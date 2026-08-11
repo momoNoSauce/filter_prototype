@@ -1,26 +1,147 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Design tokens lifted from the Figma file `Filter-and-Sort` (hdArN93DmnLu5JDB46SOwd).
+ * Named to match the Figma variable names so the mapping stays obvious.
+ */
+@theme {
+  --color-primary: #004ffa; /* primary/default */
+  --color-primary-subtle: #ccdcfe; /* primary/subtle */
+  --color-heading: #1a1c1f; /* text/heading */
+  --color-orange-500: #ff7711; /* Secondary/Orange-500 */
+  --color-orange-400: #ff923f; /* Secondary/Orange-400 */
+
+  /* Literals used throughout the PLP that have no Figma variable */
+  --color-page: #f7f7f7; /* PLP page background */
+  --color-muted: #999999; /* MRP / price-per-pc / shipping copy */
+  --color-margin: #39b54a; /* "65% margin" green */
+  --color-bar-label: #323232; /* bottom filter-bar labels */
+  --color-viewdetails: #f8faf7; /* View Details strip */
+  --color-hairline: #cccccc;
+  --color-rail: #f5f5f5; /* facet rail (unselected) */
+  --color-gold-from: #6909b8; /* GOLD gradient start */
+  --color-gold-via: #9e1ea7;
+  --color-gold-to: #a922a3; /* GOLD gradient end */
+  --color-gold-price: #ffdb99; /* ₹99 in the membership strip */
+  --color-gold-strike: #d4d4d4;
+  --color-tag-gold-from: #faecff;
+  --color-tag-gold-to: #f1c7ff;
+
+  --font-sans: var(--font-roboto), "Roboto", system-ui, sans-serif;
+  --font-display: var(--font-rowdies), "Rowdies", cursive;
+  /* Button labels only — the design mixes Inter into an otherwise Roboto UI */
+  --font-ui: var(--font-inter), "Inter", system-ui, sans-serif;
+
+  /* The design is authored at exactly 360 x 800 */
+  --spacing-frame: 360px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  color: #000;
+}
+
+/* Roboto in Figma is the variable font pinned to width 100 */
+body,
+button,
+input {
+  font-variation-settings: "wdth" 100;
+}
+
+/* Horizontal scrollers (variant pills, facet rail) hide their scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Device frame ───────────────────────────────────────────────────────────
+ * Phone-first: edge to edge below 480px. Above it, the untouched 360x800 app
+ * sits inside a mockup so the Figma dimensions never have to stretch.
+ */
+.device-screen {
+  position: relative;
+  overflow: hidden;
+  width: 100vw;
+  height: 100dvh;
+  background: var(--color-page);
+}
+
+@media (min-width: 480px) {
+  .device-page {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #e6e8ec;
+  }
+
+  .device-bezel {
+    position: relative;
+    padding: 12px;
+    border-radius: 46px;
+    background: #16181d;
+    box-shadow:
+      0 0 0 2px #2c3038,
+      0 24px 60px -12px rgb(0 0 0 / 0.45);
+  }
+
+  /* Volume rocker and power button, purely decorative */
+  .device-bezel::before,
+  .device-bezel::after {
+    content: "";
+    position: absolute;
+    width: 3px;
+    border-radius: 2px;
+    background: #2c3038;
+  }
+  .device-bezel::before {
+    left: -3px;
+    top: 132px;
+    height: 92px;
+  }
+  .device-bezel::after {
+    right: -3px;
+    top: 160px;
+    height: 64px;
+  }
+
+  .device-screen {
+    width: 360px;
+    height: 800px;
+    border-radius: 34px;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.animate-sheet-in {
+  animation: sheet-in 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* The GOLD wordmark: gradient-filled text, used in tags and the join button */
+.gold-text {
+  background-image: linear-gradient(
+    to top,
+    var(--color-gold-from),
+    var(--color-gold-to)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

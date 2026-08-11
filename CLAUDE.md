@@ -1,1 +1,96 @@
 @AGENTS.md
+
+# SOLV — Filter & Sort Prototype
+
+A Next.js prototype of SOLV's B2B commerce app, built to demonstrate **filter and sort**, which the real product lacks. Designs existed in Figma but weren't clickable. This makes them work against a seeded catalog so stakeholders can try real filter permutations.
+
+Read `plan.md` for the full architecture and `progress_tracker.md` for current state and open questions.
+
+## Commands
+
+```bash
+npm run dev      # http://localhost:3000
+npm test         # filter engine unit tests (vitest)
+npm run build    # production build; also typechecks
+npx eslint .     # lint (run from repo root, not a subdirectory)
+```
+
+## Flows
+
+- **Flow 1 — built.** Home → tap *Baheti Garments* → seller PLP → Gender / Sort / Filters in any combination.
+- **Flow 2 — designs pending.** Search "sandal" → results across multiple product verticals and genders → filtering by Gender prunes whole verticals (high heels disappears). The engine already does this; flow 1 demonstrates it when you pick Girls. Flow 2 is a catalog extension, not an engine change.
+
+## Design source — always pull from Figma, never eyeball
+
+File `hdArN93DmnLu5JDB46SOwd` (`Filter-and-Sort`), section `651:4873`. Use the Figma MCP `get_design_context` (load the `figma-design-to-code` guidance first).
+
+| Node | Screen |
+|---|---|
+| `628:1620` | Home |
+| `638:2718` | PLP base |
+| `644:4435` | Sort By sheet |
+| `644:4470` | Gender sheet |
+| `638:3659` | Filters sheet (rail + panel) |
+| `644:4011` | Chip bar (Sort/Filter chips — deliberately not used, see below) |
+| `644:4000` | Filters → Seller |
+
+**Designs are 360px wide.** Never stretch a Figma dimension to fit — `DeviceFrame` renders edge-to-edge below 480px and drops the untouched 360×800 app into a phone mockup above it.
+
+**Fonts are mixed, and that's intentional:** Roboto for everything, **Inter** for button labels (`Clear Filters`, `Show N results`), **Rowdies** for the GOLD wordmark.
+
+Tokens live in `app/globals.css` under `@theme`, named after their Figma variables (`--color-primary` = `primary/default` `#004FFA`, etc.). The design occasionally uses `#014FFA` for active states — that's a slip; use the `#004FFA` token.
+
+All icons/images are exact Figma exports in `public/figma/`. **Never redraw an asset.** Monochrome icons that need to change colour use `components/ui/MaskIcon.tsx` (CSS mask over a background colour) — an `<img>` can't be tinted.
+
+## Architecture
+
+No backend. Deterministic seeded catalog + pure filter engine, all client-side.
+
+- `lib/filters/engine.ts` — `applyFilters` (OR within a facet, AND across facets) and `facetOptionsWithCounts`.
+- `lib/filters/facets.ts` — facet registry. Each facet declares `valuesOf(product) → string[]`, so tile grids, checkbox lists, range buckets and multi-valued delivery windows all use one code path. Adding a facet is one array entry.
+- `lib/catalog/seed.ts` — 1,070 products from a fixed-seed PRNG. Determinism is load-bearing: counts must not shift between reloads or between server and client.
+- `lib/filters/urlState.ts` — state mirrored to the query string via `history.pushState`; local state stays the source of truth so filtering is instant.
+
+### The one rule that matters
+
+`facetOptionsWithCounts` counts a facet's options against **every other facet's selections, never its own**. Counting a facet against itself would zero out every unselected option the moment you ticked one. This is what makes ticking one seller still show live counts for the others, while picking Girls correctly erases Formal Shirt from Category. It's covered by tests — don't "simplify" it.
+
+Options that fall to zero are hidden; anything currently selected stays visible even at zero, so a selection can never become impossible to undo.
+
+### Catalog shape is deliberate
+
+Category × gender is restricted so pruning is demonstrable: Formal Shirt and Ethnic Shirt are never made for girls, Long Kurta Set only for women and girls. Don't flatten this into a uniform distribution.
+
+## Decisions already made — do not re-litigate
+
+| Area | Decision |
+|---|---|
+| Default sort | **Popularity**, and omitted from the URL (bare URL = Popularity) |
+| Sort sheet | Tap applies **and closes** — no Apply button in the design |
+| Gender sheet | Multi-select, holds a draft, commits on Apply. Writes the same `gender` facet that lives under *More Filters*, so the two stay in sync. CTA is **"Clear all"** here; the Filters screen keeps **"Clear Filters"** |
+| Active row (Sort/Gender) | Three things together: label bold, label primary, **icon tints to primary** |
+| Tile selected state | Primary ring + 50% primary veil over the photo + white check + bold primary label |
+| Top chip strip | Sort/Filter chips from `644:4011` were **removed** on request. Applied-filter chips were **also removed**. That strip is reserved for **contextual chips** (undefined — ask before filling it) |
+| Applied state cue | Count badges on the Gender and Filters icons in the bottom bar |
+| Brands panel | Uses the **same tile grid as Category**, not a checkbox list |
+| Undesigned panels | Ten of twelve facets aren't designed. They reuse the designed checkbox row rather than introducing sliders or swatch grids. Colour adds a 16px dot; price/margin/MOQ use bucket rows |
+| Seller PLP scope | Baheti Garments is a **storefront aggregating multiple sellers** (the app bar says Baheti while the Seller facet lists other companies). Other seller pages are scoped to their own stock |
+| `Offers` vs `Seller Offers` | The two filter frames disagree. Using **Offers** |
+| Set pills | Selectable — picking a pack re-prices that card. Dots track scroll pages |
+
+**Skipped as design artefacts:** a stray `$299.99` row at the bottom of the filter rail (`638:3712`), and `Margin` being SemiBold while its eleven siblings are Medium.
+
+## Imagery
+
+- **Category tiles** — Unsplash stock in `public/categories/`, credited in `CREDITS.md`. `ethnic-shirt.jpg` is a known weak match (knitwear flatlay, not Indian ethnic menswear).
+- **Brand tiles** — still grey `#d9d9d9` placeholders. Real logos couldn't be sourced (Clearbit's API is retired; Wikipedia/Commons returned unrelated files for 7 of 8 brands). The right input is brand-supplied assets, which also avoids scraping trademarked marks.
+- **Product images** — only two shirt renders exist in the Figma file, assigned by whether the colour is dark or light.
+
+## Working style
+
+- Verify visually before claiming something works. Playwright is not a dependency — install it ad hoc (`npm install --no-save playwright`), screenshot at 360px with `deviceScaleFactor: 2–3`, then uninstall. Hide the dev overlay first: it intercepts clicks.
+  ```js
+  await page.addStyleTag({ content: 'nextjs-portal{display:none !important}' });
+  ```
+- Badged buttons change their accessible name (`Filters` becomes `3 Filters`), so use regex selectors in tests.
+- Run `npx eslint .` from the repo root — the shell's working directory persists between commands and a stale `cd` produces confusing failures.
