@@ -22,7 +22,7 @@ Both render the identical card, catalog, engine and sheets. **Only the controls 
 | | Home | PLP | Controls |
 |---|---|---|---|
 | **Variant A** | `/` | `/seller/[sellerId]` | Gender · Sort · Filters pinned to the bottom (Figma `638:2836`) |
-| **Variant B** | `/b` | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar, **no Gender at all** |
+| **Variant B** | `/b` | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar; Gender moves into the Filters rail |
 
 Separate routes rather than a query flag — chosen so each has its own shareable link and neither inherits the other's state. Switch by editing the URL.
 
@@ -31,8 +31,6 @@ Separate routes rather than a query flag — chosen so each has its own shareabl
 - `PlpScreen` takes `variant: "bottom-bar" | "top-chips"` — there is no second copy of the screen.
 - `HomeScreen` takes `basePath: "" | "/b"`, so its seller cards link into the right variant.
 - `AppBar` takes `homeHref`, because a hardcoded `/` silently drops a Variant B session into Variant A mid-demo.
-
-Variant B has no way to set or clear gender, so it **strips a stale `?gender=`** on load — otherwise a link carried over from A would apply an invisible, unremovable filter.
 
 The journey is Home → tap *Baheti Garments* → PLP → filter and sort. Variant A is the default; Variant B is the same journey with the controls moved.
 
@@ -47,8 +45,9 @@ File `hdArN93DmnLu5JDB46SOwd` (`Filter-and-Sort`), section `651:4873`. Use the F
 | `644:4435` | Sort By sheet |
 | `644:4470` | Gender sheet |
 | `638:3659` | Filters sheet (rail + panel) |
-| `644:4011` | Chip bar (Sort/Filter chips — deliberately not used, see below) |
+| `644:4011` | Sort/Filter chip bar — Variant B's controls |
 | `644:4000` | Filters → Seller |
+| `638:3696` | Tile grid (frame renamed `Category`) — 68×96 cells, 56px tile, two-line label |
 
 **Designs are 360px wide.** Never stretch a Figma dimension to fit — `DeviceFrame` renders edge-to-edge below 480px and drops the untouched 360×800 app into a phone mockup above it.
 
@@ -65,7 +64,7 @@ All icons/images are exact Figma exports in `public/figma/`. **Never redraw an a
 No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 
 - `lib/filters/engine.ts` — `applyFilters` (OR within a facet, AND across facets) and `facetOptionsWithCounts`.
-- `lib/filters/facets.ts` — facet registry. Each facet declares `valuesOf(product) → string[]`, so tile grids, checkbox lists, range buckets and multi-valued delivery windows all use one code path. Adding a facet is one array entry. `FACETS` is every facet the engine knows; `RAIL` is only what the Filters screen shows, and `RAIL_FACET_IDS` is the set anything touching the draft must filter through.
+- `lib/filters/facets.ts` — facet registry. Each facet declares `valuesOf(product) → string[]`, so tile grids, checkbox lists, range buckets and multi-valued delivery windows all use one code path. Adding a facet is one array entry. `FACETS` is every facet the engine knows; `getRail(includeGender)` is what the Filters screen shows for a given variant, and `getRailFacetIds(includeGender)` is the set anything touching the draft must filter through.
 - `lib/catalog/seed.ts` — 1,070 products from a fixed-seed PRNG. Determinism is load-bearing: counts must not shift between reloads or between server and client.
 - `lib/filters/urlState.ts` — state mirrored to the query string via `history.pushState`; local state stays the source of truth so filtering is instant.
 
@@ -85,15 +84,16 @@ Category × gender is restricted so pruning is demonstrable: Formal Shirt and Et
 |---|---|
 | Default sort | **Popularity**, and omitted from the URL (bare URL = Popularity) |
 | Sort sheet | Tap applies **and closes** — no Apply button in the design |
-| Gender | **Single-select** (journey mapping: nobody shops two genders at once) and **bottom-bar only** — deliberately absent from `RAIL`, so the Filters screen neither lists it nor clears it. Tap applies and closes, like Sort; re-tapping the active row clears it, since there's no Clear button. Still in `FACETS`, so it filters, round-trips through the URL, and feeds other facets' counts |
-| Gender control | Renders as a **checkbox**, not a radio, for consistency with every other facet — behaviour is still exclusive. Known mismatch, flagged to the designer |
+| Gender | Reached differently per variant, and behaves accordingly. **A:** a single-select quick action in the bottom-bar sheet (journey mapping: nobody shops two genders at once) — tap applies and closes, re-tapping the active row clears it, and it is absent from A's rail. **B:** no bottom bar, so it becomes an ordinary **multi-select** facet, second in the Filters rail. Exclusivity is a property of the control, not the facet — there is no `single` flag in the registry. |
+| Gender control | Always a **checkbox**, never a radio — consistent with every other facet. In A that means a checkbox behaving exclusively; a known mismatch, flagged to the designer |
 | Active row (Sort/Gender) | Three things together: label bold, label primary, **icon tints to primary** |
 | Tile selected state | Primary ring + 50% primary veil over the photo + white check + bold primary label |
-| Top chip strip | Sort/Filter chips from `644:4011` were **removed** on request. Applied-filter chips were **also removed**. That strip is reserved for **contextual chips** (undefined — ask before filling it) |
-| Applied state cue | Bottom bar only. Gender and Sort each hold one value so they show a **dot**; Filters can hold many so it shows a **count**. Gender is excluded from that count — it reports itself |
-| Clear Filters scope | Clears only facets in `RAIL_FACET_IDS`. Gender must survive it — wiping a filter from a screen that never showed it is a silent surprise |
+| Top chip strip | In **A** it is empty and reserved for **contextual chips** (undefined — ask before filling it); the `644:4011` chips and the applied-filter chips were both removed from A on request. In **B** that same strip carries the Sort and Filter chips |
+| Applied state cue | Carried by whichever control owns the filter. One value → a **dot** (Sort always; Gender in A). Many → a **count** (Filters). In A the count excludes gender because the bottom bar reports it; in B it includes gender, because the Filters screen owns it |
+| Clear Filters scope | Clears only facets in `getRailFacetIds(variant)`. In A that spares gender — wiping a filter from a screen that never showed it is a silent surprise. In B it clears gender too, because B displays it |
 | Sheet motion | Asymmetric: enter 260ms `cubic-bezier(.05,.7,.1,1)` (decelerate), exit 200ms `cubic-bezier(.3,0,.8,.15)` (accelerate); scrim 200/160ms. `Sheet` owns dismissal — `onClose` fires on `animationend`, and rows get the animated close via a render prop. `prefers-reduced-motion` collapses all four to 1ms |
 | Brands panel | Uses the **same tile grid as Category**, not a checkbox list |
+| Tile grid | Figma frame `Category` (`638:3696`): 68×96 cells, 56px square at radius 9.333, 4px gaps, 14px left inset, three across. The label is a **fixed 36px two-line box** — reserved even for one-line labels, so tiles on a row bottom out level — and long labels clamp at two lines rather than truncating on one. Shared by Category and Brands in both variants; change it once. |
 | Undesigned panels | Ten of twelve facets aren't designed. They reuse the designed checkbox row rather than introducing sliders or swatch grids. Colour adds a 16px dot; price/margin/MOQ use bucket rows |
 | Seller PLP scope | Baheti Garments is a **storefront aggregating multiple sellers** (the app bar says Baheti while the Seller facet lists other companies). Other seller pages are scoped to their own stock |
 | `Offers` vs `Seller Offers` | The two filter frames disagree. Using **Offers** |

@@ -9,7 +9,7 @@ import {
   toggleSelection,
 } from "./engine";
 import { buildQuery, parseSelections, parseSort } from "./urlState";
-import { FACET_BY_ID, RAIL_FACET_IDS } from "./facets";
+import { FACET_BY_ID, getRail, getRailFacetIds } from "./facets";
 import { defaultVariant } from "@/lib/catalog/types";
 
 const catalog = getCatalog();
@@ -148,42 +148,53 @@ describe("toggleSelection", () => {
     });
   });
 
-  it("replaces rather than accumulates on a single-select facet", () => {
-    const men = toggleSelection({}, "gender", "men", true);
-    expect(men).toEqual({ gender: ["men"] });
-    expect(toggleSelection(men, "gender", "women", true)).toEqual({
-      gender: ["women"],
-    });
-  });
-
-  it("clears a single-select facet when the active option is re-tapped", () => {
-    const men = toggleSelection({}, "gender", "men", true);
-    expect(toggleSelection(men, "gender", "men", true)).toEqual({});
-  });
 });
 
-describe("gender is bottom-bar only", () => {
-  it("is single-select", () => {
-    expect(FACET_BY_ID.get("gender")?.single).toBe(true);
-    expect(FACET_BY_ID.get("brand")?.single).toBeFalsy();
-  });
-
-  it("is absent from the Filters rail but present in the engine", () => {
-    expect(RAIL_FACET_IDS.has("gender")).toBe(false);
+describe("gender placement differs by variant", () => {
+  it("is in the engine either way", () => {
     expect(FACET_BY_ID.has("gender")).toBe(true);
-    // Still filters, still round-trips through the URL.
     expect(countMatching(catalog, { gender: ["women"] })).toBeGreaterThan(0);
     expect(parseSelections(new URLSearchParams("gender=women"))).toEqual({
       gender: ["women"],
     });
   });
 
-  it("survives the Filters screen's Clear, which only owns rail facets", () => {
+  it("Variant A keeps it out of the rail — the bottom-bar sheet owns it", () => {
+    expect(getRailFacetIds(false).has("gender")).toBe(false);
+    expect(getRail(false).some((r) => r.id === "gender")).toBe(false);
+  });
+
+  it("Variant B puts it in the rail, second, since there is no bottom bar", () => {
+    const rail = getRail(true);
+    expect(getRailFacetIds(true).has("gender")).toBe(true);
+    expect(rail[1].id).toBe("gender");
+    // Same entries otherwise — B adds gender and changes nothing else.
+    expect(rail.length).toBe(getRail(false).length + 1);
+  });
+
+  it("Variant A's Clear must not wipe a gender it never displayed", () => {
     const draft = { gender: ["women"], seller: ["grasim"], colour: ["navy"] };
+    const owned = getRailFacetIds(false);
     const cleared = Object.fromEntries(
-      Object.entries(draft).filter(([id]) => !RAIL_FACET_IDS.has(id)),
+      Object.entries(draft).filter(([id]) => !owned.has(id)),
     );
     expect(cleared).toEqual({ gender: ["women"] });
+  });
+
+  it("Variant B's Clear does wipe gender, because it is shown there", () => {
+    const draft = { gender: ["women"], seller: ["grasim"] };
+    const owned = getRailFacetIds(true);
+    const cleared = Object.fromEntries(
+      Object.entries(draft).filter(([id]) => !owned.has(id)),
+    );
+    expect(cleared).toEqual({});
+  });
+
+  it("multi-selects in the Filters rail, like every other facet", () => {
+    const men = toggleSelection({}, "gender", "men");
+    expect(toggleSelection(men, "gender", "boys")).toEqual({
+      gender: ["men", "boys"],
+    });
   });
 });
 

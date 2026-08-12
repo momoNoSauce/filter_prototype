@@ -69,8 +69,16 @@ function Checkbox({ checked }: { checked: boolean }) {
 }
 
 /**
- * Figma 638:3696 — the tile grid used by Category and Brands. 64px cells, a
- * 48px rounded square and an 11px label.
+ * Figma 638:3696 (frame "Category") — the tile grid used by Category and Brands.
+ *
+ * 68 x 96 cells, a 56px rounded square (radius 9.333), 4px gaps, 14px left
+ * inset. Three fit across the 240px panel.
+ *
+ * The label block is a fixed 36px — two lines, reserved whether or not the
+ * label needs them. That's deliberate: a facet's labels vary in length, and
+ * letting the box grow with the text would leave the tiles on a row sitting at
+ * different heights. Long labels clamp at two lines rather than truncating on
+ * one, so "Men's Casual T-Shirts" stays readable.
  *
  * The frames show flat #d9d9d9 placeholders; facets that supply an `image`
  * render it in that square instead, and the grey stays as the backdrop so
@@ -86,7 +94,7 @@ export function TileGrid({
   onToggle: (id: string) => void;
 }) {
   return (
-    <div className="flex w-full flex-wrap items-start gap-[8px] pr-[8px] pl-[14px]">
+    <div className="flex w-full flex-wrap items-start gap-[4px] pr-[8px] pl-[14px]">
       {options.map((option) => {
         const isOn = selected.includes(option.id);
         return (
@@ -95,10 +103,10 @@ export function TileGrid({
             onClick={() => onToggle(option.id)}
             aria-pressed={isOn}
             title={`${option.label} (${option.count})`}
-            className="flex size-[64px] shrink-0 cursor-pointer flex-col items-center gap-[4px]"
+            className="flex h-[96px] w-[68px] shrink-0 cursor-pointer flex-col items-center gap-[4px]"
           >
             <span
-              className={`relative size-[48px] shrink-0 overflow-hidden rounded-[8px] bg-[#d9d9d9] ${
+              className={`relative size-[56px] shrink-0 overflow-hidden rounded-[9.333px] bg-[#d9d9d9] ${
                 isOn ? "ring-2 ring-primary ring-offset-1" : ""
               }`}
             >
@@ -128,8 +136,10 @@ export function TileGrid({
                 </span>
               )}
             </span>
+            {/* Fixed two-line box: the height is reserved even for one-line
+                labels, so every tile on a row lines up. */}
             <span
-              className={`w-full truncate text-[11px] ${
+              className={`line-clamp-2 h-[36px] w-full text-center text-[11px] leading-[13px] ${
                 isOn ? "font-bold text-primary" : "font-normal text-[#323232]"
               }`}
             >

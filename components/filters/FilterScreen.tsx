@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
-import { FACET_BY_ID, RAIL, RAIL_FACET_IDS } from "@/lib/filters/facets";
+import { FACET_BY_ID, getRail, getRailFacetIds } from "@/lib/filters/facets";
 import {
   countMatching,
   facetOptionsWithCounts,
@@ -26,12 +26,18 @@ export function FilterScreen({
   selections,
   onApply,
   onClose,
+  includeGender = false,
 }: {
   products: Product[];
   selections: Selections;
   onApply: (next: Selections) => void;
   onClose: () => void;
+  /** Variant B has no bottom bar, so Gender lives here instead. */
+  includeGender?: boolean;
 }) {
+  const RAIL = getRail(includeGender);
+  const RAIL_FACET_IDS = getRailFacetIds(includeGender);
+
   const [draft, setDraft] = useState<Selections>(selections);
   const [activeRail, setActiveRail] = useState(RAIL[0].id);
   const [query, setQuery] = useState("");
@@ -48,9 +54,7 @@ export function FilterScreen({
   const searchable = rail.facetIds.some((id) => FACET_BY_ID.get(id)?.searchable);
 
   const toggle = (facetId: string, optionId: string) =>
-    setDraft((current) =>
-      toggleSelection(current, facetId, optionId, FACET_BY_ID.get(facetId)?.single),
-    );
+    setDraft((current) => toggleSelection(current, facetId, optionId));
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col bg-white">

@@ -36,9 +36,11 @@ Local: `npm run dev` → http://localhost:3000.
 - Sort/Filter chips and applied-filter chips **removed** from the strip below the GOLD bar — reserved for contextual chips.
 - Gender CTA renamed **"Clear all"**; the Filters screen keeps "Clear Filters".
 - Brands moved to the **tile grid**, matching Category.
+- Gender in Variant B moved **into the Filters rail** (second) as an ordinary multi-select facet, since B has no bottom bar to host it. Variant A keeps it as a single-select bottom-bar sheet. The `single` flag left the facet registry — exclusivity is a property of the control, not the facet.
+- Tile grid **enlarged** to the updated Figma frame: 68×96 cells, 56px tile, fixed 36px two-line label.
 - **Category tile photos** added (Unsplash).
 - Tile selected state: primary ring + 50% primary veil + white check + bold label.
-- Gender is now **single-select and bottom-bar only** — removed from the Filters rail entirely, Apply/Clear footer dropped, tap applies and closes.
+- Gender in Variant A is **single-select, bottom-bar only** — Apply/Clear footer dropped, tap applies and closes, absent from A's rail.
 - **Sort dot** when sorted away from Popularity; Gender dot; Filters count (excludes Gender).
 - **Bottom sheet enter/exit animation**, asymmetric timing, reduced-motion aware.
 
@@ -53,7 +55,7 @@ Local: `npm run dev` → http://localhost:3000.
 - Sort dot appears on non-default sort and clears on return to Popularity.
 - Sheet motion measured frame by frame: enter decelerates (92→29→12→4px steps), exit accelerates (10→34→73→171px), then unmounts.
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
-- 26 engine tests green. Lint and typecheck clean. No console errors on any screen, local or production.
+- 27 engine tests green. Lint and typecheck clean. No console errors on any screen, local or production.
 
 ## Variant B — top chips instead of a bottom bar
 
@@ -62,13 +64,13 @@ An A/B of control placement, added 2026-08-12. Same card, catalog, engine and sh
 | | Home | PLP | Controls |
 |---|---|---|---|
 | **Variant A** | `/` | `/seller/baheti` | Gender · Sort · Filters at the bottom |
-| **Variant B** | `/b` | `/b/seller/baheti` | Sort + Filter chips at the top, no bottom bar, no Gender |
+| **Variant B** | `/b` | `/b/seller/baheti` | Sort + Filter chips at the top, no bottom bar; Gender in the Filters rail |
 
 Switching is by URL — chosen over an on-screen toggle so nothing that isn't product chrome appears on a screen being judged.
 
 Each variant is a **closed loop**: hand someone `/b` and the whole journey — home, seller card, PLP, home button — stays in B. `HomeScreen` takes a `basePath`, `AppBar` takes a `homeHref`; both must be kept in step when adding routes, or a session leaks into the other variant mid-demo with no visible cause.
 
-Verified: no Gender control and no bottom bar in B; both chips open their sheets; chips carry the same active state as the bottom bar (dot for Sort, count for Filter); a stale `?gender=` from Variant A is dropped on load; `/b` → seller card → `/b/seller/baheti` → home → `/b`; Variant A unchanged and equally self-contained.
+Verified: no bottom bar in B; both chips open their sheets; chips carry the same active vocabulary as the bottom bar (dot for Sort, count for Filter); Gender sits second in B's rail and multi-selects (`?gender=men,boys`) while A's sheet still replaces (`?gender=boys`); `/b` → seller card → `/b/seller/baheti` → home → `/b`; Variant A unchanged and equally self-contained.
 
 Open: the reference image is a *category* PLP ("Cotton Casual Shirt") with a different card — pipe-separated `MRP ₹1000 | Pack Size 1pc`, single-size pills, 4 dots, and no share icon in the app bar. Deliberately **not** built, to keep the A/B to one variable. Say if the card should change, and whether it applies to both variants.
 
@@ -84,7 +86,8 @@ Ordered by consequence. None of these block a demo.
    | `65% margin` | `#39B54A` | 2.66:1 | 4.5:1 |
    | `VIEW DETAILS` | `#FF7711` | 2.53:1 | 4.5:1 |
    Audience is kirana retailers on mid-range Android in poor light. Worth darkening before this becomes the build spec.
-3. **Gender renders as a checkbox but behaves exclusively.** Deliberate (visual consistency vs. the single-select decision) but it is the one combination that misleads. Flip to genuine multi-select, or give it radio semantics.
+3. **In Variant A, Gender renders as a checkbox but behaves exclusively** (Variant B is genuinely multi-select, so this only affects A's sheet). Deliberate — visual consistency over strict semantics — but it is the one combination that misleads.
+10. **The variants now differ in more than control placement.** A treats gender as a single-select quick action, B as a regular multi-select facet. Coherent per control model, but it means a stated preference for B can't be attributed to the chips alone. Worth naming when running it past people.
 4. **Tiles show no counts** while every checkbox row does — you can't judge whether a category is worth tapping.
 5. **Hidden zero-count options** are right for the pruning demo but break the user's mental map; most Indian ecommerce greys out instead. A conscious call, not an inherited default.
 6. **No loading / skeleton / stale-results state anywhere.** Filtering is instant only because the catalog is in memory; against a real API it won't be, and the prototype is quietly setting an expectation engineering can't meet.

@@ -27,12 +27,6 @@ export interface FacetDef {
   /** Show the search field above the options */
   searchable: boolean;
   /**
-   * Only one option can be held at a time — picking a second replaces the
-   * first. Behaviour only: the row still renders as a checkbox, matching every
-   * other facet.
-   */
-  single?: boolean;
-  /**
    * The option ids this product belongs to. Returning several is legitimate —
    * "Within 3 days" and "Within 5 days" both match a 2-day product — and the
    * engine treats every facet the same way regardless of panel type.
@@ -185,14 +179,22 @@ export const FACETS: FacetDef[] = [
     options: OFFERS.map((o) => ({ id: slug(o.name), label: o.name })),
   },
   {
+    /*
+     * Gender is reached differently in each variant, and behaves accordingly:
+     *
+     * - Variant A — the bottom-bar sheet, which is single-select by its own
+     *   logic (journey mapping: nobody shops two genders at once). Not in that
+     *   variant's rail at all.
+     * - Variant B — a normal rail facet, multi-select like every other one,
+     *   since there is no bottom bar to host a quick action.
+     *
+     * That's why there's no `single` flag here: the entry point decides, not
+     * the facet.
+     */
     id: "gender",
     label: "Gender",
     panel: "checkbox",
     searchable: false,
-    // Journey mapping showed nobody shops two genders at once.
-    single: true,
-    // Not in RAIL — the bottom-bar sheet is the only way to set this. It stays
-    // in the registry so the engine, the URL and facet counts all still see it.
     valuesOf: (p) => [p.gender],
     options: [
       { id: "men", label: "Men" },
@@ -226,7 +228,13 @@ export const FACET_BY_ID = new Map(FACETS.map((f) => [f.id, f]));
  * The left rail of the Filters screen. Most entries map to one facet;
  * "More Filters" stacks three.
  */
-export const RAIL: { id: string; label: string; facetIds: string[] }[] = [
+export interface RailEntry {
+  id: string;
+  label: string;
+  facetIds: string[];
+}
+
+const BASE_RAIL: RailEntry[] = [
   { id: "category", label: "Category", facetIds: ["category"] },
   { id: "delivery", label: "Delivery Time", facetIds: ["delivery"] },
   { id: "moq", label: "MOQ", facetIds: ["moq"] },
@@ -241,11 +249,26 @@ export const RAIL: { id: string; label: string; facetIds: string[] }[] = [
   { id: "more", label: "More Filters", facetIds: ["fabric", "tags"] },
 ];
 
+/** Sits second — high enough to match how prominent Gender is in Variant A. */
+const GENDER_ENTRY: RailEntry = { id: "gender", label: "Gender", facetIds: ["gender"] };
+
 /**
- * Facets the Filters screen owns.
+ * The Filters rail, which differs by variant.
  *
- * `gender` is deliberately absent: the bottom-bar sheet is its only entry
- * point, so the Filters screen must neither list it nor clear it. Everything
- * that touches the draft filters through this set.
+ * Variant A keeps Gender out — the bottom-bar sheet owns it there, and listing
+ * it in both places would let the two disagree. Variant B has no bottom bar,
+ * so Gender becomes a normal rail facet.
  */
-export const RAIL_FACET_IDS = new Set(RAIL.flatMap((entry) => entry.facetIds));
+export function getRail(includeGender: boolean): RailEntry[] {
+  if (!includeGender) return BASE_RAIL;
+  return [BASE_RAIL[0], GENDER_ENTRY, ...BASE_RAIL.slice(1)];
+}
+
+/**
+ * Facets the Filters screen owns, for the given variant. Anything mutating the
+ * draft — notably Clear Filters — must filter through this, so a facet the
+ * screen doesn't display can never be cleared by it.
+ */
+export function getRailFacetIds(includeGender: boolean): Set<string> {
+  return new Set(getRail(includeGender).flatMap((entry) => entry.facetIds));
+}

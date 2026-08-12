@@ -10,7 +10,7 @@ import {
   type Selections,
   type SortId,
 } from "@/lib/filters/engine";
-import { RAIL_FACET_IDS } from "@/lib/filters/facets";
+import { getRailFacetIds } from "@/lib/filters/facets";
 import { buildQuery, parseSelections, parseSort } from "@/lib/filters/urlState";
 import { AppBar } from "./AppBar";
 import { GoldStrip } from "./GoldStrip";
@@ -29,12 +29,13 @@ type Overlay = "sort" | "gender" | "filters" | null;
  * Two interaction models over the same screen, so they can be compared:
  *
  * - `bottom-bar` — Gender · Sort · Filters pinned to the bottom (Figma 638:2836).
+ *                  Gender is a single-select quick action in its own sheet.
  * - `top-chips`  — Sort and Filter as chips under the GOLD strip (Figma 644:4011),
- *                  no bottom bar, and no Gender control at all.
+ *                  no bottom bar. Gender moves into the Filters rail as an
+ *                  ordinary multi-select facet, since there's no bar to host it.
  *
- * Only the controls differ. The card, the catalog, the engine and the sheets
- * are shared, so any preference between the two is about control placement and
- * nothing else.
+ * The card, the catalog and the engine are shared, so the comparison stays
+ * about how the controls are reached.
  */
 export type PlpVariant = "bottom-bar" | "top-chips";
 
@@ -48,7 +49,11 @@ export function PlpScreen({
   variant?: PlpVariant;
 }) {
   const pathname = usePathname();
-  const hasGender = variant === "bottom-bar";
+  // Variant A reaches Gender through the bottom-bar sheet; Variant B has no
+  // bottom bar, so Gender becomes an ordinary facet in the Filters rail.
+  const genderInSheet = variant === "bottom-bar";
+  const genderInRail = variant === "top-chips";
+  const railFacetIds = getRailFacetIds(genderInRail);
 
   // The query string is the shareable record of state, but local state is the
   // source of truth — that keeps filtering instant instead of round-tripping
@@ -64,18 +69,13 @@ export function PlpScreen({
   useEffect(() => {
     const sync = () => {
       const params = new URLSearchParams(window.location.search);
-      const parsed = parseSelections(params);
-      // This variant offers no way to set or clear gender, so a stale
-      // ?gender= carried over from the other one would be an invisible,
-      // unremovable filter. Drop it.
-      if (!hasGender) delete parsed.gender;
-      setSelections(parsed);
+      setSelections(parseSelections(params));
       setSort(parseSort(params));
     };
     sync();
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
-  }, [hasGender]);
+  }, []);
 
   const commit = useCallback(
     (nextSelections: Selections, nextSort: SortId) => {
@@ -109,9 +109,11 @@ export function PlpScreen({
 
   const genderActive = (selections.gender?.length ?? 0) > 0;
   const sortActive = sort !== DEFAULT_SORT;
-  // Gender reports itself with its own dot, so it must not also be counted here.
+  // Counts exactly what the Filters screen owns in this variant. In A that
+  // excludes gender (the bottom bar reports it with its own dot); in B it
+  // includes it, because the Filters screen is where it lives.
   const filterCount = Object.entries(selections).reduce(
-    (sum, [facetId, chosen]) => sum + (RAIL_FACET_IDS.has(facetId) ? chosen.length : 0),
+    (sum, [facetId, chosen]) => sum + (railFacetIds.has(facetId) ? chosen.length : 0),
     0,
   );
 
@@ -169,7 +171,7 @@ export function PlpScreen({
         />
       )}
 
-      {overlay === "gender" && hasGender && (
+      {overlay === "gender" && genderInSheet && (
         <GenderSheet
           value={selections.gender ?? []}
           onSelect={(next) => {
@@ -186,6 +188,7 @@ export function PlpScreen({
         <FilterScreen
           products={products}
           selections={selections}
+          includeGender={genderInRail}
           onApply={(next) => commit(next, sort)}
           onClose={() => setOverlay(null)}
         />
