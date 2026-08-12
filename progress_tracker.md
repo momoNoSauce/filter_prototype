@@ -55,7 +55,24 @@ Local: `npm run dev` → http://localhost:3000.
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - 26 engine tests green. Lint and typecheck clean. No console errors on any screen, local or production.
 
-## Flow 2 — search results across verticals
+## Variant B — top chips instead of a bottom bar
+
+An A/B of control placement, added 2026-08-12. Same card, catalog, engine and sheets; only the controls differ, so the comparison stays honest.
+
+| | Route | Controls |
+|---|---|---|
+| **Variant A** | `/seller/baheti` | Gender · Sort · Filters at the bottom |
+| **Variant B** | `/b/seller/baheti` | Sort + Filter chips at the top, no bottom bar, no Gender |
+
+Switching is by URL — chosen over an on-screen toggle so nothing that isn't product chrome appears on a screen being judged.
+
+Verified: no Gender control and no bottom bar in B; both chips open their sheets; chips carry the same active state as the bottom bar (dot for Sort, count for Filter); a stale `?gender=` from Variant A is dropped on load; Variant A is unchanged.
+
+Open: the reference image is a *category* PLP ("Cotton Casual Shirt") with a different card — pipe-separated `MRP ₹1000 | Pack Size 1pc`, single-size pills, 4 dots, and no share icon in the app bar. Deliberately **not** built, to keep the A/B to one variable. Say if the card should change, and whether it applies to both variants.
+
+## The search flow — results across verticals
+
+> Originally called "flow 2"; that name now means Variant B. Referred to here as the search flow.
 
 Blocked on designs. Engine work is done: dynamic facet pruning is native, so this should be a catalog extension (footwear verticals, a search index) plus the search results screen.
 

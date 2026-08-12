@@ -16,6 +16,7 @@ import { AppBar } from "./AppBar";
 import { GoldStrip } from "./GoldStrip";
 import { ProductCard } from "./ProductCard";
 import { BottomActionBar } from "./BottomActionBar";
+import { TopChipBar } from "./TopChipBar";
 import { SortSheet } from "@/components/sheets/SortSheet";
 import { GenderSheet } from "@/components/sheets/GenderSheet";
 import { FilterScreen } from "@/components/filters/FilterScreen";
@@ -24,14 +25,30 @@ const PAGE_SIZE = 8;
 
 type Overlay = "sort" | "gender" | "filters" | null;
 
+/**
+ * Two interaction models over the same screen, so they can be compared:
+ *
+ * - `bottom-bar` — Gender · Sort · Filters pinned to the bottom (Figma 638:2836).
+ * - `top-chips`  — Sort and Filter as chips under the GOLD strip (Figma 644:4011),
+ *                  no bottom bar, and no Gender control at all.
+ *
+ * Only the controls differ. The card, the catalog, the engine and the sheets
+ * are shared, so any preference between the two is about control placement and
+ * nothing else.
+ */
+export type PlpVariant = "bottom-bar" | "top-chips";
+
 export function PlpScreen({
   title,
   products,
+  variant = "bottom-bar",
 }: {
   title: string;
   products: Product[];
+  variant?: PlpVariant;
 }) {
   const pathname = usePathname();
+  const hasGender = variant === "bottom-bar";
 
   // The query string is the shareable record of state, but local state is the
   // source of truth — that keeps filtering instant instead of round-tripping
@@ -47,13 +64,18 @@ export function PlpScreen({
   useEffect(() => {
     const sync = () => {
       const params = new URLSearchParams(window.location.search);
-      setSelections(parseSelections(params));
+      const parsed = parseSelections(params);
+      // This variant offers no way to set or clear gender, so a stale
+      // ?gender= carried over from the other one would be an invisible,
+      // unremovable filter. Drop it.
+      if (!hasGender) delete parsed.gender;
+      setSelections(parsed);
       setSort(parseSort(params));
     };
     sync();
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
-  }, []);
+  }, [hasGender]);
 
   const commit = useCallback(
     (nextSelections: Selections, nextSort: SortId) => {
@@ -98,9 +120,18 @@ export function PlpScreen({
       <div className="shrink-0">
         <AppBar title={title} />
         <GoldStrip />
-        {/* The strip below the GOLD bar is reserved for contextual chips.
-            Applied-filter chips used to live here and were removed; the
-            bottom-bar count badges carry applied state for now. */}
+        {variant === "top-chips" ? (
+          <TopChipBar
+            sortActive={sortActive}
+            filterCount={filterCount}
+            onSort={() => setOverlay("sort")}
+            onFilters={() => setOverlay("filters")}
+          />
+        ) : (
+          // In the bottom-bar variant this strip stays empty — reserved for
+          // contextual chips, still to be defined.
+          null
+        )}
       </div>
 
       <div
@@ -117,16 +148,18 @@ export function PlpScreen({
         )}
       </div>
 
-      <div className="shrink-0">
-        <BottomActionBar
-          genderActive={genderActive}
-          sortActive={sortActive}
-          filterCount={filterCount}
-          onGender={() => setOverlay("gender")}
-          onSort={() => setOverlay("sort")}
-          onFilters={() => setOverlay("filters")}
-        />
-      </div>
+      {variant === "bottom-bar" && (
+        <div className="shrink-0">
+          <BottomActionBar
+            genderActive={genderActive}
+            sortActive={sortActive}
+            filterCount={filterCount}
+            onGender={() => setOverlay("gender")}
+            onSort={() => setOverlay("sort")}
+            onFilters={() => setOverlay("filters")}
+          />
+        </div>
+      )}
 
       {overlay === "sort" && (
         <SortSheet
@@ -136,7 +169,7 @@ export function PlpScreen({
         />
       )}
 
-      {overlay === "gender" && (
+      {overlay === "gender" && hasGender && (
         <GenderSheet
           value={selections.gender ?? []}
           onSelect={(next) => {

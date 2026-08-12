@@ -15,10 +15,24 @@ npm run build    # production build; also typechecks
 npx eslint .     # lint (run from repo root, not a subdirectory)
 ```
 
-## Flows
+## Two control variants of the same PLP
 
-- **Flow 1 — built.** Home → tap *Baheti Garments* → seller PLP → Gender / Sort / Filters in any combination.
-- **Flow 2 — designs pending.** Search "sandal" → results across multiple product verticals and genders → filtering by Gender prunes whole verticals (high heels disappears). The engine already does this; flow 1 demonstrates it when you pick Girls. Flow 2 is a catalog extension, not an engine change.
+Both render the identical card, catalog, engine and sheets. **Only the controls differ**, so a preference between them is about control placement and nothing else. Don't let them drift apart in any other respect.
+
+| | Route | Controls |
+|---|---|---|
+| **Variant A** | `/seller/[sellerId]` | Gender · Sort · Filters pinned to the bottom (Figma `638:2836`) |
+| **Variant B** | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar, **no Gender at all** |
+
+Separate routes rather than a query flag — chosen so each has its own shareable link and neither inherits the other's state. Switch by editing the URL.
+
+`PlpScreen` takes `variant: "bottom-bar" | "top-chips"`; there is no second copy of the screen.
+
+Variant B has no way to set or clear gender, so it **strips a stale `?gender=`** on load — otherwise a link carried over from A would apply an invisible, unremovable filter.
+
+### Also still pending: the search flow
+
+Search "sandal" → results across multiple verticals and genders → filtering by Gender prunes whole verticals (high heels disappears). Blocked on designs. The engine already does this — Variant A demonstrates it when you pick Girls — so it's a catalog extension, not an engine change. **Note:** this was originally called "flow 2"; that name now refers to Variant B, so say "the search flow" to avoid confusion.
 
 ## Design source — always pull from Figma, never eyeball
 
