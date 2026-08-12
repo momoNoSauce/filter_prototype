@@ -42,3 +42,9 @@ next-env.d.ts
 
 # Ad-hoc screenshot scripts
 /shot.mjs
+
+# Source design exports (Figma PNGs shared for reference).
+# Kept locally, never committed — they are the designer's unreleased work and
+# nothing in the app serves them. Assets the app DOES serve live in
+# public/figma and public/categories and are tracked.
+/design/

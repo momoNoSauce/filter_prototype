@@ -40,6 +40,8 @@ Fonts: **Roboto** throughout, **Inter** for button labels only (`Clear Filters`,
 
 All icons and images are the exact assets exported from Figma, in `public/figma/`. Nothing was redrawn.
 
+Reference PNG exports of the frames above sit in `design/`, which is **gitignored** — unreleased design work, and nothing in the app serves it. Don't rely on that folder being present in a fresh clone; pull frames from Figma instead. The assets the app *does* serve (`public/figma/`, `public/categories/`) are tracked and must stay that way, or a Git-triggered build would ship without images.
+
 ---
 
 ## Architecture

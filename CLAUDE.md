@@ -42,6 +42,8 @@ Tokens live in `app/globals.css` under `@theme`, named after their Figma variabl
 
 All icons/images are exact Figma exports in `public/figma/`. **Never redraw an asset.** Monochrome icons that need to change colour use `components/ui/MaskIcon.tsx` (CSS mask over a background colour) — an `<img>` can't be tinted.
 
+`design/` holds reference PNG exports of the frames and is **gitignored** — unreleased design work, served by nothing. It may be absent in a fresh clone; pull from Figma rather than depending on it. `public/figma/` and `public/categories/` are the opposite: tracked on purpose, because the app serves them and a Git-triggered build would otherwise ship with no images.
+
 ## Architecture
 
 No backend. Deterministic seeded catalog + pure filter engine, all client-side.

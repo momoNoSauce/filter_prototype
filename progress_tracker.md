@@ -3,7 +3,18 @@
 Last updated: 2026-08-12
 
 Live: **https://filterprototype.vercel.app** (public, no login). Redeploy with `npx vercel --prod`.
+Source: **https://github.com/cheeseKracker/filter_prototype** (private).
 Local: `npm run dev` → http://localhost:3000.
+
+> **GitHub and Vercel are not connected.** `vercel --prod` uploads straight from
+> the local folder; a `git push` deploys nothing and a deploy commits nothing.
+> Both have to be run. Connecting the repo at
+> `vercel.com/bitihotra-karaks-projects/filter_prototype/settings/git` collapses
+> this to one step — browser-only, the CLI can't do it.
+
+> **`design/` is gitignored.** The source Figma PNGs stay local: unreleased
+> design work, and nothing serves them. `public/figma/` and `public/categories/`
+> stay tracked — the app needs them at runtime.
 
 ## Flow 1 — seller PLP with working filter & sort
 
