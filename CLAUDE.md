@@ -30,9 +30,7 @@ Separate routes rather than a query flag — chosen so each has its own shareabl
 
 Variant B has no way to set or clear gender, so it **strips a stale `?gender=`** on load — otherwise a link carried over from A would apply an invisible, unremovable filter.
 
-### Also still pending: the search flow
-
-Search "sandal" → results across multiple verticals and genders → filtering by Gender prunes whole verticals (high heels disappears). Blocked on designs. The engine already does this — Variant A demonstrates it when you pick Girls — so it's a catalog extension, not an engine change. **Note:** this was originally called "flow 2"; that name now refers to Variant B, so say "the search flow" to avoid confusion.
+The journey is Home → tap *Baheti Garments* → PLP → filter and sort. Variant A is the default; Variant B is the same journey with the controls moved.
 
 ## Design source — always pull from Figma, never eyeball
 

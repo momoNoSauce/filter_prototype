@@ -16,7 +16,7 @@ Local: `npm run dev` → http://localhost:3000.
 > design work, and nothing serves them. `public/figma/` and `public/categories/`
 > stay tracked — the app needs them at runtime.
 
-## Flow 1 — seller PLP with working filter & sort
+## Build log
 
 | # | Task | Status |
 |---|---|---|
@@ -69,19 +69,6 @@ Switching is by URL — chosen over an on-screen toggle so nothing that isn't pr
 Verified: no Gender control and no bottom bar in B; both chips open their sheets; chips carry the same active state as the bottom bar (dot for Sort, count for Filter); a stale `?gender=` from Variant A is dropped on load; Variant A is unchanged.
 
 Open: the reference image is a *category* PLP ("Cotton Casual Shirt") with a different card — pipe-separated `MRP ₹1000 | Pack Size 1pc`, single-size pills, 4 dots, and no share icon in the app bar. Deliberately **not** built, to keep the A/B to one variable. Say if the card should change, and whether it applies to both variants.
-
-## The search flow — results across verticals
-
-> Originally called "flow 2"; that name now means Variant B. Referred to here as the search flow.
-
-Blocked on designs. Engine work is done: dynamic facet pruning is native, so this should be a catalog extension (footwear verticals, a search index) plus the search results screen.
-
-| # | Task | Status |
-|---|---|---|
-| 10 | Receive search-flow designs | ⛔ Blocked — awaiting Figma frames |
-| 11 | Extend catalog with footwear verticals (sandals, high heels, …) | ⬜ Not started |
-| 12 | Search entry point + results screen | ⬜ Not started |
-| 13 | Wire the existing filter engine to search results | ⬜ Not started |
 
 ## UX backlog — from the design review
 
