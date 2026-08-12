@@ -43,12 +43,13 @@ Local: `npm run dev` → http://localhost:3000.
 - Gender in Variant A is **single-select, bottom-bar only** — Apply/Clear footer dropped, tap applies and closes, absent from A's rail.
 - **Sort dot** when sorted away from Popularity; Gender dot; Filters count (excludes Gender).
 - **Bottom sheet enter/exit animation**, asymmetric timing, reduced-motion aware.
+- **Categories replaced** (2026-08-12) with the seven from the merchandising list — Women's T-Shirts, Men's Formal Shirts, Men's Casual T-Shirts, Men's Casual Shirts, Girl's T-Shirts, Boy's Casual Shirts, Boy's Casual T-Shirts. New tile photos, rebuilt brand↔category map, per-category price bands, gender-free product titles.
 
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
 - Per-option counts recompute against other facets, not their own.
-- **Facet pruning:** Girls removes *Formal Shirt* and *Ethnic Shirt* from Category (6 tiles → 4).
+- **Facet pruning:** Girls cuts Category from 7 tiles to 1 (*Girl's T-Shirts*, 97 results); Men cuts it to 3 (575). *Boy's Casual T-Shirts* cuts Brands from 10 tiles to 2.
 - Selected-but-zero options stay visible so they can be unticked.
 - Gender: tap applies + closes; picking another replaces; re-tapping the active one clears.
 - Clear Filters does **not** wipe Gender.
@@ -97,11 +98,15 @@ Ordered by consequence. None of these block a demo.
 
 ## Facet tile imagery
 
-- **Category** — Unsplash photos in `public/categories/`, credited in `CREDITS.md`. `ethnic-shirt.jpg` is a weak match (warm knitwear flatlay, not Indian ethnic menswear); no suitable photo was reachable without an Unsplash API key.
+- **Category** — Unsplash photos in `public/categories/`, credited in `CREDITS.md`. Re-shot 2026-08-12 for the seven new categories: all worn on a model, since each category names its audience and at 56px a person reads faster than a flat-lay, and picked for seven distinct dominant colours. `boys-casual-t-shirts.jpg` carries an incidental Levi's wordmark, unreadable at tile size — swap it if it bothers anyone.
 - **Brands** — still grey `#d9d9d9` placeholders. Real logos couldn't be sourced: Clearbit's logo API is retired, and Wikipedia/Wikimedia returned unrelated files for 7 of 8 brands. Brand-supplied assets are the right input, and avoid the trademark question of scraping logos.
 
 ## Open questions for the designer
 
+0. **Three things fell out of the new category list** (2026-08-12), none blocking:
+   - **Apostrophes are inconsistent** — "Men's" and "Women's" are plural possessives, but "Girl's" and "Boy's" are singular. Set verbatim as supplied rather than silently corrected; say the word and they become "Girls'" / "Boys'".
+   - **Gender is now redundant as a filter.** Every category names its audience, so ticking *Girls* and ticking *Girl's T-Shirts* do the same thing. Gender still earns its place as a faster top-level cut, but it is worth deciding whether it stays a facet or becomes purely the Variant A quick action.
+   - **Product card renders are button-up shirts** while four of seven categories are tees. Only two shirt renders exist in Figma; tee renders would need exporting.
 1. **What are the contextual chips?** That strip renders nothing until defined.
 2. Gender's checkbox-but-exclusive mismatch — which way do you want it resolved?
 3. `Offers` vs `Seller Offers` — the two filter frames disagree; currently **Offers**.

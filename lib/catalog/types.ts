@@ -21,7 +21,11 @@ export interface Product {
   title: string;
   image: string;
   brand: string;
-  /** The product vertical — Formal Shirt, Partywear, etc. */
+  /**
+   * The display label — "Men's Formal Shirts", "Girl's T-Shirts". The labels
+   * name their audience, so this determines `gender` rather than varying
+   * independently of it.
+   */
   category: string;
   gender: Gender;
   sellerId: string;

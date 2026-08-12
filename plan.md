@@ -64,7 +64,7 @@ Two functions do the real work:
 - **`applyFilters(products, selections, skipFacetId?)`** — OR within a facet, AND across facets.
 - **`facetOptionsWithCounts(products, selections, facetId)`** — counts a facet's options against every *other* facet's selections, never its own.
 
-That second rule is the whole thing. Counting a facet against its own selections would zero out every unselected option the moment you ticked one, and the panel would collapse. Excluding it is what makes ticking *Grasim* still show a live count for *Gagan*, while *Girls* correctly erases *Formal Shirt* from Category.
+That second rule is the whole thing. Counting a facet against its own selections would zero out every unselected option the moment you ticked one, and the panel would collapse. Excluding it is what makes ticking *Grasim* still show a live count for *Gagan*, while *Girls* correctly erases *Men's Formal Shirts* from Category.
 
 Options that fall to zero are hidden. Anything currently selected stays visible even at zero, so a selection can never become impossible to undo.
 
@@ -82,9 +82,23 @@ Filter state lives in the query string: `?gender=men,boys&seller=grasim&sort=mar
 
 ### Catalog — `lib/catalog/`
 
-1,070 garment products (matching the design's "Show 1,070 results"), from a fixed-seed PRNG so counts never shift between reloads or between server and client. 6 verticals, 4 genders, 8 sellers, 10 brands, 10 colours, 3 pack types, 6 fabrics; each product carries 2–4 pack variants driving the card's set pills.
+1,070 garment products (matching the design's "Show 1,070 results"), from a fixed-seed PRNG so counts never shift between reloads or between server and client. 7 categories, 4 genders, 8 sellers, 10 brands, 10 colours, 3 pack types, 6 fabrics; each product carries 2–4 pack variants driving the card's set pills.
 
-Category × gender is deliberately restricted — Formal Shirt and Ethnic Shirt are never made for girls, Long Kurta Set only for women and girls — so facet pruning is visible and demonstrable.
+The seven categories come from the merchandising list and **name their audience**: Women's T-Shirts, Men's Formal Shirts, Men's Casual T-Shirts, Men's Casual Shirts, Girl's T-Shirts, Boy's Casual Shirts, Boy's Casual T-Shirts. Category → gender is therefore 1:1 rather than many-to-many, which makes pruning sharper, not weaker — picking *Girls* leaves one tile of seven (97 results) and *Men* leaves three (575).
+
+| Category | Products | Price band /pc |
+|---|---|---|
+| Women's T-Shirts | 180 | ₹150 – ₹450 |
+| Men's Formal Shirts | 163 | ₹260 – ₹1,150 |
+| Men's Casual T-Shirts | 243 | ₹160 – ₹480 |
+| Men's Casual Shirts | 169 | ₹220 – ₹780 |
+| Girl's T-Shirts | 97 | ₹110 – ₹320 |
+| Boy's Casual Shirts | 101 | ₹150 – ₹430 |
+| Boy's Casual T-Shirts | 117 | ₹110 – ₹330 |
+
+Price bands are per-category rather than one blanket rule, so kids' lines sit below adult ones and formal above casual and the Price Range facet has something to separate. Men's Formal Shirts reaches ₹1,150 to keep the top bucket (`₹900 & above`, 37 products) populated — all five price buckets and all four margin buckets are live.
+
+Brands are category-restricted too, kids' lines carrying the fewest: Boy's Casual T-Shirts collapses the Brands grid to two tiles.
 
 ### Device frame — `components/DeviceFrame.tsx`
 
@@ -107,6 +121,8 @@ Several of these were revised during review — the current state is what's list
 | 7 | Seller facet on a seller PLP | The app bar says *Baheti Garments* while the Seller facet lists Heeralal, Gagan, Grasim. Treated as a **storefront aggregating multiple sellers**, so the whole catalog is in scope there. Every other seller page is scoped to its own stock. |
 | 8 | `Offers` vs `Seller Offers` | The two filter frames disagree. Using **Offers**. |
 | 9 | Undesigned facet panels | Only Category (tile grid, reworked 2026-08-12 to 68×96 cells with a 56px tile and a two-line label) and Seller (checkbox list) are designed. Brands was moved to the tile grid on request; the rest reuse the checkbox row rather than introducing sliders or swatch grids the design system doesn't have. Colour adds a 16px dot before the label; price/margin/MOQ use bucket rows. |
+| 13 | Category ids | Declared in the catalog, not slugged from the label — slugging *Women's T-Shirts* would put `women-s-t-shirts` in the URL and in the image filename. Products store the display label and the facet maps back through `CATEGORY_ID_BY_LABEL`. |
+| 14 | Product titles | Use a gender-free `plural`, so a card reads "… Casual T-Shirts for Boys" rather than "… Boy's Casual T-Shirts for Boys". Tested. |
 | 10 | Zero results | Not designed. A centred "No products match" with a *Clear Filters* button. |
 | 11 | Home seller cards | The design's third card is *Pawan footwear*, which has no catalog behind it, so Grasim Fabrics takes that slot and every card navigates somewhere real. Product counts are read from the catalog. |
 | 12 | Sheet motion | Asymmetric — enter 260ms decelerate, exit 200ms accelerate, scrim 200/160ms, all collapsed to 1ms under `prefers-reduced-motion`. The sheet owns its own dismissal so it can animate out before unmounting. |
@@ -121,4 +137,6 @@ Several of these were revised during review — the current state is what's list
 - `npm run dev`, then Chrome DevTools at exactly 360px, and compare each screen against its Figma frame.
 - Widen past 480px to confirm the phone mockup appears and the app still renders at 360.
 
-**Demo script:** Home → Baheti Garments → Filters → Seller → tick Grasim + Gagan → footer drops 1,070 → 530 and other facets' counts shrink → Show results, Filters badge reads 2 → Sort → Highest Margin → order changes and a dot appears on Sort → Gender → Girls → sheet slides away, dot appears on Gender → Filters → Category → *Formal Shirt* and *Ethnic Shirt* are gone → Clear Filters (Gender survives; its dot stays) → Gender → tap Girls again to clear. The URL tracks every step and the back button unwinds it.
+**Demo script:** Home → Baheti Garments → Filters → Seller → tick Grasim + Gagan → footer drops 1,070 → 530 and other facets' counts shrink → Show results, Filters badge reads 2 → Sort → Highest Margin → order changes and a dot appears on Sort → Gender → Girls → sheet slides away, dot appears on Gender → Filters → Category → six of the seven tiles are gone, only *Girl's T-Shirts* stands → Clear Filters (Gender survives; its dot stays) → Gender → tap Girls again to clear. The URL tracks every step and the back button unwinds it.
+
+For the brand-pruning version: Filters → Category → *Boy's Casual T-Shirts* → Brands → the grid drops from ten tiles to two (Killer, Monte Carlo), 117 results.

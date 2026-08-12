@@ -41,74 +41,153 @@ const SELLER_WEIGHTS: Record<string, number> = {
 };
 
 /**
- * The six verticals in the Category tile grid. `genders` is deliberately
- * restrictive: picking Girls must make Formal Shirt and Ethnic Shirt vanish
- * from the Category facet entirely. That pruning is the whole point of the demo.
+ * The seven categories in the Category tile grid, in the order the merchandising
+ * list gives them.
+ *
+ * These labels name their audience — "Women's T-Shirts", "Boy's Casual Shirts" —
+ * so category and gender are 1:1 here rather than many-to-many. That keeps the
+ * pruning demo, and sharpens it: picking Girls leaves a single tile standing,
+ * and picking Men leaves three. `gender` is still its own facet because each
+ * variant reaches it differently, but it is now derivable from the category.
+ *
+ * `plural` is the gender-free noun used in product titles, so a title reads
+ * "… Casual T-Shirts for Boys" and not "… Boy's Casual T-Shirts for Boys".
+ *
+ * `priceFloor`/`priceCeil` are per-category rather than a blanket rule: kids'
+ * lines have to sit below adult ones, and formal above casual, or the Price
+ * Range facet has nothing to separate.
  */
-/* Listed in the order the Figma tile grid shows them. */
 export const CATEGORIES: {
   id: string;
   label: string;
   plural: string;
   weight: number;
-  genders: Gender[];
+  gender: Gender;
+  priceFloor: number;
+  priceCeil: number;
 }[] = [
   {
-    id: "formal-shirt",
-    label: "Formal Shirt",
+    id: "womens-t-shirts",
+    label: "Women's T-Shirts",
+    plural: "T-Shirts",
+    weight: 180,
+    gender: "women",
+    priceFloor: 150,
+    priceCeil: 450,
+  },
+  {
+    id: "mens-formal-shirts",
+    label: "Men's Formal Shirts",
     plural: "Formal Shirts",
-    weight: 240,
-    genders: ["men", "women", "boys"],
+    weight: 170,
+    gender: "men",
+    // Runs highest of the seven, and far enough to keep the top Price Range
+    // bucket ("₹900 & above") populated — an option that can never appear is
+    // worse than no option.
+    priceFloor: 260,
+    priceCeil: 1150,
   },
   {
-    id: "casual-shirt",
-    label: "Casual Shirt",
+    id: "mens-casual-t-shirts",
+    label: "Men's Casual T-Shirts",
+    plural: "Casual T-Shirts",
+    weight: 210,
+    gender: "men",
+    priceFloor: 160,
+    priceCeil: 480,
+  },
+  {
+    id: "mens-casual-shirts",
+    label: "Men's Casual Shirts",
     plural: "Casual Shirts",
-    weight: 280,
-    genders: ["men", "women", "boys", "girls"],
-  },
-  {
-    id: "partywear",
-    label: "Partywear",
-    plural: "Partywear",
-    weight: 120,
-    genders: ["men", "women", "girls"],
-  },
-  {
-    id: "long-kurta",
-    label: "Long Kurta Set",
-    plural: "Long Kurta Sets",
-    weight: 90,
-    genders: ["women", "girls"],
-  },
-  {
-    id: "ethnic-shirt",
-    label: "Ethnic Shirt",
-    plural: "Ethnic Shirts",
-    weight: 150,
-    genders: ["men", "boys"],
-  },
-  {
-    id: "trendy-shirt",
-    label: "Trendy Shirt",
-    plural: "Trendy Shirts",
     weight: 190,
-    genders: ["men", "women", "boys", "girls"],
+    gender: "men",
+    priceFloor: 220,
+    priceCeil: 780,
+  },
+  {
+    id: "girls-t-shirts",
+    label: "Girl's T-Shirts",
+    plural: "T-Shirts",
+    weight: 100,
+    gender: "girls",
+    priceFloor: 110,
+    priceCeil: 320,
+  },
+  {
+    id: "boys-casual-shirts",
+    label: "Boy's Casual Shirts",
+    plural: "Casual Shirts",
+    weight: 100,
+    gender: "boys",
+    priceFloor: 150,
+    priceCeil: 430,
+  },
+  {
+    id: "boys-casual-t-shirts",
+    label: "Boy's Casual T-Shirts",
+    plural: "Casual T-Shirts",
+    weight: 120,
+    gender: "boys",
+    priceFloor: 110,
+    priceCeil: 330,
   },
 ];
 
-/** Brands are category-restricted too, so the Brand facet prunes as well. */
+/**
+ * Brands are category-restricted too, so the Brand facet prunes as well. Kids'
+ * lines carry the fewest brands, which is both true to trade and what makes
+ * Boy's Casual T-Shirts collapse the Brands grid to two tiles.
+ */
 export const BRANDS: { name: string; weight: number; categories: string[] }[] = [
-  { name: "Camisa", weight: 22, categories: ["casual-shirt", "formal-shirt", "trendy-shirt"] },
-  { name: "Spykar", weight: 16, categories: ["casual-shirt", "trendy-shirt", "partywear"] },
-  { name: "Raymond", weight: 14, categories: ["formal-shirt", "partywear", "ethnic-shirt"] },
-  { name: "Peter England", weight: 13, categories: ["formal-shirt", "casual-shirt"] },
-  { name: "Monte Carlo", weight: 11, categories: ["trendy-shirt", "ethnic-shirt", "long-kurta"] },
-  { name: "Killer", weight: 10, categories: ["casual-shirt", "trendy-shirt"] },
-  { name: "Arrow", weight: 9, categories: ["formal-shirt", "partywear"] },
-  { name: "Allen Solly", weight: 8, categories: ["formal-shirt", "casual-shirt", "partywear"] },
-  { name: "Van Heusen", weight: 7, categories: ["formal-shirt", "partywear"] },
-  { name: "Turtle", weight: 6, categories: ["casual-shirt", "ethnic-shirt", "long-kurta"] },
+  {
+    name: "Camisa",
+    weight: 22,
+    categories: ["mens-casual-shirts", "mens-formal-shirts", "mens-casual-t-shirts"],
+  },
+  {
+    name: "Spykar",
+    weight: 16,
+    categories: ["mens-casual-shirts", "mens-casual-t-shirts", "womens-t-shirts"],
+  },
+  { name: "Raymond", weight: 14, categories: ["mens-formal-shirts", "mens-casual-shirts"] },
+  {
+    name: "Peter England",
+    weight: 13,
+    categories: ["mens-formal-shirts", "mens-casual-shirts", "mens-casual-t-shirts"],
+  },
+  {
+    name: "Monte Carlo",
+    weight: 11,
+    categories: ["womens-t-shirts", "boys-casual-t-shirts", "girls-t-shirts"],
+  },
+  {
+    name: "Killer",
+    weight: 10,
+    categories: [
+      "mens-casual-t-shirts",
+      "mens-casual-shirts",
+      "womens-t-shirts",
+      "boys-casual-t-shirts",
+    ],
+  },
+  { name: "Arrow", weight: 9, categories: ["mens-formal-shirts", "mens-casual-shirts"] },
+  {
+    name: "Allen Solly",
+    weight: 8,
+    categories: [
+      "mens-formal-shirts",
+      "womens-t-shirts",
+      "boys-casual-shirts",
+      "girls-t-shirts",
+    ],
+  },
+  { name: "Van Heusen", weight: 7, categories: ["mens-formal-shirts", "womens-t-shirts"] },
+  {
+    name: "Turtle",
+    weight: 6,
+    categories: ["mens-casual-shirts", "mens-formal-shirts", "boys-casual-shirts"],
+  },
 ];
 
 export const COLOURS: { name: string; hex: string; dark: boolean; weight: number }[] = [
@@ -240,7 +319,9 @@ export function generateCatalog(): Product[] {
   for (let i = 0; i < sellerPool.length; i += 1) {
     const seller = sellerPool[i];
     const category = weightedPick(rand, CATEGORIES, (c) => c.weight);
-    const gender = pick(rand, category.genders);
+    // The category names its audience, so gender follows from it rather than
+    // being drawn separately.
+    const gender = category.gender;
 
     const eligibleBrands = BRANDS.filter((b) => b.categories.includes(category.id));
     const brand = weightedPick(rand, eligibleBrands, (b) => b.weight);
@@ -251,11 +332,10 @@ export function generateCatalog(): Product[] {
     const delivery = weightedPick(rand, DELIVERY_DAYS, (d) => d.weight);
     const moq = weightedPick(rand, MOQS, (m) => m.weight);
 
-    // Kids' and casual lines sit lower; partywear and kurta sets sit higher.
-    const priceFloor = category.id === "partywear" || category.id === "long-kurta" ? 320 : 140;
-    const priceCeil = category.id === "partywear" || category.id === "long-kurta" ? 1250 : 620;
-    const kidsFactor = gender === "boys" || gender === "girls" ? 0.7 : 1;
-    const basePrice = roundTo((priceFloor + rand() * (priceCeil - priceFloor)) * kidsFactor, 5);
+    // Each category carries its own band — kids' below adults', formal above
+    // casual — so the Price Range buckets have something to separate.
+    const { priceFloor, priceCeil } = category;
+    const basePrice = roundTo(priceFloor + rand() * (priceCeil - priceFloor), 5);
     const baseMargin = 18 + Math.floor(rand() * 48);
 
     const offers = OFFERS.filter((o) => rand() < o.chance).map((o) => o.name);

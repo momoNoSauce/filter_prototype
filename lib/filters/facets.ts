@@ -41,6 +41,14 @@ const slug = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+/**
+ * Category ids are declared in the catalog rather than slugged from the label,
+ * because the labels carry apostrophes — slugging "Women's T-Shirts" would put
+ * `women-s-t-shirts` in the URL and in the image filename. Products store the
+ * display label, so the facet maps back through this.
+ */
+const CATEGORY_ID_BY_LABEL = new Map(CATEGORIES.map((c) => [c.label, c.id]));
+
 /** Cumulative buckets: a 1-day product also satisfies "Within 3 days". */
 const DELIVERY_BUCKETS = [
   { id: "d1", label: "Next day", maxDays: 1 },
@@ -86,11 +94,14 @@ export const FACETS: FacetDef[] = [
     label: "Category",
     panel: "tile",
     searchable: true,
-    valuesOf: (p) => [slug(p.category)],
+    valuesOf: (p) => {
+      const id = CATEGORY_ID_BY_LABEL.get(p.category);
+      return id ? [id] : [];
+    },
     options: CATEGORIES.map((c) => ({
-      id: slug(c.label),
+      id: c.id,
       label: c.label,
-      image: `/categories/${slug(c.label)}.jpg`,
+      image: `/categories/${c.id}.jpg`,
     })),
   },
   {

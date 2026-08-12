@@ -70,13 +70,22 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 
 ### The one rule that matters
 
-`facetOptionsWithCounts` counts a facet's options against **every other facet's selections, never its own**. Counting a facet against itself would zero out every unselected option the moment you ticked one. This is what makes ticking one seller still show live counts for the others, while picking Girls correctly erases Formal Shirt from Category. It's covered by tests — don't "simplify" it.
+`facetOptionsWithCounts` counts a facet's options against **every other facet's selections, never its own**. Counting a facet against itself would zero out every unselected option the moment you ticked one. This is what makes ticking one seller still show live counts for the others, while picking Girls correctly erases Men's Formal Shirts from Category. It's covered by tests — don't "simplify" it.
 
 Options that fall to zero are hidden; anything currently selected stays visible even at zero, so a selection can never become impossible to undo.
 
 ### Catalog shape is deliberate
 
-Category × gender is restricted so pruning is demonstrable: Formal Shirt and Ethnic Shirt are never made for girls, Long Kurta Set only for women and girls. Don't flatten this into a uniform distribution.
+**The seven categories name their audience** — Women's T-Shirts, Men's Formal Shirts, Men's Casual T-Shirts, Men's Casual Shirts, Girl's T-Shirts, Boy's Casual Shirts, Boy's Casual T-Shirts (merchandising list, 2026-08-12). So category → gender is **1:1**, not many-to-many: `CATEGORIES[].gender` is a single value and the seed reads it rather than drawing one.
+
+That keeps pruning demonstrable and sharpens it — Girls leaves **one** tile of seven (97 results), Men leaves three (575). Gender remains its own facet because each variant reaches it differently, but it is now derivable from category. Don't flatten the weights into a uniform distribution, and don't reintroduce a `genders[]` array.
+
+Two knock-on rules, both easy to undo by accident:
+
+- `plural` is the **gender-free** noun used in product titles, so a card reads "… Casual T-Shirts for Boys" and not "… Boy's Casual T-Shirts for Boys". A test asserts no possessive ever reaches a title.
+- `priceFloor`/`priceCeil` are **per category** — kids' below adults', formal above casual. Men's Formal Shirts runs to ₹1,150 specifically to keep the top Price Range bucket (`₹900 & above`) populated; an option that can never appear is worse than no option.
+
+Brands are category-restricted too. Kids' lines carry the fewest, which is what makes Boy's Casual T-Shirts collapse the Brands grid to two tiles.
 
 ## Decisions already made — do not re-litigate
 
@@ -103,7 +112,8 @@ Category × gender is restricted so pruning is demonstrable: Formal Shirt and Et
 
 ## Imagery
 
-- **Category tiles** — Unsplash stock in `public/categories/`, credited in `CREDITS.md`. `ethnic-shirt.jpg` is a known weak match (knitwear flatlay, not Indian ethnic menswear).
+- **Category tiles** — Unsplash stock in `public/categories/`, credited in `CREDITS.md`. Filenames match the category id (`womens-t-shirts.jpg`), fetched at 336×336 = 6× the 56px tile. All seven are **worn on a model**, because every category names its audience and at 56px a person says who it is for faster than a flat-lay does; they're also picked for seven distinct dominant colours. `boys-casual-t-shirts.jpg` carries an incidental Levi's wordmark — unreadable at tile size, noted in `CREDITS.md`.
+- **Product card renders don't match the T-shirt categories.** Only two shirt renders exist in Figma, and four of the seven categories are now tees, so a card titled "… Casual T-Shirts for Boys" shows a button-up. Pre-existing constraint, more visible than it was. Needs a designer to export tee renders — don't substitute stock photography on the card.
 - **Brand tiles** — still grey `#d9d9d9` placeholders. Real logos couldn't be sourced (Clearbit's API is retired; Wikipedia/Commons returned unrelated files for 7 of 8 brands). The right input is brand-supplied assets, which also avoids scraping trademarked marks.
 - **Product images** — only two shirt renders exist in the Figma file, assigned by whether the colour is dark or light.
 

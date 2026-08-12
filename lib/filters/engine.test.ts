@@ -26,6 +26,16 @@ describe("catalog", () => {
   it("gives every product at least two packs so the pills are meaningful", () => {
     expect(catalog.every((p) => p.variants.length >= 2)).toBe(true);
   });
+
+  it("keeps category and gender consistent — the labels name their audience", () => {
+    const genderOf = new Map(CATEGORIES.map((c) => [c.label, c.gender]));
+    expect(catalog.every((p) => genderOf.get(p.category) === p.gender)).toBe(true);
+  });
+
+  it("does not repeat the gender in a title", () => {
+    // "… Casual T-Shirts for Boys", never "… Boy's Casual T-Shirts for Boys".
+    expect(catalog.some((p) => /Boy's|Girl's|Men's|Women's/.test(p.title))).toBe(false);
+  });
 });
 
 describe("applyFilters", () => {
@@ -67,26 +77,31 @@ describe("facetOptionsWithCounts", () => {
   });
 
   it("prunes options that become impossible — the 'high heels disappears' case", () => {
-    // Formal Shirt and Ethnic Shirt are never made for girls.
+    // The categories name their audience, so Girls leaves exactly one standing.
     const all = facetOptionsWithCounts(catalog, {}, "category");
-    expect(all.map((o) => o.id)).toContain("formal-shirt");
+    expect(all.map((o) => o.id)).toContain("mens-formal-shirts");
 
     const forGirls = facetOptionsWithCounts(catalog, { gender: ["girls"] }, "category");
-    const ids = forGirls.map((o) => o.id);
-    expect(ids).not.toContain("formal-shirt");
-    expect(ids).not.toContain("ethnic-shirt");
-    expect(ids).toContain("long-kurta-set");
+    expect(forGirls.map((o) => o.id)).toEqual(["girls-t-shirts"]);
+
+    // Men keeps its three and drops the other four.
+    const forMen = facetOptionsWithCounts(catalog, { gender: ["men"] }, "category");
+    expect(forMen.map((o) => o.id).sort()).toEqual([
+      "mens-casual-shirts",
+      "mens-casual-t-shirts",
+      "mens-formal-shirts",
+    ]);
   });
 
   it("keeps a selected option visible even when its count reaches zero", () => {
-    // Girls + Formal Shirt is an empty intersection, but the user must still be
-    // able to untick Formal Shirt.
+    // Girls + Men's Formal Shirts is an empty intersection, but the user must
+    // still be able to untick it.
     const options = facetOptionsWithCounts(
       catalog,
-      { gender: ["girls"], category: ["formal-shirt"] },
+      { gender: ["girls"], category: ["mens-formal-shirts"] },
       "category",
     );
-    const formal = options.find((o) => o.id === "formal-shirt");
+    const formal = options.find((o) => o.id === "mens-formal-shirts");
     expect(formal).toBeDefined();
     expect(formal?.count).toBe(0);
   });
