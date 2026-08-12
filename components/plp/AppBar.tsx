@@ -2,8 +2,13 @@
 
 import { useRouter } from "next/navigation";
 
-/** Figma 638:2739 — h-56, bg primary, px-16, gap-12, 20px Roboto Medium title. */
-export function AppBar({ title }: { title: string }) {
+/**
+ * Figma 638:2739 — h-56, bg primary, px-16, gap-12, 20px Roboto Medium title.
+ *
+ * `homeHref` keeps the home button inside the current variant; hardcoding "/"
+ * would silently drop a Variant B session back into Variant A.
+ */
+export function AppBar({ title, homeHref = "/" }: { title: string; homeHref?: string }) {
   const router = useRouter();
 
   return (
@@ -19,7 +24,7 @@ export function AppBar({ title }: { title: string }) {
         </button>
         <button
           aria-label="Home"
-          onClick={() => router.push("/")}
+          onClick={() => router.push(homeHref)}
           className="h-[19.365px] w-[19px] shrink-0 cursor-pointer"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -118,7 +118,7 @@ export function PlpScreen({
   return (
     <div className="flex h-full flex-col bg-page">
       <div className="shrink-0">
-        <AppBar title={title} />
+        <AppBar title={title} homeHref={variant === "top-chips" ? "/b" : "/"} />
         <GoldStrip />
         {variant === "top-chips" ? (
           <TopChipBar

@@ -16,14 +16,16 @@ Deploys to Vercel with zero configuration.
 
 Home → tap *Baheti Garments* → PLP → filter and sort. Two control layouts over that same journey:
 
-| | Route | Controls |
-|---|---|---|
-| **Variant A** | `/seller/[sellerId]` | Gender · Sort · Filters pinned to the bottom (Figma `638:2836`) |
-| **Variant B** | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar, no Gender |
+| | Home | PLP | Controls |
+|---|---|---|---|
+| **Variant A** | `/` | `/seller/[sellerId]` | Gender · Sort · Filters pinned to the bottom (Figma `638:2836`) |
+| **Variant B** | `/b` | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar, no Gender |
 
-Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop. Only the controls differ, so any preference between them is about control placement and nothing else.
+Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop, one `HomeScreen` with a `basePath` prop. Only the controls differ, so any preference between them is about control placement and nothing else.
 
 Separate routes rather than a query flag: each variant gets its own shareable link, neither inherits the other's state, and no switcher UI intrudes on a screen being judged.
+
+Each variant is a **closed loop** — hand someone `/b` and the entire journey stays in B. `HomeScreen`'s seller cards and `AppBar`'s home button both route through the variant's base path rather than hardcoding `/`.
 
 ---
 

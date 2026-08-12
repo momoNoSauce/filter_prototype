@@ -19,14 +19,18 @@ npx eslint .     # lint (run from repo root, not a subdirectory)
 
 Both render the identical card, catalog, engine and sheets. **Only the controls differ**, so a preference between them is about control placement and nothing else. Don't let them drift apart in any other respect.
 
-| | Route | Controls |
-|---|---|---|
-| **Variant A** | `/seller/[sellerId]` | Gender · Sort · Filters pinned to the bottom (Figma `638:2836`) |
-| **Variant B** | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar, **no Gender at all** |
+| | Home | PLP | Controls |
+|---|---|---|---|
+| **Variant A** | `/` | `/seller/[sellerId]` | Gender · Sort · Filters pinned to the bottom (Figma `638:2836`) |
+| **Variant B** | `/b` | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar, **no Gender at all** |
 
 Separate routes rather than a query flag — chosen so each has its own shareable link and neither inherits the other's state. Switch by editing the URL.
 
-`PlpScreen` takes `variant: "bottom-bar" | "top-chips"`; there is no second copy of the screen.
+**Each variant is a closed loop.** Hand someone `/b` and the whole journey stays in B. Three things enforce that, and all three must be kept in step when adding a route:
+
+- `PlpScreen` takes `variant: "bottom-bar" | "top-chips"` — there is no second copy of the screen.
+- `HomeScreen` takes `basePath: "" | "/b"`, so its seller cards link into the right variant.
+- `AppBar` takes `homeHref`, because a hardcoded `/` silently drops a Variant B session into Variant A mid-demo.
 
 Variant B has no way to set or clear gender, so it **strips a stale `?gender=`** on load — otherwise a link carried over from A would apply an invisible, unremovable filter.
 

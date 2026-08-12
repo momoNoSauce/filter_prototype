@@ -59,14 +59,16 @@ Local: `npm run dev` → http://localhost:3000.
 
 An A/B of control placement, added 2026-08-12. Same card, catalog, engine and sheets; only the controls differ, so the comparison stays honest.
 
-| | Route | Controls |
-|---|---|---|
-| **Variant A** | `/seller/baheti` | Gender · Sort · Filters at the bottom |
-| **Variant B** | `/b/seller/baheti` | Sort + Filter chips at the top, no bottom bar, no Gender |
+| | Home | PLP | Controls |
+|---|---|---|---|
+| **Variant A** | `/` | `/seller/baheti` | Gender · Sort · Filters at the bottom |
+| **Variant B** | `/b` | `/b/seller/baheti` | Sort + Filter chips at the top, no bottom bar, no Gender |
 
 Switching is by URL — chosen over an on-screen toggle so nothing that isn't product chrome appears on a screen being judged.
 
-Verified: no Gender control and no bottom bar in B; both chips open their sheets; chips carry the same active state as the bottom bar (dot for Sort, count for Filter); a stale `?gender=` from Variant A is dropped on load; Variant A is unchanged.
+Each variant is a **closed loop**: hand someone `/b` and the whole journey — home, seller card, PLP, home button — stays in B. `HomeScreen` takes a `basePath`, `AppBar` takes a `homeHref`; both must be kept in step when adding routes, or a session leaks into the other variant mid-demo with no visible cause.
+
+Verified: no Gender control and no bottom bar in B; both chips open their sheets; chips carry the same active state as the bottom bar (dot for Sort, count for Filter); a stale `?gender=` from Variant A is dropped on load; `/b` → seller card → `/b/seller/baheti` → home → `/b`; Variant A unchanged and equally self-contained.
 
 Open: the reference image is a *category* PLP ("Cotton Casual Shirt") with a different card — pipe-separated `MRP ₹1000 | Pack Size 1pc`, single-size pills, 4 dots, and no share icon in the app bar. Deliberately **not** built, to keep the A/B to one variable. Say if the card should change, and whether it applies to both variants.
 
