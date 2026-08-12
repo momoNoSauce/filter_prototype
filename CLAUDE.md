@@ -47,7 +47,7 @@ All icons/images are exact Figma exports in `public/figma/`. **Never redraw an a
 No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 
 - `lib/filters/engine.ts` — `applyFilters` (OR within a facet, AND across facets) and `facetOptionsWithCounts`.
-- `lib/filters/facets.ts` — facet registry. Each facet declares `valuesOf(product) → string[]`, so tile grids, checkbox lists, range buckets and multi-valued delivery windows all use one code path. Adding a facet is one array entry.
+- `lib/filters/facets.ts` — facet registry. Each facet declares `valuesOf(product) → string[]`, so tile grids, checkbox lists, range buckets and multi-valued delivery windows all use one code path. Adding a facet is one array entry. `FACETS` is every facet the engine knows; `RAIL` is only what the Filters screen shows, and `RAIL_FACET_IDS` is the set anything touching the draft must filter through.
 - `lib/catalog/seed.ts` — 1,070 products from a fixed-seed PRNG. Determinism is load-bearing: counts must not shift between reloads or between server and client.
 - `lib/filters/urlState.ts` — state mirrored to the query string via `history.pushState`; local state stays the source of truth so filtering is instant.
 
@@ -67,11 +67,14 @@ Category × gender is restricted so pruning is demonstrable: Formal Shirt and Et
 |---|---|
 | Default sort | **Popularity**, and omitted from the URL (bare URL = Popularity) |
 | Sort sheet | Tap applies **and closes** — no Apply button in the design |
-| Gender sheet | Multi-select, holds a draft, commits on Apply. Writes the same `gender` facet that lives under *More Filters*, so the two stay in sync. CTA is **"Clear all"** here; the Filters screen keeps **"Clear Filters"** |
+| Gender | **Single-select** (journey mapping: nobody shops two genders at once) and **bottom-bar only** — deliberately absent from `RAIL`, so the Filters screen neither lists it nor clears it. Tap applies and closes, like Sort; re-tapping the active row clears it, since there's no Clear button. Still in `FACETS`, so it filters, round-trips through the URL, and feeds other facets' counts |
+| Gender control | Renders as a **checkbox**, not a radio, for consistency with every other facet — behaviour is still exclusive. Known mismatch, flagged to the designer |
 | Active row (Sort/Gender) | Three things together: label bold, label primary, **icon tints to primary** |
 | Tile selected state | Primary ring + 50% primary veil over the photo + white check + bold primary label |
 | Top chip strip | Sort/Filter chips from `644:4011` were **removed** on request. Applied-filter chips were **also removed**. That strip is reserved for **contextual chips** (undefined — ask before filling it) |
-| Applied state cue | Count badges on the Gender and Filters icons in the bottom bar |
+| Applied state cue | Bottom bar only. Gender and Sort each hold one value so they show a **dot**; Filters can hold many so it shows a **count**. Gender is excluded from that count — it reports itself |
+| Clear Filters scope | Clears only facets in `RAIL_FACET_IDS`. Gender must survive it — wiping a filter from a screen that never showed it is a silent surprise |
+| Sheet motion | Asymmetric: enter 260ms `cubic-bezier(.05,.7,.1,1)` (decelerate), exit 200ms `cubic-bezier(.3,0,.8,.15)` (accelerate); scrim 200/160ms. `Sheet` owns dismissal — `onClose` fires on `animationend`, and rows get the animated close via a render prop. `prefers-reduced-motion` collapses all four to 1ms |
 | Brands panel | Uses the **same tile grid as Category**, not a checkbox list |
 | Undesigned panels | Ten of twelve facets aren't designed. They reuse the designed checkbox row rather than introducing sliders or swatch grids. Colour adds a 16px dot; price/margin/MOQ use bucket rows |
 | Seller PLP scope | Baheti Garments is a **storefront aggregating multiple sellers** (the app bar says Baheti while the Seller facet lists other companies). Other seller pages are scoped to their own stock |

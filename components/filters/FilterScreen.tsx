@@ -3,10 +3,9 @@
 import { useMemo, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
-import { FACET_BY_ID, RAIL } from "@/lib/filters/facets";
+import { FACET_BY_ID, RAIL, RAIL_FACET_IDS } from "@/lib/filters/facets";
 import {
   countMatching,
-  countSelections,
   facetOptionsWithCounts,
   toggleSelection,
   type Selections,
@@ -40,10 +39,18 @@ export function FilterScreen({
   const rail = RAIL.find((r) => r.id === activeRail) ?? RAIL[0];
   const total = useMemo(() => countMatching(products, draft), [products, draft]);
 
+  // Only selections this screen can actually show enable "Clear Filters".
+  const ownedCount = Object.entries(draft).reduce(
+    (sum, [facetId, chosen]) => sum + (RAIL_FACET_IDS.has(facetId) ? chosen.length : 0),
+    0,
+  );
+
   const searchable = rail.facetIds.some((id) => FACET_BY_ID.get(id)?.searchable);
 
   const toggle = (facetId: string, optionId: string) =>
-    setDraft((current) => toggleSelection(current, facetId, optionId));
+    setDraft((current) =>
+      toggleSelection(current, facetId, optionId, FACET_BY_ID.get(facetId)?.single),
+    );
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col bg-white">
@@ -149,8 +156,17 @@ export function FilterScreen({
 
       <ActionFooter
         primaryLabel={`Show ${total.toLocaleString("en-IN")} results`}
-        clearDisabled={countSelections(draft) === 0}
-        onClear={() => setDraft({})}
+        clearDisabled={ownedCount === 0}
+        // Clears only what this screen owns. Gender is set from the bottom bar
+        // and isn't listed here, so wiping it from a button the user can't see
+        // the effect of would be a silent surprise.
+        onClear={() =>
+          setDraft((current) =>
+            Object.fromEntries(
+              Object.entries(current).filter(([facetId]) => !RAIL_FACET_IDS.has(facetId)),
+            ),
+          )
+        }
         onPrimary={() => {
           onApply(draft);
           onClose();

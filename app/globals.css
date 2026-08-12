@@ -122,6 +122,12 @@ input {
   }
 }
 
+/* ── Bottom sheet motion ────────────────────────────────────────────────────
+ * Asymmetric on purpose. Arriving content decelerates into place over a
+ * longer beat so it reads as deliberate; leaving content accelerates away
+ * faster, because a dismissal the user already decided on shouldn't be
+ * something they wait for. The scrim trails the panel slightly at both ends.
+ */
 @keyframes sheet-in {
   from {
     transform: translateY(100%);
@@ -130,8 +136,58 @@ input {
     transform: translateY(0);
   }
 }
+@keyframes sheet-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes scrim-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Emphasized decelerate — slow settle at the end of the travel. */
 .animate-sheet-in {
-  animation: sheet-in 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: sheet-in 260ms cubic-bezier(0.05, 0.7, 0.1, 1) both;
+}
+/* Emphasized accelerate — leaves briskly, no lingering tail. */
+.animate-sheet-out {
+  animation: sheet-out 200ms cubic-bezier(0.3, 0, 0.8, 0.15) both;
+}
+.animate-scrim-in {
+  animation: scrim-in 200ms ease-out both;
+}
+.animate-scrim-out {
+  animation: scrim-out 160ms ease-in both;
+}
+
+/*
+ * Respect the OS setting. The animation still runs — `onAnimationEnd` drives
+ * unmount, so removing it entirely would strand the sheet on screen — it just
+ * collapses to a single frame.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet-in,
+  .animate-sheet-out,
+  .animate-scrim-in,
+  .animate-scrim-out {
+    animation-duration: 1ms;
+  }
 }
 
 /* The GOLD wordmark: gradient-filled text, used in tags and the join button */

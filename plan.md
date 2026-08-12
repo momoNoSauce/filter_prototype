@@ -59,7 +59,11 @@ Options that fall to zero are hidden. Anything currently selected stays visible 
 
 ### Facet registry — `lib/filters/facets.ts`
 
-Fourteen facets behind twelve rail entries (*More Filters* stacks Gender, Fabric and Product Tags). Each facet declares `valuesOf(product) → string[]`, so range buckets, multi-valued delivery windows and plain checkboxes all flow through one code path. Adding a facet is one array entry.
+Fourteen facets behind twelve rail entries (*More Filters* stacks Fabric and Product Tags). Each facet declares `valuesOf(product) → string[]`, so range buckets, multi-valued delivery windows and plain checkboxes all flow through one code path. Adding a facet is one array entry.
+
+`FACETS` is everything the engine knows about; `RAIL` is only what the Filters screen displays. `gender` is in the first and not the second — it is set exclusively from the bottom bar. `RAIL_FACET_IDS` is the set that anything mutating the draft (notably Clear Filters) must filter through, so a facet the screen doesn't show can never be cleared by it.
+
+Panels: Category and Brands use the tile grid; Colour is a checkbox row with a 16px colour dot; Price Range, Margin and MOQ are checkbox rows over preset buckets (no slider — that would add a control the design system doesn't have); everything else is the designed checkbox row.
 
 ### State — `lib/filters/urlState.ts`
 
@@ -79,18 +83,22 @@ Below 480px the app renders edge to edge and reads as the real thing. At 480px a
 
 ## Decisions taken where the designs were silent
 
+Several of these were revised during review — the current state is what's listed.
+
 | # | Question | Decision |
 |---|---|---|
-| 1 | Facet counts | Footer total **and** per-option counts both recompute live on every tick. Zero-count options are hidden. |
+| 1 | Facet counts | Footer total **and** per-option counts both recompute live on every tick. Zero-count options are hidden; anything selected stays visible even at zero. |
 | 2 | Sort sheet | Tapping a row applies and closes — the design has no Apply button. |
-| 3 | Gender sheet | Multi-select with Clear/Apply, writing to the same `gender` facet that lives under *More Filters*, so the two stay in sync. The frames show no selected state, so the treatment is borrowed from the Sort sheet — same component, one screen over. |
+| 3 | Gender | **Single-select and bottom-bar only.** Journey mapping found nobody shops two genders at once, so the Apply/Clear footer is gone and a tap applies and closes, like Sort; re-tapping the active row clears it. It is deliberately absent from the Filters rail — the sheet is the only entry point — but remains in the engine, so it filters, round-trips through the URL and feeds other facets' counts. Renders as a checkbox for consistency, despite behaving exclusively. |
 | 4 | Set pills | Selectable. Picking a pack updates that card's MRP, price/pc, margin and set size. Dots track scroll pages. |
-| 5 | Applied-filter cue | The design's own `Filters Container` chip bar (Sort · Filter · divider) appears once anything is applied. Removable filter chips after the divider are an addition, tinted `primary/subtle`. Count badges on the Gender and Filters icons are also an addition. |
-| 6 | Seller facet on a seller PLP | The app bar says *Baheti Garments* while the Seller facet lists Heeralal, Gagan, Grasim. Treated as a **storefront aggregating multiple sellers**, so the whole catalog is in scope there. Every other seller page is scoped to its own stock. |
-| 7 | `Offers` vs `Seller Offers` | The two filter frames disagree. Using **Offers**. |
-| 8 | Undesigned facet panels | Only Category (tile grid) and Seller (checkbox list) are designed. The other ten reuse the checkbox row rather than introducing sliders or swatch grids the design system doesn't have. Colour adds a 16px dot before the label; price/margin/MOQ use bucket rows. |
-| 9 | Zero results | Not designed. A centred "No products match" with a *Clear Filters* button. |
-| 10 | Home seller cards | The design's third card is *Pawan footwear*, which has no catalog behind it (footwear arrives with flow 2), so Grasim Fabrics takes that slot and every card navigates somewhere real. Product counts are read from the catalog. |
+| 5 | Applied-filter cue | **Bottom bar only.** The `644:4011` chip bar and the removable filter chips were both removed on request; that strip is reserved for contextual chips, still undefined. Gender and Sort each show a dot (one value each), Filters shows a count. Gender is excluded from the Filters count. |
+| 6 | Clear Filters scope | Clears only the facets the rail owns. Gender survives it — clearing a filter from a screen that never displayed it would be a silent surprise. |
+| 7 | Seller facet on a seller PLP | The app bar says *Baheti Garments* while the Seller facet lists Heeralal, Gagan, Grasim. Treated as a **storefront aggregating multiple sellers**, so the whole catalog is in scope there. Every other seller page is scoped to its own stock. |
+| 8 | `Offers` vs `Seller Offers` | The two filter frames disagree. Using **Offers**. |
+| 9 | Undesigned facet panels | Only Category (tile grid) and Seller (checkbox list) are designed. Brands was moved to the tile grid on request; the rest reuse the checkbox row rather than introducing sliders or swatch grids the design system doesn't have. Colour adds a 16px dot before the label; price/margin/MOQ use bucket rows. |
+| 10 | Zero results | Not designed. A centred "No products match" with a *Clear Filters* button. |
+| 11 | Home seller cards | The design's third card is *Pawan footwear*, which has no catalog behind it (footwear arrives with flow 2), so Grasim Fabrics takes that slot and every card navigates somewhere real. Product counts are read from the catalog. |
+| 12 | Sheet motion | Asymmetric — enter 260ms decelerate, exit 200ms accelerate, scrim 200/160ms, all collapsed to 1ms under `prefers-reduced-motion`. The sheet owns its own dismissal so it can animate out before unmounting. |
 
 **Two things in the design that were deliberately not reproduced:** a stray `$299.99` row at the bottom of the filter rail (`638:3712`), and the `Margin` rail label being SemiBold while its eleven siblings are Medium. Both read as artefacts. Say the word if either was intentional.
 
@@ -102,4 +110,4 @@ Below 480px the app renders edge to edge and reads as the real thing. At 480px a
 - `npm run dev`, then Chrome DevTools at exactly 360px, and compare each screen against its Figma frame.
 - Widen past 480px to confirm the phone mockup appears and the app still renders at 360.
 
-**Demo script:** Home → Baheti Garments → Filters → Seller → tick Grasim + Gagan → footer drops 1,070 → 530 and other facets' counts shrink → Show results → Gender → Men + Boys → Apply → chips appear, badges show 2 → Sort → Highest Margin → order changes → Filters → More Filters → Girls → back to Category → *Formal Shirt* and *Ethnic Shirt* are gone → Clear Filters. The URL tracks every step and the back button unwinds it.
+**Demo script:** Home → Baheti Garments → Filters → Seller → tick Grasim + Gagan → footer drops 1,070 → 530 and other facets' counts shrink → Show results, Filters badge reads 2 → Sort → Highest Margin → order changes and a dot appears on Sort → Gender → Girls → sheet slides away, dot appears on Gender → Filters → Category → *Formal Shirt* and *Ethnic Shirt* are gone → Clear Filters (Gender survives; its dot stays) → Gender → tap Girls again to clear. The URL tracks every step and the back button unwinds it.

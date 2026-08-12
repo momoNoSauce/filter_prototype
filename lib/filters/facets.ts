@@ -27,6 +27,12 @@ export interface FacetDef {
   /** Show the search field above the options */
   searchable: boolean;
   /**
+   * Only one option can be held at a time — picking a second replaces the
+   * first. Behaviour only: the row still renders as a checkbox, matching every
+   * other facet.
+   */
+  single?: boolean;
+  /**
    * The option ids this product belongs to. Returning several is legitimate —
    * "Within 3 days" and "Within 5 days" both match a 2-day product — and the
    * engine treats every facet the same way regardless of panel type.
@@ -178,12 +184,15 @@ export const FACETS: FacetDef[] = [
     valuesOf: (p) => p.offers.map(slug),
     options: OFFERS.map((o) => ({ id: slug(o.name), label: o.name })),
   },
-  // The three below share the "More Filters" rail entry.
   {
     id: "gender",
     label: "Gender",
     panel: "checkbox",
     searchable: false,
+    // Journey mapping showed nobody shops two genders at once.
+    single: true,
+    // Not in RAIL — the bottom-bar sheet is the only way to set this. It stays
+    // in the registry so the engine, the URL and facet counts all still see it.
     valuesOf: (p) => [p.gender],
     options: [
       { id: "men", label: "Men" },
@@ -192,6 +201,7 @@ export const FACETS: FacetDef[] = [
       { id: "girls", label: "Girls" },
     ],
   },
+  // The two below share the "More Filters" rail entry.
   {
     id: "fabric",
     label: "Fabric",
@@ -228,5 +238,14 @@ export const RAIL: { id: string; label: string; facetIds: string[] }[] = [
   { id: "seller", label: "Seller", facetIds: ["seller"] },
   { id: "sellerCity", label: "Seller City", facetIds: ["sellerCity"] },
   { id: "offers", label: "Offers", facetIds: ["offers"] },
-  { id: "more", label: "More Filters", facetIds: ["gender", "fabric", "tags"] },
+  { id: "more", label: "More Filters", facetIds: ["fabric", "tags"] },
 ];
+
+/**
+ * Facets the Filters screen owns.
+ *
+ * `gender` is deliberately absent: the bottom-bar sheet is its only entry
+ * point, so the Filters screen must neither list it nor clear it. Everything
+ * that touches the draft filters through this set.
+ */
+export const RAIL_FACET_IDS = new Set(RAIL.flatMap((entry) => entry.facetIds));

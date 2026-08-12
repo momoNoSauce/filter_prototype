@@ -9,6 +9,7 @@ import {
   toggleSelection,
 } from "./engine";
 import { buildQuery, parseSelections, parseSort } from "./urlState";
+import { FACET_BY_ID, RAIL_FACET_IDS } from "./facets";
 import { defaultVariant } from "@/lib/catalog/types";
 
 const catalog = getCatalog();
@@ -135,9 +136,54 @@ describe("sortProducts", () => {
 
 describe("toggleSelection", () => {
   it("adds, then removes, then drops the empty key", () => {
-    const added = toggleSelection({}, "gender", "men");
-    expect(added).toEqual({ gender: ["men"] });
-    expect(toggleSelection(added, "gender", "men")).toEqual({});
+    const added = toggleSelection({}, "brand", "camisa");
+    expect(added).toEqual({ brand: ["camisa"] });
+    expect(toggleSelection(added, "brand", "camisa")).toEqual({});
+  });
+
+  it("accumulates on a multi-select facet", () => {
+    const one = toggleSelection({}, "brand", "camisa");
+    expect(toggleSelection(one, "brand", "spykar")).toEqual({
+      brand: ["camisa", "spykar"],
+    });
+  });
+
+  it("replaces rather than accumulates on a single-select facet", () => {
+    const men = toggleSelection({}, "gender", "men", true);
+    expect(men).toEqual({ gender: ["men"] });
+    expect(toggleSelection(men, "gender", "women", true)).toEqual({
+      gender: ["women"],
+    });
+  });
+
+  it("clears a single-select facet when the active option is re-tapped", () => {
+    const men = toggleSelection({}, "gender", "men", true);
+    expect(toggleSelection(men, "gender", "men", true)).toEqual({});
+  });
+});
+
+describe("gender is bottom-bar only", () => {
+  it("is single-select", () => {
+    expect(FACET_BY_ID.get("gender")?.single).toBe(true);
+    expect(FACET_BY_ID.get("brand")?.single).toBeFalsy();
+  });
+
+  it("is absent from the Filters rail but present in the engine", () => {
+    expect(RAIL_FACET_IDS.has("gender")).toBe(false);
+    expect(FACET_BY_ID.has("gender")).toBe(true);
+    // Still filters, still round-trips through the URL.
+    expect(countMatching(catalog, { gender: ["women"] })).toBeGreaterThan(0);
+    expect(parseSelections(new URLSearchParams("gender=women"))).toEqual({
+      gender: ["women"],
+    });
+  });
+
+  it("survives the Filters screen's Clear, which only owns rail facets", () => {
+    const draft = { gender: ["women"], seller: ["grasim"], colour: ["navy"] };
+    const cleared = Object.fromEntries(
+      Object.entries(draft).filter(([id]) => !RAIL_FACET_IDS.has(id)),
+    );
+    expect(cleared).toEqual({ gender: ["women"] });
   });
 });
 

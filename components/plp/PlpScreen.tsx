@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 import type { Product } from "@/lib/catalog/types";
 import {
   applyFilters,
-  countSelections,
   sortProducts,
+  DEFAULT_SORT,
   type Selections,
   type SortId,
 } from "@/lib/filters/engine";
+import { RAIL_FACET_IDS } from "@/lib/filters/facets";
 import { buildQuery, parseSelections, parseSort } from "@/lib/filters/urlState";
 import { AppBar } from "./AppBar";
 import { GoldStrip } from "./GoldStrip";
@@ -84,8 +85,13 @@ export function PlpScreen({
     }
   };
 
-  const filterCount = countSelections(selections);
-  const genderCount = selections.gender?.length ?? 0;
+  const genderActive = (selections.gender?.length ?? 0) > 0;
+  const sortActive = sort !== DEFAULT_SORT;
+  // Gender reports itself with its own dot, so it must not also be counted here.
+  const filterCount = Object.entries(selections).reduce(
+    (sum, [facetId, chosen]) => sum + (RAIL_FACET_IDS.has(facetId) ? chosen.length : 0),
+    0,
+  );
 
   return (
     <div className="flex h-full flex-col bg-page">
@@ -113,7 +119,8 @@ export function PlpScreen({
 
       <div className="shrink-0">
         <BottomActionBar
-          genderCount={genderCount}
+          genderActive={genderActive}
+          sortActive={sortActive}
           filterCount={filterCount}
           onGender={() => setOverlay("gender")}
           onSort={() => setOverlay("sort")}
@@ -132,7 +139,7 @@ export function PlpScreen({
       {overlay === "gender" && (
         <GenderSheet
           value={selections.gender ?? []}
-          onApply={(next) => {
+          onSelect={(next) => {
             const updated = { ...selections };
             if (next.length) updated.gender = next;
             else delete updated.gender;

@@ -23,23 +23,27 @@ export function SortSheet({
 }) {
   return (
     <Sheet title="Sort By" onClose={onClose}>
-      <div className="flex w-full flex-col items-start gap-[4px] pb-[8px]">
-        {SORT_OPTIONS.map((option, index) => (
-          <SheetRow
-            key={option.id}
-            label={option.label}
-            selected={option.id === value}
-            last={index === SORT_OPTIONS.length - 1}
-            onClick={() => {
-              onChange(option.id);
-              onClose();
-            }}
-            renderIcon={(color) => (
-              <MaskIcon src={ICONS[option.id]} className="size-full" color={color} />
-            )}
-          />
-        ))}
-      </div>
+      {(close) => (
+        <div className="flex w-full flex-col items-start gap-[4px] pb-[8px]">
+          {SORT_OPTIONS.map((option, index) => (
+            <SheetRow
+              key={option.id}
+              label={option.label}
+              selected={option.id === value}
+              last={index === SORT_OPTIONS.length - 1}
+              onClick={() => {
+                onChange(option.id);
+                // Animated dismissal — the list re-sorts behind the sheet as
+                // it slides away.
+                close();
+              }}
+              renderIcon={(color) => (
+                <MaskIcon src={ICONS[option.id]} className="size-full" color={color} />
+              )}
+            />
+          ))}
+        </div>
+      )}
     </Sheet>
   );
 }

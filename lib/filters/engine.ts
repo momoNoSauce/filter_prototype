@@ -108,15 +108,26 @@ export function countSelections(selections: Selections): number {
   return Object.values(selections).reduce((sum, chosen) => sum + chosen.length, 0);
 }
 
+/**
+ * Toggle one option on a facet.
+ *
+ * `single` facets hold at most one value: picking another replaces it, and
+ * re-tapping the current one clears the facet. That re-tap is the only way to
+ * remove a single-select filter from a sheet with no Clear button.
+ */
 export function toggleSelection(
   selections: Selections,
   facetId: string,
   optionId: string,
+  single = false,
 ): Selections {
   const current = selections[facetId] ?? [];
-  const next = current.includes(optionId)
-    ? current.filter((id) => id !== optionId)
-    : [...current, optionId];
+  const alreadyOn = current.includes(optionId);
+
+  let next: string[];
+  if (single) next = alreadyOn ? [] : [optionId];
+  else if (alreadyOn) next = current.filter((id) => id !== optionId);
+  else next = [...current, optionId];
 
   const updated = { ...selections };
   if (next.length) updated[facetId] = next;
