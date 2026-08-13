@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SOLV — Filter & Sort Prototype
 
-## Getting Started
+A runnable prototype of SOLV's B2B commerce app, built to demonstrate **filter and sort**, which the product doesn't have today. The designs existed in Figma but nothing was clickable, so filter behaviour couldn't be evaluated. This makes it real: 1,070 seeded products behind a working faceted-search engine and the designed UI.
 
-First, run the development server:
+**Live:** https://filterprototype.vercel.app — public, no login.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm test         # filter engine unit tests
+npm run build    # production build; also typechecks
+npx eslint .     # lint (from the repo root)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## The two variants
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Home → tap *Baheti Garments* → PLP → filter and sort. Two control layouts over that one journey:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| | Home | PLP | Controls |
+|---|---|---|---|
+| **Variant A** | `/` | `/seller/baheti` | Category · Sort · Filters pinned to the bottom |
+| **Variant B** | `/b` | `/b/seller/baheti` | Sort and Filter chips at the top, no bottom bar |
 
-## Learn More
+Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop. Only the controls differ, so a preference between them is about control placement. Switch by editing the URL; each variant is a closed loop and neither inherits the other's state.
 
-To learn more about Next.js, take a look at the following resources:
+## Where the documentation lives
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Three files, and they are the source of truth rather than something to re-derive:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **`plan.md`** — architecture, the filter engine's one load-bearing rule, the catalog's shape, and every decision taken where the designs were silent.
+- **`progress_tracker.md`** — current state, what's been verified, the UX backlog, and the open questions for the designer.
+- **`CLAUDE.md`** / **`AGENTS.md`** — conventions for anyone (or anything) writing code here: the Figma node map, which decisions are settled, and the traps.
 
-## Deploy on Vercel
+## Two things to know before changing anything
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Designs come from Figma, never from eyeballing.** File `hdArN93DmnLu5JDB46SOwd`, pulled through the Figma MCP. `CLAUDE.md` maps every screen to its node. Guessing at a spec that has a frame wastes a round trip — and the frames disagree with intuition more often than not.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Determinism is load-bearing.** The catalog comes from a fixed-seed PRNG, so facet counts must be identical between reloads and between server and client. A change that makes generation non-deterministic breaks hydration and makes the demo look broken.
+
+## Deploying
+
+GitHub and Vercel are **not connected**, so a push deploys nothing and a deploy commits nothing. Both have to be run:
+
+```bash
+git push origin main
+npx vercel --prod
+```
+
+Connecting the repo in the Vercel project's Git settings would collapse this to one step; it's browser-only.
