@@ -83,18 +83,45 @@ function Checkbox({ checked }: { checked: boolean }) {
  * The frames show flat #d9d9d9 placeholders; facets that supply an `image`
  * render it in that square instead, and the grey stays as the backdrop so
  * tiles still look right while an image loads or if one is missing.
+ *
+ * Two layouts, because only one of the two surfaces is designed:
+ *
+ * - `fixed` — the frame exactly: 68px cells, 4px gaps, left-aligned from a
+ *   14px inset. Three fit the 240px filter panel with 6px to spare, which is
+ *   what Figma draws.
+ * - `fill` — cells divide the container evenly instead, with a 64px floor. For
+ *   the Category sheet, which has no frame of its own: it is 360px wide, so
+ *   left-aligned 68px cells fit four and strand a whole empty column at the
+ *   right. Filling puts five across and no dead edge. The 56px square, the 4px
+ *   gaps and the 36px label box are untouched — only the cell's spare width
+ *   moves.
  */
 export function TileGrid({
   options,
   selected,
   onToggle,
+  layout = "fixed",
 }: {
   options: CountedOption[];
   selected: string[];
   onToggle: (id: string) => void;
+  layout?: "fixed" | "fill";
 }) {
+  const fill = layout === "fill";
   return (
-    <div className="flex w-full flex-wrap items-start gap-[4px] pr-[8px] pl-[14px]">
+    <div
+      className={
+        fill
+          ? // Symmetric insets here, unlike the panel's 14/8 — nothing sits to
+            // the side of this grid, so there's no rail to bias away from.
+            // 8px insets and a 2px column gap rather than the frame's 14/8 and
+            // 4px: they buy back enough width that a five-across cell lands at
+            // 67.2px, close enough to the frame's 68 that "Men's Formal
+            // Shirts" still wraps to two lines instead of three.
+            "grid w-full grid-cols-[repeat(auto-fill,minmax(64px,1fr))] items-start gap-x-[2px] gap-y-[4px] px-[8px]"
+          : "flex w-full flex-wrap items-start gap-[4px] pr-[8px] pl-[14px]"
+      }
+    >
       {options.map((option) => {
         const isOn = selected.includes(option.id);
         return (
@@ -103,7 +130,9 @@ export function TileGrid({
             onClick={() => onToggle(option.id)}
             aria-pressed={isOn}
             title={`${option.label} (${option.count})`}
-            className="flex h-[96px] w-[68px] shrink-0 cursor-pointer flex-col items-center gap-[4px]"
+            className={`flex h-[96px] shrink-0 cursor-pointer flex-col items-center gap-[4px] ${
+              fill ? "w-full" : "w-[68px]"
+            }`}
           >
             <span
               className={`relative size-[56px] shrink-0 overflow-hidden rounded-[9.333px] bg-[#d9d9d9] ${
@@ -137,13 +166,21 @@ export function TileGrid({
               )}
             </span>
             {/* Fixed two-line box: the height is reserved even for one-line
-                labels, so every tile on a row lines up. */}
-            <span
-              className={`line-clamp-2 h-[36px] w-full text-center text-[11px] leading-[13px] ${
-                isOn ? "font-bold text-primary" : "font-normal text-[#323232]"
-              }`}
-            >
-              {option.label}
+                labels, so every tile on a row lines up.
+
+                The reserved height and the clamp must sit on *different*
+                elements. Together on one, the explicit 36px wins over the
+                clamp's two-line height, so a label needing three lines is
+                cropped mid-glyph at 36 of its 39px instead of ellipsised.
+                Wrapper reserves the space; inner clamps and ellipsises. */}
+            <span className="h-[36px] w-full">
+              <span
+                className={`line-clamp-2 text-center text-[11px] leading-[13px] ${
+                  isOn ? "font-bold text-primary" : "font-normal text-[#323232]"
+                }`}
+              >
+                {option.label}
+              </span>
             </span>
           </button>
         );

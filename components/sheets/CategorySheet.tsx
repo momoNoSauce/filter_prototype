@@ -26,9 +26,10 @@ import {
  * absent from A's Filters rail — see `getRail`.
  *
  * The grid is the Filters screen's `TileGrid`, not a restyled copy, so the
- * cell geometry can only be changed in one place. The sheet is wider than the
- * 240px filter panel, so those same 68px cells wrap four across rather than
- * three; the cells themselves keep their Figma dimensions.
+ * 56px square and its label box can only be changed in one place. It runs in
+ * `fill` layout here: at 360px, left-aligning fixed 68px cells fits four and
+ * leaves a whole empty column at the right, so the cells divide the width
+ * instead and five go across.
  */
 export function CategorySheet({
   products,
@@ -86,6 +87,7 @@ export function CategorySheet({
         <TileGrid
           options={options}
           selected={chosen}
+          layout="fill"
           onToggle={(id) =>
             setDraft((current) => toggleSelection(current, "category", id))
           }
