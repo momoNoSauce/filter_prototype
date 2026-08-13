@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { Sheet } from "@/components/ui/Sheet";
 import { ActionFooter } from "@/components/ui/ActionFooter";
@@ -11,6 +11,10 @@ import {
   toggleSelection,
   type Selections,
 } from "@/lib/filters/engine";
+
+/** Order is an artefact of tap sequence, so compare as sets, not as lists. */
+const sameOptions = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((id) => b.includes(id));
 
 /**
  * Variant A's bottom-bar quick action, in the slot Gender used to hold.
@@ -36,13 +40,30 @@ export function CategorySheet({
   selections,
   onApply,
   onClose,
+  onDiscard,
 }: {
   products: Product[];
   selections: Selections;
   onApply: (next: Selections) => void;
   onClose: () => void;
+  /**
+   * Dismissed — scrim, close button or Escape — while holding edits that were
+   * never applied. Fires only when something would actually be lost: opening
+   * the sheet and closing it untouched discards nothing worth announcing, and
+   * neither does ticking a category and unticking it again.
+   */
+  onDiscard: () => void;
 }) {
   const [draft, setDraft] = useState<Selections>(selections);
+
+  /**
+   * What the sheet opened with, frozen. Comparing against the live
+   * `selections` prop instead would be unreliable: applying updates it, and
+   * this component stays mounted through the exit animation, so by the time
+   * the sheet finishes closing the two would already agree.
+   */
+  const opened = useRef(selections.category ?? []);
+  const applied = useRef(false);
 
   // Counted against every other facet's selections but never Category's own,
   // so ticking one category still leaves live counts on the rest.
@@ -58,7 +79,13 @@ export function CategorySheet({
   return (
     <Sheet
       title="Category"
-      onClose={onClose}
+      // Runs once the exit animation has finished, on every dismissal route —
+      // scrim, close button and Escape all funnel through it, so none of them
+      // can drop a draft silently.
+      onClose={() => {
+        if (!applied.current && !sameOptions(chosen, opened.current)) onDiscard();
+        onClose();
+      }}
       footer={(close) => (
         <ActionFooter
           primaryLabel={`Show ${total.toLocaleString("en-IN")} results`}
@@ -77,6 +104,7 @@ export function CategorySheet({
             })
           }
           onPrimary={() => {
+            applied.current = true;
             onApply(draft);
             close();
           }}

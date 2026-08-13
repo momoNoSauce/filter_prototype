@@ -134,6 +134,7 @@ Several of these were revised during review — the current state is what's list
 | 10 | Zero results | Not designed. A centred "No products match" with a *Clear Filters* button. |
 | 11 | Home seller cards | The design's third card is *Pawan footwear*, which has no catalog behind it, so Grasim Fabrics takes that slot and every card navigates somewhere real. Product counts are read from the catalog. |
 | 12 | Sheet motion | Asymmetric — enter 260ms decelerate, exit 200ms accelerate, scrim 200/160ms, all collapsed to 1ms under `prefers-reduced-motion`. The sheet owns its own dismissal so it can animate out before unmounting. |
+| 15 | Discarded drafts | Dismissing the Category sheet without applying throws its edits away, and doing that silently reads as the filter being broken. It now raises a **`Selection discarded`** toast on every dismissal route — scrim, close button, Escape — and only when edits would actually be lost: untouched, ticked-then-unticked, and applied all stay quiet. The toast is an addition (`components/ui/Toast.tsx`); its lifetime is its CSS animation, so the duration is declared once. **The Filters screen discards its draft the same way and does not yet toast** — say if it should. |
 
 **Two things in the design that were deliberately not reproduced:** a stray `$299.99` row at the bottom of the filter rail (`638:3712`), and the `Margin` rail label being SemiBold while its eleven siblings are Medium. Both read as artefacts. Say the word if either was intentional.
 

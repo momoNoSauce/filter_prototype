@@ -20,6 +20,7 @@ import { TopChipBar } from "./TopChipBar";
 import { SortSheet } from "@/components/sheets/SortSheet";
 import { CategorySheet } from "@/components/sheets/CategorySheet";
 import { FilterScreen } from "@/components/filters/FilterScreen";
+import { Toast } from "@/components/ui/Toast";
 
 const PAGE_SIZE = 8;
 
@@ -64,8 +65,20 @@ export function PlpScreen({
   const [sort, setSort] = useState<SortId>("popularity");
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
+  // Ids rather than the text alone, so discarding twice in a row replays the
+  // animation instead of React seeing an identical element and leaving the
+  // finished one on screen.
+  const toastSeq = useRef(0);
+
+  // Plain function, not a useCallback: the React Compiler handles memoization
+  // here, and a manual one with `[]` deps trips its preservation check.
+  const showToast = (text: string) => {
+    toastSeq.current += 1;
+    setToast({ id: toastSeq.current, text });
+  };
 
   // Read the URL on mount, and again whenever the back button moves us.
   useEffect(() => {
@@ -178,6 +191,7 @@ export function PlpScreen({
           products={products}
           selections={selections}
           onApply={(next) => commit(next, sort)}
+          onDiscard={() => showToast("Selection discarded")}
           onClose={() => setOverlay(null)}
         />
       )}
@@ -189,6 +203,16 @@ export function PlpScreen({
           variant={variant}
           onApply={(next) => commit(next, sort)}
           onClose={() => setOverlay(null)}
+        />
+      )}
+
+      {toast && (
+        <Toast
+          key={toast.id}
+          text={toast.text}
+          // Guarded by id so a stale instance can't clear a toast that
+          // replaced it.
+          onDone={() => setToast((current) => (current?.id === toast.id ? null : current))}
         />
       )}
     </div>

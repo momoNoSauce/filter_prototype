@@ -177,6 +177,45 @@ input {
 }
 
 /*
+ * Toast: rise and fade in, hold, fade out. One animation covers the whole
+ * lifetime and `onAnimationEnd` unmounts it, so the duration is declared here
+ * only — a setTimeout alongside would be a second copy free to drift.
+ */
+@keyframes toast {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  8% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  88% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+/* Reduced motion drops the travel but keeps the fade and, crucially, the hold:
+   collapsing this to 1ms like the sheets would leave the message unreadable. */
+@keyframes toast-fade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  8%,
+  88% {
+    opacity: 1;
+  }
+}
+.animate-toast {
+  animation: toast 2600ms both;
+}
+
+/*
  * Respect the OS setting. The animation still runs — `onAnimationEnd` drives
  * unmount, so removing it entirely would strand the sheet on screen — it just
  * collapses to a single frame.
@@ -187,6 +226,9 @@ input {
   .animate-scrim-in,
   .animate-scrim-out {
     animation-duration: 1ms;
+  }
+  .animate-toast {
+    animation-name: toast-fade;
   }
 }
 
