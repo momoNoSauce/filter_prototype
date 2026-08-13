@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { MaskIcon } from "@/components/ui/MaskIcon";
 import type { ContextChip } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
 
@@ -75,25 +76,26 @@ export function ContextChips({
 }
 
 /**
- * The product-vertical chip — a Material input chip, which is the pattern for
- * an avatar plus a remove.
+ * Figma 674:4904 — the product-vertical chip, both states.
  *
- * M3 proportions: a 40dp container on an 8dp corner, 1dp outline when
- * unselected, filled and outline-free when selected, a 30dp avatar inset from
- * the leading edge on its own 8dp corner, 14sp Medium label on a single line.
- * Slightly above M3's 32dp container and 24dp avatar, because these avatars
- * are product photography rather than initials and stop reading much below
- * this.
+ * h-32 on a 4px corner, gap-4, px-6. Unselected: white, 0.5px #4d4d4d border,
+ * label Roboto Medium 11px at `black/90` and 74% opacity — the same label
+ * treatment `TopChipBar`'s chips use. Selected: no border, filled, label in
+ * primary, and the exported `close_small` glyph at 11.185px.
  *
- * **Selected drops the label**, keeping the avatar and the ✕. That makes the
- * chip you're standing in far smaller than the ones you could move to, so the
- * strip reads as "here, and the alternatives" at a glance. It does mean the
- * strip no longer names the vertical in words while you're inside it — the
- * photo has to carry it.
+ * The avatar is **circular** (`rounded-[99px]`), not a rounded square, at the
+ * frame's own 26.727 × 27.796 — slightly taller than wide, which is why both
+ * dimensions are set rather than one `size-`.
  *
- * Each state is one button. Unselected it toggles on; selected its only
- * possible action is to leave, so the whole chip removes rather than a 20dp
- * circle — a far better touch target for the same result.
+ * Two departures from the raw export, both by the standing rule that the
+ * design's off-token blues are slips: the fill comes back as
+ * `rgba(21,95,255,0.2)`, which over white is exactly `primary/subtle`
+ * (#CCDCFE), and the label and glyph come back as `#0a57ff`, which is
+ * `primary` (#004FFA). The glyph ships as an exported asset tinted through
+ * `MaskIcon`, since an `<img>` would bake in the slipped hex.
+ *
+ * The frame keeps the label when selected and adds the ✕ beside it, so that is
+ * what this does — it does not drop the label.
  */
 function VerticalChip({
   option,
@@ -107,39 +109,37 @@ function VerticalChip({
   return (
     <button
       onClick={onToggle}
-      {...(selected
-        ? { "aria-label": `Remove ${option.label}` }
-        : { role: "checkbox", "aria-checked": false })}
-      className={`flex h-[40px] shrink-0 cursor-pointer items-center gap-[8px] rounded-[8px] pl-[5px] ${
-        selected ? "bg-primary-subtle pr-[8px]" : "border border-[#4d4d4d] bg-white pr-[12px]"
+      role="checkbox"
+      aria-checked={selected}
+      className={`flex h-[32px] shrink-0 cursor-pointer items-center justify-center gap-[4px] rounded-[4px] px-[6px] ${
+        selected ? "bg-primary-subtle" : "border-[0.5px] border-[#4d4d4d] bg-white"
       }`}
     >
-      <span className="size-[30px] shrink-0 overflow-hidden rounded-[8px] bg-[#d9d9d9]">
+      <span className="h-[27.796px] w-[26.727px] shrink-0 overflow-hidden rounded-[99px] bg-[#d9d9d9]">
         {option.image && (
           // eslint-disable-next-line @next/next/no-img-element
           <img alt="" loading="lazy" className="size-full object-cover" src={option.image} />
         )}
       </span>
 
-      {selected ? (
-        <span
-          aria-hidden
-          className="flex size-[20px] shrink-0 items-center justify-center rounded-full bg-[#2e9e42]"
-        >
-          <svg viewBox="0 0 24 24" className="size-[13px]">
-            <path
-              d="M6 6l12 12M18 6L6 18"
-              fill="none"
-              stroke="#fff"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </span>
-      ) : (
-        <span className="text-[14px] leading-[20px] font-medium whitespace-nowrap text-[#323232]">
-          {option.label}
-        </span>
+      {/* The frame sets this label two lines deep. 68px is its own label box,
+          back-solved from the 110px chip less the 6px insets, the 26.727px
+          avatar and the 4px gaps — and it is the width at which the longest
+          vertical name still breaks into two lines rather than clamping. */}
+      <span
+        className={`line-clamp-2 max-w-[68px] text-left text-[11px] leading-[normal] font-medium ${
+          selected ? "text-primary" : "text-black/90 opacity-74"
+        }`}
+      >
+        {option.label}
+      </span>
+
+      {selected && (
+        <MaskIcon
+          src="/figma/icons/close-small.svg"
+          color="var(--color-primary)"
+          className="size-[11.185px] shrink-0"
+        />
       )}
     </button>
   );
