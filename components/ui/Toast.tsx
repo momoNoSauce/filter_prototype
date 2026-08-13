@@ -17,9 +17,25 @@
  * a `transform` in the keyframes would otherwise overwrite a centring
  * `-translate-x-1/2` and shunt it off to the right.
  */
-export function Toast({ text, onDone }: { text: string; onDone: () => void }) {
+export function Toast({
+  text,
+  onDone,
+  clearsBottomBar,
+}: {
+  text: string;
+  onDone: () => void;
+  /**
+   * Variant A has to sit above the bottom bar; Variant B has no bar, and
+   * holding the same offset there would leave it floating over nothing.
+   */
+  clearsBottomBar: boolean;
+}) {
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-[72px] z-50 flex justify-center px-[16px]">
+    <div
+      className={`pointer-events-none absolute inset-x-0 z-50 flex justify-center px-[16px] ${
+        clearsBottomBar ? "bottom-[72px]" : "bottom-[24px]"
+      }`}
+    >
       <div
         // Announced without stealing focus — the toast is never interactive,
         // and grabbing focus would drop the user out of the list they're in.

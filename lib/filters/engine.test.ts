@@ -5,6 +5,7 @@ import {
   applyFilters,
   countMatching,
   facetOptionsWithCounts,
+  sameSelections,
   sortProducts,
   toggleSelection,
 } from "./engine";
@@ -163,6 +164,35 @@ describe("toggleSelection", () => {
     });
   });
 
+});
+
+describe("sameSelections — what decides whether a discard is announced", () => {
+  it("ignores option order, which is only ever tap sequence", () => {
+    expect(sameSelections({ gender: ["men", "boys"] }, { gender: ["boys", "men"] })).toBe(true);
+  });
+
+  it("treats an absent key and an empty array as the same no-constraint", () => {
+    expect(sameSelections({}, { category: [] })).toBe(true);
+    expect(sameSelections({ category: [] }, {})).toBe(true);
+  });
+
+  it("spots an addition, a removal and a swap", () => {
+    expect(sameSelections({ gender: ["men"] }, { gender: ["men", "boys"] })).toBe(false);
+    expect(sameSelections({ gender: ["men"] }, {})).toBe(false);
+    expect(sameSelections({ gender: ["men"] }, { gender: ["women"] })).toBe(false);
+  });
+
+  it("spots a change in a facet the other side never mentions", () => {
+    expect(sameSelections({ gender: ["men"] }, { seller: ["grasim"] })).toBe(false);
+  });
+
+  it("says nothing was lost when an option is ticked and then unticked", () => {
+    const opened = { seller: ["grasim"] };
+    const ticked = toggleSelection(opened, "category", "girls-t-shirts");
+    expect(sameSelections(ticked, opened)).toBe(false);
+    const unticked = toggleSelection(ticked, "category", "girls-t-shirts");
+    expect(sameSelections(unticked, opened)).toBe(true);
+  });
 });
 
 describe("the rail differs by variant, and only by Category", () => {

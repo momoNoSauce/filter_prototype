@@ -109,9 +109,9 @@ export function countSelections(selections: Selections): number {
 }
 
 /**
- * Toggle one option on a facet. Every facet in the Filters screen is
- * multi-select; Variant A's Gender sheet does its own single-select in the
- * component, since that's a property of the control, not of the facet.
+ * Toggle one option on a facet. Every facet is multi-select — exclusivity was
+ * only ever a property of a control, never of a facet, and no control claims
+ * it any more.
  */
 export function toggleSelection(
   selections: Selections,
@@ -127,6 +127,30 @@ export function toggleSelection(
   if (next.length) updated[facetId] = next;
   else delete updated[facetId];
   return updated;
+}
+
+/**
+ * Same options, ignoring order — order is only ever the sequence they were
+ * tapped in, never anything the user chose.
+ */
+export function sameOptions(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((id) => b.includes(id));
+}
+
+/**
+ * Whether two selection sets would filter identically.
+ *
+ * Used by the draft surfaces to decide whether dismissing them actually loses
+ * anything: a sheet opened and closed untouched, or one where an option was
+ * ticked and unticked again, has nothing to announce. An absent key and an
+ * empty array both mean "no constraint", so they must compare equal.
+ */
+export function sameSelections(a: Selections, b: Selections): boolean {
+  const facetIds = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const facetId of facetIds) {
+    if (!sameOptions(a[facetId] ?? [], b[facetId] ?? [])) return false;
+  }
+  return true;
 }
 
 /** Rail entries that currently constrain the result set, for the applied dot. */

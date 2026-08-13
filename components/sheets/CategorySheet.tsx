@@ -8,13 +8,10 @@ import { TileGrid } from "@/components/filters/OptionRows";
 import {
   countMatching,
   facetOptionsWithCounts,
+  sameOptions,
   toggleSelection,
   type Selections,
 } from "@/lib/filters/engine";
-
-/** Order is an artefact of tap sequence, so compare as sets, not as lists. */
-const sameOptions = (a: string[], b: string[]) =>
-  a.length === b.length && a.every((id) => b.includes(id));
 
 /**
  * Variant A's bottom-bar quick action, in the slot Gender used to hold.

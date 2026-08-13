@@ -24,6 +24,13 @@ import { Toast } from "@/components/ui/Toast";
 
 const PAGE_SIZE = 8;
 
+/**
+ * One string for both draft surfaces. The Category sheet and the Filters
+ * screen lose a draft the same way, and giving the same event two wordings
+ * would read as two different things happening.
+ */
+const DISCARDED = "Selection discarded";
+
 type Overlay = "sort" | "category" | "filters" | null;
 
 /**
@@ -191,7 +198,7 @@ export function PlpScreen({
           products={products}
           selections={selections}
           onApply={(next) => commit(next, sort)}
-          onDiscard={() => showToast("Selection discarded")}
+          onDiscard={() => showToast(DISCARDED)}
           onClose={() => setOverlay(null)}
         />
       )}
@@ -202,6 +209,7 @@ export function PlpScreen({
           selections={selections}
           variant={variant}
           onApply={(next) => commit(next, sort)}
+          onDiscard={() => showToast(DISCARDED)}
           onClose={() => setOverlay(null)}
         />
       )}
@@ -210,6 +218,7 @@ export function PlpScreen({
         <Toast
           key={toast.id}
           text={toast.text}
+          clearsBottomBar={variant === "bottom-bar"}
           // Guarded by id so a stale instance can't clear a toast that
           // replaced it.
           onDone={() => setToast((current) => (current?.id === toast.id ? null : current))}

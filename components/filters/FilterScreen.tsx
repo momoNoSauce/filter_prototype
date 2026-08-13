@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
 import {
@@ -12,6 +12,7 @@ import {
 import {
   countMatching,
   facetOptionsWithCounts,
+  sameSelections,
   toggleSelection,
   type Selections,
 } from "@/lib/filters/engine";
@@ -31,12 +32,20 @@ export function FilterScreen({
   selections,
   onApply,
   onClose,
+  onDiscard,
   variant,
 }: {
   products: Product[];
   selections: Selections;
   onApply: (next: Selections) => void;
   onClose: () => void;
+  /**
+   * Closed on the ✕ while holding edits that were never applied. This screen
+   * can be carrying a dozen of them, so losing the lot in silence is worse
+   * here than on the Category sheet. Fires only when something would actually
+   * be lost.
+   */
+  onDiscard: () => void;
   /**
    * Decides the rail, and only by one row: Variant A hands Category to the
    * bottom bar, so it is absent here. Gender is in both.
@@ -49,6 +58,19 @@ export function FilterScreen({
   const [draft, setDraft] = useState<Selections>(selections);
   const [activeRail, setActiveRail] = useState(RAIL[0].id);
   const [query, setQuery] = useState("");
+
+  /** What the screen opened with, frozen, so the ✕ can tell edits from none. */
+  const opened = useRef(selections);
+
+  /*
+   * Unlike the bottom sheets, this screen's two exits are separate handlers
+   * rather than one animated `onClose`, so only the ✕ needs the check — "Show
+   * N results" can't reach it and needs no `applied` guard.
+   */
+  const dismiss = () => {
+    if (!sameSelections(draft, opened.current)) onDiscard();
+    onClose();
+  };
 
   const rail = RAIL.find((r) => r.id === activeRail) ?? RAIL[0];
   const total = useMemo(() => countMatching(products, draft), [products, draft]);
@@ -70,7 +92,7 @@ export function FilterScreen({
         <p className="text-[16px] font-medium text-black">Filters</p>
         <button
           aria-label="Close filters"
-          onClick={onClose}
+          onClick={dismiss}
           className="block size-[15px] shrink-0 cursor-pointer"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
