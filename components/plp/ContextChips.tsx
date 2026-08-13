@@ -75,18 +75,25 @@ export function ContextChips({
 }
 
 /**
- * The product-vertical chip: a square thumbnail flush to the leading edge, a
- * two-line label, and — once picked — a green ✕ that removes it.
+ * The product-vertical chip — a Material input chip, which is the pattern for
+ * an avatar plus a remove.
  *
- * Closer to a Material *input* chip than a filter chip, which is what the
- * thumbnail-plus-remove pattern is for. It departs from M3's 32dp height, as
- * the mockup does: a 48dp thumbnail and a two-line label need the room, and
- * the vertical names don't fit one line at this width.
+ * M3 proportions: a 40dp container on an 8dp corner, 1dp outline when
+ * unselected, filled and outline-free when selected, a 30dp avatar inset from
+ * the leading edge on its own 8dp corner, 14sp Medium label on a single line.
+ * Slightly above M3's 32dp container and 24dp avatar, because these avatars
+ * are product photography rather than initials and stop reading much below
+ * this.
  *
- * The ✕ is a button in its own right rather than the whole chip toggling,
- * because with the chip staying on the strip while its vertical is active,
- * "tap anywhere to remove" would make it far too easy to fall out of the
- * vertical by mis-tapping the label.
+ * **Selected drops the label**, keeping the avatar and the ✕. That makes the
+ * chip you're standing in far smaller than the ones you could move to, so the
+ * strip reads as "here, and the alternatives" at a glance. It does mean the
+ * strip no longer names the vertical in words while you're inside it — the
+ * photo has to carry it.
+ *
+ * Each state is one button. Unselected it toggles on; selected its only
+ * possible action is to leave, so the whole chip removes rather than a 20dp
+ * circle — a far better touch target for the same result.
  */
 function VerticalChip({
   option,
@@ -98,54 +105,43 @@ function VerticalChip({
   onToggle: () => void;
 }) {
   return (
-    <div
-      className={`flex h-[48px] shrink-0 items-center overflow-hidden rounded-[8px] border bg-white ${
-        selected ? "border-primary" : "border-[#dedede]"
+    <button
+      onClick={onToggle}
+      {...(selected
+        ? { "aria-label": `Remove ${option.label}` }
+        : { role: "checkbox", "aria-checked": false })}
+      className={`flex h-[40px] shrink-0 cursor-pointer items-center gap-[8px] rounded-[8px] pl-[5px] ${
+        selected ? "bg-primary-subtle pr-[8px]" : "border border-[#4d4d4d] bg-white pr-[12px]"
       }`}
     >
-      <button
-        onClick={onToggle}
-        role="checkbox"
-        aria-checked={selected}
-        className="flex h-full cursor-pointer items-center gap-[8px] pr-[8px]"
-      >
-        <span className="size-[48px] shrink-0 overflow-hidden bg-[#d9d9d9]">
-          {option.image && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              alt=""
-              loading="lazy"
-              className="size-full object-cover"
-              src={option.image}
-            />
-          )}
-        </span>
+      <span className="size-[30px] shrink-0 overflow-hidden rounded-[8px] bg-[#d9d9d9]">
+        {option.image && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" loading="lazy" className="size-full object-cover" src={option.image} />
+        )}
+      </span>
+
+      {selected ? (
         <span
-          className={`line-clamp-2 max-w-[92px] text-left text-[13px] leading-[16px] font-medium ${
-            selected ? "text-primary" : "text-[#323232]"
-          }`}
+          aria-hidden
+          className="flex size-[20px] shrink-0 items-center justify-center rounded-full bg-[#2e9e42]"
         >
-          {option.label}
-        </span>
-      </button>
-      {selected && (
-        <button
-          onClick={onToggle}
-          aria-label={`Remove ${option.label}`}
-          className="mr-[8px] flex size-[22px] shrink-0 cursor-pointer items-center justify-center rounded-full bg-[#2e9e42]"
-        >
-          <svg viewBox="0 0 24 24" className="size-[14px]" aria-hidden>
+          <svg viewBox="0 0 24 24" className="size-[13px]">
             <path
               d="M6 6l12 12M18 6L6 18"
               fill="none"
               stroke="#fff"
-              strokeWidth="3"
+              strokeWidth="3.2"
               strokeLinecap="round"
             />
           </svg>
-        </button>
+        </span>
+      ) : (
+        <span className="text-[14px] leading-[20px] font-medium whitespace-nowrap text-[#323232]">
+          {option.label}
+        </span>
       )}
-    </div>
+    </button>
   );
 }
 
