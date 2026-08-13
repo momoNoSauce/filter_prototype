@@ -1,5 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { ChipStrip } from "./ContextChips";
+
 /**
  * Figma 644:4011 — the Sort / Filter chip bar, used by Variant B.
  *
@@ -10,22 +13,27 @@
  * this variant it is the *only* way to reach Sort and Filters, so it can never
  * be allowed to scroll out of reach.
  *
- * The trailing divider is the design's own — the boundary before the
- * contextual chips that are still to be defined.
+ * The trailing divider is the design's own — the boundary it draws before the
+ * contextual chips, which now arrive as `children` and share the row and its
+ * horizontal scroll. Variant A puts those same chips in a bare `ChipStrip`,
+ * with no Sort or Filter chip ahead of them and so no divider.
  */
 export function TopChipBar({
   sortActive,
   filterCount,
   onSort,
   onFilters,
+  children,
 }: {
   sortActive: boolean;
   filterCount: number;
   onSort: () => void;
   onFilters: () => void;
+  /** Contextual chips, placed after the frame's divider. */
+  children?: ReactNode;
 }) {
   return (
-    <div className="no-scrollbar flex w-full items-center gap-[8px] overflow-x-auto bg-white py-[12px] pr-[16px] pl-[8px]">
+    <ChipStrip>
       <Chip icon="/figma/icons/caret-down.svg" label="Sort" dot={sortActive} onClick={onSort} />
       <Chip
         icon="/figma/icons/funnel.svg"
@@ -34,7 +42,8 @@ export function TopChipBar({
         onClick={onFilters}
       />
       <span className="h-[22px] w-px shrink-0 bg-[#4d4d4d]" />
-    </div>
+      {children}
+    </ChipStrip>
   );
 }
 

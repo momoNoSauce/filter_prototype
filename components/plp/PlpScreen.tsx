@@ -6,6 +6,7 @@ import type { Product } from "@/lib/catalog/types";
 import {
   applyFilters,
   sortProducts,
+  toggleSelection,
   DEFAULT_SORT,
   type Selections,
   type SortId,
@@ -17,6 +18,8 @@ import { GoldStrip } from "./GoldStrip";
 import { ProductCard } from "./ProductCard";
 import { BottomActionBar } from "./BottomActionBar";
 import { TopChipBar } from "./TopChipBar";
+import { ChipStrip, ContextChips } from "./ContextChips";
+import { contextChips } from "@/lib/filters/contextChips";
 import { SortSheet } from "@/components/sheets/SortSheet";
 import { CategorySheet } from "@/components/sheets/CategorySheet";
 import { FilterScreen } from "@/components/filters/FilterScreen";
@@ -119,6 +122,16 @@ export function PlpScreen({
     [products, selections, sort],
   );
 
+  // Product-vertical chips until a single vertical is settled, then price and
+  // offer chips. Same strip and same rule in both variants.
+  const chips = useMemo(
+    () => contextChips(products, selections),
+    [products, selections],
+  );
+
+  const toggleChip = (facetId: string, optionId: string) =>
+    commit(toggleSelection(selections, facetId, optionId), sort);
+
   // Cards are heavy, and there can be 1,070 of them. Render a page at a time
   // and extend as the list scrolls.
   const onScroll = () => {
@@ -150,11 +163,18 @@ export function PlpScreen({
             filterCount={filterCount}
             onSort={() => setOverlay("sort")}
             onFilters={() => setOverlay("filters")}
-          />
+          >
+            <ContextChips chips={chips} selections={selections} onToggle={toggleChip} />
+          </TopChipBar>
         ) : (
-          // In the bottom-bar variant this strip stays empty — reserved for
-          // contextual chips, still to be defined.
-          null
+          // Variant A has no Sort or Filter chip, so the strip is the
+          // contextual chips alone — and collapses entirely when there are
+          // none, rather than leaving an empty white band.
+          chips.length > 0 && (
+            <ChipStrip>
+              <ContextChips chips={chips} selections={selections} onToggle={toggleChip} />
+            </ChipStrip>
+          )
         )}
       </div>
 

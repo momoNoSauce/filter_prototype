@@ -4,12 +4,14 @@ import { CATEGORIES } from "@/lib/catalog/seed";
 import {
   applyFilters,
   countMatching,
+  discriminatingOptions,
   facetOptionsWithCounts,
   sameSelections,
   sortProducts,
   toggleSelection,
 } from "./engine";
 import { buildQuery, parseSelections, parseSort } from "./urlState";
+import { contextChips } from "./contextChips";
 import { FACET_BY_ID, getRail, getRailFacetIds } from "./facets";
 import { defaultVariant } from "@/lib/catalog/types";
 
@@ -164,6 +166,74 @@ describe("toggleSelection", () => {
     });
   });
 
+});
+
+describe("contextual chips", () => {
+  const ids = (selections: Record<string, string[]>) =>
+    contextChips(catalog, selections).map((c) => `${c.facetId}:${c.option.id}`);
+
+  it("offers the verticals when none is picked", () => {
+    expect(ids({})).toEqual([
+      "category:womens-t-shirts",
+      "category:mens-formal-shirts",
+      "category:mens-casual-t-shirts",
+      "category:mens-casual-shirts",
+      "category:girls-t-shirts",
+      "category:boys-casual-shirts",
+      "category:boys-casual-t-shirts",
+    ]);
+  });
+
+  it("switches to price and offers once a single vertical is settled", () => {
+    const chips = ids({ category: ["girls-t-shirts"] });
+    expect(chips.every((c) => !c.startsWith("category:"))).toBe(true);
+    expect(chips.some((c) => c.startsWith("price:"))).toBe(true);
+    expect(chips).toContain("hasOffer:any");
+    expect(chips).toContain("offers:cashback");
+    expect(chips).toContain("offers:free-delivery");
+  });
+
+  it("goes back to verticals when a second one is added", () => {
+    const chips = ids({ category: ["girls-t-shirts", "womens-t-shirts"] });
+    expect(chips.every((c) => c.startsWith("category:"))).toBe(true);
+  });
+
+  it("keeps the offer strip to the three asked for", () => {
+    const chips = ids({ category: ["mens-formal-shirts"] });
+    expect(chips).not.toContain("offers:bulk-offer");
+    expect(chips).not.toContain("offers:gold-target-scheme");
+  });
+
+  it("drops an offer every product in the vertical already carries", () => {
+    // Nothing in the seeded catalog is universal, so pin the rule directly:
+    // an option on every product in scope filters nothing and must not appear.
+    const allCashback = catalog
+      .filter((p) => p.category === "Girl's T-Shirts")
+      .map((p) => ({ ...p, offers: ["Cashback"] }));
+    const options = discriminatingOptions(allCashback, {}, "offers").map((o) => o.id);
+    expect(options).not.toContain("cashback");
+  });
+
+  it("keeps a non-discriminating option visible while it is selected", () => {
+    const allCashback = catalog
+      .filter((p) => p.category === "Girl's T-Shirts")
+      .map((p) => ({ ...p, offers: ["Cashback"] }));
+    const options = discriminatingOptions(allCashback, { offers: ["cashback"] }, "offers");
+    expect(options.map((o) => o.id)).toContain("cashback");
+  });
+
+  it("hides a price band no product in the vertical falls into", () => {
+    const chips = ids({ category: ["girls-t-shirts"] });
+    // Girl's T-Shirts top out at ~₹320/pc, so the upper bands cannot appear.
+    expect(chips).not.toContain("price:p-max");
+    expect(chips).not.toContain("price:p-900");
+  });
+
+  it("treats Seller Offer as its own facet, so it narrows Cashback rather than widening it", () => {
+    const both = countMatching(catalog, { hasOffer: ["any"], offers: ["cashback"] });
+    expect(both).toBe(countMatching(catalog, { offers: ["cashback"] }));
+    expect(both).toBeLessThan(countMatching(catalog, { hasOffer: ["any"] }));
+  });
 });
 
 describe("sameSelections — what decides whether a discard is announced", () => {

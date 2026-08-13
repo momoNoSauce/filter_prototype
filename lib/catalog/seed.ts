@@ -222,7 +222,7 @@ export const OFFERS = [
   { name: "Bulk Offer", chance: 0.42 },
   { name: "GOLD Target Scheme", chance: 0.55 },
   { name: "Cashback", chance: 0.22 },
-  { name: "Free Shipping", chance: 0.16 },
+  { name: "Free Delivery", chance: 0.16 },
 ];
 
 const DELIVERY_DAYS = [

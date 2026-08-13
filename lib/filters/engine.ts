@@ -84,6 +84,28 @@ export function facetOptionsWithCounts(
     .filter((option) => option.count > 0 || selected.includes(option.id));
 }
 
+/**
+ * Options that would actually change the result set: carried by some products
+ * in scope but not all of them.
+ *
+ * `facetOptionsWithCounts` already drops options no product has. This drops
+ * the opposite dead end — an option *every* product has, which filters nothing
+ * out and so is a control that does nothing when tapped. Anything already
+ * selected is kept regardless, so a selection never becomes impossible to
+ * undo.
+ */
+export function discriminatingOptions(
+  products: Product[],
+  selections: Selections,
+  facetId: string,
+): CountedOption[] {
+  const scope = applyFilters(products, selections, facetId).length;
+  const selected = selections[facetId] ?? [];
+  return facetOptionsWithCounts(products, selections, facetId).filter(
+    (option) => selected.includes(option.id) || option.count < scope,
+  );
+}
+
 export function sortProducts(products: Product[], sort: SortId): Product[] {
   const sorted = [...products];
   switch (sort) {

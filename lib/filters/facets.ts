@@ -182,6 +182,20 @@ export const FACETS: FacetDef[] = [
       .map((city) => ({ id: slug(city), label: city })),
   },
   {
+    /*
+     * "Carries any offer at all" — its own facet rather than a fifth option
+     * inside `offers`. Inside it, OR-within-a-facet would make Seller Offer
+     * *widen* a Cashback selection instead of narrowing it; as a separate
+     * facet the two AND, which is what a catch-all has to do.
+     */
+    id: "hasOffer",
+    label: "Seller Offer",
+    panel: "checkbox",
+    searchable: false,
+    valuesOf: (p) => (p.offers.length ? ["any"] : []),
+    options: [{ id: "any", label: "Seller Offer" }],
+  },
+  {
     id: "offers",
     label: "Offers",
     panel: "checkbox",
@@ -263,7 +277,10 @@ const COMMON_RAIL: RailEntry[] = [
   { id: "colour", label: "Colour", facetIds: ["colour"] },
   { id: "seller", label: "Seller", facetIds: ["seller"] },
   { id: "sellerCity", label: "Seller City", facetIds: ["sellerCity"] },
-  { id: "offers", label: "Offers", facetIds: ["offers"] },
+  // `hasOffer` is reached from a chip, but it has to be listed here too, or a
+  // chip-applied filter would survive Clear Filters and go uncounted by the
+  // Filters badge with no control left to undo it once the chip strip changes.
+  { id: "offers", label: "Offers", facetIds: ["hasOffer", "offers"] },
   { id: "more", label: "More Filters", facetIds: ["fabric", "tags"] },
 ];
 
