@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { ContextChip } from "@/lib/filters/contextChips";
+import type { CountedOption } from "@/lib/filters/engine";
 
 /**
  * The strip below the GOLD bar. In Variant A it holds only these; in B it
@@ -9,8 +10,8 @@ import type { ContextChip } from "@/lib/filters/contextChips";
  * as the boundary for them.
  *
  * Pinned rather than scrolling with the list, matching `TopChipBar`: the strip
- * changes as you drill in, and a control that rewrites itself off-screen is
- * worse than no control.
+ * rewrites itself as you drill in, and a control that moves off-screen as it
+ * changes is worse than no control.
  */
 export function ChipStrip({ children }: { children: ReactNode }) {
   return (
@@ -24,44 +25,193 @@ export function ContextChips({
   chips,
   selections,
   onToggle,
+  onOpenPrice,
 }: {
   chips: ContextChip[];
   selections: Record<string, string[]>;
   onToggle: (facetId: string, optionId: string) => void;
+  /** Passes the chip element so the menu can be anchored under it. */
+  onOpenPrice: (anchor: HTMLElement, options: CountedOption[]) => void;
 }) {
   return (
     <>
-      {chips.map(({ facetId, option }) => (
-        <FilterChip
-          key={`${facetId}:${option.id}`}
-          label={option.label}
-          selected={(selections[facetId] ?? []).includes(option.id)}
-          onClick={() => onToggle(facetId, option.id)}
-        />
-      ))}
+      {chips.map((chip) => {
+        if (chip.kind === "price") {
+          const chosen = selections.price ?? [];
+          return (
+            <PriceChip
+              key="price"
+              options={chip.options}
+              chosen={chosen}
+              onOpen={(el) => onOpenPrice(el, chip.options)}
+            />
+          );
+        }
+
+        const selected = (selections[chip.facetId] ?? []).includes(chip.option.id);
+
+        if (chip.kind === "vertical") {
+          return (
+            <VerticalChip
+              key={`category:${chip.option.id}`}
+              option={chip.option}
+              selected={selected}
+              onToggle={() => onToggle("category", chip.option.id)}
+            />
+          );
+        }
+
+        return (
+          <FilterChip
+            key={`${chip.facetId}:${chip.option.id}`}
+            label={chip.option.label}
+            selected={selected}
+            onClick={() => onToggle(chip.facetId, chip.option.id)}
+          />
+        );
+      })}
     </>
   );
 }
 
 /**
- * Material 3 filter chip.
+ * The product-vertical chip: a square thumbnail flush to the leading edge, a
+ * two-line label, and — once picked — a green ✕ that removes it.
+ *
+ * Closer to a Material *input* chip than a filter chip, which is what the
+ * thumbnail-plus-remove pattern is for. It departs from M3's 32dp height, as
+ * the mockup does: a 48dp thumbnail and a two-line label need the room, and
+ * the vertical names don't fit one line at this width.
+ *
+ * The ✕ is a button in its own right rather than the whole chip toggling,
+ * because with the chip staying on the strip while its vertical is active,
+ * "tap anywhere to remove" would make it far too easy to fall out of the
+ * vertical by mis-tapping the label.
+ */
+function VerticalChip({
+  option,
+  selected,
+  onToggle,
+}: {
+  option: CountedOption;
+  selected: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      className={`flex h-[48px] shrink-0 items-center overflow-hidden rounded-[8px] border bg-white ${
+        selected ? "border-primary" : "border-[#dedede]"
+      }`}
+    >
+      <button
+        onClick={onToggle}
+        role="checkbox"
+        aria-checked={selected}
+        className="flex h-full cursor-pointer items-center gap-[8px] pr-[8px]"
+      >
+        <span className="size-[48px] shrink-0 overflow-hidden bg-[#d9d9d9]">
+          {option.image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              alt=""
+              loading="lazy"
+              className="size-full object-cover"
+              src={option.image}
+            />
+          )}
+        </span>
+        <span
+          className={`line-clamp-2 max-w-[92px] text-left text-[13px] leading-[16px] font-medium ${
+            selected ? "text-primary" : "text-[#323232]"
+          }`}
+        >
+          {option.label}
+        </span>
+      </button>
+      {selected && (
+        <button
+          onClick={onToggle}
+          aria-label={`Remove ${option.label}`}
+          className="mr-[8px] flex size-[22px] shrink-0 cursor-pointer items-center justify-center rounded-full bg-[#2e9e42]"
+        >
+          <svg viewBox="0 0 24 24" className="size-[14px]" aria-hidden>
+            <path
+              d="M6 6l12 12M18 6L6 18"
+              fill="none"
+              stroke="#fff"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Price: one chip opening a dropdown over the bands, rather than a chip each.
+ *
+ * The label carries the state so the closed chip still says what's applied —
+ * the band's own name when one is picked, a count beyond that.
+ */
+function PriceChip({
+  options,
+  chosen,
+  onOpen,
+}: {
+  options: CountedOption[];
+  chosen: string[];
+  onOpen: (anchor: HTMLElement) => void;
+}) {
+  const selected = chosen.length > 0;
+  const label =
+    chosen.length === 1
+      ? (options.find((o) => o.id === chosen[0])?.label ?? "Price")
+      : chosen.length > 1
+        ? `Price (${chosen.length})`
+        : "Price";
+
+  return (
+    <button
+      onClick={(e) => onOpen(e.currentTarget)}
+      aria-haspopup="menu"
+      className={`flex h-[32px] shrink-0 cursor-pointer items-center gap-[4px] rounded-[8px] pr-[8px] pl-[16px] ${
+        selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"
+      }`}
+    >
+      <span
+        className={`text-[14px] leading-[20px] font-medium whitespace-nowrap ${
+          selected ? "text-primary" : "text-[#323232]"
+        }`}
+      >
+        {label}
+      </span>
+      <svg viewBox="0 0 24 24" className="size-[18px] shrink-0" aria-hidden>
+        <path
+          d="M7 10l5 5 5-5"
+          fill="none"
+          stroke={selected ? "var(--color-primary)" : "#323232"}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  );
+}
+
+/**
+ * Material 3 filter chip — the three offer chips.
  *
  * Spec followed: 32dp high, 8dp corner, 1dp outline when unselected, filled
  * container with no outline when selected, an 18dp leading checkmark on
- * selection, 16dp label padding dropping to 8dp on the side the checkmark
- * takes, 14sp Medium label, 8dp between chips.
+ * selection, 16dp label padding dropping to 8dp beside the checkmark, 14sp
+ * Medium label, 8dp between chips.
  *
- * Two deliberate departures. The container and label take this app's tokens
- * rather than M3's palette — `primary/subtle` and `primary/default` for the
- * selected state — so the chips read as part of the product. And the shape is
- * M3's 8dp corner while `TopChipBar`'s Sort and Filter chips are the frame's
- * fully-rounded pills, so in Variant B the two shapes sit side by side. That
- * follows the instruction to use the M3 guideline, but it is a visible
- * mismatch and easy to reverse if the pill should win.
- *
- * No counts on the labels. M3 filter chips are a label and an optional leading
- * icon, and the vertical names are long enough on a 360px strip without a
- * trailing number. Counts stay where there is room for them, in the panels.
+ * The palette is this app's rather than M3's, and the 8dp corner sits beside
+ * `TopChipBar`'s fully-rounded Figma pills in Variant B — following the M3
+ * instruction, but a visible mismatch and one line to reverse.
  */
 function FilterChip({
   label,
@@ -75,14 +225,10 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      // A chip is a toggle, so it announces as one rather than as a button
-      // that happens to look pressed.
       role="checkbox"
       aria-checked={selected}
       className={`flex h-[32px] shrink-0 cursor-pointer items-center gap-[8px] rounded-[8px] pr-[16px] ${
-        selected
-          ? "bg-primary-subtle pl-[8px]"
-          : "border border-[#4d4d4d] bg-white pl-[16px]"
+        selected ? "bg-primary-subtle pl-[8px]" : "border border-[#4d4d4d] bg-white pl-[16px]"
       }`}
     >
       {selected && (
@@ -105,5 +251,86 @@ function FilterChip({
         {label}
       </span>
     </button>
+  );
+}
+
+/**
+ * The Price dropdown: a Material menu anchored under its chip.
+ *
+ * It renders at the screen root rather than inside the strip, because the
+ * strip scrolls horizontally under `overflow-x-auto`, which would clip a
+ * child menu. `left` and `top` are measured against the root when it opens.
+ *
+ * Each tap applies immediately — matching the chips beside it, which also
+ * commit on tap — so there is no Apply button.
+ */
+export function PriceMenu({
+  options,
+  chosen,
+  left,
+  top,
+  onToggle,
+  onClose,
+}: {
+  options: CountedOption[];
+  chosen: string[];
+  left: number;
+  top: number;
+  onToggle: (optionId: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <button
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 z-40 cursor-default"
+      />
+      <div
+        role="menu"
+        style={{ left, top }}
+        className="absolute z-50 w-[180px] overflow-hidden rounded-[8px] border border-[#dedede] bg-white py-[4px] shadow-[0px_4px_12px_rgba(0,0,0,0.18)]"
+      >
+        {options.map((option) => {
+          const on = chosen.includes(option.id);
+          return (
+            <button
+              key={option.id}
+              role="menuitemcheckbox"
+              aria-checked={on}
+              onClick={() => onToggle(option.id)}
+              className="flex h-[40px] w-full cursor-pointer items-center gap-[8px] px-[12px] text-left"
+            >
+              <span
+                className={`flex size-[18px] shrink-0 items-center justify-center rounded-[3px] ${
+                  on ? "bg-primary" : "border-[1.5px] border-[#767676] bg-white"
+                }`}
+              >
+                {on && (
+                  <svg viewBox="0 0 20 20" className="size-[13px]" aria-hidden>
+                    <path
+                      d="M4 10.5l4 4 8-8"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </span>
+              <span
+                className={`flex-1 truncate text-[14px] ${
+                  on ? "font-medium text-primary" : "text-[#323232]"
+                }`}
+              >
+                {option.label}
+              </span>
+              <span className="shrink-0 text-[12px] text-muted">{option.count}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }

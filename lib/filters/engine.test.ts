@@ -170,7 +170,15 @@ describe("toggleSelection", () => {
 
 describe("contextual chips", () => {
   const ids = (selections: Record<string, string[]>) =>
-    contextChips(catalog, selections).map((c) => `${c.facetId}:${c.option.id}`);
+    contextChips(catalog, selections).map((c) =>
+      c.kind === "price" ? "price:*" : `${c.facetId}:${c.option.id}`,
+    );
+
+  /** The bands inside the Price dropdown, which is one chip however many. */
+  const bands = (selections: Record<string, string[]>) => {
+    const chip = contextChips(catalog, selections).find((c) => c.kind === "price");
+    return chip?.kind === "price" ? chip.options.map((o) => o.id) : [];
+  };
 
   it("offers the verticals when none is picked", () => {
     expect(ids({})).toEqual([
@@ -184,13 +192,21 @@ describe("contextual chips", () => {
     ]);
   });
 
-  it("switches to price and offers once a single vertical is settled", () => {
-    const chips = ids({ category: ["girls-t-shirts"] });
-    expect(chips.every((c) => !c.startsWith("category:"))).toBe(true);
-    expect(chips.some((c) => c.startsWith("price:"))).toBe(true);
-    expect(chips).toContain("hasOffer:any");
-    expect(chips).toContain("offers:cashback");
-    expect(chips).toContain("offers:free-delivery");
+  it("leads with the picked vertical, then price and offers", () => {
+    expect(ids({ category: ["girls-t-shirts"] })).toEqual([
+      // Stays on the strip so its ✕ is the way back out.
+      "category:girls-t-shirts",
+      "price:*",
+      "hasOffer:any",
+      "offers:cashback",
+      "offers:free-delivery",
+    ]);
+  });
+
+  it("offers price as one chip, not one per band", () => {
+    const chips = contextChips(catalog, { category: ["girls-t-shirts"] });
+    expect(chips.filter((c) => c.kind === "price")).toHaveLength(1);
+    expect(bands({ category: ["girls-t-shirts"] }).length).toBeGreaterThan(1);
   });
 
   it("goes back to verticals when a second one is added", () => {
@@ -223,10 +239,18 @@ describe("contextual chips", () => {
   });
 
   it("hides a price band no product in the vertical falls into", () => {
-    const chips = ids({ category: ["girls-t-shirts"] });
     // Girl's T-Shirts top out at ~₹320/pc, so the upper bands cannot appear.
-    expect(chips).not.toContain("price:p-max");
-    expect(chips).not.toContain("price:p-900");
+    expect(bands({ category: ["girls-t-shirts"] })).toEqual(["p-200", "p-400"]);
+    // Men's Formal Shirts reach ₹1,150 and so keep the top band.
+    expect(bands({ category: ["mens-formal-shirts"] })).toContain("p-max");
+  });
+
+  it("carries a vertical chip with its image, so the strip can show a thumbnail", () => {
+    const chip = contextChips(catalog, {})[0];
+    expect(chip.kind).toBe("vertical");
+    if (chip.kind === "vertical") {
+      expect(chip.option.image).toBe("/categories/womens-t-shirts.jpg");
+    }
   });
 
   it("treats Seller Offer as its own facet, so it narrows Cashback rather than widening it", () => {

@@ -6,10 +6,17 @@ import {
   type Selections,
 } from "./engine";
 
-export interface ContextChip {
-  facetId: string;
-  option: CountedOption;
-}
+/**
+ * The strip carries three kinds of chip, and they render differently enough
+ * that the kind is part of the data rather than something the view infers.
+ */
+export type ContextChip =
+  /** Product vertical: a thumbnail, a two-line label, and a remove ✕ once picked. */
+  | { kind: "vertical"; facetId: "category"; option: CountedOption }
+  /** Price: one chip opening a dropdown over the bands, rather than a chip each. */
+  | { kind: "price"; facetId: "price"; options: CountedOption[] }
+  /** Plain Material filter chip — the three offers. */
+  | { kind: "filter"; facetId: string; option: CountedOption };
 
 /**
  * Which contextual chips the strip below the GOLD bar should carry.
@@ -21,52 +28,57 @@ export interface ContextChip {
  *
  * - **Not inside a single product vertical** — none picked, or several — the
  *   open question is *which vertical*, so it offers those.
- * - **Inside exactly one** — the vertical is settled and the open questions
- *   are price and offers, so it offers those instead.
+ * - **Inside exactly one** — the vertical leads, still removable by its ✕ so
+ *   the strip is also the way back out, and price and offers follow it.
  *
  * Pure, and separate from the rendering, because the interesting part is this
  * selection rule rather than the markup.
  */
 export function contextChips(products: Product[], selections: Selections): ContextChip[] {
-  const inSingleVertical = (selections.category ?? []).length === 1;
+  const picked = selections.category ?? [];
+  const verticals = facetOptionsWithCounts(products, selections, "category");
 
-  if (!inSingleVertical) {
-    return facetOptionsWithCounts(products, selections, "category").map((option) => ({
-      facetId: "category",
-      option,
-    }));
+  if (picked.length !== 1) {
+    return verticals.map((option) => ({ kind: "vertical", facetId: "category", option }));
   }
 
-  return SINGLE_VERTICAL_CHIPS.flatMap(({ facetId, only, discriminating }) => {
-    const options = discriminating
-      ? discriminatingOptions(products, selections, facetId)
-      : facetOptionsWithCounts(products, selections, facetId);
+  const current = verticals.find((option) => option.id === picked[0]);
 
-    return options
-      .filter((option) => !only || only.includes(option.id))
-      .map((option) => ({ facetId, option }));
-  });
+  return [
+    // Leads the strip. `facetOptionsWithCounts` keeps a selected option even at
+    // zero, so this is only missing if the id in the URL isn't a real vertical.
+    ...(current
+      ? [{ kind: "vertical" as const, facetId: "category" as const, option: current }]
+      : []),
+    {
+      kind: "price",
+      facetId: "price",
+      options: facetOptionsWithCounts(products, selections, "price"),
+    },
+    ...OFFER_CHIPS.flatMap(({ facetId, only }) =>
+      discriminatingOptions(products, selections, facetId)
+        .filter((option) => !only || only.includes(option.id))
+        .map((option) => ({ kind: "filter" as const, facetId, option })),
+    ),
+  ];
 }
 
 /**
- * The single-vertical strip, in order: price bands, then the three offers.
+ * The three offer chips, in order.
  *
- * `discriminating` carries the "only if the products don't all share it" rule
- * — an offer every product in the vertical already has is a chip that filters
- * nothing. It is deliberately off for price: a band holding the entire
- * vertical is possible in principle, but hiding it would strand a narrow
- * catalog with an empty strip, and zero-count bands already drop out anyway.
+ * They use `discriminatingOptions`, which carries the "only if the products
+ * don't all share it" rule — an offer every product in the vertical already
+ * has is a chip that filters nothing.
  *
- * `only` keeps the offers list to the two that were asked for. Bulk Offer and
+ * Price deliberately doesn't get that treatment: its bands are behind a
+ * dropdown that always shows, and hiding a band holding the whole vertical
+ * would strand a narrow catalog with an empty menu. Zero-count bands still
+ * drop out, as they do everywhere.
+ *
+ * `only` keeps the list to the two specific offers asked for. Bulk Offer and
  * GOLD Target Scheme stay in the Filters panel rather than the strip.
  */
-const SINGLE_VERTICAL_CHIPS: {
-  facetId: string;
-  /** Restrict to these option ids. Omitted means every option the facet has. */
-  only?: string[];
-  discriminating?: boolean;
-}[] = [
-  { facetId: "price" },
-  { facetId: "hasOffer", discriminating: true },
-  { facetId: "offers", only: ["cashback", "free-delivery"], discriminating: true },
+const OFFER_CHIPS: { facetId: string; only?: string[] }[] = [
+  { facetId: "hasOffer" },
+  { facetId: "offers", only: ["cashback", "free-delivery"] },
 ];
