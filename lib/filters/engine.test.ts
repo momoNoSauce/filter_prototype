@@ -165,50 +165,81 @@ describe("toggleSelection", () => {
 
 });
 
-describe("gender placement differs by variant", () => {
-  it("is in the engine either way", () => {
+describe("the rail differs by variant, and only by Category", () => {
+  it("keeps both facets in the engine either way", () => {
     expect(FACET_BY_ID.has("gender")).toBe(true);
+    expect(FACET_BY_ID.has("category")).toBe(true);
     expect(countMatching(catalog, { gender: ["women"] })).toBeGreaterThan(0);
     expect(parseSelections(new URLSearchParams("gender=women"))).toEqual({
       gender: ["women"],
     });
   });
 
-  it("Variant A keeps it out of the rail — the bottom-bar sheet owns it", () => {
-    expect(getRailFacetIds(false).has("gender")).toBe(false);
-    expect(getRail(false).some((r) => r.id === "gender")).toBe(false);
+  it("Variant A shows Gender but not Category — the bottom bar owns Category", () => {
+    const rail = getRail("bottom-bar");
+    const owned = getRailFacetIds("bottom-bar");
+    expect(owned.has("category")).toBe(false);
+    expect(owned.has("gender")).toBe(true);
+    expect(rail.some((r) => r.id === "category")).toBe(false);
+    expect(rail[0].id).toBe("gender");
   });
 
-  it("Variant B puts it in the rail, second, since there is no bottom bar", () => {
-    const rail = getRail(true);
-    expect(getRailFacetIds(true).has("gender")).toBe(true);
+  it("Variant B adds Category on top, and changes nothing else", () => {
+    const rail = getRail("top-chips");
+    const owned = getRailFacetIds("top-chips");
+    expect(owned.has("category")).toBe(true);
+    expect(owned.has("gender")).toBe(true);
+    expect(rail[0].id).toBe("category");
     expect(rail[1].id).toBe("gender");
-    // Same entries otherwise — B adds gender and changes nothing else.
-    expect(rail.length).toBe(getRail(false).length + 1);
+    // The rails differ by exactly one row.
+    expect(rail.slice(1)).toEqual(getRail("bottom-bar"));
+    expect(rail.length).toBe(getRail("bottom-bar").length + 1);
   });
 
-  it("Variant A's Clear must not wipe a gender it never displayed", () => {
-    const draft = { gender: ["women"], seller: ["grasim"], colour: ["navy"] };
-    const owned = getRailFacetIds(false);
+  it("Variant A's Clear must not wipe the Category it never displayed", () => {
+    const draft = {
+      category: ["girls-t-shirts"],
+      gender: ["women"],
+      seller: ["grasim"],
+      colour: ["navy"],
+    };
+    const owned = getRailFacetIds("bottom-bar");
     const cleared = Object.fromEntries(
       Object.entries(draft).filter(([id]) => !owned.has(id)),
     );
-    expect(cleared).toEqual({ gender: ["women"] });
+    // Gender goes, because A's rail shows it; Category survives, because the
+    // bottom bar owns it.
+    expect(cleared).toEqual({ category: ["girls-t-shirts"] });
   });
 
-  it("Variant B's Clear does wipe gender, because it is shown there", () => {
-    const draft = { gender: ["women"], seller: ["grasim"] };
-    const owned = getRailFacetIds(true);
+  it("Variant B's Clear does wipe Category too, because it shows it", () => {
+    const draft = { category: ["girls-t-shirts"], gender: ["women"], seller: ["grasim"] };
+    const owned = getRailFacetIds("top-chips");
     const cleared = Object.fromEntries(
       Object.entries(draft).filter(([id]) => !owned.has(id)),
     );
     expect(cleared).toEqual({});
   });
 
-  it("multi-selects in the Filters rail, like every other facet", () => {
-    const men = toggleSelection({}, "gender", "men");
-    expect(toggleSelection(men, "gender", "boys")).toEqual({
-      gender: ["men", "boys"],
+  it("Variant A's Filters badge counts gender but not the category the bar reports", () => {
+    const selections = {
+      category: ["girls-t-shirts", "womens-t-shirts"],
+      gender: ["women"],
+      seller: ["grasim"],
+    };
+    const owned = getRailFacetIds("bottom-bar");
+    const badge = Object.entries(selections).reduce(
+      (sum, [id, chosen]) => sum + (owned.has(id) ? chosen.length : 0),
+      0,
+    );
+    // Gender and seller; the two categories are the Category badge's to show.
+    expect(badge).toBe(2);
+  });
+
+  it("Category multi-selects, which is why its sheet needs an Apply", () => {
+    const one = toggleSelection({}, "category", "mens-casual-shirts");
+    expect(toggleSelection(one, "category", "mens-casual-t-shirts")).toEqual({
+      category: ["mens-casual-shirts", "mens-casual-t-shirts"],
     });
   });
 });

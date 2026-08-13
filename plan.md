@@ -18,8 +18,10 @@ Home → tap *Baheti Garments* → PLP → filter and sort. Two control layouts 
 
 | | Home | PLP | Controls |
 |---|---|---|---|
-| **Variant A** | `/` | `/seller/[sellerId]` | Gender · Sort · Filters pinned to the bottom (Figma `638:2836`) |
-| **Variant B** | `/b` | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar; Gender moves into the Filters rail |
+| **Variant A** | `/` | `/seller/[sellerId]` | Category · Sort · Filters pinned to the bottom (Figma `638:2836`); Category is a multi-select sheet and so leaves A's rail |
+| **Variant B** | `/b` | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar, so Category is a Filters-rail facet instead |
+
+Gender is a rail facet in both, so the two rails differ by exactly one row.
 
 Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop, one `HomeScreen` with a `basePath` prop. Only the controls differ, so any preference between them is about control placement and nothing else.
 
@@ -72,7 +74,11 @@ Options that fall to zero are hidden. Anything currently selected stays visible 
 
 Fourteen facets behind twelve rail entries (*More Filters* stacks Fabric and Product Tags). Each facet declares `valuesOf(product) → string[]`, so range buckets, multi-valued delivery windows and plain checkboxes all flow through one code path. Adding a facet is one array entry.
 
-`FACETS` is everything the engine knows about; `getRail(includeGender)` is what the Filters screen displays, which differs by variant. `gender` is in the rail only in Variant B — in A the bottom-bar sheet owns it, and listing it in both places would let the two disagree. `getRailFacetIds(includeGender)` is the set that anything mutating the draft (notably Clear Filters) must filter through, so a facet the screen doesn't show can never be cleared by it.
+`FACETS` is everything the engine knows about; `getRail(variant)` is what the Filters screen displays, which differs by variant — and differs *only* in whether it carries Category and Gender at the top.
+
+The one row that differs is **Category**: it is the bottom bar's quick action in A, so the bar owns it there. Listing it in both places would put one facet behind two controls and double-report it, once as the Category badge and again inside the Filters count. **Gender** is in both rails — largely redundant now that every category names its audience, but a faster cut than ticking three tiles, and dropping it would leave `?gender=` links with no UI.
+
+`getRailFacetIds(variant)` is the set that anything mutating the draft (notably Clear Filters) must filter through, so a facet the screen doesn't show can never be cleared by it.
 
 Panels: Category and Brands use the tile grid (68×96 cells, 56px tile, fixed 36px two-line label reserved whether or not it's used, so a row's tiles align); Colour is a checkbox row with a 16px colour dot; Price Range, Margin and MOQ are checkbox rows over preset buckets (no slider — that would add a control the design system doesn't have); everything else is the designed checkbox row.
 
@@ -114,10 +120,12 @@ Several of these were revised during review — the current state is what's list
 |---|---|---|
 | 1 | Facet counts | Footer total **and** per-option counts both recompute live on every tick. Zero-count options are hidden; anything selected stays visible even at zero. |
 | 2 | Sort sheet | Tapping a row applies and closes — the design has no Apply button. |
-| 3 | Gender | Reached differently per variant. **A:** a single-select quick action in the bottom-bar sheet — journey mapping found nobody shops two genders at once — so the Apply/Clear footer is gone, a tap applies and closes like Sort, and re-tapping the active row clears it. Absent from A's rail. **B:** no bottom bar, so it becomes an ordinary multi-select facet sitting second in the Filters rail. Always rendered as a checkbox, never a radio. |
+| 3 | Bottom bar slot 1 | **Category**, replacing Gender (2026-08-13). The categories name their audience now, so gender stopped earning a control of its own. Figma's frame says Gender; this is a deliberate departure. `tag.svg` stands in as the icon — the design has no Category bar slot and so no glyph for one, and this one is already the Sort sheet's *Recently Added* icon. Wants a designed replacement. |
+| 3a | Category | **A:** a multi-select quick action in the bottom-bar sheet, with a draft and a `Clear all` / `Show N results` footer — a retailer plausibly wants Men's Casual Shirts *and* Men's Casual T-Shirts, so "tap applies and closes" would be wrong here even though it was right for Gender. Absent from A's rail, because the bar owns it. **B:** an ordinary rail facet, first. The sheet reuses the Filters screen's `TileGrid`, so cell geometry can only change in one place; being wider than the 240px panel, it wraps four across instead of three. |
+| 3b | Gender | An ordinary multi-select rail facet in **both** variants — first in A's rail, second in B's, a checkbox in each. It briefly had no control in A at all, on the grounds that the categories name their audience; put back because redundant isn't useless, it is a faster cut than ticking three tiles, and `?gender=` links need somewhere to show. The single-select `GenderSheet` stayed deleted — the bottom-bar slot it lived in belongs to Category now. |
 | 4 | Set pills | Selectable. Picking a pack updates that card's MRP, price/pc, margin and set size. Dots track scroll pages. |
-| 5 | Applied-filter cue | Carried by the controls themselves, in both variants: a **dot** for anything holding one value (Gender, Sort), a **count** for Filters, which can hold many. Gender is excluded from that count since it reports itself. Removable filter chips were built and then removed on request — in Variant A that strip is reserved for contextual chips, still undefined. |
-| 6 | Clear Filters scope | Clears only the facets that variant's rail owns. In A gender survives it — clearing a filter from a screen that never displayed it would be a silent surprise. In B gender is cleared, because B shows it. |
+| 5 | Applied-filter cue | Carried by the controls themselves, in both variants: a **dot** for anything holding one value (Sort), a **count** for anything that can hold many (Category in A, Filters always). Category is excluded from A's Filters count since it reports itself. Removable filter chips were built and then removed on request — in Variant A that strip is reserved for contextual chips, still undefined. |
+| 6 | Clear Filters scope | Clears only the facets that variant's rail owns. In A category survives it — clearing a filter from a screen that never displayed it would be a silent surprise — while gender is cleared, because A's rail shows it. In B both are cleared. The Category sheet's own `Clear all` clears category and nothing else, by the same rule. |
 | 7 | Seller facet on a seller PLP | The app bar says *Baheti Garments* while the Seller facet lists Heeralal, Gagan, Grasim. Treated as a **storefront aggregating multiple sellers**, so the whole catalog is in scope there. Every other seller page is scoped to its own stock. |
 | 8 | `Offers` vs `Seller Offers` | The two filter frames disagree. Using **Offers**. |
 | 9 | Undesigned facet panels | Only Category (tile grid, reworked 2026-08-12 to 68×96 cells with a 56px tile and a two-line label) and Seller (checkbox list) are designed. Brands was moved to the tile grid on request; the rest reuse the checkbox row rather than introducing sliders or swatch grids the design system doesn't have. Colour adds a 16px dot before the label; price/margin/MOQ use bucket rows. |
@@ -137,6 +145,8 @@ Several of these were revised during review — the current state is what's list
 - `npm run dev`, then Chrome DevTools at exactly 360px, and compare each screen against its Figma frame.
 - Widen past 480px to confirm the phone mockup appears and the app still renders at 360.
 
-**Demo script:** Home → Baheti Garments → Filters → Seller → tick Grasim + Gagan → footer drops 1,070 → 530 and other facets' counts shrink → Show results, Filters badge reads 2 → Sort → Highest Margin → order changes and a dot appears on Sort → Gender → Girls → sheet slides away, dot appears on Gender → Filters → Category → six of the seven tiles are gone, only *Girl's T-Shirts* stands → Clear Filters (Gender survives; its dot stays) → Gender → tap Girls again to clear. The URL tracks every step and the back button unwinds it.
+**Demo script (Variant A):** Home → Baheti Garments → Category → tick *Men's Casual Shirts* + *Men's Casual T-Shirts* → footer reads Show 412 results → apply, and the Category badge reads 2 while Filters stays bare, because the bar reports its own → Filters → Seller → tick Grasim + Gagan → counts shrink → Show results, Filters badge reads 2 → Sort → Highest Margin → order changes and a dot appears on Sort → Filters → Clear Filters (the two categories survive; their badge stays) → Category → Clear all. The URL tracks every step and the back button unwinds it.
 
-For the brand-pruning version: Filters → Category → *Boy's Casual T-Shirts* → Brands → the grid drops from ten tiles to two (Killer, Monte Carlo), 117 results.
+**Facet pruning (Variant B, where Category and Gender share a rail):** Filters → Gender → Girls → Category → six of the seven tiles are gone, only *Girl's T-Shirts* stands. In A the same cut is Filters → Gender → Girls, then Category from the bottom bar.
+
+**Brand pruning (either variant):** Category → *Boy's Casual T-Shirts* → Filters → Brands → the grid drops from ten tiles to two (Killer, Monte Carlo), 117 results.

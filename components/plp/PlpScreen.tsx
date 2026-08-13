@@ -10,7 +10,7 @@ import {
   type Selections,
   type SortId,
 } from "@/lib/filters/engine";
-import { getRailFacetIds } from "@/lib/filters/facets";
+import { getRailFacetIds, type PlpVariant } from "@/lib/filters/facets";
 import { buildQuery, parseSelections, parseSort } from "@/lib/filters/urlState";
 import { AppBar } from "./AppBar";
 import { GoldStrip } from "./GoldStrip";
@@ -18,26 +18,29 @@ import { ProductCard } from "./ProductCard";
 import { BottomActionBar } from "./BottomActionBar";
 import { TopChipBar } from "./TopChipBar";
 import { SortSheet } from "@/components/sheets/SortSheet";
-import { GenderSheet } from "@/components/sheets/GenderSheet";
+import { CategorySheet } from "@/components/sheets/CategorySheet";
 import { FilterScreen } from "@/components/filters/FilterScreen";
 
 const PAGE_SIZE = 8;
 
-type Overlay = "sort" | "gender" | "filters" | null;
+type Overlay = "sort" | "category" | "filters" | null;
 
 /**
  * Two interaction models over the same screen, so they can be compared:
  *
- * - `bottom-bar` — Gender · Sort · Filters pinned to the bottom (Figma 638:2836).
- *                  Gender is a single-select quick action in its own sheet.
- * - `top-chips`  — Sort and Filter as chips under the GOLD strip (Figma 644:4011),
- *                  no bottom bar. Gender moves into the Filters rail as an
- *                  ordinary multi-select facet, since there's no bar to host it.
+ * - `bottom-bar` — Category · Sort · Filters pinned to the bottom (Figma
+ *                  638:2836). Category is a multi-select quick action in its
+ *                  own sheet, and is therefore absent from the Filters rail.
+ * - `top-chips`  — Sort and Filter as chips under the GOLD strip (Figma
+ *                  644:4011), no bottom bar, so Category is an ordinary rail
+ *                  facet instead.
+ *
+ * Gender is a rail facet in both, so the rails differ by exactly one row.
  *
  * The card, the catalog and the engine are shared, so the comparison stays
  * about how the controls are reached.
  */
-export type PlpVariant = "bottom-bar" | "top-chips";
+export type { PlpVariant };
 
 export function PlpScreen({
   title,
@@ -49,11 +52,10 @@ export function PlpScreen({
   variant?: PlpVariant;
 }) {
   const pathname = usePathname();
-  // Variant A reaches Gender through the bottom-bar sheet; Variant B has no
-  // bottom bar, so Gender becomes an ordinary facet in the Filters rail.
-  const genderInSheet = variant === "bottom-bar";
-  const genderInRail = variant === "top-chips";
-  const railFacetIds = getRailFacetIds(genderInRail);
+  // Variant A reaches Category through the bottom-bar sheet, so the Filters
+  // rail there must not list it; B has no bottom bar and keeps it in the rail.
+  const categoryInSheet = variant === "bottom-bar";
+  const railFacetIds = getRailFacetIds(variant);
 
   // The query string is the shareable record of state, but local state is the
   // source of truth — that keeps filtering instant instead of round-tripping
@@ -107,11 +109,11 @@ export function PlpScreen({
     }
   };
 
-  const genderActive = (selections.gender?.length ?? 0) > 0;
+  const categoryCount = selections.category?.length ?? 0;
   const sortActive = sort !== DEFAULT_SORT;
   // Counts exactly what the Filters screen owns in this variant. In A that
-  // excludes gender (the bottom bar reports it with its own dot); in B it
-  // includes it, because the Filters screen is where it lives.
+  // excludes category (the bottom bar reports it with its own badge) but
+  // includes gender; in B it includes both, because that screen shows both.
   const filterCount = Object.entries(selections).reduce(
     (sum, [facetId, chosen]) => sum + (railFacetIds.has(facetId) ? chosen.length : 0),
     0,
@@ -153,10 +155,10 @@ export function PlpScreen({
       {variant === "bottom-bar" && (
         <div className="shrink-0">
           <BottomActionBar
-            genderActive={genderActive}
+            categoryCount={categoryCount}
             sortActive={sortActive}
             filterCount={filterCount}
-            onGender={() => setOverlay("gender")}
+            onCategory={() => setOverlay("category")}
             onSort={() => setOverlay("sort")}
             onFilters={() => setOverlay("filters")}
           />
@@ -171,15 +173,11 @@ export function PlpScreen({
         />
       )}
 
-      {overlay === "gender" && genderInSheet && (
-        <GenderSheet
-          value={selections.gender ?? []}
-          onSelect={(next) => {
-            const updated = { ...selections };
-            if (next.length) updated.gender = next;
-            else delete updated.gender;
-            commit(updated, sort);
-          }}
+      {overlay === "category" && categoryInSheet && (
+        <CategorySheet
+          products={products}
+          selections={selections}
+          onApply={(next) => commit(next, sort)}
           onClose={() => setOverlay(null)}
         />
       )}
@@ -188,7 +186,7 @@ export function PlpScreen({
         <FilterScreen
           products={products}
           selections={selections}
-          includeGender={genderInRail}
+          variant={variant}
           onApply={(next) => commit(next, sort)}
           onClose={() => setOverlay(null)}
         />

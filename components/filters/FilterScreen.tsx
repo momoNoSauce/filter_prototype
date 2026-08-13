@@ -3,7 +3,12 @@
 import { useMemo, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
-import { FACET_BY_ID, getRail, getRailFacetIds } from "@/lib/filters/facets";
+import {
+  FACET_BY_ID,
+  getRail,
+  getRailFacetIds,
+  type PlpVariant,
+} from "@/lib/filters/facets";
 import {
   countMatching,
   facetOptionsWithCounts,
@@ -26,17 +31,20 @@ export function FilterScreen({
   selections,
   onApply,
   onClose,
-  includeGender = false,
+  variant,
 }: {
   products: Product[];
   selections: Selections;
   onApply: (next: Selections) => void;
   onClose: () => void;
-  /** Variant B has no bottom bar, so Gender lives here instead. */
-  includeGender?: boolean;
+  /**
+   * Decides the rail, and only by one row: Variant A hands Category to the
+   * bottom bar, so it is absent here. Gender is in both.
+   */
+  variant: PlpVariant;
 }) {
-  const RAIL = getRail(includeGender);
-  const RAIL_FACET_IDS = getRailFacetIds(includeGender);
+  const RAIL = getRail(variant);
+  const RAIL_FACET_IDS = getRailFacetIds(variant);
 
   const [draft, setDraft] = useState<Selections>(selections);
   const [activeRail, setActiveRail] = useState(RAIL[0].id);
@@ -161,9 +169,10 @@ export function FilterScreen({
       <ActionFooter
         primaryLabel={`Show ${total.toLocaleString("en-IN")} results`}
         clearDisabled={ownedCount === 0}
-        // Clears only what this screen owns. Gender is set from the bottom bar
-        // and isn't listed here, so wiping it from a button the user can't see
-        // the effect of would be a silent surprise.
+        // Clears only what this screen owns. In Variant A that spares Category
+        // — it is set from the bottom bar and isn't listed here, so wiping it
+        // from a button whose effect the user can't see would be a silent
+        // surprise. In B it clears Category too, because B displays it.
         onClear={() =>
           setDraft((current) =>
             Object.fromEntries(

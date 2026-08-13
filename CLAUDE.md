@@ -21,8 +21,10 @@ Both render the identical card, catalog, engine and sheets. **Only the controls 
 
 | | Home | PLP | Controls |
 |---|---|---|---|
-| **Variant A** | `/` | `/seller/[sellerId]` | Gender · Sort · Filters pinned to the bottom (Figma `638:2836`) |
-| **Variant B** | `/b` | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar; Gender moves into the Filters rail |
+| **Variant A** | `/` | `/seller/[sellerId]` | Category · Sort · Filters pinned to the bottom (Figma `638:2836`). Category is a multi-select sheet, so it leaves A's rail |
+| **Variant B** | `/b` | `/b/seller/[sellerId]` | Sort and Filter chips under the GOLD strip (Figma `644:4011`), no bottom bar, so Category is a Filters-rail facet instead |
+
+Gender is a rail facet in **both**, so the two rails differ by exactly one row.
 
 Separate routes rather than a query flag — chosen so each has its own shareable link and neither inherits the other's state. Switch by editing the URL.
 
@@ -64,7 +66,7 @@ All icons/images are exact Figma exports in `public/figma/`. **Never redraw an a
 No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 
 - `lib/filters/engine.ts` — `applyFilters` (OR within a facet, AND across facets) and `facetOptionsWithCounts`.
-- `lib/filters/facets.ts` — facet registry. Each facet declares `valuesOf(product) → string[]`, so tile grids, checkbox lists, range buckets and multi-valued delivery windows all use one code path. Adding a facet is one array entry. `FACETS` is every facet the engine knows; `getRail(includeGender)` is what the Filters screen shows for a given variant, and `getRailFacetIds(includeGender)` is the set anything touching the draft must filter through.
+- `lib/filters/facets.ts` — facet registry. Each facet declares `valuesOf(product) → string[]`, so tile grids, checkbox lists, range buckets and multi-valued delivery windows all use one code path. Adding a facet is one array entry. `FACETS` is every facet the engine knows; `getRail(variant)` is what the Filters screen shows for a given variant, and `getRailFacetIds(variant)` is the set anything touching the draft must filter through. `PlpVariant` is declared here rather than in the component, because rail composition is what the variant actually decides.
 - `lib/catalog/seed.ts` — 1,070 products from a fixed-seed PRNG. Determinism is load-bearing: counts must not shift between reloads or between server and client.
 - `lib/filters/urlState.ts` — state mirrored to the query string via `history.pushState`; local state stays the source of truth so filtering is instant.
 
@@ -93,14 +95,17 @@ Brands are category-restricted too. Kids' lines carry the fewest, which is what 
 |---|---|
 | Default sort | **Popularity**, and omitted from the URL (bare URL = Popularity) |
 | Sort sheet | Tap applies **and closes** — no Apply button in the design |
-| Gender | Reached differently per variant, and behaves accordingly. **A:** a single-select quick action in the bottom-bar sheet (journey mapping: nobody shops two genders at once) — tap applies and closes, re-tapping the active row clears it, and it is absent from A's rail. **B:** no bottom bar, so it becomes an ordinary **multi-select** facet, second in the Filters rail. Exclusivity is a property of the control, not the facet — there is no `single` flag in the registry. |
-| Gender control | Always a **checkbox**, never a radio — consistent with every other facet. In A that means a checkbox behaving exclusively; a known mismatch, flagged to the designer |
-| Active row (Sort/Gender) | Three things together: label bold, label primary, **icon tints to primary** |
+| Bottom bar slot 1 | **Category**, not Gender (2026-08-13). The categories name their audience, so gender stopped earning a control; Category is what a retailer reaches for first. Figma's frame says Gender — this is a deliberate departure |
+| Category | **A:** a multi-select quick action in the bottom-bar sheet — a draft plus a `Clear all` / `Show N results` footer, because a retailer plausibly wants Men's Casual Shirts *and* Men's Casual T-Shirts. Absent from A's rail, since the bar owns it. **B:** an ordinary rail facet, first. Same `TileGrid` either way; the sheet is wider than the 240px panel, so the same 68px cells wrap four across instead of three |
+| Gender | An ordinary **multi-select** rail facet in **both** variants — first in A's rail, second in B's. Largely redundant now that every category names its audience, but redundant isn't useless: it's a faster cut than ticking three category tiles, and dropping it would leave `?gender=` links with no UI. Exclusivity was always a property of the control, never the facet, which is why there is no `single` flag in the registry |
+| Category sheet icon | `tag.svg`. The design has no bottom-bar Category slot and therefore no icon for one. It's an existing Figma export rather than a drawn asset, but it is also the Sort sheet's *Recently Added* icon — **wants a designed replacement** |
+| Active row (Sort) | Three things together: label bold, label primary, **icon tints to primary** |
 | Tile selected state | Primary ring + 50% primary veil over the photo + white check + bold primary label |
 | Top chip strip | In **A** it is empty and reserved for **contextual chips** (undefined — ask before filling it); the `644:4011` chips and the applied-filter chips were both removed from A on request. In **B** that same strip carries the Sort and Filter chips |
-| Applied state cue | Carried by whichever control owns the filter. One value → a **dot** (Sort always; Gender in A). Many → a **count** (Filters). In A the count excludes gender because the bottom bar reports it; in B it includes gender, because the Filters screen owns it |
-| Clear Filters scope | Clears only facets in `getRailFacetIds(variant)`. In A that spares gender — wiping a filter from a screen that never showed it is a silent surprise. In B it clears gender too, because B displays it |
-| Sheet motion | Asymmetric: enter 260ms `cubic-bezier(.05,.7,.1,1)` (decelerate), exit 200ms `cubic-bezier(.3,0,.8,.15)` (accelerate); scrim 200/160ms. `Sheet` owns dismissal — `onClose` fires on `animationend`, and rows get the animated close via a render prop. `prefers-reduced-motion` collapses all four to 1ms |
+| Applied state cue | Carried by whichever control owns the filter. One value → a **dot** (Sort). Many → a **count** (Category in A, Filters always). In A the Filters count excludes category, because the bottom bar reports it; it still counts gender, which A's rail shows |
+| Clear Filters scope | Clears only facets in `getRailFacetIds(variant)`. In A that spares category — wiping a filter from a screen that never showed it is a silent surprise — but does clear gender, which A's rail displays. In B it clears both. `Clear all` in the Category sheet clears only category, by the same rule |
+| Sheet motion | Asymmetric: enter 260ms `cubic-bezier(.05,.7,.1,1)` (decelerate), exit 200ms `cubic-bezier(.3,0,.8,.15)` (accelerate); scrim 200/160ms. `Sheet` owns dismissal — `onClose` fires on `animationend`, and rows and footers get the animated close via a render prop. `prefers-reduced-motion` collapses all four to 1ms |
+| Sort sheet vs Category sheet | Sort has no footer and commits on tap, because it holds one value. Category has the `Clear all` / `Show N results` footer, because it holds many. That footer is the one Figma's gender frame (`644:4470`) carried before it was dropped for being single-select |
 | Brands panel | Uses the **same tile grid as Category**, not a checkbox list |
 | Tile grid | Figma frame `Category` (`638:3696`): 68×96 cells, 56px square at radius 9.333, 4px gaps, 14px left inset, three across. The label is a **fixed 36px two-line box** — reserved even for one-line labels, so tiles on a row bottom out level — and long labels clamp at two lines rather than truncating on one. Shared by Category and Brands in both variants; change it once. |
 | Undesigned panels | Ten of twelve facets aren't designed. They reuse the designed checkbox row rather than introducing sliders or swatch grids. Colour adds a 16px dot; price/margin/MOQ use bucket rows |

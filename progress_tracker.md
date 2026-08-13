@@ -43,6 +43,8 @@ Local: `npm run dev` → http://localhost:3000.
 - Gender in Variant A is **single-select, bottom-bar only** — Apply/Clear footer dropped, tap applies and closes, absent from A's rail.
 - **Sort dot** when sorted away from Popularity; Gender dot; Filters count (excludes Gender).
 - **Bottom sheet enter/exit animation**, asymmetric timing, reduced-motion aware.
+- **Category replaced Gender in A's bottom bar** (2026-08-13), as a *multi-select* sheet with a `Clear all` / `Show N results` footer — Gender's tap-applies-and-closes was right for one value, not for many. Category left A's rail so one facet isn't behind two controls. `getRail`/`getRailFacetIds` now take the variant instead of an `includeGender` boolean.
+- **Gender moved into A's Filters rail**, heading it. It was briefly dropped from A altogether as redundant; put back because it is still a faster cut than ticking three category tiles, and `?gender=` links need somewhere to show. The two rails now differ by exactly one row, Category. The single-select `GenderSheet.tsx` stayed deleted — the bar slot it lived in belongs to Category.
 - **Categories replaced** (2026-08-12) with the seven from the merchandising list — Women's T-Shirts, Men's Formal Shirts, Men's Casual T-Shirts, Men's Casual Shirts, Girl's T-Shirts, Boy's Casual Shirts, Boy's Casual T-Shirts. New tile photos, rebuilt brand↔category map, per-category price bands, gender-free product titles.
 
 ### Verified working
@@ -51,8 +53,9 @@ Local: `npm run dev` → http://localhost:3000.
 - Per-option counts recompute against other facets, not their own.
 - **Facet pruning:** Girls cuts Category from 7 tiles to 1 (*Girl's T-Shirts*, 97 results); Men cuts it to 3 (575). *Boy's Casual T-Shirts* cuts Brands from 10 tiles to 2.
 - Selected-but-zero options stay visible so they can be unticked.
-- Gender: tap applies + closes; picking another replaces; re-tapping the active one clears.
-- Clear Filters does **not** wipe Gender.
+- Category sheet in A: multi-selects, footer total tracks the draft, apply writes `?category=mens-casual-shirts,mens-casual-t-shirts` and the bar badge reads 2 while Filters stays bare.
+- A's rail is Gender plus the eleven common entries; B's is the same list with Category added on top. Exactly one row apart.
+- Clear Filters does **not** wipe Category in A (the bar owns it) but does wipe Gender (the rail shows it); the Category sheet's `Clear all` wipes only Category.
 - Sort dot appears on non-default sort and clears on return to Popularity.
 - Sheet motion measured frame by frame: enter decelerates (92→29→12→4px steps), exit accelerates (10→34→73→171px), then unmounts.
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
@@ -64,8 +67,8 @@ An A/B of control placement, added 2026-08-12. Same card, catalog, engine and sh
 
 | | Home | PLP | Controls |
 |---|---|---|---|
-| **Variant A** | `/` | `/seller/baheti` | Gender · Sort · Filters at the bottom |
-| **Variant B** | `/b` | `/b/seller/baheti` | Sort + Filter chips at the top, no bottom bar; Gender in the Filters rail |
+| **Variant A** | `/` | `/seller/baheti` | Category · Sort · Filters at the bottom; Gender heads the Filters rail |
+| **Variant B** | `/b` | `/b/seller/baheti` | Sort + Filter chips at the top, no bottom bar; Category and Gender both in the Filters rail |
 
 Switching is by URL — chosen over an on-screen toggle so nothing that isn't product chrome appears on a screen being judged.
 
@@ -87,8 +90,8 @@ Ordered by consequence. None of these block a demo.
    | `65% margin` | `#39B54A` | 2.66:1 | 4.5:1 |
    | `VIEW DETAILS` | `#FF7711` | 2.53:1 | 4.5:1 |
    Audience is kirana retailers on mid-range Android in poor light. Worth darkening before this becomes the build spec.
-3. **In Variant A, Gender renders as a checkbox but behaves exclusively** (Variant B is genuinely multi-select, so this only affects A's sheet). Deliberate — visual consistency over strict semantics — but it is the one combination that misleads.
-10. **The variants now differ in more than control placement.** A treats gender as a single-select quick action, B as a regular multi-select facet. Coherent per control model, but it means a stated preference for B can't be attributed to the chips alone. Worth naming when running it past people.
+10. **The variants still differ in more than control placement, but by less than they did.** The gap is now one facet: A reaches Category from the bottom bar, B from the rail. Everything else, Gender included, is identical. A stated preference for B is closer to being about the chips alone than at any earlier point, though not purely so.
+    *Resolved along the way:* A's checkbox-that-behaves-exclusively Gender mismatch is gone — Gender is an ordinary multi-select rail facet in both variants now, so no control claims exclusivity anywhere.
 4. **Tiles show no counts** while every checkbox row does — you can't judge whether a category is worth tapping.
 5. **Hidden zero-count options** are right for the pruning demo but break the user's mental map; most Indian ecommerce greys out instead. A conscious call, not an inherited default.
 6. **No loading / skeleton / stale-results state anywhere.** Filtering is instant only because the catalog is in memory; against a real API it won't be, and the prototype is quietly setting an expectation engineering can't meet.
@@ -105,10 +108,10 @@ Ordered by consequence. None of these block a demo.
 
 0. **Three things fell out of the new category list** (2026-08-12), none blocking:
    - **Apostrophes are inconsistent** — "Men's" and "Women's" are plural possessives, but "Girl's" and "Boy's" are singular. Set verbatim as supplied rather than silently corrected; say the word and they become "Girls'" / "Boys'".
-   - **Gender is now redundant as a filter.** Every category names its audience, so ticking *Girls* and ticking *Girl's T-Shirts* do the same thing. Gender still earns its place as a faster top-level cut, but it is worth deciding whether it stays a facet or becomes purely the Variant A quick action.
+   - ~~**Gender is now redundant as a filter.**~~ Settled 2026-08-13: kept as a rail facet in **both** variants, since it is still a faster cut than ticking three category tiles. A's bottom-bar slot went to Category instead.
    - **Product card renders are button-up shirts** while four of seven categories are tees. Only two shirt renders exist in Figma; tee renders would need exporting.
 1. **What are the contextual chips?** That strip renders nothing until defined.
-2. Gender's checkbox-but-exclusive mismatch — which way do you want it resolved?
+2. **A Category glyph for the bottom bar.** The frame's first slot was Gender (`wc.svg`); it now holds Category and is borrowing `tag.svg`, which is also the Sort sheet's *Recently Added* icon. An exported Category icon would settle it.
 3. `Offers` vs `Seller Offers` — the two filter frames disagree; currently **Offers**.
 4. Baheti Garments is treated as a storefront aggregating multiple sellers, since the app bar says Baheti while the Seller facet lists other companies. Confirm, or scope it to one seller and drop the Seller facet there.
 5. A stray `$299.99` row sits at the bottom of the filter rail in Figma (`638:3712`) and was skipped as an artefact; `Margin` is SemiBold while its eleven rail siblings are Medium.

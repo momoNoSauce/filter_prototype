@@ -1,36 +1,50 @@
 "use client";
 
 /**
- * Figma 638:2836 — the Gender / Sort / Filters bar.
+ * Figma 638:2836 — the bottom bar.
  * White, a -4px 4px 10% shadow, each item flex-1 with pt-4 pb-8.
  *
- * The count badge is an addition: the frames give no way to tell a filtered
+ * The frame's first slot is Gender. It holds **Category** instead: the
+ * categories name their audience now ("Boy's Casual Shirts"), so gender no
+ * longer earns a control of its own, and Category is what a retailer reaches
+ * for first.
+ *
+ * The count badge is an addition — the frames give no way to tell a filtered
  * list from an unfiltered one, and a demo needs that legible.
- */
-/**
- * Each control reports its own state, and only its own:
- * Gender and Sort hold at most one value each, so they get a dot; Filters can
- * hold many, so it gets a count. Gender is excluded from that count — it is
- * set from here, never from the Filters screen.
+ *
+ * Each control reports its own state, and only its own. Sort holds at most one
+ * value, so it gets a dot; Category and Filters can each hold many, so they
+ * get counts. Category is excluded from the Filters count, because it is set
+ * from here and is absent from that screen's rail.
+ *
+ * `tag.svg` stands in for a Category glyph. The design has no bottom-bar
+ * Category slot and so no icon for one; this is an existing Figma export
+ * rather than a drawn asset, but it is also the Sort sheet's "Recently Added"
+ * icon. Worth a designed replacement.
  */
 export function BottomActionBar({
-  genderActive,
+  categoryCount,
   sortActive,
   filterCount,
-  onGender,
+  onCategory,
   onSort,
   onFilters,
 }: {
-  genderActive: boolean;
+  categoryCount: number;
   sortActive: boolean;
   filterCount: number;
-  onGender: () => void;
+  onCategory: () => void;
   onSort: () => void;
   onFilters: () => void;
 }) {
   return (
     <div className="flex w-full items-center justify-center gap-[18px] bg-white drop-shadow-[0px_-4px_4px_rgba(0,0,0,0.1)]">
-      <BarItem label="Gender" icon="/figma/icons/wc.svg" dot={genderActive} onClick={onGender} />
+      <BarItem
+        label="Category"
+        icon="/figma/icons/tag.svg"
+        badge={categoryCount}
+        onClick={onCategory}
+      />
       <BarItem label="Sort" icon="/figma/icons/sort.svg" dot={sortActive} onClick={onSort} />
       <BarItem
         label="Filters"

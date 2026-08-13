@@ -245,8 +245,15 @@ export interface RailEntry {
   facetIds: string[];
 }
 
-const BASE_RAIL: RailEntry[] = [
-  { id: "category", label: "Category", facetIds: ["category"] },
+/**
+ * Which control model the screen is running. The rail differs between the two
+ * because each variant hands a different set of facets to its own controls,
+ * and a facet must never be reachable from two places at once.
+ */
+export type PlpVariant = "bottom-bar" | "top-chips";
+
+/** Everything below Category and Gender — identical in both variants. */
+const COMMON_RAIL: RailEntry[] = [
   { id: "delivery", label: "Delivery Time", facetIds: ["delivery"] },
   { id: "moq", label: "MOQ", facetIds: ["moq"] },
   { id: "brand", label: "Brands", facetIds: ["brand"] },
@@ -260,19 +267,30 @@ const BASE_RAIL: RailEntry[] = [
   { id: "more", label: "More Filters", facetIds: ["fabric", "tags"] },
 ];
 
-/** Sits second — high enough to match how prominent Gender is in Variant A. */
+/** Variant B only — in A the bottom bar owns Category. */
+const CATEGORY_ENTRY: RailEntry = { id: "category", label: "Category", facetIds: ["category"] };
+
+/** In both rails: first in A, second in B, directly under Category. */
 const GENDER_ENTRY: RailEntry = { id: "gender", label: "Gender", facetIds: ["gender"] };
 
 /**
- * The Filters rail, which differs by variant.
+ * The Filters rail, which differs by variant — and only by **Category**.
  *
- * Variant A keeps Gender out — the bottom-bar sheet owns it there, and listing
- * it in both places would let the two disagree. Variant B has no bottom bar,
- * so Gender becomes a normal rail facet.
+ * Variant A hands Category to the bottom bar, so it must not also appear here:
+ * one facet behind two controls is how they come to disagree, and it would
+ * double-report, once as the Category badge and again inside the Filters
+ * count.
+ *
+ * Gender is in both. It is largely redundant now that every category names its
+ * audience ("Girl's T-Shirts"), but redundant is not useless — it is a faster
+ * top-level cut than ticking three category tiles — and a variant with no
+ * gender control at all leaves `?gender=` links with nothing to show them.
+ *
+ * Everything else is common, so the two rails differ by exactly one row.
  */
-export function getRail(includeGender: boolean): RailEntry[] {
-  if (!includeGender) return BASE_RAIL;
-  return [BASE_RAIL[0], GENDER_ENTRY, ...BASE_RAIL.slice(1)];
+export function getRail(variant: PlpVariant): RailEntry[] {
+  if (variant === "bottom-bar") return [GENDER_ENTRY, ...COMMON_RAIL];
+  return [CATEGORY_ENTRY, GENDER_ENTRY, ...COMMON_RAIL];
 }
 
 /**
@@ -280,6 +298,6 @@ export function getRail(includeGender: boolean): RailEntry[] {
  * draft — notably Clear Filters — must filter through this, so a facet the
  * screen doesn't display can never be cleared by it.
  */
-export function getRailFacetIds(includeGender: boolean): Set<string> {
-  return new Set(getRail(includeGender).flatMap((entry) => entry.facetIds));
+export function getRailFacetIds(variant: PlpVariant): Set<string> {
+  return new Set(getRail(variant).flatMap((entry) => entry.facetIds));
 }
