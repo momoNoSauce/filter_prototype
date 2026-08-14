@@ -3,7 +3,7 @@
 Last updated: 2026-08-14
 
 Live: **https://filterprototype.vercel.app** — **password-protected** since
-2026-08-14. Any username, password in the `SITE_PASSWORD` env var on Vercel
+2026-08-14. **Leave the username blank** and enter the password; only the password is checked. It lives in the `SITE_PASSWORD` env var on Vercel
 (`npx vercel env ls --scope bitihotra-karaks-projects` to see it is set; `env
 rm` then `env add` to change it, then redeploy — env changes only reach the
 site on the next deploy). Redeploy with
