@@ -2,7 +2,11 @@
 
 Last updated: 2026-08-14
 
-Live: **https://filterprototype.vercel.app** (public, no login). Redeploy with `npx vercel --prod`.
+Live: **https://filterprototype.vercel.app** (public, no login). Redeploy with
+`npx vercel --prod --scope bitihotra-karaks-projects`. **The `--scope` is not
+optional** — the project belongs to the team, so a bare `vercel --prod` fails
+with `Not authorized` even when `vercel whoami` reports you logged in, which
+reads as an expired session and isn't one.
 Source: **https://github.com/cheeseKracker/filter_prototype** (private).
 Local: `npm run dev` → http://localhost:3000.
 
