@@ -15,6 +15,27 @@ npm run build    # production build; also typechecks
 npx eslint .     # lint (run from repo root, not a subdirectory)
 ```
 
+## The deployment is password-gated; localhost is not
+
+`proxy.ts` puts HTTP Basic Auth over every request — pages, `_next` chunks and
+`public/` alike, since a gate that lets the assets through isn't one. Any
+username; the password is Vercel's `SITE_PASSWORD` env var and is never in the
+repo. Vercel's own password protection is Pro-only and the API refuses it on
+this Hobby team, which is why this is application code.
+
+Two properties to preserve if you touch it:
+
+- **It keys off `VERCEL`**, not `NODE_ENV`. The platform sets `VERCEL=1` and
+  your machine doesn't, so `npm run dev` never prompts — and neither does a
+  local `next build && next start`, which `NODE_ENV` would have caught.
+- **It fails closed.** No `SITE_PASSWORD` on a deployment means 503 for
+  everything, so a missing secret is loud instead of silently public. Set the
+  env var *before* deploying, and note env changes only take effect on the
+  next deploy.
+
+The file is `proxy.ts`, not `middleware.ts` — the middleware convention is
+deprecated in Next 16 and renamed. Same behaviour, different file and export.
+
 ## Two control variants of the same PLP
 
 Both render the identical card, catalog, engine and sheets. **Only the controls differ**, so a preference between them is about control placement and nothing else. Don't let them drift apart in any other respect.

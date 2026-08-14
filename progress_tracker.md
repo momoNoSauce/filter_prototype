@@ -2,7 +2,11 @@
 
 Last updated: 2026-08-14
 
-Live: **https://filterprototype.vercel.app** (public, no login). Redeploy with
+Live: **https://filterprototype.vercel.app** — **password-protected** since
+2026-08-14. Any username, password in the `SITE_PASSWORD` env var on Vercel
+(`npx vercel env ls --scope bitihotra-karaks-projects` to see it is set; `env
+rm` then `env add` to change it, then redeploy — env changes only reach the
+site on the next deploy). Redeploy with
 `npx vercel --prod --scope bitihotra-karaks-projects`. **The `--scope` is not
 optional** — the project belongs to the team, so a bare `vercel --prod` fails
 with `Not authorized` even when `vercel whoami` reports you logged in, which
@@ -15,6 +19,15 @@ Local: `npm run dev` → http://localhost:3000.
 > Both have to be run. Connecting the repo at
 > `vercel.com/bitihotra-karaks-projects/filter_prototype/settings/git` collapses
 > this to one step — browser-only, the CLI can't do it.
+
+> **The password gate never fires on localhost.** `proxy.ts` keys off `VERCEL`,
+> which the platform sets and your machine does not, so `npm run dev` — and a
+> local `next build && next start` — are untouched. It is deliberately not
+> keyed off `NODE_ENV`, under which a local production server would prompt.
+>
+> **It fails closed.** A deployment with no `SITE_PASSWORD` serves 503 to
+> everything rather than quietly going public, so **set the env var before
+> deploying**, not after.
 
 > **`design/` is gitignored.** The source Figma PNGs stay local: unreleased
 > design work, and nothing serves them. `public/figma/` and `public/categories/`
