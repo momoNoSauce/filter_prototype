@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { Variant } from "@/lib/catalog/types";
 
 /**
- * The "Set of 4 / M, L, XL, 2XL" pills. Figma 638:2790 — h-40, px-16, py-4,
- * rounded-20; selected is filled primary, the rest are outlined.
+ * The "SET OF 6 / M/2, L/2, XL/2" pills. Figma 638:2790 — h-40, px-16, py-4,
+ * rounded-20; selected is filled primary, the rest are outlined. The wording
+ * follows the live app rather than the frame — see the label comments below.
  *
  * The row scrolls horizontally and the dots below track scroll pages, which is
  * what the design's 4-pills-3-dots arrangement implies.
@@ -62,8 +63,12 @@ export function SetPills({
                   : "border border-primary bg-white text-primary"
               }`}
             >
+              {/* `SET OF 6` over `M/2, L/2, XL/2` — the live app's pill
+                  (screengrab, 2026-08-14). Was `Set of 6`; the caps are the
+                  app's, and they also hold the small top line apart from the
+                  bold breakup under it. */}
               <span className="w-full text-[10px] font-medium whitespace-nowrap">
-                Set of {variant.setOf}
+                SET OF {variant.setOf}
               </span>
               <span className="w-full text-[16px] font-bold whitespace-nowrap">
                 {variant.sizeBreakup}

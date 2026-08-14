@@ -1,15 +1,15 @@
 export type Gender = "men" | "women" | "boys" | "girls";
 
 /**
- * A purchasable pack configuration. These drive the "Set of 4 / M, L, XL, 2XL"
+ * A purchasable pack configuration. These drive the "SET OF 6 / M/2, L/2, XL/2"
  * pills on the product card — picking one changes the price, MRP and margin
  * shown on that card.
  */
 export interface Variant {
   setOf: number;
-  /** e.g. "M, L, XL, 2XL" or "XS×2,S×2" */
+  /** `size/qty`, comma-joined — "M/6" or "M/2, L/2, XL/2". Sums to `setOf`. */
   sizeBreakup: string;
-  /** MRP per piece */
+  /** MRP per piece — the card labels it `MRP/PC` */
   mrp: number;
   pricePerPc: number;
   marginPct: number;

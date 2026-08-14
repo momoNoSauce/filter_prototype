@@ -250,13 +250,26 @@ const GENDER_LABEL: Record<Gender, string> = {
   girls: "Girls",
 };
 
-/** Pack shapes, keyed by set size. Bigger packs price lower per piece. */
+/**
+ * Pack shapes, keyed by set size. Bigger packs price lower per piece.
+ *
+ * Written as `size/qty`, joined by commas, to match the live SOLV app
+ * (screengrab, 2026-08-14) — `M/6` for six of one size, `M/6, L/6, XL/6` for a
+ * mixed pack. It replaced three earlier notations that had drifted apart: bare
+ * repetition (`S,S`), a `×` multiplier (`M×2,L×2`), and a bare size standing
+ * for a whole pack (`2XL` for ten pieces).
+ *
+ * **The quantities sum to the key**, which the old shapes did not always do —
+ * `2XL` for a set of 10 named no quantity at all. A retailer reads this line to
+ * work out what actually arrives in the carton, so a breakup that doesn't add
+ * up to the pack size is worse than a vague one.
+ */
 const SIZE_BREAKUPS: Record<number, string[]> = {
-  2: ["S,S", "L,XL", "M,L"],
-  4: ["M, L, XL, 2XL", "XS×2,S×2", "S, M, L, XL"],
-  6: ["M×2,L×2,XL×2", "S,M,L,XL,2XL,3XL"],
-  10: ["2XL", "L×4,XL×4,2XL×2"],
-  12: ["S×3,M×3,L×3,XL×3"],
+  2: ["S/2", "L/1, XL/1", "M/1, L/1"],
+  4: ["M/1, L/1, XL/1, 2XL/1", "XS/2, S/2", "S/1, M/1, L/1, XL/1"],
+  6: ["M/6", "M/2, L/2, XL/2", "S/1, M/1, L/1, XL/1, 2XL/1, 3XL/1"],
+  10: ["2XL/10", "L/4, XL/4, 2XL/2"],
+  12: ["S/3, M/3, L/3, XL/3", "M/6, L/6"],
 };
 
 const SET_SIZES = [2, 4, 6, 10, 12];
@@ -292,6 +305,9 @@ function buildVariants(rand: () => number, basePrice: number, baseMargin: number
 
     return {
       setOf,
+      // One `rand()` call, as before — `pick` draws once whatever the array's
+      // length, so re-shaping the tables above leaves the seeded sequence
+      // untouched and the documented facet counts (Girls 97, Men 575) hold.
       sizeBreakup: pick(rand, SIZE_BREAKUPS[setOf]),
       mrp,
       pricePerPc,

@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-08-12
+Last updated: 2026-08-14
 
 Live: **https://filterprototype.vercel.app** (public, no login). Redeploy with `npx vercel --prod`.
 Source: **https://github.com/cheeseKracker/filter_prototype** (private).
@@ -52,6 +52,20 @@ Local: `npm run dev` → http://localhost:3000.
 - **Gender moved into A's Filters rail**, heading it. It was briefly dropped from A altogether as redundant; put back because it is still a faster cut than ticking three category tiles, and `?gender=` links need somewhere to show. The two rails now differ by exactly one row, Category. The single-select `GenderSheet.tsx` stayed deleted — the bar slot it lived in belongs to Category.
 - **Categories replaced** (2026-08-12) with the seven from the merchandising list — Women's T-Shirts, Men's Formal Shirts, Men's Casual T-Shirts, Men's Casual Shirts, Girl's T-Shirts, Boy's Casual Shirts, Boy's Casual T-Shirts. New tile photos, rebuilt brand↔category map, per-category price bands, gender-free product titles.
 
+### 2026-08-14 — the chip strip, and the card measured against the live app
+
+**Chip strip, both variants.** Thumbnails are **square-cropped and full-bleed**, against the frame's circular 26.7 × 27.8 avatar inside a 6px inset. The whole strip then went to **44px** — up from 32 — so the thumbnail is big enough to identify a garment; because it is full-bleed, the chip's height *is* the image size, so nothing else could grow it. `CHIP_H` is now one exported constant that `TopChipBar` imports, since B's chips previously carried their own hardcoded height and could drift. The label rose to 12px in a 76px box, still the width where the longest vertical name breaks to two lines rather than clamping. Side effect worth having: 44px is the first time these clear the touch-target floor, closing backlog item 7 for the strip.
+
+**One radius across the row.** Vertical chips left the frame's 4px and `TopChipBar`'s Sort/Filter left their rounded-100 pills; everything in the strip is now **8px**. This settles the open question the chip work left for the designer (*"say if the pill should win"*) — it doesn't; the shape the majority of the row already carried does. Each is one value to reverse.
+
+**B's Sort/Filter were pinned, then unpinned.** They were briefly held at the head of the row with `position: sticky` while chips scrolled beneath them; reversed the same day, by choice, for the scroll-everything convention other commerce apps use. **The exposure that pin existed to close is now back:** B's only route to Sort and Filters can be scrolled off-screen. The strip is still pinned vertically, so they are one horizontal swipe away rather than lost — but A's fixed bottom bar has no equivalent exposure, so if the variants are ever judged on *could you find the controls*, that asymmetry is part of what is being compared.
+
+**Product card rebuilt from a screengrab of the shipping SOLV app**, which supersedes Figma wherever the two disagree. Format: `MRP/PC ₹299 | SET of: 6` on one pipe-separated line, `PRICE/PC` in caps, pills reading `SET OF 6` over `M/2, L/2, XL/2`. The old line never said the MRP was per piece although it always was, so it read as a pack price and made the margin look wrong. Pack breakups were regenerated as `size/qty` **summing to the set size** — the old table ran three notations at once, one of which (`2XL` for a set of ten) named no quantity at all. Two new tests hold both properties; 47 green.
+
+**The price block was measured, not eyeballed** — the screengrab is 1080×2400, exactly 3× the 360px design, so every device pixel divides cleanly. Margin sits **10px after the price on the same baseline** (identical in both sampled cards, ink bottoms within 0.3px), where it had been a `flex-1` column pushing it ~40px right. Title sets on a **16px** pitch, not 21px. The text column lost its uniform `gap` — its four rows sit at four different distances, so each carries its own measured `mt-`. Verified by re-measuring our own render the same way: title pitch exact, and all three gaps within **0.3px**.
+
+**Two contrast failures closed as a by-product** — see backlog item 2. Not by choosing darker colours, but by sampling the live app, which sets both better than the frame: margin is blue (`primary`, 2.66:1 → **6.0:1**, clears AA) and the secondary grey is `#7f7f7f` (2.85:1 → 4.0:1). Margin measured `#0066ff`, but that same screengrab's app bar is `#004ffa` exactly — our token — so the sampled value is a second blue a hair off brand, and the token is used instead. It also preserves what matters: margin reads in the same blue as a selected set pill.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -93,13 +107,14 @@ Open: the reference image is a *category* PLP ("Cotton Casual Shirt") with a dif
 Ordered by consequence. None of these block a demo.
 
 1. **Applied filters are hard to read on the PLP.** Three active filters render as one small count on a 24px icon. Scroll away and back and you can't tell what's constraining the list. *Partly closed 2026-08-13:* the contextual chips are defined and built, and a selected chip shows its own state inline — but only for the facets the strip currently offers, so a seller or delivery filter is still just a number on an icon.
-2. **Contrast failures**, inherited from the Figma, on the three numbers a retailer actually reads. All fail even the 3:1 large-text bar, and two are set at 9px:
-   | Text | Colour | Ratio | AA needs |
-   |---|---|---|---|
-   | MRP / Price per pc / shipping | `#999999` | 2.85:1 | 4.5:1 |
-   | `65% margin` | `#39B54A` | 2.66:1 | 4.5:1 |
-   | `VIEW DETAILS` | `#FF7711` | 2.53:1 | 4.5:1 |
-   Audience is kirana retailers on mid-range Android in poor light. Worth darkening before this becomes the build spec.
+2. **Contrast failures**, inherited from the Figma, on the three numbers a retailer actually reads. **Two of the three closed on 2026-08-14** — not by picking darker colours, but by sampling the live app's own screengrab, which turned out to set both better than the frame does:
+   | Text | Was | Ratio | Now | Ratio | AA needs |
+   |---|---|---|---|---|---|
+   | `65% margin` | `#39B54A` | 2.66:1 | `#004FFA` (`primary`) | **6.0:1** ✅ | 4.5:1 |
+   | MRP / Price per pc / shipping | `#999999` | 2.85:1 | `#7F7F7F` | 4.0:1 ⚠️ | 4.5:1 |
+   | `VIEW DETAILS` | `#FF7711` | 2.53:1 | — | 2.53:1 ❌ | 4.5:1 |
+   The margin now clears AA outright. The grey improves but still misses at 12px, so it stays listed. `VIEW DETAILS` is untouched and is now the worst offender on the card — the live app renders it blue, which would close it too, but that was left for a deliberate call rather than folded into a format pass.
+   Audience is kirana retailers on mid-range Android in poor light.
 10. **The variants still differ in more than control placement, but by less than they did.** The gap is now one facet: A reaches Category from the bottom bar, B from the rail. Everything else, Gender included, is identical. A stated preference for B is closer to being about the chips alone than at any earlier point, though not purely so.
     *Resolved along the way:* A's checkbox-that-behaves-exclusively Gender mismatch is gone — Gender is an ordinary multi-select rail facet in both variants now, so no control claims exclusivity anywhere.
 4. **Tiles show no counts** while every checkbox row does — you can't judge whether a category is worth tapping.
@@ -120,8 +135,13 @@ Ordered by consequence. None of these block a demo.
    - **Apostrophes are inconsistent** — "Men's" and "Women's" are plural possessives, but "Girl's" and "Boy's" are singular. Set verbatim as supplied rather than silently corrected; say the word and they become "Girls'" / "Boys'".
    - ~~**Gender is now redundant as a filter.**~~ Settled 2026-08-13: kept as a rail facet in **both** variants, since it is still a faster cut than ticking three category tiles. A's bottom-bar slot went to Category instead.
    - **Product card renders are button-up shirts** while four of seven categories are tees. Only two shirt renders exist in Figma; tee renders would need exporting.
-1. ~~**What are the contextual chips?**~~ **Answered and built 2026-08-13.** Product-vertical chips until a single vertical is settled, then price bands, Seller Offer, Cashback and Free Delivery. Two things to confirm now that it is on screen: the M3 8dp corner sits beside the frame's rounded Sort/Filter pills in B — say if the pill should win; and *Seller Offer* meaning "any offer" makes it disappear once Cashback is ticked, because every remaining product then has an offer. Correct per the rule, but worth seeing before it is settled.
+1. ~~**What are the contextual chips?**~~ **Answered and built 2026-08-13.** Product-vertical chips until a single vertical is settled, then price bands, Seller Offer, Cashback and Free Delivery. ~~The M3 corner beside the frame's pills~~ settled 2026-08-14: one 8px radius across the whole strip, pills included. Still worth seeing before it is final: *Seller Offer* meaning "any offer" makes it disappear once Cashback is ticked, because every remaining product then has an offer. Correct per the rule, but worth seeing.
 2. **A Category glyph for the bottom bar.** The frame's first slot was Gender (`wc.svg`); it now holds Category and is borrowing `tag.svg`, which is also the Sort sheet's *Recently Added* icon. An exported Category icon would settle it.
 3. `Offers` vs `Seller Offers` — the two filter frames disagree; currently **Offers**.
 4. Baheti Garments is treated as a storefront aggregating multiple sellers, since the app bar says Baheti while the Seller facet lists other companies. Confirm, or scope it to one seller and drop the Seller facet there.
 5. A stray `$299.99` row sits at the bottom of the filter rail in Figma (`638:3712`) and was skipped as an artefact; `Margin` is SemiBold while its eleven rail siblings are Medium.
+6. **Four things the live-app screengrab raises** (2026-08-14), now that the card follows it rather than the frame:
+   - **The screengrab has no shipping-fee line.** Ours keeps `+₹50 shipping fee` under the price — it is real per-order cost the seed carries, and dropping information to match a screenshot is a designer's call, not a format pass's. Say the word and it goes.
+   - **`VIEW DETAILS` is blue in the live app**, orange `#FF7711` here. Left alone deliberately, but it is now the **worst contrast on the card** at 2.53:1 — the only one of the three original failures still open, and taking the app's blue would close it.
+   - **Price measures ~24px in the app**, 26px here per the frame. A 2px delta, left rather than overriding Figma silently.
+   - **The app is inconsistent with its own label** — card 1 reads `SET of:` and card 2 `Set of:`. Reproduced as `SET of:`; confirm which is intended.

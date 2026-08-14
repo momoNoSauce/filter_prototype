@@ -6,6 +6,17 @@ import type { ContextChip } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
 
 /**
+ * Every chip in the strip is this tall — the verticals, Price, the offers, and
+ * `TopChipBar`'s Sort and Filter, which import it. One number rather than four
+ * copies of `h-[44px]`, because the row only reads as a row while they agree.
+ *
+ * 44 rather than the frames' 32 (2026-08-14): the vertical chip's thumbnail is
+ * full-bleed, so the chip's height *is* the image size, and 32 was too small to
+ * identify a garment. It also puts these controls on the 44px touch floor.
+ */
+export const CHIP_H = "h-[44px]";
+
+/**
  * The strip below the GOLD bar. In Variant A it holds only these; in B it
  * follows the Sort and Filter chips, after the divider the frame already draws
  * as the boundary for them.
@@ -13,6 +24,11 @@ import type { CountedOption } from "@/lib/filters/engine";
  * Pinned rather than scrolling with the list, matching `TopChipBar`: the strip
  * rewrites itself as you drill in, and a control that moves off-screen as it
  * changes is worse than no control.
+ *
+ * Everything inside scrolls horizontally as one row, in both variants — B's
+ * Sort and Filter chips included. They were briefly pinned at the head of the
+ * row; see `TopChipBar` for why that was reversed, and for the sticky trap to
+ * avoid if it is ever reinstated.
  */
 export function ChipStrip({ children }: { children: ReactNode }) {
   return (
@@ -78,14 +94,27 @@ export function ContextChips({
 /**
  * Figma 674:4904 — the product-vertical chip, both states.
  *
- * h-32 on a 4px corner, gap-4, px-6. Unselected: white, 0.5px #4d4d4d border,
- * label Roboto Medium 11px at `black/90` and 74% opacity — the same label
- * treatment `TopChipBar`'s chips use. Selected: no border, filled, label in
- * primary, and the exported `close_small` glyph at 11.185px.
+ * Unselected: white, 0.5px #4d4d4d border, label Roboto Medium at `black/90`
+ * and 74% opacity — the same label treatment `TopChipBar`'s chips use.
+ * Selected: no border, filled, label in primary, and the exported `close_small`
+ * glyph beside it.
  *
- * The avatar is **circular** (`rounded-[99px]`), not a rounded square, at the
- * frame's own 26.727 × 27.796 — slightly taller than wide, which is why both
- * dimensions are set rather than one `size-`.
+ * **The whole strip was scaled up on 2026-08-14**, so the thumbnail could be
+ * read at a glance: every chip in the row is 44px high rather than the frame's
+ * 32, which is also the first time these clear the 44px touch-target floor.
+ * `CHIP_H` in this file is the single number — `TopChipBar`'s chip imports it,
+ * so B's Sort and Filter cannot drift from the chips they share a row with.
+ *
+ * The avatar is **square-cropped and full-bleed**, two departures from the
+ * frame, which draws it circular at 26.727 × 27.796 inside the chip's 6px
+ * inset. It takes the chip's whole height, so it can only fit by losing the
+ * inset: it sits flush against the leading edge and `overflow-hidden` on the
+ * chip clips its left corners. `object-cover` does the cropping.
+ *
+ * The label went to 12px with the scale-up — 11px under a 44px thumbnail read
+ * as an afterthought. Its box widened to 76px to match, that being where the
+ * longest name (*Men's Casual T-Shirts*) still breaks across two lines rather
+ * than clamping, which is the same rule the frame's 68px box followed at 11px.
  *
  * Two departures from the raw export, both by the standing rule that the
  * design's off-token blues are slips: the fill comes back as
@@ -96,6 +125,11 @@ export function ContextChips({
  *
  * The frame keeps the label when selected and adds the ✕ beside it, so that is
  * what this does — it does not drop the label.
+ *
+ * The corner is **8px** (2026-08-14), a third departure: the frame draws 4px,
+ * but a selected vertical sits in the same row as the Price and offer chips,
+ * which are M3 filter chips at 8dp, and two radii one gap apart read as a
+ * mistake. One radius across the strip, and 8px is the one more chips use.
  */
 function VerticalChip({
   option,
@@ -111,23 +145,22 @@ function VerticalChip({
       onClick={onToggle}
       role="checkbox"
       aria-checked={selected}
-      className={`flex h-[32px] shrink-0 cursor-pointer items-center justify-center gap-[4px] rounded-[4px] px-[6px] ${
+      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center justify-center gap-[6px] overflow-hidden rounded-[8px] pr-[8px] ${
         selected ? "bg-primary-subtle" : "border-[0.5px] border-[#4d4d4d] bg-white"
       }`}
     >
-      <span className="h-[27.796px] w-[26.727px] shrink-0 overflow-hidden rounded-[99px] bg-[#d9d9d9]">
+      <span className="size-[44px] shrink-0 overflow-hidden bg-[#d9d9d9]">
         {option.image && (
           // eslint-disable-next-line @next/next/no-img-element
           <img alt="" loading="lazy" className="size-full object-cover" src={option.image} />
         )}
       </span>
 
-      {/* The frame sets this label two lines deep. 68px is its own label box,
-          back-solved from the 110px chip less the 6px insets, the 26.727px
-          avatar and the 4px gaps — and it is the width at which the longest
-          vertical name still breaks into two lines rather than clamping. */}
+      {/* Two lines deep, as the frame sets it. See the header on why the box is
+          76px: it is where the longest vertical name still breaks rather than
+          clamping, which is the rule the frame's own 68px box followed at 11px. */}
       <span
-        className={`line-clamp-2 max-w-[68px] text-left text-[11px] leading-[normal] font-medium ${
+        className={`line-clamp-2 max-w-[76px] text-left text-[12px] leading-[normal] font-medium ${
           selected ? "text-primary" : "text-black/90 opacity-74"
         }`}
       >
@@ -138,7 +171,7 @@ function VerticalChip({
         <MaskIcon
           src="/figma/icons/close-small.svg"
           color="var(--color-primary)"
-          className="size-[11.185px] shrink-0"
+          className="size-[14px] shrink-0"
         />
       )}
     </button>
@@ -172,7 +205,7 @@ function PriceChip({
     <button
       onClick={(e) => onOpen(e.currentTarget)}
       aria-haspopup="menu"
-      className={`flex h-[32px] shrink-0 cursor-pointer items-center gap-[4px] rounded-[8px] pr-[8px] pl-[16px] ${
+      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center gap-[4px] rounded-[8px] pr-[10px] pl-[16px] ${
         selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"
       }`}
     >
@@ -183,7 +216,7 @@ function PriceChip({
       >
         {label}
       </span>
-      <svg viewBox="0 0 24 24" className="size-[18px] shrink-0" aria-hidden>
+      <svg viewBox="0 0 24 24" className="size-[20px] shrink-0" aria-hidden>
         <path
           d="M7 10l5 5 5-5"
           fill="none"
@@ -200,14 +233,16 @@ function PriceChip({
 /**
  * Material 3 filter chip — the three offer chips.
  *
- * Spec followed: 32dp high, 8dp corner, 1dp outline when unselected, filled
- * container with no outline when selected, an 18dp leading checkmark on
- * selection, 16dp label padding dropping to 8dp beside the checkmark, 14sp
- * Medium label, 8dp between chips.
+ * Spec followed: 8dp corner, 1dp outline when unselected, filled container with
+ * no outline when selected, a leading checkmark on selection, 16dp label
+ * padding dropping to 8dp beside the checkmark, 14sp Medium label, 8dp between
+ * chips. **Height departs** — `CHIP_H` at 44 rather than M3's 32dp, because the
+ * vertical chips beside these needed the room for their thumbnail and a row of
+ * two heights is worse than a row off-spec by one value.
  *
- * The palette is this app's rather than M3's, and the 8dp corner sits beside
- * `TopChipBar`'s fully-rounded Figma pills in Variant B — following the M3
- * instruction, but a visible mismatch and one line to reverse.
+ * The palette is this app's rather than M3's. The 8dp corner used to sit beside
+ * `TopChipBar`'s fully-rounded Figma pills in Variant B; that mismatch closed
+ * on 2026-08-14 by taking the pills to 8px too, so the whole row is one radius.
  */
 function FilterChip({
   label,
@@ -223,12 +258,12 @@ function FilterChip({
       onClick={onClick}
       role="checkbox"
       aria-checked={selected}
-      className={`flex h-[32px] shrink-0 cursor-pointer items-center gap-[8px] rounded-[8px] pr-[16px] ${
+      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center gap-[8px] rounded-[8px] pr-[16px] ${
         selected ? "bg-primary-subtle pl-[8px]" : "border border-[#4d4d4d] bg-white pl-[16px]"
       }`}
     >
       {selected && (
-        <svg viewBox="0 0 18 18" className="size-[18px] shrink-0" aria-hidden>
+        <svg viewBox="0 0 18 18" className="size-[20px] shrink-0" aria-hidden>
           <path
             d="M3.5 9.5l3.5 3.5 7.5-7.5"
             fill="none"

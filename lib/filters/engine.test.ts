@@ -39,6 +39,32 @@ describe("catalog", () => {
     // "… Casual T-Shirts for Boys", never "… Boy's Casual T-Shirts for Boys".
     expect(catalog.some((p) => /Boy's|Girl's|Men's|Women's/.test(p.title))).toBe(false);
   });
+
+  it("breaks every pack down into quantities that sum to its set size", () => {
+    // The card shows `SET OF 6` over `M/2, L/2, XL/2`, and a retailer reads the
+    // second line to work out what arrives in the carton. A breakup that does
+    // not add up to the first line is a wrong answer to that question — which
+    // the pre-2026-08-14 shapes gave, `2XL` standing for a set of ten.
+    const wrong = catalog
+      .flatMap((p) => p.variants)
+      .filter((v) => {
+        const total = v.sizeBreakup
+          .split(",")
+          .reduce((sum, part) => sum + Number(part.split("/")[1]), 0);
+        return total !== v.setOf;
+      });
+
+    expect(wrong).toEqual([]);
+  });
+
+  it("writes every pack breakup as size/qty", () => {
+    // The live app's notation. Three earlier ones had drifted apart — bare
+    // repetition (`S,S`), a multiplier (`M×2`), and a bare size (`2XL`).
+    const shape = /^[A-Z0-9]+\/\d+(, [A-Z0-9]+\/\d+)*$/;
+    expect(catalog.flatMap((p) => p.variants).every((v) => shape.test(v.sizeBreakup))).toBe(
+      true,
+    );
+  });
 });
 
 describe("applyFilters", () => {

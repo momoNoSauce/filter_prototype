@@ -13,8 +13,26 @@
 
   /* Literals used throughout the PLP that have no Figma variable */
   --color-page: #f7f7f7; /* PLP page background */
-  --color-muted: #999999; /* MRP / price-per-pc / shipping copy */
-  --color-margin: #39b54a; /* "65% margin" green */
+  /* MRP / price-per-pc / shipping copy. Sampled off the live app's own
+     screengrab (2026-08-14), which sets this grey at #7f7f7f, not the #999999
+     the Figma frame uses. Taking the app's: it is the same copy, and #999999
+     was one of the three logged contrast failures at 2.85:1, where #7f7f7f
+     reaches 4.0:1. Still short of AA's 4.5:1 for 12px, so the row stays on the
+     contrast list — but it is a measured improvement rather than a guess. */
+  --color-muted: #7f7f7f;
+
+  /* "65% margin". Blue, not the #39b54a green the frame draws — the live app
+     renders it in the same blue as a selected set pill (screengrab, sampled at
+     #0066ff across an 85%-solid fill, so not an antialiasing artefact).
+
+     Pointed at `primary` rather than at the sampled hex: that same screengrab's
+     app bar measures #004ffa exactly, our token, so #0066ff is a second blue a
+     hair off the brand one — the same off-token slip the design makes with
+     #014ffa, and indistinguishable at 14px. Using the token keeps the app to
+     one blue and preserves the relationship that matters, margin reading in
+     the same colour as the pills. Contrast rises from 2.66:1 to 6.0:1, which
+     clears AA and closes the worst of the three logged failures. */
+  --color-margin: var(--color-primary);
   --color-bar-label: #323232; /* bottom filter-bar labels */
   --color-viewdetails: #f8faf7; /* View Details strip */
   --color-hairline: #cccccc;
