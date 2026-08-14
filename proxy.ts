@@ -25,9 +25,16 @@ import type { NextRequest } from "next/server";
  * through is not a gate. It costs nothing in practice, because a browser
  * re-sends Basic credentials on same-origin subrequests once it has them.
  *
- * The username is ignored; only the password is checked. One secret is one
- * thing to pass along, and a username nobody verifies is a field people get
- * wrong. Browsers still need something typed in it — anything will do.
+ * **The username is ignored, and empty is the intended input.** Only the
+ * password is compared. One secret is one thing to pass along, and a username
+ * nobody verifies is just a field people get wrong. A blank username sends
+ * `:password`, which is the ordinary case here rather than an edge one; a
+ * header carrying no colon at all is read as password-only too, so a
+ * hand-rolled client can't trip on it.
+ *
+ * What this cannot do is remove the username *box*. Basic Auth's browser dialog
+ * always draws both fields — only a custom HTML form plus a cookie would show
+ * one. Tell people to leave it blank and press enter.
  */
 
 const REALM = "SOLV filter prototype";
@@ -78,10 +85,10 @@ export function proxy(request: NextRequest) {
     return challenge();
   }
 
+  // Everything after the first colon. A blank username gives ":password", the
+  // expected shape here; no colon at all is taken as the password alone.
   const separator = decoded.indexOf(":");
-  if (separator < 0) return challenge();
+  const password = separator < 0 ? decoded : decoded.slice(separator + 1);
 
-  return matches(decoded.slice(separator + 1), expected)
-    ? NextResponse.next()
-    : challenge();
+  return matches(password, expected) ? NextResponse.next() : challenge();
 }
