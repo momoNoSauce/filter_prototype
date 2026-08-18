@@ -15,6 +15,7 @@ import { getRailFacetIds, type PlpVariant } from "@/lib/filters/facets";
 import { buildQuery, parseSelections, parseSort } from "@/lib/filters/urlState";
 import { AppBar } from "./AppBar";
 import { GoldStrip } from "./GoldStrip";
+import { SIZE_FACET_ID } from "@/lib/filters/activeVariant";
 import { ProductCard } from "./ProductCard";
 import { BottomActionBar } from "./BottomActionBar";
 import { TopChipBar } from "./TopChipBar";
@@ -128,7 +129,7 @@ export function PlpScreen({
   );
 
   const results = useMemo(
-    () => sortProducts(applyFilters(products, selections), sort, selections.size),
+    () => sortProducts(applyFilters(products, selections), sort, selections[SIZE_FACET_ID]),
     [products, selections, sort],
   );
 
@@ -228,7 +229,11 @@ export function PlpScreen({
           results
             .slice(0, visible)
             .map((product) => (
-              <ProductCard key={product.id} product={product} sizes={selections.size} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                sizes={selections[SIZE_FACET_ID]}
+              />
             ))
         )}
       </div>
