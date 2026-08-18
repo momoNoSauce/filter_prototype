@@ -3,11 +3,13 @@ import {
   CATEGORIES,
   COLOURS,
   FABRICS,
+  ALL_SIZES,
   OFFERS,
   PACK_TYPES,
   SELLERS,
 } from "@/lib/catalog/seed";
-import { defaultVariant, type Product } from "@/lib/catalog/types";
+import type { Product } from "@/lib/catalog/types";
+import { activeVariant, sizeOptionId } from "./activeVariant";
 
 export type PanelType = "tile" | "checkbox" | "swatch" | "range";
 
@@ -30,8 +32,15 @@ export interface FacetDef {
    * The option ids this product belongs to. Returning several is legitimate —
    * "Within 3 days" and "Within 5 days" both match a 2-day product — and the
    * engine treats every facet the same way regardless of panel type.
+   *
+   * `sizes` is the current Size selection, and the *only* selection any facet
+   * is allowed to see. Price and Margin need it because they read the pack the
+   * card is showing, which a size filter moves; every other facet ignores it.
+   * Passing the one selection that can move a value, rather than the whole
+   * set, keeps that dependency visible instead of letting any facet quietly
+   * depend on any other.
    */
-  valuesOf: (product: Product) => string[];
+  valuesOf: (product: Product, sizes?: string[]) => string[];
   options: FacetOption[];
 }
 
@@ -136,7 +145,7 @@ export const FACETS: FacetDef[] = [
     label: "Price Range",
     panel: "range",
     searchable: false,
-    valuesOf: (p) => bucketId(PRICE_BUCKETS, defaultVariant(p).pricePerPc),
+    valuesOf: (p, sizes) => bucketId(PRICE_BUCKETS, activeVariant(p, sizes).pricePerPc),
     options: PRICE_BUCKETS.map(({ id, label }) => ({ id, label })),
   },
   {
@@ -144,7 +153,7 @@ export const FACETS: FacetDef[] = [
     label: "Margin",
     panel: "range",
     searchable: false,
-    valuesOf: (p) => bucketId(MARGIN_BUCKETS, defaultVariant(p).marginPct),
+    valuesOf: (p, sizes) => bucketId(MARGIN_BUCKETS, activeVariant(p, sizes).marginPct),
     options: MARGIN_BUCKETS.map(({ id, label }) => ({ id, label })),
   },
   {
@@ -154,6 +163,24 @@ export const FACETS: FacetDef[] = [
     searchable: false,
     valuesOf: (p) => [slug(p.packType)],
     options: PACK_TYPES.map((p) => ({ id: slug(p.name), label: p.name })),
+  },
+  {
+    id: "size",
+    label: "Size",
+    panel: "checkbox",
+    searchable: false,
+    /**
+     * Every size the product is made in, unioned across its packs — so ticking
+     * L returns anything with at least one pack carrying L, and ticking M and
+     * L returns anything carrying either. That is the engine's ordinary
+     * OR-within-a-facet rule with no exception, which is why Size costs one
+     * array entry like every other facet.
+     *
+     * Which of those packs the card then shows is a separate question, and the
+     * only one Size answers differently — see `activeVariantIndex`.
+     */
+    valuesOf: (p) => [...new Set(p.variants.flatMap((v) => v.sizes))].map(sizeOptionId),
+    options: ALL_SIZES.map((size) => ({ id: sizeOptionId(size), label: size })),
   },
   {
     id: "colour",
@@ -274,6 +301,11 @@ const COMMON_RAIL: RailEntry[] = [
   { id: "price", label: "Price Range", facetIds: ["price"] },
   { id: "margin", label: "Margin", facetIds: ["margin"] },
   { id: "packType", label: "Pack Type", facetIds: ["packType"] },
+  // Not in the Figma rail, which predates the facet. Placed with the other
+  // garment attributes rather than at the top, so the designed order above it
+  // is left alone — worth a designer's call, since size is the filter an
+  // apparel buyer reaches for first.
+  { id: "size", label: "Size", facetIds: ["size"] },
   { id: "colour", label: "Colour", facetIds: ["colour"] },
   { id: "seller", label: "Seller", facetIds: ["seller"] },
   { id: "sellerCity", label: "Seller City", facetIds: ["sellerCity"] },

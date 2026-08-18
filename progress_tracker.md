@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-08-14
+Last updated: 2026-08-18
 
 Live: **https://filterprototype.vercel.app** — **password-protected** since
 2026-08-14. **Leave the username blank** and enter the password; only the password is checked. It lives in the `SITE_PASSWORD` env var on Vercel
@@ -83,6 +83,20 @@ Local: `npm run dev` → http://localhost:3000.
 
 **Two contrast failures closed as a by-product** — see backlog item 2. Not by choosing darker colours, but by sampling the live app, which sets both better than the frame: margin is blue (`primary`, 2.66:1 → **6.0:1**, clears AA) and the secondary grey is `#7f7f7f` (2.85:1 → 4.0:1). Margin measured `#0066ff`, but that same screengrab's app bar is `#004ffa` exactly — our token — so the sampled value is a second blue a hair off brand, and the token is used instead. It also preserves what matters: margin reads in the same blue as a selected set pill.
 
+### 2026-08-18 — Size, a facet that lives on the pack
+
+**The rule, confirmed with the product side rather than assumed.** Sizes sit on the pack, not the product, so a size filter matches a product when **any** of its packs carries a selected size. Ticking M *and* L therefore returns their union — 586, against 412 for M and 450 for L — rather than narrowing to packs carrying both. The ALL-within-one-pack reading was put up alongside it and rejected: this is B2B carton buying, so it was a real question, but ANY is what the engine already does and what was wanted.
+
+**Which pack the card is talking about.** The card opens on the leftmost pack carrying a selected size — pills run in ascending set size, so that is the smallest pack a retailer can buy their size in. Price and margin read **that same pack** for sorting and for the Price Range and Margin facets, which was the second thing settled and the one with teeth: leaving them on pack #1 while the card printed another pack's price left `Price/pc low → high` showing **63 visibly-descending prices** at `size=M,L`. Not wrong — ranked on numbers nobody can see — but it reads as broken sorting. Ranking on the shown pack takes that to 0. MOQ is a product field and does not move. New module `lib/filters/activeVariant.ts`, and `valuesOf` grew a second parameter carrying the size selection, the only selection a facet is allowed to see.
+
+**The seed was reshaped, because Size was a dead control before it.** Measured against the old flat breakup table, L appeared in **96%** of the catalog and M in 93%: two-to-four packs each drawing their own sizes unioned into near-total coverage, so ticking a size pruned about 4%. Sizes are now a contiguous **run per product** — a garment comes in S–XL and its packs are quantity splits of that run — which puts L at 42%, M at 39%, and all thirteen options between 3% and 42%. Kids' lines are sized by **age band** (`2-3Y` … `12-13Y`) and adults' by letter, category-restricted the way brands and price bands already are, so Girls empties the panel of letters and Men empties it of bands.
+
+**Determinism held.** Runs draw from their own PRNG stream; the per-pack split reuses the slot the old breakup `pick` occupied, so the main sequence never shifted. Verified: all seven category counts, Girls 97, Men 575 and `₹900 & above` 37 are unchanged. Two side effects worth having — *Solid Size Pack* now genuinely means one size for the carton, which the facet always claimed and the flat table never honoured; and mixed packs are capped at four sizes, because a seven-size `whitespace-nowrap` breakup runs past the 360px frame.
+
+**Two bugs, both found by checking rather than reasoning.** `Variant.sizes` holds display labels (`"3XL"`) while selections hold ids (`"3xl"`), so the pack silently never moved off #1 and nothing failed — `sizeOptionId` is now declared once and imported by both sides. And the pill row's scroll-into-view aligned an over-wide pill's *right* edge, hiding its left; a pill wider than the row now aligns left.
+
+**Size sits between Pack Type and Colour in both rails** — a new entry Figma's rail predates. Placed with the other garment attributes so the designed order above it is untouched, which **wants a designer's call**: size is the filter an apparel buyer reaches for first, and this is not the top.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -100,7 +114,9 @@ Local: `npm run dev` → http://localhost:3000.
 - Sort dot appears on non-default sort and clears on return to Popularity.
 - Sheet motion measured frame by frame: enter decelerates (92→29→12→4px steps), exit accelerates (10→34→73→171px), then unmounts.
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
-- 27 engine tests green. Lint and typecheck clean. No console errors on any screen, local or production.
+- Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
+- The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
+- 57 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## Variant B — top chips instead of a bottom bar
 

@@ -1,4 +1,5 @@
-import { defaultVariant, type Product } from "@/lib/catalog/types";
+import type { Product } from "@/lib/catalog/types";
+import { SIZE_FACET_ID, activeVariant } from "./activeVariant";
 import { FACETS, FACET_BY_ID, type FacetOption } from "./facets";
 
 /** facetId -> selected option ids. Absent or empty means "no constraint". */
@@ -15,10 +16,15 @@ export const SORT_OPTIONS: { id: SortId; label: string }[] = [
 
 export const DEFAULT_SORT: SortId = "popularity";
 
-function matchesFacet(product: Product, facetId: string, chosen: string[]): boolean {
+function matchesFacet(
+  product: Product,
+  facetId: string,
+  chosen: string[],
+  sizes?: string[],
+): boolean {
   const facet = FACET_BY_ID.get(facetId);
   if (!facet) return true;
-  const values = facet.valuesOf(product);
+  const values = facet.valuesOf(product, sizes);
   // OR within a facet.
   return values.some((value) => chosen.includes(value));
 }
@@ -30,6 +36,15 @@ function matchesFacet(product: Product, facetId: string, chosen: string[]): bool
  * facet F we must ignore F's own selections, otherwise every unselected option
  * in F would read zero and the panel would collapse the moment you ticked
  * anything.
+ *
+ * Size is the one selection that reaches beyond its own facet, because it
+ * moves which pack Price and Margin read. Skipping Size therefore also drops
+ * that influence and puts both back on pack #1 — which is what "ignore this
+ * facet's selections" has to mean if the answer is to stay consistent. The
+ * visible consequence is narrow: with Size *and* a price or margin filter both
+ * active, an option count inside the Size panel can differ slightly from the
+ * total you get after ticking it. The footer total is always exact, because
+ * nothing is skipped there.
  */
 export function applyFilters(
   products: Product[],
@@ -41,8 +56,10 @@ export function applyFilters(
   );
   if (!active.length) return products;
 
+  const sizes = skipFacetId === SIZE_FACET_ID ? undefined : selections[SIZE_FACET_ID];
+
   return products.filter((product) =>
-    active.every(([facetId, chosen]) => matchesFacet(product, facetId, chosen)),
+    active.every(([facetId, chosen]) => matchesFacet(product, facetId, chosen, sizes)),
   );
 }
 
@@ -71,9 +88,10 @@ export function facetOptionsWithCounts(
   if (!facet) return [];
 
   const scope = applyFilters(products, selections, facetId);
+  const sizes = facetId === SIZE_FACET_ID ? undefined : selections[SIZE_FACET_ID];
   const tally = new Map<string, number>();
   for (const product of scope) {
-    for (const value of facet.valuesOf(product)) {
+    for (const value of facet.valuesOf(product, sizes)) {
       tally.set(value, (tally.get(value) ?? 0) + 1);
     }
   }
@@ -106,18 +124,23 @@ export function discriminatingOptions(
   );
 }
 
-export function sortProducts(products: Product[], sort: SortId): Product[] {
+/**
+ * `sizes` is the current Size selection. Price and margin rank on the pack the
+ * card is actually printing, which a size filter moves off pack #1 — rank it
+ * anywhere else and a low-to-high sort lists visibly descending prices.
+ */
+export function sortProducts(products: Product[], sort: SortId, sizes?: string[]): Product[] {
   const sorted = [...products];
   switch (sort) {
     case "recent":
       return sorted.sort((a, b) => a.listedDaysAgo - b.listedDaysAgo);
     case "price_asc":
       return sorted.sort(
-        (a, b) => defaultVariant(a).pricePerPc - defaultVariant(b).pricePerPc,
+        (a, b) => activeVariant(a, sizes).pricePerPc - activeVariant(b, sizes).pricePerPc,
       );
     case "margin_desc":
       return sorted.sort(
-        (a, b) => defaultVariant(b).marginPct - defaultVariant(a).marginPct,
+        (a, b) => activeVariant(b, sizes).marginPct - activeVariant(a, sizes).marginPct,
       );
     case "popularity":
     default:

@@ -128,7 +128,7 @@ export function PlpScreen({
   );
 
   const results = useMemo(
-    () => sortProducts(applyFilters(products, selections), sort),
+    () => sortProducts(applyFilters(products, selections), sort, selections.size),
     [products, selections, sort],
   );
 
@@ -227,7 +227,9 @@ export function PlpScreen({
         ) : (
           results
             .slice(0, visible)
-            .map((product) => <ProductCard key={product.id} product={product} />)
+            .map((product) => (
+              <ProductCard key={product.id} product={product} sizes={selections.size} />
+            ))
         )}
       </div>
 

@@ -251,28 +251,61 @@ const GENDER_LABEL: Record<Gender, string> = {
 };
 
 /**
- * Pack shapes, keyed by set size. Bigger packs price lower per piece.
+ * Size vocabularies, in size order.
  *
- * Written as `size/qty`, joined by commas, to match the live SOLV app
- * (screengrab, 2026-08-14) — `M/6` for six of one size, `M/6, L/6, XL/6` for a
- * mixed pack. It replaced three earlier notations that had drifted apart: bare
- * repetition (`S,S`), a `×` multiplier (`M×2,L×2`), and a bare size standing
- * for a whole pack (`2XL` for ten pieces).
- *
- * **The quantities sum to the key**, which the old shapes did not always do —
- * `2XL` for a set of 10 named no quantity at all. A retailer reads this line to
- * work out what actually arrives in the carton, so a breakup that doesn't add
- * up to the pack size is worse than a vague one.
+ * Kids' lines are sold by age band in this market rather than by letter, so
+ * the size facet's options depend on the category exactly the way brands and
+ * price bands already do. It also sharpens the pruning demo the way the
+ * category list does: pick Girls and every letter size leaves the Size panel,
+ * pick Men and every age band does.
  */
-const SIZE_BREAKUPS: Record<number, string[]> = {
-  2: ["S/2", "L/1, XL/1", "M/1, L/1"],
-  4: ["M/1, L/1, XL/1, 2XL/1", "XS/2, S/2", "S/1, M/1, L/1, XL/1"],
-  6: ["M/6", "M/2, L/2, XL/2", "S/1, M/1, L/1, XL/1, 2XL/1, 3XL/1"],
-  10: ["2XL/10", "L/4, XL/4, 2XL/2"],
-  12: ["S/3, M/3, L/3, XL/3", "M/6, L/6"],
-};
+const ADULT_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"];
+const KIDS_SIZES = ["2-3Y", "4-5Y", "6-7Y", "8-9Y", "10-11Y", "12-13Y"];
+
+export const ALL_SIZES = [...ADULT_SIZES, ...KIDS_SIZES];
+
+/**
+ * The contiguous stretch of its vocabulary one product is made in — a tee that
+ * comes in S–XL, not one drawing a fresh size for every pack.
+ *
+ * Modelling the run at the **product** level is what makes Size worth
+ * filtering on. Drawing sizes per pack instead lets 2–4 packs union together
+ * into near-total coverage: measured against the old table, L reached 96% of
+ * the catalog and M 93%, so ticking either pruned ~4% and the control was
+ * dead. Runs put that back under the seller's control, where it belongs.
+ *
+ * Weighted toward the middle of each vocabulary, because that is where real
+ * apparel sits — but not so far that XS or 3XL becomes unreachable. An option
+ * that can never appear is worse than no option.
+ */
+const ADULT_RUNS = [
+  { start: 1, len: 2, weight: 12 }, // S–M
+  { start: 2, len: 2, weight: 16 }, // M–L
+  { start: 3, len: 2, weight: 14 }, // L–XL
+  { start: 4, len: 2, weight: 8 }, //  XL–2XL
+  { start: 1, len: 3, weight: 12 }, // S–L
+  { start: 2, len: 3, weight: 14 }, // M–XL
+  { start: 3, len: 3, weight: 6 }, //  L–2XL
+  { start: 0, len: 2, weight: 6 }, //  XS–S
+  { start: 5, len: 2, weight: 6 }, //  2XL–3XL
+  { start: 1, len: 4, weight: 4 }, //  S–XL
+  { start: 0, len: 7, weight: 2 }, //  the full range, rare
+];
+
+const KIDS_RUNS = [
+  { start: 0, len: 2, weight: 14 }, // 2-3Y–4-5Y
+  { start: 1, len: 2, weight: 16 }, // 4-5Y–6-7Y
+  { start: 2, len: 2, weight: 16 }, // 6-7Y–8-9Y
+  { start: 3, len: 2, weight: 12 }, // 8-9Y–10-11Y
+  { start: 4, len: 2, weight: 8 }, //  10-11Y–12-13Y
+  { start: 0, len: 3, weight: 12 }, // 2-3Y–6-7Y
+  { start: 1, len: 3, weight: 12 }, // 4-5Y–8-9Y
+  { start: 2, len: 3, weight: 6 }, //  6-7Y–10-11Y
+  { start: 0, len: 6, weight: 4 }, //  the full range, rare
+];
 
 const SET_SIZES = [2, 4, 6, 10, 12];
+
 
 function weightedPick<T>(rand: () => number, items: T[], weightOf: (item: T) => number): T {
   const total = items.reduce((sum, item) => sum + weightOf(item), 0);
@@ -284,15 +317,50 @@ function weightedPick<T>(rand: () => number, items: T[], weightOf: (item: T) => 
   return items[items.length - 1];
 }
 
-function pick<T>(rand: () => number, items: T[]): T {
-  return items[Math.floor(rand() * items.length)];
-}
-
 function roundTo(value: number, step: number) {
   return Math.round(value / step) * step;
 }
 
-function buildVariants(rand: () => number, basePrice: number, baseMargin: number): Variant[] {
+/**
+ * One pack's contents, drawn from the product's size run.
+ *
+ * A **Solid Size Pack** is one size for the whole carton — which is what that
+ * pack type has always claimed on the card and what the old flat table never
+ * honoured. Every other pack type spreads across a window of the run, the
+ * middle sizes taking the remainder the way a real size curve does.
+ *
+ * Quantities always sum to `setOf`. A retailer reads this line to work out
+ * what actually arrives, so a breakup that does not add up is a wrong answer
+ * to the only question the line exists to answer.
+ */
+function buildBreakup(roll: number, run: string[], solid: boolean, setOf: number) {
+  if (solid) return [{ size: run[Math.floor(roll * run.length)], qty: setOf }];
+
+  // Capped at four sizes. A carton spread over all seven runs the pill's
+  // `whitespace-nowrap` label past the 360px frame, so it can only ever show
+  // one end of itself — and the live app's own cards spread over three.
+  const span = Math.min(run.length, 4, 2 + Math.floor(roll * (run.length - 1)));
+  const start = Math.floor((run.length - span) / 2);
+  const window = run.slice(start, start + span);
+
+  const middle = (window.length - 1) / 2;
+  const order = [...window.keys()].sort(
+    (a, b) => Math.abs(a - middle) - Math.abs(b - middle) || a - b,
+  );
+
+  const qty: number[] = new Array(window.length).fill(0);
+  for (let i = 0; i < setOf; i += 1) qty[order[i % order.length]] += 1;
+
+  return window.map((size, i) => ({ size, qty: qty[i] })).filter((part) => part.qty > 0);
+}
+
+function buildVariants(
+  rand: () => number,
+  run: string[],
+  solid: boolean,
+  basePrice: number,
+  baseMargin: number,
+): Variant[] {
   const count = 2 + Math.floor(rand() * 3); // 2–4 packs
   const sizes = [...SET_SIZES].sort(() => rand() - 0.5).slice(0, count).sort((a, b) => a - b);
 
@@ -303,12 +371,15 @@ function buildVariants(rand: () => number, basePrice: number, baseMargin: number
     const marginPct = Math.min(78, Math.round(baseMargin + index * (2 + rand() * 4)));
     const mrp = roundTo(pricePerPc / (1 - marginPct / 100), 10);
 
+    // Still exactly one draw, in the slot the old `pick(rand, SIZE_BREAKUPS)`
+    // occupied, so moving to size runs left the main sequence — and every
+    // documented facet count with it — untouched.
+    const breakup = buildBreakup(rand(), run, solid, setOf);
+
     return {
       setOf,
-      // One `rand()` call, as before — `pick` draws once whatever the array's
-      // length, so re-shaping the tables above leaves the seeded sequence
-      // untouched and the documented facet counts (Girls 97, Men 575) hold.
-      sizeBreakup: pick(rand, SIZE_BREAKUPS[setOf]),
+      sizes: breakup.map((part) => part.size),
+      sizeBreakup: breakup.map((part) => `${part.size}/${part.qty}`).join(", "),
       mrp,
       pricePerPc,
       marginPct,
@@ -319,6 +390,11 @@ function buildVariants(rand: () => number, basePrice: number, baseMargin: number
 
 export function generateCatalog(): Product[] {
   const rand = mulberry32(0x50_1f_20_25);
+  // Sizes draw from their own stream. Size runs are one extra decision per
+  // product, and taking it from `rand` would have shifted every draw after it
+  // — re-rolling the whole catalog and invalidating every count in the docs.
+  // A second stream keeps the main sequence byte-for-byte what it was.
+  const sizeRand = mulberry32(0x51_2e_50_17);
   const products: Product[] = [];
 
   // Expand the seller weights into a flat draw pool so the totals land exactly.
@@ -354,6 +430,13 @@ export function generateCatalog(): Product[] {
     const basePrice = roundTo(priceFloor + rand() * (priceCeil - priceFloor), 5);
     const baseMargin = 18 + Math.floor(rand() * 48);
 
+    // Kids' lines are sized by age band, adults' by letter. One run per
+    // product, not per pack — see ADULT_RUNS.
+    const kids = gender === "boys" || gender === "girls";
+    const vocabulary = kids ? KIDS_SIZES : ADULT_SIZES;
+    const run = weightedPick(sizeRand, kids ? KIDS_RUNS : ADULT_RUNS, (r) => r.weight);
+    const sizeRun = vocabulary.slice(run.start, run.start + run.len);
+
     const offers = OFFERS.filter((o) => rand() < o.chance).map((o) => o.name);
     const code = 1000 + Math.floor(rand() * 8999);
 
@@ -377,7 +460,13 @@ export function generateCatalog(): Product[] {
       bestSeller: rand() < 0.18,
       listedDaysAgo: Math.floor(rand() * 180),
       popularity: Math.floor(rand() * 10000),
-      variants: buildVariants(rand, basePrice, baseMargin),
+      variants: buildVariants(
+        rand,
+        sizeRun,
+        packType.name === "Solid Size Pack",
+        basePrice,
+        baseMargin,
+      ),
     });
   }
 

@@ -7,6 +7,8 @@ export type Gender = "men" | "women" | "boys" | "girls";
  */
 export interface Variant {
   setOf: number;
+  /** The sizes this pack carries, in size order — `["M", "L", "XL"]`. */
+  sizes: string[];
   /** `size/qty`, comma-joined — "M/6" or "M/2, L/2, XL/2". Sums to `setOf`. */
   sizeBreakup: string;
   /** MRP per piece — the card labels it `MRP/PC` */
@@ -53,7 +55,11 @@ export interface Seller {
   city: string;
 }
 
-/** The default pack — index 0 — supplies the values used for filter and sort. */
+/**
+ * The pack a card opens on, and whose price, margin and MOQ drive filter and
+ * sort — **unless a size is selected**, in which case `activeVariant` moves
+ * both to the first pack carrying that size. See `lib/filters/activeVariant.ts`.
+ */
 export function defaultVariant(product: Product): Variant {
   return product.variants[0];
 }

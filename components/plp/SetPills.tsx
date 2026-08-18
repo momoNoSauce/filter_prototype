@@ -10,6 +10,10 @@ import type { Variant } from "@/lib/catalog/types";
  *
  * The row scrolls horizontally and the dots below track scroll pages, which is
  * what the design's 4-pills-3-dots arrangement implies.
+ *
+ * It also scrolls itself to the selected pill. Under a size filter the card
+ * opens on a pack that may sit past the right edge, and a card that silently
+ * prices a pack you cannot see is worse than one that opens on the wrong pack.
  */
 export function SetPills({
   variants,
@@ -44,11 +48,30 @@ export function SetPills({
     };
   }, [variants.length]);
 
+  // Deliberately not `scrollIntoView`: that walks up and scrolls every
+  // ancestor container, so twenty mounting cards would each yank the PLP.
+  // Setting `scrollLeft` moves this row and nothing else. Instant, not smooth,
+  // for the same reason — twenty simultaneous animations on first paint.
+  useEffect(() => {
+    const el = scroller.current;
+    const pill = el?.children[selected] as HTMLElement | undefined;
+    if (!el || !pill) return;
+
+    const left = pill.offsetLeft;
+    const right = left + pill.offsetWidth;
+    // A pill wider than the row can only show one end of itself. Show the
+    // left one: the breakup reads left to right, and its set size is there.
+    if (left < el.scrollLeft || pill.offsetWidth > el.clientWidth) el.scrollLeft = left;
+    else if (right > el.scrollLeft + el.clientWidth) el.scrollLeft = right - el.clientWidth;
+  }, [selected]);
+
   return (
     <div className="flex w-full flex-col gap-[20px]">
       <div
         ref={scroller}
-        className="no-scrollbar flex w-full items-center gap-[8px] overflow-x-auto text-center"
+        // `relative` only so the pills' `offsetLeft` is measured against this
+        // scroller — see the scroll-into-view effect. It changes no layout.
+        className="no-scrollbar relative flex w-full items-center gap-[8px] overflow-x-auto text-center"
       >
         {variants.map((variant, index) => {
           const active = index === selected;

@@ -14,6 +14,7 @@ import { buildQuery, parseSelections, parseSort } from "./urlState";
 import { contextChips } from "./contextChips";
 import { FACET_BY_ID, getRail, getRailFacetIds } from "./facets";
 import { defaultVariant } from "@/lib/catalog/types";
+import { activeVariant, activeVariantIndex, sizeOptionId } from "./activeVariant";
 
 const catalog = getCatalog();
 
@@ -60,7 +61,9 @@ describe("catalog", () => {
   it("writes every pack breakup as size/qty", () => {
     // The live app's notation. Three earlier ones had drifted apart — bare
     // repetition (`S,S`), a multiplier (`M×2`), and a bare size (`2XL`).
-    const shape = /^[A-Z0-9]+\/\d+(, [A-Z0-9]+\/\d+)*$/;
+    // The hyphen is for kids' age bands — `4-5Y/2` — which are sizes here in
+    // exactly the way `2XL` is.
+    const shape = /^[A-Z0-9-]+\/\d+(, [A-Z0-9-]+\/\d+)*$/;
     expect(catalog.flatMap((p) => p.variants).every((v) => shape.test(v.sizeBreakup))).toBe(
       true,
     );
@@ -410,5 +413,107 @@ describe("url state", () => {
   it("discards unknown option ids rather than filtering to nothing", () => {
     const params = new URLSearchParams("gender=men,unicorn");
     expect(parseSelections(params)).toEqual({ gender: ["men"] });
+  });
+});
+
+describe("size — a facet that lives on the pack, not the product", () => {
+  const catalog = getCatalog();
+  it("matches a product when any one of its packs carries the size", () => {
+    for (const product of applyFilters(catalog, { size: ["l"] })) {
+      expect(product.variants.some((v) => v.sizes.map(sizeOptionId).includes("l"))).toBe(true);
+    }
+  });
+
+  it("widens rather than narrows when a second size is ticked", () => {
+    // ANY, not ALL: M and L together means a pack carrying either. Confirmed
+    // 2026-08-18 — the alternative reading was a pack carrying both.
+    const m = applyFilters(catalog, { size: ["m"] });
+    const l = applyFilters(catalog, { size: ["l"] });
+    const both = applyFilters(catalog, { size: ["m", "l"] });
+
+    expect(both.length).toBeGreaterThan(Math.max(m.length, l.length));
+    expect(new Set(both.map((p) => p.id))).toEqual(
+      new Set([...m, ...l].map((p) => p.id)),
+    );
+  });
+
+  it("keeps every option reachable and none universal", () => {
+    // The old flat size table put L in 96% of the catalog and M in 93%, so
+    // ticking either pruned about 4% and the control did nothing worth doing.
+    const options = facetOptionsWithCounts(catalog, {}, "size");
+    expect(options).toHaveLength(13);
+    for (const option of options) {
+      expect(option.count).toBeGreaterThan(0);
+      expect(option.count).toBeLessThan(catalog.length * 0.6);
+    }
+  });
+
+  it("prunes to age bands for kids and letters for adults", () => {
+    const labels = (selections: Record<string, string[]>) =>
+      facetOptionsWithCounts(catalog, selections, "size").map((o) => o.label);
+
+    expect(labels({ gender: ["girls"] }).every((l) => l.endsWith("Y"))).toBe(true);
+    expect(labels({ gender: ["men"] }).some((l) => l.endsWith("Y"))).toBe(false);
+  });
+});
+
+describe("the pack a card shows, and is judged by", () => {
+  const catalog = getCatalog();
+
+  it("opens on pack #1 when no size is selected", () => {
+    for (const product of catalog.slice(0, 50)) {
+      expect(activeVariantIndex(product, undefined)).toBe(0);
+      expect(activeVariantIndex(product, [])).toBe(0);
+      expect(activeVariant(product, [])).toBe(defaultVariant(product));
+    }
+  });
+
+  it("opens on the leftmost pack carrying a selected size", () => {
+    const sizes = ["3xl"];
+    const hits = applyFilters(catalog, { size: sizes });
+    expect(hits.length).toBeGreaterThan(0);
+
+    for (const product of hits) {
+      const index = activeVariantIndex(product, sizes);
+      expect(product.variants[index].sizes.map(sizeOptionId)).toContain("3xl");
+      // Nothing to its left qualifies, or it would not be the leftmost.
+      for (const earlier of product.variants.slice(0, index)) {
+        expect(earlier.sizes.map(sizeOptionId)).not.toContain("3xl");
+      }
+    }
+  });
+
+  it("ignores the order sizes were tapped in", () => {
+    for (const product of applyFilters(catalog, { size: ["m", "l"] }).slice(0, 100)) {
+      expect(activeVariantIndex(product, ["m", "l"])).toBe(activeVariantIndex(product, ["l", "m"]));
+    }
+  });
+
+  it("sorts price on the pack the card prints, not on pack #1", () => {
+    // Ranking on pack #1 while the card shows another pack lists visibly
+    // descending prices under a low-to-high sort. Measured 2026-08-18: with
+    // size=M,L that was 63 out-of-order rows.
+    const sizes = ["m", "l"];
+    const hits = applyFilters(catalog, { size: sizes });
+    const printed = sortProducts(hits, "price_asc", sizes).map(
+      (p) => activeVariant(p, sizes).pricePerPc,
+    );
+
+    expect(printed).toEqual([...printed].sort((a, b) => a - b));
+    expect(hits.filter((p) => activeVariantIndex(p, sizes) > 0).length).toBeGreaterThan(0);
+  });
+
+  it("filters price on that same pack", () => {
+    const sizes = ["xs"];
+    for (const product of applyFilters(catalog, { size: sizes, price: ["p-200"] })) {
+      expect(activeVariant(product, sizes).pricePerPc).toBeLessThan(200);
+    }
+  });
+
+  it("resolves to a real pack even for a product the size filter excluded", () => {
+    // Count passes ask about products that were filtered out; -1 would index
+    // undefined and take the card down with it.
+    const outside = catalog.find((p) => !p.variants.some((v) => v.sizes.includes("3XL")))!;
+    expect(activeVariant(outside, ["3xl"])).toBe(outside.variants[0]);
   });
 });

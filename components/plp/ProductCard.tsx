@@ -2,15 +2,31 @@
 
 import { useState } from "react";
 import type { Product } from "@/lib/catalog/types";
+import { activeVariantIndex } from "@/lib/filters/activeVariant";
 import { SetPills } from "./SetPills";
 import { BulkOfferTag, GenericOfferTag, GoldSchemeTag } from "./Tags";
 
 const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 /** Figma 638:2768 — the PLP product card. */
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, sizes }: { product: Product; sizes?: string[] }) {
+  // Which pack the card opens on: pack #1 normally, and under a size filter
+  // the first pack carrying a selected size — the same pack the engine ranked
+  // this card by, so the price shown is the price it was sorted on.
+  const auto = activeVariantIndex(product, sizes);
+
   // Picking a pack re-prices the card, per the selectable-variant decision.
-  const [variantIndex, setVariantIndex] = useState(0);
+  // A manual pick outranks the filter, but only until the filter moves the
+  // answer: at that point the card is showing a pack the retailer no longer
+  // asked for, and holding on to it would contradict the list it sits in.
+  const [override, setOverride] = useState<number | null>(null);
+  const [lastAuto, setLastAuto] = useState(auto);
+  if (lastAuto !== auto) {
+    setLastAuto(auto);
+    setOverride(null);
+  }
+
+  const variantIndex = override ?? auto;
   const variant = product.variants[variantIndex];
 
   return (
@@ -123,7 +139,7 @@ export function ProductCard({ product }: { product: Product }) {
         <SetPills
           variants={product.variants}
           selected={variantIndex}
-          onSelect={setVariantIndex}
+          onSelect={setOverride}
         />
       </div>
 

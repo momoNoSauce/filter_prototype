@@ -8,7 +8,7 @@ npm run dev      # http://localhost:3000
 npm test         # filter engine unit tests
 ```
 
-Deploys to Vercel with zero configuration.
+Deploys to Vercel. The deployment is password-gated by `proxy.ts`, which fails closed — set `SITE_PASSWORD` **before** deploying, and pass `--scope bitihotra-karaks-projects`. See `progress_tracker.md`.
 
 ---
 
@@ -71,9 +71,15 @@ That second rule is the whole thing. Counting a facet against its own selections
 
 Options that fall to zero are hidden. Anything currently selected stays visible even at zero, so a selection can never become impossible to undo.
 
+### The active pack — `lib/filters/activeVariant.ts`
+
+Sizes are the one thing that lives on the **pack** rather than the product, and that makes a size filter ask two questions instead of one. *Is this product in?* — yes if any of its two-to-four packs carries a selected size, which is the ordinary OR-within-a-facet rule and needs no exception. And then: *which pack is the card talking about?*
+
+`activeVariant(product, sizes)` answers the second. Pack #1 normally; under a size filter, the leftmost pack carrying a selected size — pills run in ascending set size, so that is the smallest pack a retailer can buy their size in. Price and margin read that same pack for sorting and for the Price Range and Margin facets, so a card is ranked on the number it prints. It is kept out of both the engine and the registry because both need it and neither owns it.
+
 ### Facet registry — `lib/filters/facets.ts`
 
-Fourteen facets behind twelve rail entries (*More Filters* stacks Fabric and Product Tags). Each facet declares `valuesOf(product) → string[]`, so range buckets, multi-valued delivery windows and plain checkboxes all flow through one code path. Adding a facet is one array entry.
+Sixteen facets behind thirteen rail entries in A and fourteen in B (*More Filters* stacks Fabric and Product Tags). Each facet declares `valuesOf(product, sizes?) → string[]`, so range buckets, multi-valued delivery windows and plain checkboxes all flow through one code path. Adding a facet is one array entry. `sizes` is the current Size selection and the only selection any facet may see — Price and Margin need it because they read the pack the card is showing; every other facet ignores it.
 
 `FACETS` is everything the engine knows about; `getRail(variant)` is what the Filters screen displays, which differs by variant — and differs *only* in whether it carries Category and Gender at the top.
 
@@ -89,7 +95,7 @@ Filter state lives in the query string: `?gender=men,boys&seller=grasim&sort=mar
 
 ### Catalog — `lib/catalog/`
 
-1,070 garment products (matching the design's "Show 1,070 results"), from a fixed-seed PRNG so counts never shift between reloads or between server and client. 7 categories, 4 genders, 8 sellers, 10 brands, 10 colours, 3 pack types, 6 fabrics; each product carries 2–4 pack variants driving the card's set pills.
+1,070 garment products (matching the design's "Show 1,070 results"), from a fixed-seed PRNG so counts never shift between reloads or between server and client. 7 categories, 4 genders, 8 sellers, 10 brands, 10 colours, 3 pack types, 6 fabrics, 13 sizes; each product carries 2–4 pack variants driving the card's set pills.
 
 The seven categories come from the merchandising list and **name their audience**: Women's T-Shirts, Men's Formal Shirts, Men's Casual T-Shirts, Men's Casual Shirts, Girl's T-Shirts, Boy's Casual Shirts, Boy's Casual T-Shirts. Category → gender is therefore 1:1 rather than many-to-many, which makes pruning sharper, not weaker — picking *Girls* leaves one tile of seven (97 results) and *Men* leaves three (575).
 
@@ -106,6 +112,18 @@ The seven categories come from the merchandising list and **name their audience*
 Price bands are per-category rather than one blanket rule, so kids' lines sit below adult ones and formal above casual and the Price Range facet has something to separate. Men's Formal Shirts reaches ₹1,150 to keep the top bucket (`₹900 & above`, 37 products) populated — all five price buckets and all four margin buckets are live.
 
 Brands are category-restricted too, kids' lines carrying the fewest: Boy's Casual T-Shirts collapses the Brands grid to two tiles.
+
+Sizes are as well, and go further — kids' lines are sized by age band (`2-3Y` … `12-13Y`) and adults' by letter (`XS` … `3XL`), so picking Girls empties the Size panel of letters and picking Men empties it of bands. Each product is made in one contiguous **run** of its vocabulary, and its packs are quantity splits of that run rather than fresh draws, which is what stops 2–4 packs unioning into near-total coverage and leaving the control with nothing to prune.
+
+| Size | Products | | Size | Products |
+|---|---|---|---|---|
+| XS | 49 | | 2-3Y | 76 |
+| S | 232 | | 4-5Y | 156 |
+| M | 412 | | 6-7Y | 173 |
+| L | 450 | | 8-9Y | 140 |
+| XL | 304 | | 10-11Y | 81 |
+| 2XL | 114 | | 12-13Y | 28 |
+| 3XL | 30 | | | |
 
 ### Device frame — `components/DeviceFrame.tsx`
 
@@ -129,6 +147,9 @@ Several of these were revised during review — the current state is what's list
 | 17 | Seller Offer | Means *any offer at all* — its own `hasOffer` facet, not a fifth option inside `offers`, because inside it OR-within-a-facet would make Seller Offer widen a Cashback selection instead of narrowing it. Listed in the Offers rail entry so a chip-applied filter is still clearable once the strip moves on. The three offer chips appear only when some but not all products in scope carry the offer; price bands and verticals keep the plain hide-at-zero rule. `Free Shipping` was renamed `Free Delivery` to match. |
 | 18 | Chip design | Material 3, as asked, in this app's palette. The three offer chips are **filter chips** — 32dp, 8dp corner, outline unselected, filled with a leading checkmark when selected, 14sp Medium. The vertical chips come from **Figma `674:4904`** rather than from the M3 spec: 32px on a 4px corner, a circular 26.7 × 27.8 avatar, an 11px two-line label, 0.5px outline unselected, filled with the label in primary plus the exported `close_small` glyph when selected. Known mismatch: M3's 8dp corner sits beside the frame's fully-rounded Sort and Filter pills in B. |
 | 19 | Price dropdown | One chip opening an anchored menu over the bands rather than a chip each. Multi-select with a checkbox and count per row, matching the Price Range facet in Filters; each tap applies live, the menu stays open, and there is no Apply. The closed chip carries the state — the band's name for one, `Price (n)` beyond. The menu renders at the screen root because the strip's `overflow-x-auto` would clip a child, with its position measured on open and clamped to the frame. |
+| 20 | Size | Sizes live on the **pack**, not the product, so a product matches when any of its packs carries a selected size. That is the engine's ordinary OR-within-a-facet rule with no exception, so Size cost one array entry like everything else — and it means ticking M *and* L widens to their union (586) rather than narrowing to packs carrying both. Confirmed 2026-08-18 after the ALL-within-one-pack reading was put up and rejected. |
+| 21 | The pack a card is judged by | Under a size filter the card opens on the **leftmost pack carrying a selected size** — pills run in ascending set size, so that is the smallest pack a retailer can buy their size in. Price and margin read that same pack for sorting and for the Price Range and Margin facets. Leaving them on pack #1 while the card printed another pack's price left `Price/pc low → high` showing 63 visibly-descending prices at `size=M,L`: not wrong, but ranked on numbers nobody can see, which reads as broken sorting. MOQ is a product field and does not move. The pill row scrolls itself to that pack, by setting `scrollLeft` rather than calling `scrollIntoView`, which would scroll every ancestor and let twenty mounting cards yank the PLP. |
+| 22 | Size seed | Runs are drawn **per product**, not per pack: a garment comes in S–XL and is sold in quantity splits of that run. Drawing per pack let 2–4 packs union into near-total coverage — L in 96% of the catalog, M in 93% — so ticking a size pruned about 4% and the control was dead; runs put L at 42% and M at 39%. Kids' lines are sized by age band and adults' by letter, category-restricted the way brands and price bands already are. The runs come from their own PRNG stream, because one extra draw on the main one would have re-rolled the catalog and invalidated every count in this file — all seven category counts, Girls 97, Men 575 and `₹900 & above` 37 are verified unchanged. |
 | 5 | Applied-filter cue | Carried by the controls themselves, in both variants: a **dot** for anything holding one value (Sort), a **count** for anything that can hold many (Category in A, Filters always). Category is excluded from A's Filters count since it reports itself. Removable filter chips were built and then removed on request — in Variant A that strip is reserved for contextual chips, still undefined. |
 | 6 | Clear Filters scope | Clears only the facets that variant's rail owns. In A category survives it — clearing a filter from a screen that never displayed it would be a silent surprise — while gender is cleared, because A's rail shows it. In B both are cleared. The Category sheet's own `Clear all` clears category and nothing else, by the same rule. |
 | 7 | Seller facet on a seller PLP | The app bar says *Baheti Garments* while the Seller facet lists Heeralal, Gagan, Grasim. Treated as a **storefront aggregating multiple sellers**, so the whole catalog is in scope there. Every other seller page is scoped to its own stock. |
@@ -147,7 +168,7 @@ Several of these were revised during review — the current state is what's list
 
 ## Verification
 
-- `npm test` — 20 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip.
+- `npm test` — 57 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, and the size facet's match-and-active-pack rules.
 - `npm run dev`, then Chrome DevTools at exactly 360px, and compare each screen against its Figma frame.
 - Widen past 480px to confirm the phone mockup appears and the app still renders at 360.
 
