@@ -376,13 +376,16 @@ const GENDER_ENTRY: RailEntry = { id: "gender", label: "Gender", facetIds: ["gen
  * once exactly one vertical is settled — see `PV_RAIL`.
  *
  * `locked` is variants C and D, where the *page* is a vertical rather than the
- * selection being one. There the block is always on, and the Category row goes
- * entirely: the page cannot leave the vertical, so a control that pretends
- * otherwise would be a lie the back button has to correct.
+ * selection being one. There the block is always on, and **both Category and
+ * Gender go**: the page cannot leave the vertical, so a Category control would
+ * be a lie the back button has to correct — and since every category names its
+ * audience, one vertical is one gender, leaving a Gender row that can only
+ * offer the single value every product in scope already has. That is a dead
+ * control by the same test `discriminatingOptions` applies to the offer chips.
  */
 export function getRail(category?: string[], locked?: string): RailEntry[] {
   const base = locked
-    ? [GENDER_ENTRY, ...COMMON_RAIL]
+    ? [...COMMON_RAIL]
     : [CATEGORY_ENTRY, GENDER_ENTRY, ...COMMON_RAIL];
   if (!locked && !inSingleVertical(category)) return base;
 

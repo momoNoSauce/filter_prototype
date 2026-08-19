@@ -663,15 +663,26 @@ describe("variants C and D — the page is the vertical", () => {
     expect(verticalScope("not-a-seller", LOCKED)).toBeNull();
   });
 
-  it("drops the Category row and keeps the attribute block on", () => {
+  it("drops Category and Gender, and keeps the attribute block on", () => {
     const rail = getRail(undefined, LOCKED).map((r) => r.id);
     expect(rail).not.toContain("category");
+    // Every category names its audience, so one vertical is one gender: the
+    // row could only ever offer the value every product in scope has.
+    expect(rail).not.toContain("gender");
     for (const id of PV_FACET_IDS) expect(rail).toContain(id);
-    expect(rail[0]).toBe("gender");
+    expect(rail[0]).toBe("delivery");
     expect(rail[rail.length - 1]).toBe("more");
 
     // Nothing can clear or count a facet the page never shows.
-    expect(getRailFacetIds(undefined, LOCKED).has("category")).toBe(false);
+    for (const id of ["category", "gender"]) {
+      expect(getRailFacetIds(undefined, LOCKED).has(id)).toBe(false);
+    }
+  });
+
+  it("confirms Gender would in fact be a dead control there", () => {
+    const genders = facetOptionsWithCounts(scope.products, {}, "gender");
+    expect(genders).toHaveLength(1);
+    expect(genders[0].count).toBe(scope.products.length);
   });
 
   it("never orphans the attributes, there being no vertical to leave", () => {

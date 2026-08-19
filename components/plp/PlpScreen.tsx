@@ -112,10 +112,14 @@ export function PlpScreen({
   useEffect(() => {
     const sync = () => {
       const params = new URLSearchParams(window.location.search);
-      // A vertical-scoped page has no Category control, so `?category=` in a
-      // hand-edited URL would filter with nothing to show or undo it — and
-      // could empty the page by naming a different vertical entirely.
-      if (lockedVertical) params.delete("category");
+      // A vertical-scoped page has no Category or Gender control, so either in
+      // a hand-edited URL would filter with nothing to show or undo it — and
+      // could empty the page outright by naming a different vertical, or the
+      // wrong audience for this one.
+      if (lockedVertical) {
+        params.delete("category");
+        params.delete("gender");
+      }
       setSelections(parseSelections(params, lockedVertical));
       setSort(parseSort(params));
     };
