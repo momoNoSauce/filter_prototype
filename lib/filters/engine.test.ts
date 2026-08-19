@@ -332,14 +332,26 @@ describe("the rail, now identical in both variants", () => {
     });
   });
 
-  it("heads the rail with Category, then Gender", () => {
-    // Category left Variant A's bottom bar on 2026-08-19 and rejoined the
-    // rail, so there is one rail rather than two.
-    const rail = getRail();
-    expect(rail[0].id).toBe("category");
-    expect(rail[1].id).toBe("gender");
+  it("runs in the reference apparel order", () => {
+    // Ordered after a reference PLP (2026-08-19) rather than the Figma frame,
+    // which sequenced these before most of them existed. Pinned in full so a
+    // future reorder has to be a decision rather than a drift.
+    expect(getRail().map((r) => r.id)).toEqual([
+      "category", "brand", "size", "colour", "gender", "fabric",
+      "price", "margin", "moq", "delivery", "offers", "seller", "sellerCity", "more",
+    ]);
     expect(getRailFacetIds().has("category")).toBe(true);
     expect(getRailFacetIds().has("gender")).toBe(true);
+  });
+
+  it("slots the vertical block after Fabric, not at the end", () => {
+    // The reference puts Fit, Pattern and Sleeve Type mid-rail, between the
+    // garment basics and Price — not after the commercial filters.
+    expect(getRail(["mens-formal-shirts"]).map((r) => r.id)).toEqual([
+      "category", "brand", "size", "colour", "gender", "fabric",
+      "fit", "pattern", "sleeve", "neck", "closure",
+      "price", "margin", "moq", "delivery", "offers", "seller", "sellerCity", "more",
+    ]);
   });
 
   it("Clear Filters now wipes Category in both variants", () => {
@@ -671,7 +683,7 @@ describe("variants C and D — the page is the vertical", () => {
     // row could only ever offer the value every product in scope has.
     expect(rail).not.toContain("gender");
     for (const id of PV_FACET_IDS) expect(rail).toContain(id);
-    expect(rail[0]).toBe("delivery");
+    expect(rail[0]).toBe("brand");
     expect(rail[rail.length - 1]).toBe("more");
 
     // Nothing can clear or count a facet the page never shows.

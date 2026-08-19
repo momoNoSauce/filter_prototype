@@ -179,7 +179,7 @@ Several of these were revised during review — the current state is what's list
 
 ## Verification
 
-- `npm test` — 78 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, and the size facet's match-and-active-pack rules.
+- `npm test` — 79 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, and the size facet's match-and-active-pack rules.
 - `npm run dev`, then Chrome DevTools at exactly 360px, and compare each screen against its Figma frame.
 - Widen past 480px to confirm the phone mockup appears and the app still renders at 360.
 

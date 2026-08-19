@@ -304,57 +304,74 @@ export interface RailEntry {
 export type PlpVariant = "bottom-bar" | "top-chips";
 
 /** Everything below Category and Gender — identical in both variants. */
-const COMMON_RAIL: RailEntry[] = [
-  { id: "delivery", label: "Delivery Time", facetIds: ["delivery"] },
-  { id: "moq", label: "MOQ", facetIds: ["moq"] },
+/**
+ * The Filters rail, in order.
+ *
+ * The sequence follows a **reference apparel PLP** (Flipkart, screengrabbed
+ * 2026-08-19) rather than the Figma frame, which ordered these before most of
+ * them existed: Brand, Size, Colour, Gender, Fabric, then the garment
+ * attributes, then Price, then the commercial filters. It is the order a
+ * clothing buyer is used to, and the frame has no opinion about the ten rows
+ * it never drew.
+ *
+ * Departures from the reference, all because the reference has no equivalent:
+ *
+ * - **Category leads.** The reference has no category filter because you are
+ *   already inside one — which is exactly variants C and D, where this row is
+ *   gone. In A and B it is the primary cut and belongs first.
+ * - **Neck Type and Closure Type** follow Fit, Pattern and Sleeve Type, the
+ *   three the reference does carry, rather than interleaving.
+ * - **Margin** sits with Price, being the other number a retailer buys on.
+ * - **Seller and Seller City** are B2B and land with the commercial filters.
+ * - **More Filters** stays last, as the catch-all.
+ *
+ * One ordered list rather than a base plus insertions: with the vertical block
+ * now in the middle rather than at the end, slicing around it was going to be
+ * the thing that quietly put a row in the wrong place.
+ */
+const RAIL_ORDER: (RailEntry & { only?: "filter"; vertical?: true })[] = [
+  { id: "category", label: "Category", facetIds: ["category"], only: "filter" },
   { id: "brand", label: "Brands", facetIds: ["brand"] },
-  { id: "price", label: "Price Range", facetIds: ["price"] },
-  { id: "margin", label: "Margin", facetIds: ["margin"] },
-  // Not in the Figma rail, which predates the facet. Placed with the other
-  // garment attributes rather than at the top, so the designed order above it
-  // is left alone — worth a designer's call, since size is the filter an
-  // apparel buyer reaches for first.
   { id: "size", label: "Size", facetIds: ["size"] },
   { id: "colour", label: "Colour", facetIds: ["colour"] },
-  // Not vertical-specific despite being asked for alongside them: Cotton and
-  // Denim mean the same on a shirt as on a tee, where a collar has no tee
-  // equivalent at all. So it sits here, once, rather than appearing in the
-  // vertical block and again in More Filters.
+  // Dropped under `locked`: one vertical is one audience, so the row could
+  // only offer the single value every product in scope already has.
+  { id: "gender", label: "Gender", facetIds: ["gender"], only: "filter" },
+  // Not vertical-specific despite being asked for with them — Cotton and Denim
+  // mean the same on a shirt as on a tee, where a collar has no tee equivalent
+  // at all. So it sits here always, rather than in the block and in More
+  // Filters both.
   { id: "fabric", label: "Fabric", facetIds: ["fabric"] },
-  { id: "seller", label: "Seller", facetIds: ["seller"] },
-  { id: "sellerCity", label: "Seller City", facetIds: ["sellerCity"] },
+
+  // The vertical-specific block. Shown only inside exactly one vertical:
+  // across verticals a Neck Type list offers *Spread Collar* beside *Round
+  // Neck*, which answers nothing anyone is still asking.
+  { id: "fit", label: "Fit", facetIds: ["fit"], vertical: true },
+  { id: "pattern", label: "Pattern", facetIds: ["pattern"], vertical: true },
+  { id: "sleeve", label: "Sleeve Type", facetIds: ["sleeve"], vertical: true },
+  { id: "neck", label: "Neck Type", facetIds: ["neck"], vertical: true },
+  { id: "closure", label: "Closure Type", facetIds: ["closure"], vertical: true },
+
+  { id: "price", label: "Price Range", facetIds: ["price"] },
+  { id: "margin", label: "Margin", facetIds: ["margin"] },
+  { id: "moq", label: "MOQ", facetIds: ["moq"] },
+  { id: "delivery", label: "Delivery Time", facetIds: ["delivery"] },
   // `hasOffer` is reached from a chip, but it has to be listed here too, or a
   // chip-applied filter would survive Clear Filters and go uncounted by the
   // Filters badge with no control left to undo it once the chip strip changes.
   { id: "offers", label: "Offers", facetIds: ["hasOffer", "offers"] },
+  { id: "seller", label: "Seller", facetIds: ["seller"] },
+  { id: "sellerCity", label: "Seller City", facetIds: ["sellerCity"] },
   { id: "more", label: "More Filters", facetIds: ["tags"] },
 ];
 
 /**
- * Rows the rail only shows once the shopper is inside **exactly one** product
- * vertical.
- *
- * Across verticals these are noise: a Neck Type list spanning every category
- * offers *Spread Collar* beside *Round Neck*, and neither answers a question
- * anyone is asking while still deciding between shirts and tees. Inside one
- * vertical they are the filters that remain.
- *
- * Fabric is deliberately **not** here, though it was asked for alongside them.
- * Its values don't vary by vertical — Cotton and Denim mean the same on a
- * shirt as on a tee, where a collar has no tee equivalent at all — so it is an
- * ordinary rail row instead, visible whether or not a vertical is settled.
+ * The facets the vertical-specific rows own, for the orphan check below. Typed
+ * as strings because every caller is testing an arbitrary selection key.
  */
-const PV_RAIL: RailEntry[] = PV_ATTRIBUTES.map(({ id, label }) => ({
-  id,
-  label,
-  facetIds: [id],
-}));
-
-/**
- * The facets `PV_RAIL` owns, for the orphan check below. Typed as strings
- * because every caller is testing an arbitrary selection key against it.
- */
-export const PV_FACET_IDS: Set<string> = new Set(PV_ATTRIBUTES.map(({ id }) => String(id)));
+export const PV_FACET_IDS: Set<string> = new Set(
+  RAIL_ORDER.filter((r) => r.vertical).flatMap((r) => r.facetIds),
+);
 
 /** Whether the rail is showing its vertical-specific block. */
 export const inSingleVertical = (category?: string[]) => category?.length === 1;
@@ -366,52 +383,31 @@ export const inSingleVertical = (category?: string[]) => category?.length === 1;
  *   rail row, the chips toggle it, and the attribute block appears once
  *   exactly one is picked.
  * - `locked` — C and D. The vertical *is* the page. No Category row, no Gender
- *   row (one vertical is one audience), no vertical chips, and the attribute
- *   block permanently on.
+ *   row, no vertical chips, and the attribute block permanently on.
  */
 export type VerticalMode = { kind: "filter" } | { kind: "locked"; id: string };
 
 export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
 
-/** First in both rails. */
-const CATEGORY_ENTRY: RailEntry = { id: "category", label: "Category", facetIds: ["category"] };
-
-/** Second in both rails, directly under Category. */
-const GENDER_ENTRY: RailEntry = { id: "gender", label: "Gender", facetIds: ["gender"] };
-
 /**
- * The Filters rail — now **identical in both variants**.
+ * The Filters rail — identical in both A and B since Category left A's bottom
+ * bar on 2026-08-19, so what separates those two is only where Sort and
+ * Filters sit.
  *
- * Category moved out of A's bottom bar and into this rail on 2026-08-19, so
- * the last facet-level difference between the variants is gone. What remains
- * between them is Sort and Filters at the bottom versus the same two as chips
- * at the top, which is the only thing the A/B was ever meant to test.
- *
- * The `variant` parameter went with the difference. What it takes instead is
- * the **category selection**, because the rail grows a vertical-specific block
- * once exactly one vertical is settled — see `PV_RAIL`.
- *
- * `mode` is the C/D axis — see `VerticalMode`. Under `locked` the block is
- * always on and **both Category and Gender go**: the page cannot leave the
- * vertical, so a Category control would be a lie the back button has to
- * correct, and since every category names its audience one vertical is one
- * gender, leaving a Gender row that can only offer the single value every
- * product in scope already has.
+ * It takes the **category selection** because the vertical block appears once
+ * exactly one vertical is settled, and `mode` because C and D fix the vertical
+ * as page scope instead.
  */
 export function getRail(
   category?: string[],
   mode: VerticalMode = FILTER_VERTICALS,
 ): RailEntry[] {
-  const base =
-    mode.kind === "locked"
-      ? [...COMMON_RAIL]
-      : [CATEGORY_ENTRY, GENDER_ENTRY, ...COMMON_RAIL];
+  const locked = mode.kind === "locked";
+  const showVertical = locked || inSingleVertical(category);
 
-  if (mode.kind !== "locked" && !inSingleVertical(category)) return base;
-
-  // Ahead of *More Filters*, which is the catch-all and should stay last.
-  const tail = base.length - 1;
-  return [...base.slice(0, tail), ...PV_RAIL, ...base.slice(tail)];
+  return RAIL_ORDER.filter(
+    (row) => !(locked && row.only === "filter") && !(row.vertical && !showVertical),
+  ).map(({ id, label, facetIds }) => ({ id, label, facetIds }));
 }
 
 /**

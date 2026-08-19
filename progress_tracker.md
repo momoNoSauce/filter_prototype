@@ -204,6 +204,14 @@ It **shares low→high's `currency-inr.svg`** for now, the only pair in the shee
 
 Verified at 360px: the row appears in A, B, C and D; `?sort=price_desc` round-trips; and the PRICE/PC figures on screen run 1085 → 1020 descending against 230 → 275 ascending.
 
+### 2026-08-19 — rail reordered to a reference PLP
+
+The Filters rail now runs **Category · Brands · Size · Colour · Gender · Fabric · Fit · Pattern · Sleeve Type · Neck Type · Closure Type · Price Range · Margin · MOQ · Delivery Time · Offers · Seller · Seller City · More Filters**, following a screengrab of a reference apparel PLP rather than the Figma frame — which sequenced these rows before most of them existed, and has no opinion about the ten it never drew.
+
+Four departures, each where the reference has no equivalent. **Category leads**: the reference carries no category filter because you are already inside one, which is precisely C and D, where the row is gone. **Neck Type and Closure Type** trail Fit, Pattern and Sleeve Type, the three the reference does carry. **Margin** sits beside Price, being the other number a retailer buys on. **Seller and Seller City** are B2B and land with the commercial filters.
+
+The composition changed shape with it: one ordered `RAIL_ORDER` array carrying `only: "filter"` and `vertical: true` flags, rather than a base list with the vertical block spliced in before the last row. With the block now mid-rail instead of at the end, slicing around it was the thing that would quietly put a row in the wrong place. A test pins the full sequence in both states, so the next reorder has to be a decision.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -223,7 +231,7 @@ Verified at 360px: the row appears in A, B, C and D; `?sort=price_desc` round-tr
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 78 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 79 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## The four variants
 
