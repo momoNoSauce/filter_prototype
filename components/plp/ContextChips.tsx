@@ -82,6 +82,7 @@ export function ContextChips({
           <FilterChip
             key={`${chip.facetId}:${chip.option.id}`}
             label={chip.option.label}
+            icon={OFFER_ICONS[chip.option.id]}
             selected={selected}
             onClick={() => onToggle(chip.facetId, chip.option.id)}
           />
@@ -244,24 +245,48 @@ function PriceChip({
  * `TopChipBar`'s fully-rounded Figma pills in Variant B; that mismatch closed
  * on 2026-08-14 by taking the pills to 8px too, so the whole row is one radius.
  */
+/**
+ * Leading art for an offer chip, by option id.
+ *
+ * Only Cashback has one. Supplied as a PNG rather than exported from Figma,
+ * which is why it sits in `public/offers/` and not `public/figma/` — the
+ * latter is exports only, and a file's folder should not imply an origin it
+ * doesn't have. It is 48×37, so it has little headroom above the 20px it
+ * renders at; a vector would be better if one turns up.
+ */
+const OFFER_ICONS: Record<string, string> = {
+  cashback: "/offers/cashback.png",
+};
+
 function FilterChip({
   label,
+  icon,
   selected,
   onClick,
 }: {
   label: string;
+  icon?: string;
   selected: boolean;
   onClick: () => void;
 }) {
+  // Material 3: the checkmark *replaces* the leading icon rather than joining
+  // it, so a selected chip has one leading element either way and the label
+  // never shifts. The 8px inset applies whenever something leads.
+  const leading = selected || !!icon;
+
   return (
     <button
       onClick={onClick}
       role="checkbox"
       aria-checked={selected}
       className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center gap-[8px] rounded-[8px] pr-[16px] ${
-        selected ? "bg-primary-subtle pl-[8px]" : "border border-[#4d4d4d] bg-white pl-[16px]"
-      }`}
+        selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"
+      } ${leading ? "pl-[8px]" : "pl-[16px]"}`}
     >
+      {!selected && icon && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt="" className="h-[20px] w-auto shrink-0" src={icon} />
+      )}
       {selected && (
         <svg viewBox="0 0 18 18" className="size-[20px] shrink-0" aria-hidden>
           <path

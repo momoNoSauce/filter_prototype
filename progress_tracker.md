@@ -172,6 +172,12 @@ Verified at 360px: `/c` and `/d` both land on Men's Formal Shirts; rail 17 rows 
 
 Worth noting the frames were already inconsistent here: A's bottom bar uses `filter_alt.svg` and B and D's chip uses `funnel.svg`. The header follows the bar.
 
+### 2026-08-19 — an icon on the Cashback chip
+
+A supplied PNG, 20px, leading the chip. **The checkmark replaces it when selected**, per Material 3, rather than the two sitting side by side — so the chip has one leading element in either state and the label doesn't shift as you tick it. The 8px left inset, previously only for the selected state, now applies whenever anything leads.
+
+It sits in `public/offers/` rather than `public/figma/`: that folder is Figma exports, and a file's location shouldn't imply an origin it doesn't have. At 48×37 it has almost no headroom above the 20px it renders at, so it will soften on a 3× display — **wants a vector**. Only Cashback has art; the map in `ContextChips.tsx` takes more without a code change.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
