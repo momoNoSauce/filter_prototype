@@ -248,14 +248,18 @@ function PriceChip({
 /**
  * Leading art for an offer chip, by option id.
  *
- * Only Cashback has one. Supplied as a PNG rather than exported from Figma,
- * which is why it sits in `public/offers/` and not `public/figma/` — the
- * latter is exports only, and a file's folder should not imply an origin it
- * doesn't have. It is 48×37, so it has little headroom above the 20px it
- * renders at; a vector would be better if one turns up.
+ * Supplied as PNGs rather than exported from Figma, which is why they sit in
+ * `public/offers/` and not `public/figma/` — the latter is exports only, and a
+ * file's folder should not imply an origin it doesn't have. Both are small
+ * enough to have little headroom above the 20px they render at; vectors would
+ * be better if any turn up.
+ *
+ * Seller Offer has none: it means *any offer at all*, so there is nothing
+ * specific to draw.
  */
 const OFFER_ICONS: Record<string, string> = {
   cashback: "/offers/cashback.png",
+  "free-delivery": "/offers/free-delivery.png",
 };
 
 function FilterChip({
