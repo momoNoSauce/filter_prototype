@@ -8,9 +8,18 @@ import { SORT_OPTIONS, type SortId } from "@/lib/filters/engine";
 const ICONS: Record<SortId, string> = {
   popularity: "/figma/icons/trend-up.svg",
   recent: "/figma/icons/tag.svg",
-  price_asc: "/figma/icons/currency-inr.svg",
-  // Shares low→high's glyph until a distinct one is exported.
-  price_desc: "/figma/icons/currency-inr.svg",
+  /*
+   * Supplied PNGs, not Figma exports, so they sit outside `public/figma/`.
+   * They work through `MaskIcon` like the rest: a mask reads only the alpha
+   * channel, so a black glyph on transparent still tints to primary when its
+   * row is active.
+   *
+   * Arrow direction is the magnitude, not the list: **up for low → high**,
+   * since the prices ascend as you read down. Swap the two paths if the
+   * intent was to describe the list order instead.
+   */
+  price_asc: "/sort/price-asc.png",
+  price_desc: "/sort/price-desc.png",
   margin_desc: "/figma/icons/percent.svg",
 };
 

@@ -200,7 +200,7 @@ This was the trade-off recorded when Size went in, where the consequence was cal
 
 Added to the Sort sheet in all four variants: one `SORT_OPTIONS` entry and one `sortProducts` case, every variant reading the same list. Like low→high it ranks on the pack the card actually prints, so a size filter moves it too.
 
-It **shares low→high's `currency-inr.svg`** for now, the only pair in the sheet with the same icon — a distinct glyph is wanted.
+Each direction now has its **own supplied glyph** (`public/sort/`, outside `public/figma/` since they aren't exports). They render through `MaskIcon` like the rest of the sheet — a mask reads only the alpha channel, so a black PNG still tints to primary on the active row. **The arrow is the magnitude, not the list**: up for low→high, prices ascending as you read down.
 
 Verified at 360px: the row appears in A, B, C and D; `?sort=price_desc` round-trips; and the PRICE/PC figures on screen run 1085 → 1020 descending against 230 → 275 ascending.
 
