@@ -713,3 +713,72 @@ describe("variants C and D — the page is the vertical", () => {
     expect(necks.every((o) => o.label.includes("Collar"))).toBe(true);
   });
 });
+
+describe("a count the tap can honour", () => {
+  const catalog = getCatalog();
+
+  it("promises exactly what ticking a size delivers, price filter and all", () => {
+    /*
+     * The failure this exists for, measured 2026-08-19: colour=White,
+     * price ₹600–900, closure=Snap Button left two products; the Size panel
+     * offered 2XL as `(1)` and tapping it gave an empty page. Pack #1 of
+     * `p-0079` is ₹610, inside the band, but the pack carrying 2XL is ₹575,
+     * outside it — so picking the size moved the product out of a *price*
+     * filter, which a tally taken with size ignored can't see.
+     */
+    const bases: Selections[] = [
+      {},
+      { price: ["p-900"] },
+      { colour: ["white"], price: ["p-900"], closure: ["snap-button"] },
+      { margin: ["m-60"], category: ["mens-formal-shirts"] },
+      { size: ["m"], price: ["p-400"] },
+    ];
+
+    for (const base of bases) {
+      for (const option of facetOptionsWithCounts(catalog, base, "size")) {
+        const ticked = {
+          ...base,
+          size: [...new Set([...(base.size ?? []), option.id])],
+        };
+        expect(applyFilters(catalog, ticked).length).toBe(option.count);
+      }
+    }
+  });
+
+  it("never lets a visible option lead to an empty page", () => {
+    /*
+     * Random walks that only ever tick what the UI is showing. Before the fix
+     * above, 13 of 400 ended on "No products match".
+     *
+     * Kept to 60 × 12 with an explicit budget: every step re-counts every
+     * facet, and Size now costs a filter pass per option, so the full 400 runs
+     * for forty seconds. This is a slow guard by nature — it is here because
+     * no single hand-written case would have found the bug.
+     */
+    const facetIds = [...new Set(getRail(["mens-formal-shirts"]).flatMap((r) => r.facetIds))];
+    let seed = 12345;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+
+    for (let walk = 0; walk < 60; walk += 1) {
+      let selections: Selections = {};
+      for (let step = 0; step < 12; step += 1) {
+        const choices: { facetId: string; id: string }[] = [];
+        for (const facetId of facetIds) {
+          for (const option of facetOptionsWithCounts(catalog, selections, facetId)) {
+            if (!(selections[facetId] ?? []).includes(option.id)) {
+              choices.push({ facetId, id: option.id });
+            }
+          }
+        }
+        if (!choices.length) break;
+
+        const pick = choices[Math.floor(rnd() * choices.length)];
+        selections = {
+          ...selections,
+          [pick.facetId]: [...(selections[pick.facetId] ?? []), pick.id],
+        };
+        expect(applyFilters(catalog, selections).length).toBeGreaterThan(0);
+      }
+    }
+  }, 30_000);
+});

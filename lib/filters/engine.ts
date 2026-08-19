@@ -87,8 +87,39 @@ export function facetOptionsWithCounts(
   const facet = FACET_BY_ID.get(facetId);
   if (!facet) return [];
 
+  const selected = selections[facetId] ?? [];
+
+  /*
+   * Size is counted by *applying* each option rather than tallying it.
+   *
+   * Every other facet can be tallied in one pass, because a product's value
+   * for one facet doesn't depend on what's selected in another. Size breaks
+   * that: it moves which pack the card is priced by, so ticking a size can
+   * push a product out of the Price or Margin band it was in. Tallying with
+   * size ignored counts that product anyway, and the panel then promises a
+   * result the tap can't deliver — measured 2026-08-19, an option labelled
+   * `(1)` handing back an empty page, because pack #1 was ₹610 and the pack
+   * carrying the size was ₹575.
+   *
+   * Thirteen options, one filter pass each, a couple of milliseconds. The
+   * count means what it says.
+   */
+  if (facetId === SIZE_FACET_ID) {
+    return facet.options
+      .map((option) => ({
+        ...option,
+        // What the shopper is about to have: this option added to whatever is
+        // already ticked, which is what tapping it does.
+        count: applyFilters(products, {
+          ...selections,
+          [facetId]: [...new Set([...selected, option.id])],
+        }).length,
+      }))
+      .filter((option) => option.count > 0 || selected.includes(option.id));
+  }
+
   const scope = applyFilters(products, selections, facetId);
-  const sizes = facetId === SIZE_FACET_ID ? undefined : selections[SIZE_FACET_ID];
+  const sizes = selections[SIZE_FACET_ID];
   const tally = new Map<string, number>();
   for (const product of scope) {
     for (const value of facet.valuesOf(product, sizes)) {
@@ -96,7 +127,6 @@ export function facetOptionsWithCounts(
     }
   }
 
-  const selected = selections[facetId] ?? [];
   return facet.options
     .map((option) => ({ ...option, count: tally.get(option.id) ?? 0 }))
     .filter((option) => option.count > 0 || selected.includes(option.id));
