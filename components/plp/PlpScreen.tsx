@@ -59,10 +59,25 @@ export function PlpScreen({
   title,
   products,
   variant = "bottom-bar",
+  lockedVertical,
+  homeHref,
 }: {
   title: string;
   products: Product[];
   variant?: PlpVariant;
+  /**
+   * Variants C and D: the page is one product vertical, `products` is already
+   * scoped to it, and the vertical is **not** a selection. It is page scope,
+   * the way the seller already is — which is what takes the Category row off
+   * the rail and the vertical chips out of the strip, and what keeps the
+   * attribute block permanently on.
+   */
+  lockedVertical?: string;
+  /**
+   * `null` on C and D: they have no home of their own, and any href would
+   * land the session in a different variant. See `AppBar`.
+   */
+  homeHref?: string | null;
 }) {
   const pathname = usePathname();
   // The query string is the shareable record of state, but local state is the
@@ -97,20 +112,24 @@ export function PlpScreen({
   useEffect(() => {
     const sync = () => {
       const params = new URLSearchParams(window.location.search);
-      setSelections(parseSelections(params));
+      // A vertical-scoped page has no Category control, so `?category=` in a
+      // hand-edited URL would filter with nothing to show or undo it — and
+      // could empty the page by naming a different vertical entirely.
+      if (lockedVertical) params.delete("category");
+      setSelections(parseSelections(params, lockedVertical));
       setSort(parseSort(params));
     };
     sync();
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
-  }, []);
+  }, [lockedVertical]);
 
   const commit = useCallback(
     (raw: Selections, nextSort: SortId) => {
       // A chip tap can leave a single vertical, which takes the attribute rows
       // off the rail with it — their selections must not outlive their
       // controls. See `dropOrphanedAttributes`.
-      const nextSelections = dropOrphanedAttributes(raw);
+      const nextSelections = dropOrphanedAttributes(raw, lockedVertical);
       setSelections(nextSelections);
       setSort(nextSort);
       setVisible(PAGE_SIZE);
@@ -121,7 +140,7 @@ export function PlpScreen({
         `${pathname}${buildQuery(nextSelections, nextSort)}`,
       );
     },
-    [pathname],
+    [pathname, lockedVertical],
   );
 
   const results = useMemo(
@@ -132,8 +151,8 @@ export function PlpScreen({
   // Product-vertical chips until a single vertical is settled, then price and
   // offer chips. Same strip and same rule in both variants.
   const chips = useMemo(
-    () => contextChips(products, selections),
-    [products, selections],
+    () => contextChips(products, selections, lockedVertical),
+    [products, selections, lockedVertical],
   );
 
   const toggleChip = (facetId: string, optionId: string) =>
@@ -169,7 +188,7 @@ export function PlpScreen({
   // Follows the applied selections, so the badge counts exactly the rows the
   // Filters screen would show if opened right now — attribute rows included
   // once a single vertical is settled.
-  const railFacetIds = getRailFacetIds(selections.category);
+  const railFacetIds = getRailFacetIds(selections.category, lockedVertical);
 
   const sortActive = sort !== DEFAULT_SORT;
   // Counts exactly what the Filters screen owns — which, since Category
@@ -185,7 +204,13 @@ export function PlpScreen({
     // than the page, which is what makes the measured offsets meaningful.
     <div ref={rootRef} className="relative flex h-full flex-col bg-page">
       <div className="shrink-0">
-        <AppBar title={title} homeHref={variant === "top-chips" ? "/b" : "/"} />
+        <AppBar
+          title={title}
+          // `??` would be wrong: C and D pass an explicit `null` to mean "no
+          // home button", and nullish-coalescing would swallow it back into
+          // the default and put them one tap from another variant's home.
+          homeHref={homeHref === undefined ? (variant === "top-chips" ? "/b" : "/") : homeHref}
+        />
         <GoldStrip />
         {variant === "top-chips" ? (
           <TopChipBar
@@ -261,6 +286,7 @@ export function PlpScreen({
         <FilterScreen
           products={products}
           selections={selections}
+          lockedVertical={lockedVertical}
           onApply={(next) => commit(next, sort)}
           onDiscard={() => showToast(DISCARDED)}
           onClose={() => setOverlay(null)}

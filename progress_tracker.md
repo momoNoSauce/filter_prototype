@@ -143,6 +143,29 @@ Verified at 360px: rail 14 rows with no vertical and 19 with one; Neck Type read
 
 The block sits after Offers and before *More Filters*, 13 rows down — raised as a question and **left there deliberately** (2026-08-19), Price, Brands and Delivery being the commercially primary rows.
 
+### 2026-08-19 — variants C and D, vertical-scoped listings
+
+A **2×2**. A and B list every category; C and D *are* one. C carries A's bottom bar, D carries B's top chips, so scope and control placement can be read apart.
+
+| | bottom bar | top chips |
+|---|---|---|
+| **all categories** | A `/seller/[id]` | B `/b/seller/[id]` |
+| **one vertical** | C `/c/seller/[id]/[cat]` | D `/d/seller/[id]/[cat]` |
+
+**The vertical is page scope, not a filter** — exactly as the seller already was. `products` arrives pre-scoped and `category` is never a selection, which is what lets the Category row leave the rail without stranding a filter no control could undo. The rail is 18 rows: everything A and B have minus Category, plus the vertical-specific block, which is now permanently on. The strip carries Price and the three offer chips and no vertical chip — an unremovable one would be a ✕ that isn't there, and a removable one would have to unmake the page.
+
+`lockedVertical` threads through `getRail`, `getRailFacetIds`, `dropOrphanedAttributes`, `contextChips` and `parseSelections`. The last two earn their keep: a hand-edited `?category=girls-t-shirts` on a Men's Formal Shirts page is dropped rather than emptying it, and the attribute guard is disabled because there is no vertical to leave.
+
+**Linked directly**, as chosen — no `/c` or `/d` home or seller page. 55 pages each, seller × vertical, skipping the pairs with no stock rather than serving an empty listing.
+
+**Two bugs caught in verification, both silent.** `parseSelections` applied the orphan guard without knowing the page was locked, so every attribute in a URL was stripped on load. And `homeHref ?? default` swallowed the explicit `null` that means "no home button", leaving C and D one tap from another variant's home — the exact leak the prop exists to prevent.
+
+**App bar: no home button, title at 18px.** The two go together. C and D have no home of their own, so every href leads out of the variant; dropping the button frees 36px, which the title needs because the frame's 20px was sized for a seller name. *Men's Casual T-Shirts* measures 191px against the 157px the full bar leaves, and 172px against the 193px it leaves without home. All seven category labels now fit; A and B are untouched at 20px.
+
+Verified at 360px: title reads the category; strip is Price · Seller Offer · Cashback · Free Delivery; C has a Sort/Filters bottom bar and D has neither; rail is 18 rows headed by Gender with no Category; ticking Spread Collar gives `Show 64 results` and `?neck=spread-collar`; a stale `?category=` is ignored while `?fit=` survives.
+
+**Open:** Gender is still in C and D's rail. Category → gender is 1:1, so it can only offer one option that every product in scope already has — a dead control by the same test the offer chips use. Kept because the brief was that only Category goes.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -162,7 +185,7 @@ The block sits after Offers and before *More Filters*, 13 rows down — raised a
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 66 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 72 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## Variant B — top chips instead of a bottom bar
 

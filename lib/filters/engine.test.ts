@@ -16,6 +16,7 @@ import { FACET_BY_ID, getRail, getRailFacetIds } from "./facets";
 import { defaultVariant } from "@/lib/catalog/types";
 import { activeVariant, activeVariantIndex, sizeOptionId } from "./activeVariant";
 import { PV_FACET_IDS, dropOrphanedAttributes } from "./facets";
+import { verticalRoutes, verticalScope } from "@/lib/catalog/scope";
 import { CATEGORIES as CATS } from "@/lib/catalog/seed";
 
 const catalog = getCatalog();
@@ -611,6 +612,11 @@ describe("vertical-specific attributes", () => {
 
   it("refuses to honour an attribute in a URL that has no vertical", () => {
     expect(parseSelections(new URLSearchParams("fit=slim-fit"))).toEqual({});
+    // ...unless the page itself is the vertical, as in C and D, where the
+    // query string never carries the category at all.
+    expect(parseSelections(new URLSearchParams("fit=slim-fit"), "mens-formal-shirts")).toEqual({
+      fit: ["slim-fit"],
+    });
     expect(
       parseSelections(new URLSearchParams("category=mens-formal-shirts&fit=slim-fit")),
     ).toEqual({ category: ["mens-formal-shirts"], fit: ["slim-fit"] });
@@ -631,5 +637,68 @@ describe("vertical-specific attributes", () => {
     // Fabric is shared, not vertical-specific — it must survive leaving a
     // vertical, because More Filters still shows it.
     expect(PV_FACET_IDS.has("fabric")).toBe(false);
+  });
+});
+
+describe("variants C and D — the page is the vertical", () => {
+  const LOCKED = "mens-formal-shirts";
+  const scope = verticalScope("baheti", LOCKED)!;
+
+  it("scopes the catalog by vertical, and by seller unless it is the storefront", () => {
+    expect(scope.products).toHaveLength(163);
+    expect(scope.products.every((p) => p.category === "Men's Formal Shirts")).toBe(true);
+    // Baheti aggregates, so every seller's stock in this vertical is in scope.
+    expect(new Set(scope.products.map((p) => p.sellerId)).size).toBeGreaterThan(1);
+
+    const one = verticalScope("grasim", LOCKED)!;
+    expect(one.products.every((p) => p.sellerId === "grasim")).toBe(true);
+    expect(one.products.length).toBeLessThan(scope.products.length);
+  });
+
+  it("gives no page to a seller with nothing in the vertical", () => {
+    for (const route of verticalRoutes()) {
+      expect(verticalScope(route.sellerId, route.categoryId)!.products.length).toBeGreaterThan(0);
+    }
+    expect(verticalScope("baheti", "not-a-category")).toBeNull();
+    expect(verticalScope("not-a-seller", LOCKED)).toBeNull();
+  });
+
+  it("drops the Category row and keeps the attribute block on", () => {
+    const rail = getRail(undefined, LOCKED).map((r) => r.id);
+    expect(rail).not.toContain("category");
+    for (const id of PV_FACET_IDS) expect(rail).toContain(id);
+    expect(rail[0]).toBe("gender");
+    expect(rail[rail.length - 1]).toBe("more");
+
+    // Nothing can clear or count a facet the page never shows.
+    expect(getRailFacetIds(undefined, LOCKED).has("category")).toBe(false);
+  });
+
+  it("never orphans the attributes, there being no vertical to leave", () => {
+    const selections = { fit: ["slim-fit"], neck: ["spread-collar"] };
+    // Without a lock this would be stripped — no single category selected.
+    expect(dropOrphanedAttributes(selections)).toEqual({});
+    expect(dropOrphanedAttributes(selections, LOCKED)).toEqual(selections);
+  });
+
+  it("offers no vertical chips, since there is none to pick or remove", () => {
+    const chips = contextChips(scope.products, {}, LOCKED);
+    expect(chips.some((c) => c.kind === "vertical")).toBe(false);
+    expect(chips[0].kind).toBe("price");
+
+    // The unscoped strip does the opposite with the same products.
+    expect(contextChips(scope.products, {}).every((c) => c.kind === "vertical")).toBe(true);
+  });
+
+  it("filters and counts inside the vertical like any other page", () => {
+    const hits = applyFilters(scope.products, { fit: ["slim-fit"] });
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits.length).toBeLessThan(scope.products.length);
+    expect(hits.every((p) => p.fit === "Slim Fit")).toBe(true);
+
+    // Counted against the scoped set, not the whole catalog.
+    const necks = facetOptionsWithCounts(scope.products, {}, "neck");
+    expect(necks.reduce((n, o) => n + o.count, 0)).toBe(scope.products.length);
+    expect(necks.every((o) => o.label.includes("Collar"))).toBe(true);
   });
 });

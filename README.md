@@ -20,6 +20,10 @@ Home → tap *Baheti Garments* → PLP → filter and sort. Two control layouts 
 |---|---|---|---|
 | **Variant A** | `/` | `/seller/baheti` | Sort · Filters pinned to the bottom |
 | **Variant B** | `/b` | `/b/seller/baheti` | The same two as chips at the top, no bottom bar |
+| **Variant C** | — | `/c/seller/baheti/mens-formal-shirts` | Scoped to one vertical, bottom bar |
+| **Variant D** | — | `/d/seller/baheti/mens-formal-shirts` | Scoped to one vertical, top chips |
+
+A and B list every category; C and D *are* one, so there is no Category control at all. Together they make a 2×2 of scope against control placement.
 
 Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop. Only the controls differ, so a preference between them is about control placement. Switch by editing the URL; each variant is a closed loop and neither inherits the other's state.
 

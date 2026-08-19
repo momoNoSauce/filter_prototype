@@ -7,9 +7,27 @@ import { useRouter } from "next/navigation";
  *
  * `homeHref` keeps the home button inside the current variant; hardcoding "/"
  * would silently drop a Variant B session back into Variant A.
+ *
+ * **`homeHref: null` drops the button**, for the vertical-scoped variants C
+ * and D. They have no home of their own, so every candidate href leads out of
+ * the variant — which is the leak the prop exists to prevent, not a use of it.
+ * Back is the way out there, deliberately.
+ *
+ * That also buys the title 36px, which it needs: the frame's 20px was sized
+ * for a seller name, and these pages are titled by category. *Men's Casual
+ * T-Shirts* measures 191px against the 157px the full bar leaves. Dropping the
+ * home button and stepping to 18px puts it at 172px in 193px — the two
+ * changes travel together because one alone doesn't fit.
  */
-export function AppBar({ title, homeHref = "/" }: { title: string; homeHref?: string }) {
+export function AppBar({
+  title,
+  homeHref = "/",
+}: {
+  title: string;
+  homeHref?: string | null;
+}) {
   const router = useRouter();
+  const compact = homeHref === null;
 
   return (
     <div className="flex h-[56px] w-full items-center gap-[12px] bg-primary px-[16px]">
@@ -22,15 +40,23 @@ export function AppBar({ title, homeHref = "/" }: { title: string; homeHref?: st
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img alt="" className="size-full" src="/figma/icons/back.svg" />
         </button>
-        <button
-          aria-label="Home"
-          onClick={() => router.push(homeHref)}
-          className="h-[19.365px] w-[19px] shrink-0 cursor-pointer"
+        {!compact && (
+          <button
+            aria-label="Home"
+            onClick={() => router.push(homeHref)}
+            className="h-[19.365px] w-[19px] shrink-0 cursor-pointer"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt="" className="size-full" src="/figma/icons/home.svg" />
+          </button>
+        )}
+        <p
+          className={`truncate font-medium text-white ${
+            compact ? "text-[18px]" : "text-[20px]"
+          }`}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt="" className="size-full" src="/figma/icons/home.svg" />
-        </button>
-        <p className="truncate text-[20px] font-medium text-white">{title}</p>
+          {title}
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-[12px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}

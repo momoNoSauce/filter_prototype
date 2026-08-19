@@ -30,19 +30,27 @@ export type ContextChip =
  *   open question is *which vertical*, so it offers those.
  * - **Inside exactly one** — the vertical leads, still removable by its ✕ so
  *   the strip is also the way back out, and price and offers follow it.
+ * - **`locked`** (variants C and D) — the *page* is a vertical, so there is no
+ *   vertical to offer and none to remove. The strip is price and offers only.
+ *   Leading it with an unremovable chip would be a ✕ that isn't there, and a
+ *   removable one would have to unmake the page.
  *
  * Pure, and separate from the rendering, because the interesting part is this
  * selection rule rather than the markup.
  */
-export function contextChips(products: Product[], selections: Selections): ContextChip[] {
+export function contextChips(
+  products: Product[],
+  selections: Selections,
+  locked?: string,
+): ContextChip[] {
   const picked = selections.category ?? [];
-  const verticals = facetOptionsWithCounts(products, selections, "category");
+  const verticals = locked ? [] : facetOptionsWithCounts(products, selections, "category");
 
-  if (picked.length !== 1) {
+  if (!locked && picked.length !== 1) {
     return verticals.map((option) => ({ kind: "vertical", facetId: "category", option }));
   }
 
-  const current = verticals.find((option) => option.id === picked[0]);
+  const current = locked ? undefined : verticals.find((option) => option.id === picked[0]);
 
   return [
     // Leads the strip. `facetOptionsWithCounts` keeps a selected option even at
