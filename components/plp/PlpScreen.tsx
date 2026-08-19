@@ -11,7 +11,7 @@ import {
   type Selections,
   type SortId,
 } from "@/lib/filters/engine";
-import { getRailFacetIds, type PlpVariant } from "@/lib/filters/facets";
+import { dropOrphanedAttributes, getRailFacetIds, type PlpVariant } from "@/lib/filters/facets";
 import { buildQuery, parseSelections, parseSort } from "@/lib/filters/urlState";
 import { AppBar } from "./AppBar";
 import { GoldStrip } from "./GoldStrip";
@@ -65,8 +65,6 @@ export function PlpScreen({
   variant?: PlpVariant;
 }) {
   const pathname = usePathname();
-  const railFacetIds = getRailFacetIds();
-
   // The query string is the shareable record of state, but local state is the
   // source of truth — that keeps filtering instant instead of round-tripping
   // through the router on every tick.
@@ -108,7 +106,11 @@ export function PlpScreen({
   }, []);
 
   const commit = useCallback(
-    (nextSelections: Selections, nextSort: SortId) => {
+    (raw: Selections, nextSort: SortId) => {
+      // A chip tap can leave a single vertical, which takes the attribute rows
+      // off the rail with it — their selections must not outlive their
+      // controls. See `dropOrphanedAttributes`.
+      const nextSelections = dropOrphanedAttributes(raw);
       setSelections(nextSelections);
       setSort(nextSort);
       setVisible(PAGE_SIZE);
@@ -163,6 +165,11 @@ export function PlpScreen({
       setVisible((n) => Math.min(n + PAGE_SIZE, results.length));
     }
   };
+
+  // Follows the applied selections, so the badge counts exactly the rows the
+  // Filters screen would show if opened right now — attribute rows included
+  // once a single vertical is settled.
+  const railFacetIds = getRailFacetIds(selections.category);
 
   const sortActive = sort !== DEFAULT_SORT;
   // Counts exactly what the Filters screen owns — which, since Category

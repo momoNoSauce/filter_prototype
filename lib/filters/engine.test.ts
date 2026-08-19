@@ -15,6 +15,8 @@ import { contextChips } from "./contextChips";
 import { FACET_BY_ID, getRail, getRailFacetIds } from "./facets";
 import { defaultVariant } from "@/lib/catalog/types";
 import { activeVariant, activeVariantIndex, sizeOptionId } from "./activeVariant";
+import { PV_FACET_IDS, dropOrphanedAttributes } from "./facets";
+import { CATEGORIES as CATS } from "@/lib/catalog/seed";
 
 const catalog = getCatalog();
 
@@ -526,5 +528,103 @@ describe("Pack Type is no longer a filter, but is still a product property", () 
         expect(variant.sizes.length === 1).toBe(solid);
       }
     }
+  });
+});
+
+describe("vertical-specific attributes", () => {
+  const catalog = getCatalog();
+  const ATTRS = ["fit", "neck", "sleeve", "pattern", "closure"];
+  const shirt = ["mens-formal-shirts"];
+  const tee = ["womens-t-shirts"];
+
+  it("only joins the rail inside exactly one vertical", () => {
+    const base = getRail().map((r) => r.id);
+    for (const id of ATTRS) expect(base).not.toContain(id);
+
+    const inside = getRail(shirt).map((r) => r.id);
+    for (const id of ATTRS) expect(inside).toContain(id);
+
+    // Two verticals is not one, so the block goes again.
+    expect(getRail(["mens-formal-shirts", "womens-t-shirts"]).map((r) => r.id)).toEqual(base);
+  });
+
+  it("surfaces Fabric beside them, and keeps it reachable otherwise", () => {
+    // It lives in More Filters the rest of the time, so it never disappears.
+    expect(getRail(shirt).map((r) => r.id)).toContain("fabric");
+    expect(getRail().find((r) => r.id === "more")?.facetIds).toContain("fabric");
+    expect(getRailFacetIds().has("fabric")).toBe(true);
+  });
+
+  it("leaves More Filters last, wherever the block lands", () => {
+    for (const category of [undefined, shirt, tee]) {
+      const rail = getRail(category);
+      expect(rail[rail.length - 1].id).toBe("more");
+    }
+  });
+
+  it("offers collars to shirts and necklines to tees, never both", () => {
+    const necks = (category: string[]) =>
+      facetOptionsWithCounts(catalog, { category }, "neck").map((o) => o.label);
+
+    expect(necks(shirt).every((l) => l.includes("Collar"))).toBe(true);
+    expect(necks(tee)).toContain("Round Neck");
+    expect(necks(tee).some((l) => l === "Spread Collar")).toBe(false);
+
+    const closures = (category: string[]) =>
+      facetOptionsWithCounts(catalog, { category }, "closure").map((o) => o.label);
+    expect(closures(tee)).toContain("Pullover");
+    expect(closures(shirt).some((l) => l === "Pullover")).toBe(false);
+  });
+
+  it("gives every category a full, non-degenerate set of options", () => {
+    for (const category of CATS) {
+      for (const id of ATTRS) {
+        const options = facetOptionsWithCounts(catalog, { category: [category.id] }, id);
+        expect(options.length).toBeGreaterThan(2);
+        // A value every product in the vertical shares would filter nothing.
+        const scope = applyFilters(catalog, { category: [category.id] }).length;
+        expect(options.every((o) => o.count > 0 && o.count < scope)).toBe(true);
+      }
+    }
+  });
+
+  it("drops attribute selections when the vertical they belong to goes", () => {
+    const inside = { category: shirt, fit: ["slim-fit"], seller: ["grasim"] };
+    expect(dropOrphanedAttributes(inside)).toEqual(inside);
+
+    // Leaving the vertical takes the rows off the rail, so the filters they
+    // set must go too — otherwise they narrow the list uncounted and
+    // unclearable, with no control left to undo them.
+    expect(dropOrphanedAttributes({ ...inside, category: [] })).toEqual({
+      category: [],
+      seller: ["grasim"],
+    });
+    expect(
+      dropOrphanedAttributes({ ...inside, category: [...shirt, ...tee] }),
+    ).toEqual({ category: [...shirt, ...tee], seller: ["grasim"] });
+  });
+
+  it("refuses to honour an attribute in a URL that has no vertical", () => {
+    expect(parseSelections(new URLSearchParams("fit=slim-fit"))).toEqual({});
+    expect(
+      parseSelections(new URLSearchParams("category=mens-formal-shirts&fit=slim-fit")),
+    ).toEqual({ category: ["mens-formal-shirts"], fit: ["slim-fit"] });
+  });
+
+  it("filters on them like any other facet", () => {
+    const selections = { category: shirt, fit: ["slim-fit"] };
+    const hits = applyFilters(catalog, selections);
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits.every((p) => p.fit === "Slim Fit" && p.category === "Men's Formal Shirts")).toBe(
+      true,
+    );
+    expect(hits.length).toBeLessThan(applyFilters(catalog, { category: shirt }).length);
+  });
+
+  it("registers exactly the five attributes as vertical-specific", () => {
+    expect([...PV_FACET_IDS].sort()).toEqual([...ATTRS].sort());
+    // Fabric is shared, not vertical-specific — it must survive leaving a
+    // vertical, because More Filters still shows it.
+    expect(PV_FACET_IDS.has("fabric")).toBe(false);
   });
 });

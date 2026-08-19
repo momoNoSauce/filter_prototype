@@ -125,6 +125,22 @@ Three consequences, all intended:
 
 Verified at 360px: A's bar reads Sort · Filters; A's rail is the same thirteen rows as B's, headed by Category; picking *Girl's T-Shirts* gives `Show 97 results`, `?category=girls-t-shirts` and a Filters badge of 1; Clear Filters returns the URL to bare; and the chip route still writes category and is picked up by the badge.
 
+### 2026-08-19 — vertical-specific attributes
+
+**Fit · Neck Type · Sleeve Type · Pattern · Closure Type**, plus **Fabric** lifted out of *More Filters* to sit beside them. Of the eight attributes asked for, three already existed: `PRODUCT_COLOR` and `AVAILABLE_SIZES` are the `colour` and `size` rail facets, left where they are because both are useful across verticals, and `FABRIC_MATERIAL` only needed surfacing.
+
+**They appear only inside exactly one product vertical**, which is what "focuses on a single PV" has to mean in practice — across verticals a Neck Type list offers *Spread Collar* beside *Round Neck*, and answers no question anyone is asking while still deciding between shirts and tees. The rail runs **13 rows normally, 19 inside a vertical**, and it follows the *draft*, so ticking a second vertical takes the block away again without waiting for `Show N results`.
+
+**Shirts and tees carry different vocabularies.** `kind: "shirt" | "tee"` on the category picks between them, exactly as gender picks the size vocabulary. The facet's options are the union of both, so the ordinary zero-count rule does the separating — Men's Formal Shirts offers Spread, Button-Down, Cutaway, Mandarin and Club collars; Women's T-Shirts offers Round, Polo, V, Henley and Boat necks. No special case.
+
+**Leaving a vertical drops its attribute selections.** Their rows leave the rail with the vertical, and a filter still narrowing the list with nothing to show or undo it is the trap the `hasOffer` rail entry exists to avoid: it would survive Clear Filters and go uncounted. `dropOrphanedAttributes` runs in `commit` (a chip ✕ can leave a vertical), in the Filters screen's `toggle`, and in `parseSelections`, since `?fit=slim-fit` with no vertical was never reachable by clicking.
+
+**A third PRNG stream** (`attrRand`) carries the five new draws, for the same reason `sizeRand` exists — five more draws on the main stream would have re-rolled the catalog. Verified unchanged: 1,070 total, Girls 97, Men 575, `₹900 & above` 37 and all seven category counts.
+
+Verified at 360px: rail 13 rows with no vertical and 19 with one; Neck Type reads `Spread Collar (64) · Button-Down (42) · Cutaway (12) · Mandarin (32) · Club (13)` under Men's Formal Shirts and the five necklines under Women's T-Shirts; ticking V-Neck writes `?category=womens-t-shirts&neck=v-neck` with a badge of 2; removing the vertical by its chip ✕ returns the URL to bare and clears the badge, taking `neck=` with it. Drill-down works — Men's Formal + Slim Fit + Spread Collar + Full Sleeve is 8 of 163.
+
+**Open for the designer:** the block sits after Offers and before *More Filters*, so it is 12 rows down. These are the most specific filters available once a vertical is settled, but Price, Brands and Delivery are the commercially primary ones. Worth a call on the order.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -144,7 +160,7 @@ Verified at 360px: A's bar reads Sort · Filters; A's rail is the same thirteen 
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 57 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 66 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## Variant B — top chips instead of a bottom bar
 

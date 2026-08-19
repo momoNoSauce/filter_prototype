@@ -63,6 +63,13 @@ export const CATEGORIES: {
   plural: string;
   weight: number;
   gender: Gender;
+  /**
+   * Which attribute vocabulary the garment draws from. A shirt has a collar
+   * and a button placket; a tee has a neckline and pulls over. Filtering both
+   * from one list would offer *Spread Collar* on a t-shirt, so the vertical
+   * picks the vocabulary the way it already picks the size vocabulary.
+   */
+  kind: "shirt" | "tee";
   priceFloor: number;
   priceCeil: number;
 }[] = [
@@ -72,6 +79,7 @@ export const CATEGORIES: {
     plural: "T-Shirts",
     weight: 180,
     gender: "women",
+    kind: "tee",
     priceFloor: 150,
     priceCeil: 450,
   },
@@ -81,6 +89,7 @@ export const CATEGORIES: {
     plural: "Formal Shirts",
     weight: 170,
     gender: "men",
+    kind: "shirt",
     // Runs highest of the seven, and far enough to keep the top Price Range
     // bucket ("₹900 & above") populated — an option that can never appear is
     // worse than no option.
@@ -93,6 +102,7 @@ export const CATEGORIES: {
     plural: "Casual T-Shirts",
     weight: 210,
     gender: "men",
+    kind: "tee",
     priceFloor: 160,
     priceCeil: 480,
   },
@@ -102,6 +112,7 @@ export const CATEGORIES: {
     plural: "Casual Shirts",
     weight: 190,
     gender: "men",
+    kind: "shirt",
     priceFloor: 220,
     priceCeil: 780,
   },
@@ -111,6 +122,7 @@ export const CATEGORIES: {
     plural: "T-Shirts",
     weight: 100,
     gender: "girls",
+    kind: "tee",
     priceFloor: 110,
     priceCeil: 320,
   },
@@ -120,6 +132,7 @@ export const CATEGORIES: {
     plural: "Casual Shirts",
     weight: 100,
     gender: "boys",
+    kind: "shirt",
     priceFloor: 150,
     priceCeil: 430,
   },
@@ -129,6 +142,7 @@ export const CATEGORIES: {
     plural: "Casual T-Shirts",
     weight: 120,
     gender: "boys",
+    kind: "tee",
     priceFloor: 110,
     priceCeil: 330,
   },
@@ -304,6 +318,114 @@ const KIDS_RUNS = [
   { start: 0, len: 6, weight: 4 }, //  the full range, rare
 ];
 
+
+/**
+ * Attributes that belong to the **product vertical**, not to the catalog at
+ * large: how the garment closes, how it fits, what it does at the neck, what
+ * is printed on it, how long the sleeve is.
+ *
+ * Two vocabularies, because a shirt and a tee do not share these. A shirt has
+ * a collar and a button placket; a tee has a neckline and pulls over. Offering
+ * *Spread Collar* on a t-shirt would be the same mistake as offering `2XL` on
+ * a garment sized in age bands, and the fix is the same one: the vertical
+ * picks the vocabulary.
+ *
+ * Weighted rather than uniform, so the options separate — *Full Button
+ * Placket* is most shirts and *Pullover* is most tees, and the rarer ones stay
+ * reachable without being everywhere.
+ */
+const SHIRT_ATTRIBUTES = {
+  closure: [
+    { name: "Full Button Placket", weight: 62 },
+    { name: "Half Placket", weight: 20 },
+    { name: "Snap Button", weight: 12 },
+    { name: "Zipper", weight: 6 },
+  ],
+  fit: [
+    { name: "Regular Fit", weight: 40 },
+    { name: "Slim Fit", weight: 34 },
+    { name: "Relaxed Fit", weight: 18 },
+    { name: "Boxy Fit", weight: 8 },
+  ],
+  neck: [
+    { name: "Spread Collar", weight: 34 },
+    { name: "Button-Down Collar", weight: 26 },
+    { name: "Cutaway Collar", weight: 16 },
+    { name: "Mandarin Collar", weight: 14 },
+    { name: "Club Collar", weight: 10 },
+  ],
+  pattern: [
+    { name: "Solid", weight: 34 },
+    { name: "Checked", weight: 24 },
+    { name: "Striped", weight: 20 },
+    { name: "Printed", weight: 14 },
+    { name: "Textured", weight: 8 },
+  ],
+  sleeve: [
+    { name: "Full Sleeve", weight: 52 },
+    { name: "Half Sleeve", weight: 36 },
+    { name: "Roll-Up Sleeve", weight: 12 },
+  ],
+};
+
+const TEE_ATTRIBUTES = {
+  closure: [
+    { name: "Pullover", weight: 74 },
+    { name: "Henley Placket", weight: 16 },
+    { name: "Quarter Zip", weight: 10 },
+  ],
+  fit: [
+    { name: "Regular Fit", weight: 38 },
+    { name: "Slim Fit", weight: 26 },
+    { name: "Oversized", weight: 22 },
+    { name: "Relaxed Fit", weight: 14 },
+  ],
+  neck: [
+    { name: "Round Neck", weight: 44 },
+    { name: "Polo Collar", weight: 22 },
+    { name: "V-Neck", weight: 16 },
+    { name: "Henley Neck", weight: 10 },
+    { name: "Boat Neck", weight: 8 },
+  ],
+  pattern: [
+    { name: "Solid", weight: 36 },
+    { name: "Graphic Print", weight: 26 },
+    { name: "Striped", weight: 18 },
+    { name: "Colour Block", weight: 12 },
+    { name: "Tie-Dye", weight: 8 },
+  ],
+  sleeve: [
+    { name: "Half Sleeve", weight: 58 },
+    { name: "Full Sleeve", weight: 22 },
+    { name: "Sleeveless", weight: 12 },
+    { name: "Three-Quarter Sleeve", weight: 8 },
+  ],
+};
+
+export type PvAttributeId = keyof typeof SHIRT_ATTRIBUTES;
+
+/** Rail order, and the label each attribute carries there. */
+export const PV_ATTRIBUTES: { id: PvAttributeId; label: string }[] = [
+  { id: "fit", label: "Fit" },
+  { id: "neck", label: "Neck Type" },
+  { id: "sleeve", label: "Sleeve Type" },
+  { id: "pattern", label: "Pattern" },
+  { id: "closure", label: "Closure Type" },
+];
+
+/**
+ * Every value either vocabulary can produce, shirts first. The facet needs the
+ * union because its option list is fixed while the catalog in scope is not —
+ * zero-count options drop out on their own, which is what makes picking a
+ * shirt vertical clear the necklines and picking a tee clear the collars.
+ */
+export const PV_ATTRIBUTE_OPTIONS: Record<PvAttributeId, string[]> = Object.fromEntries(
+  PV_ATTRIBUTES.map(({ id }) => [
+    id,
+    [...new Set([...SHIRT_ATTRIBUTES[id], ...TEE_ATTRIBUTES[id]].map((v) => v.name))],
+  ]),
+) as Record<PvAttributeId, string[]>;
+
 const SET_SIZES = [2, 4, 6, 10, 12];
 
 
@@ -395,6 +517,10 @@ export function generateCatalog(): Product[] {
   // — re-rolling the whole catalog and invalidating every count in the docs.
   // A second stream keeps the main sequence byte-for-byte what it was.
   const sizeRand = mulberry32(0x51_2e_50_17);
+  // A third stream, for the same reason as the second: five more draws per
+  // product on the main one would have re-rolled the catalog and moved every
+  // count in the docs.
+  const attrRand = mulberry32(0x5a_77_20_19);
   const products: Product[] = [];
 
   // Expand the seller weights into a flat draw pool so the totals land exactly.
@@ -437,6 +563,16 @@ export function generateCatalog(): Product[] {
     const run = weightedPick(sizeRand, kids ? KIDS_RUNS : ADULT_RUNS, (r) => r.weight);
     const sizeRun = vocabulary.slice(run.start, run.start + run.len);
 
+    // Vertical-specific attributes, drawn from the vocabulary the garment kind
+    // uses. Fixed order — closure, fit, neck, pattern, sleeve — because the
+    // stream's meaning depends on it.
+    const attrs = category.kind === "shirt" ? SHIRT_ATTRIBUTES : TEE_ATTRIBUTES;
+    const closure = weightedPick(attrRand, attrs.closure, (a) => a.weight).name;
+    const fit = weightedPick(attrRand, attrs.fit, (a) => a.weight).name;
+    const neck = weightedPick(attrRand, attrs.neck, (a) => a.weight).name;
+    const pattern = weightedPick(attrRand, attrs.pattern, (a) => a.weight).name;
+    const sleeve = weightedPick(attrRand, attrs.sleeve, (a) => a.weight).name;
+
     const offers = OFFERS.filter((o) => rand() < o.chance).map((o) => o.name);
     const code = 1000 + Math.floor(rand() * 8999);
 
@@ -454,6 +590,11 @@ export function generateCatalog(): Product[] {
       colourHex: colour.hex,
       packType: packType.name,
       fabric: fabric.name,
+      fit,
+      neck,
+      sleeve,
+      pattern,
+      closure,
       moq: moq.qty,
       deliveryDays: delivery.days,
       offers,

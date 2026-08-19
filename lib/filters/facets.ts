@@ -5,6 +5,8 @@ import {
   FABRICS,
   ALL_SIZES,
   OFFERS,
+  PV_ATTRIBUTES,
+  PV_ATTRIBUTE_OPTIONS,
   SELLERS,
 } from "@/lib/catalog/seed";
 import type { Product } from "@/lib/catalog/types";
@@ -95,6 +97,20 @@ function bucketId<T extends { id: string; min: number; max: number }>(
   const hit = buckets.find((b) => value >= b.min && value <= b.max);
   return hit ? [hit.id] : [];
 }
+
+/**
+ * The vertical-specific attributes, built from one table rather than five
+ * near-identical literals — they differ only in id and label, and five copies
+ * of the same shape is five chances for one to drift.
+ */
+const PV_ATTRIBUTE_FACETS: FacetDef[] = PV_ATTRIBUTES.map(({ id, label }) => ({
+  id,
+  label,
+  panel: "checkbox",
+  searchable: false,
+  valuesOf: (p) => [slug(p[id])],
+  options: PV_ATTRIBUTE_OPTIONS[id].map((name) => ({ id: slug(name), label: name })),
+}));
 
 export const FACETS: FacetDef[] = [
   {
@@ -255,6 +271,7 @@ export const FACETS: FacetDef[] = [
     valuesOf: (p) => [slug(p.fabric)],
     options: FABRICS.map((f) => ({ id: slug(f.name), label: f.name })),
   },
+  ...PV_ATTRIBUTE_FACETS,
   {
     id: "tags",
     label: "Product Tags",
@@ -306,6 +323,34 @@ const COMMON_RAIL: RailEntry[] = [
   { id: "more", label: "More Filters", facetIds: ["fabric", "tags"] },
 ];
 
+/**
+ * Rows the rail only shows once the shopper is inside **exactly one** product
+ * vertical.
+ *
+ * Across verticals these are noise: a Neck Type list spanning every category
+ * offers *Spread Collar* beside *Round Neck*, and neither answers a question
+ * anyone is asking while still deciding between shirts and tees. Inside one
+ * vertical they are the filters that remain.
+ *
+ * Fabric leads the block. It is the one attribute here that already existed,
+ * buried in *More Filters* — worth surfacing beside its siblings once they are
+ * on screen, and it stays in *More Filters* the rest of the time so it never
+ * becomes unreachable.
+ */
+const PV_RAIL: RailEntry[] = [
+  { id: "fabric", label: "Fabric", facetIds: ["fabric"] },
+  ...PV_ATTRIBUTES.map(({ id, label }) => ({ id, label, facetIds: [id] })),
+];
+
+/**
+ * The facets `PV_RAIL` owns, for the orphan check below. Typed as strings
+ * because every caller is testing an arbitrary selection key against it.
+ */
+export const PV_FACET_IDS: Set<string> = new Set(PV_ATTRIBUTES.map(({ id }) => String(id)));
+
+/** Whether the rail is showing its vertical-specific block. */
+export const inSingleVertical = (category?: string[]) => category?.length === 1;
+
 /** First in both rails. */
 const CATEGORY_ENTRY: RailEntry = { id: "category", label: "Category", facetIds: ["category"] };
 
@@ -320,12 +365,17 @@ const GENDER_ENTRY: RailEntry = { id: "gender", label: "Gender", facetIds: ["gen
  * between them is Sort and Filters at the bottom versus the same two as chips
  * at the top, which is the only thing the A/B was ever meant to test.
  *
- * The `variant` parameter went with the difference. Carrying one nothing reads
- * would only claim a distinction the code no longer makes; if the rails ever
- * need to diverge again, it comes back at that point.
+ * The `variant` parameter went with the difference. What it takes instead is
+ * the **category selection**, because the rail grows a vertical-specific block
+ * once exactly one vertical is settled — see `PV_RAIL`.
  */
-export function getRail(): RailEntry[] {
-  return [CATEGORY_ENTRY, GENDER_ENTRY, ...COMMON_RAIL];
+export function getRail(category?: string[]): RailEntry[] {
+  const base = [CATEGORY_ENTRY, GENDER_ENTRY, ...COMMON_RAIL];
+  if (!inSingleVertical(category)) return base;
+
+  // Ahead of *More Filters*, which is the catch-all and should stay last.
+  const tail = base.length - 1;
+  return [...base.slice(0, tail), ...PV_RAIL, ...base.slice(tail)];
 }
 
 /**
@@ -333,6 +383,27 @@ export function getRail(): RailEntry[] {
  * draft — notably Clear Filters — must filter through this, so a facet the
  * screen doesn't display can never be cleared by it.
  */
-export function getRailFacetIds(): Set<string> {
-  return new Set(getRail().flatMap((entry) => entry.facetIds));
+export function getRailFacetIds(category?: string[]): Set<string> {
+  return new Set(getRail(category).flatMap((entry) => entry.facetIds));
+}
+
+/**
+ * Drop vertical-specific selections the rail is no longer showing.
+ *
+ * Leaving a single vertical takes their controls off screen with it, and a
+ * filter still narrowing the list with nothing left to display or undo it is
+ * the exact trap the `hasOffer` rail entry exists to avoid — it would survive
+ * Clear Filters, go uncounted by the badge, and quietly hide products.
+ *
+ * Applied wherever selections change rather than only in the Filters screen,
+ * because a chip tap can leave a vertical too, and `parseSelections` can be
+ * handed a URL that was never reachable by clicking at all.
+ */
+export function dropOrphanedAttributes<T extends Record<string, string[]>>(selections: T): T {
+  if (inSingleVertical(selections.category)) return selections;
+  if (!Object.keys(selections).some((id) => PV_FACET_IDS.has(id))) return selections;
+
+  return Object.fromEntries(
+    Object.entries(selections).filter(([id]) => !PV_FACET_IDS.has(id)),
+  ) as T;
 }

@@ -5,6 +5,7 @@ import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
 import {
   FACET_BY_ID,
+  dropOrphanedAttributes,
   getRail,
   getRailFacetIds,
 } from "@/lib/filters/facets";
@@ -45,10 +46,14 @@ export function FilterScreen({
    */
   onDiscard: () => void;
 }) {
-  const RAIL = getRail();
-  const RAIL_FACET_IDS = getRailFacetIds();
-
   const [draft, setDraft] = useState<Selections>(selections);
+
+  // The rail follows the *draft*, not the applied selections: ticking a single
+  // vertical grows the attribute block immediately, and ticking a second one
+  // takes it away again, without waiting for "Show N results".
+  const RAIL = getRail(draft.category);
+  const RAIL_FACET_IDS = getRailFacetIds(draft.category);
+
   const [activeRail, setActiveRail] = useState(RAIL[0].id);
   const [query, setQuery] = useState("");
 
@@ -65,6 +70,9 @@ export function FilterScreen({
     onClose();
   };
 
+  // The block can vanish under the cursor — tick a second vertical while
+  // standing on Neck Type and that row is gone. Falling back to the first row
+  // beats rendering an empty panel.
   const rail = RAIL.find((r) => r.id === activeRail) ?? RAIL[0];
   const total = useMemo(() => countMatching(products, draft), [products, draft]);
 
@@ -77,7 +85,9 @@ export function FilterScreen({
   const searchable = rail.facetIds.some((id) => FACET_BY_ID.get(id)?.searchable);
 
   const toggle = (facetId: string, optionId: string) =>
-    setDraft((current) => toggleSelection(current, facetId, optionId));
+    setDraft((current) =>
+      dropOrphanedAttributes(toggleSelection(current, facetId, optionId)),
+    );
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col bg-white">

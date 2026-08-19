@@ -44,6 +44,17 @@ export interface Product {
    */
   packType: string;
   fabric: string;
+  /**
+   * Attributes belonging to the product vertical rather than the catalog:
+   * shirts draw collars and plackets, tees draw necklines and pullovers. The
+   * Filters rail only offers them once a single vertical is settled — across
+   * verticals they would mix *Spread Collar* with *Round Neck*.
+   */
+  fit: string;
+  neck: string;
+  sleeve: string;
+  pattern: string;
+  closure: string;
   /** Minimum order quantity, in pieces */
   moq: number;
   deliveryDays: number;

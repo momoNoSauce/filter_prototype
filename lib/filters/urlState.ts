@@ -1,4 +1,4 @@
-import { FACETS } from "./facets";
+import { FACETS, dropOrphanedAttributes } from "./facets";
 import { DEFAULT_SORT, SORT_OPTIONS, type Selections, type SortId } from "./engine";
 
 /**
@@ -15,7 +15,9 @@ export function parseSelections(params: URLSearchParams): Selections {
     const chosen = raw.split(",").filter((id) => valid.has(id));
     if (chosen.length) selections[facet.id] = chosen;
   }
-  return selections;
+  // `?fit=slim-fit` with no single vertical would filter the list with no row
+  // on the rail to show or undo it.
+  return dropOrphanedAttributes(selections);
 }
 
 export function parseSort(params: URLSearchParams): SortId {
