@@ -95,7 +95,7 @@ Local: `npm run dev` → http://localhost:3000.
 
 **Two bugs, both found by checking rather than reasoning.** `Variant.sizes` holds display labels (`"3XL"`) while selections hold ids (`"3xl"`), so the pack silently never moved off #1 and nothing failed — `sizeOptionId` is now declared once and imported by both sides. And the pill row's scroll-into-view aligned an over-wide pill's *right* edge, hiding its left; a pill wider than the row now aligns left.
 
-**Size sits between Pack Type and Colour in both rails** — a new entry Figma's rail predates. Placed with the other garment attributes so the designed order above it is untouched, which **wants a designer's call**: size is the filter an apparel buyer reaches for first, and this is not the top.
+**Size sits between Margin and Colour in every rail** (it went in beside Pack Type, which has since gone) — a new entry Figma's rail predates. Placed with the other garment attributes so the designed order above it is untouched, which **wants a designer's call**: size is the filter an apparel buyer reaches for first, and this is not the top.
 
 ### 2026-08-19 — Pack Type removed as a filter
 
@@ -207,22 +207,29 @@ Verified unchanged: 1,070 total, Girls 97, Men 575, `₹900 & above` 37, all sev
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
 - 73 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
-## Variant B — top chips instead of a bottom bar
+## The four variants
 
-An A/B of control placement, added 2026-08-12. Same card, catalog, engine and sheets; only the controls differ, so the comparison stays honest.
+Started as an A/B of control placement on 2026-08-12; C and D added the scope axis on 2026-08-19, making it a 2×2. Same card, catalog and engine throughout, so each comparison stays honest.
 
-| | Home | PLP | Controls |
+| | Demo URL | Controls | Starts |
 |---|---|---|---|
-| **Variant A** | `/` | `/seller/baheti` | Sort · Filters at the bottom |
-| **Variant B** | `/b` | `/b/seller/baheti` | The same two as chips at the top, no bottom bar |
+| **Variant A** | `/` | Sort · Filters at the bottom | across every category |
+| **Variant B** | `/b` | The same two as chips at the top | across every category |
+| **Variant C** | `/c` | Sort · Filters at the bottom | inside one vertical |
+| **Variant D** | `/d` | The same two as chips at the top | inside one vertical |
 
-Switching is by URL — chosen over an on-screen toggle so nothing that isn't product chrome appears on a screen being judged.
+|  | bottom bar | top chips |
+|---|---|---|
+| **all categories** | A | B |
+| **one vertical** | C | D |
 
-Each variant is a **closed loop**: hand someone `/b` and the whole journey — home, seller card, PLP, home button — stays in B. `HomeScreen` takes a `basePath`, `AppBar` takes a `homeHref`; both must be kept in step when adding routes, or a session leaks into the other variant mid-demo with no visible cause.
+Switching is by URL — chosen over an on-screen toggle so nothing that isn't product chrome appears on a screen being judged. A and B walk home → seller → PLP; C and D **are** the listing, landing straight inside a vertical, since the point there is the state rather than the route to it.
 
-Verified: no bottom bar in B; both chips open their sheets; chips carry the same active vocabulary as the bottom bar (dot for Sort, count for Filter); Gender sits second in B's rail and multi-selects (`?gender=men,boys`) while A's sheet still replaces (`?gender=boys`); `/b` → seller card → `/b/seller/baheti` → home → `/b`; Variant A unchanged and equally self-contained.
+A and B are each a **closed loop**: hand someone `/b` and the whole journey — home, seller card, PLP, home button — stays in B. `HomeScreen` takes a `basePath` and `AppBar` a `homeHref`; both must be kept in step when adding routes, or a session leaks into another variant mid-demo with no visible cause. C and D are single screens and so carry no home button at all — every href one could hold leads out of the variant, which is that leak rather than a use of the prop.
 
-Open: the reference image is a *category* PLP ("Cotton Casual Shirt") with a different card — pipe-separated `MRP ₹1000 | Pack Size 1pc`, single-size pills, 4 dots, and no share icon in the app bar. Deliberately **not** built, to keep the A/B to one variable. Say if the card should change, and whether it applies to both variants.
+Verified: no bottom bar in B or D; the chips open the same sheets the bar does and carry the same active vocabulary (dot for Sort, count for Filter); the rails are identical between A and B and between C and D; `/b` → seller card → `/b/seller/baheti` → home → `/b` stays in B; `/c` and `/d` land inside a vertical with no Category or Gender control anywhere.
+
+Open: the reference image for a category PLP ("Cotton Casual Shirt") also shows a **different card** — pipe-separated `MRP ₹1000 | Pack Size 1pc`, single-size pills, 4 dots, and no share icon in the app bar. C and D now cover the *listing* half of that reference; the card is deliberately still the shared one, so the variants differ by scope and controls alone. Say if the card should change too, and whether it applies to all four.
 
 ## UX backlog — from the design review
 

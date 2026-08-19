@@ -2,7 +2,9 @@
 
 A runnable prototype of SOLV's B2B commerce app, built to demonstrate **filter and sort**, which the product doesn't have today. The designs existed in Figma but nothing was clickable, so filter behaviour couldn't be evaluated. This makes it real: 1,070 seeded products behind a working faceted-search engine and the designed UI.
 
-**Live:** https://filterprototype.vercel.app — public, no login.
+**Live:** https://filterprototype.vercel.app — **password-protected**. Leave the
+username blank; the password is the `SITE_PASSWORD` env var on Vercel and is
+never in the repo. Localhost is never gated — `proxy.ts` keys off `VERCEL`.
 
 ```bash
 npm install
@@ -14,7 +16,7 @@ npx eslint .     # lint (from the repo root)
 
 ## The two variants
 
-Home → tap *Baheti Garments* → PLP → filter and sort. Two control layouts over that one journey:
+Four variants over one catalog. A and B walk Home → tap *Baheti Garments* → PLP → filter and sort; C and D drop you straight inside a product vertical.
 
 | | Home | PLP | Controls |
 |---|---|---|---|
@@ -25,7 +27,7 @@ Home → tap *Baheti Garments* → PLP → filter and sort. Two control layouts 
 
 A and B start across every category; C and D start *inside* one, so there is no Category control at all. Together they make a 2×2 of that against control placement. `/c` and `/d` are the listing itself — other seller/vertical pairs are at `/c/seller/[sellerId]/[categoryId]`.
 
-Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop. Only the controls differ, so a preference between them is about control placement. Switch by editing the URL; each variant is a closed loop and neither inherits the other's state.
+Card, catalog, engine and sheets are shared — one `PlpScreen` throughout — so within a row of the 2×2 a preference is about control placement, and within a column it is about starting scope. Switch by editing the URL. A and B are closed loops: hand someone `/b` and the whole journey stays in B.
 
 ## Where the documentation lives
 
