@@ -79,13 +79,15 @@ Sizes are the one thing that lives on the **pack** rather than the product, and 
 
 ### Facet registry — `lib/filters/facets.ts`
 
-Sixteen facets behind thirteen rail entries in A and fourteen in B (*More Filters* stacks Fabric and Product Tags). Each facet declares `valuesOf(product, sizes?) → string[]`, so range buckets, multi-valued delivery windows and plain checkboxes all flow through one code path. Adding a facet is one array entry. `sizes` is the current Size selection and the only selection any facet may see — Price and Margin need it because they read the pack the card is showing; every other facet ignores it.
+Fifteen facets behind twelve rail entries in A and thirteen in B (*More Filters* stacks Fabric and Product Tags). Each facet declares `valuesOf(product, sizes?) → string[]`, so range buckets, multi-valued delivery windows and plain checkboxes all flow through one code path. Adding a facet is one array entry. `sizes` is the current Size selection and the only selection any facet may see — Price and Margin need it because they read the pack the card is showing; every other facet ignores it.
 
 `FACETS` is everything the engine knows about; `getRail(variant)` is what the Filters screen displays, which differs by variant — and differs *only* in whether it carries Category and Gender at the top.
 
 The one row that differs is **Category**: it is the bottom bar's quick action in A, so the bar owns it there. Listing it in both places would put one facet behind two controls and double-report it, once as the Category badge and again inside the Filters count. **Gender** is in both rails — largely redundant now that every category names its audience, but a faster cut than ticking three tiles, and dropping it would leave `?gender=` links with no UI.
 
 `getRailFacetIds(variant)` is the set that anything mutating the draft (notably Clear Filters) must filter through, so a facet the screen doesn't show can never be cleared by it.
+
+Pack Type was removed as a filter on 2026-08-19 — a deliberate departure from Figma's rail. It left `FACETS` too, not just the rail, since a facet with no control would survive Clear Filters uncounted; the product field stays, because the seed draws it mid-sequence and it still decides whether a pack is one size or a spread.
 
 Panels: Category and Brands use the tile grid (68×96 cells, 56px tile, fixed 36px two-line label reserved whether or not it's used, so a row's tiles align); Colour is a checkbox row with a 16px colour dot; Price Range, Margin and MOQ are checkbox rows over preset buckets (no slider — that would add a control the design system doesn't have); everything else is the designed checkbox row.
 
@@ -168,7 +170,7 @@ Several of these were revised during review — the current state is what's list
 
 ## Verification
 
-- `npm test` — 57 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, and the size facet's match-and-active-pack rules.
+- `npm test` — 59 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, and the size facet's match-and-active-pack rules.
 - `npm run dev`, then Chrome DevTools at exactly 360px, and compare each screen against its Figma frame.
 - Widen past 480px to confirm the phone mockup appears and the app still renders at 360.
 

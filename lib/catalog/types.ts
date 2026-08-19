@@ -35,6 +35,13 @@ export interface Product {
   sellerCity: string;
   colour: string;
   colourHex: string;
+  /**
+   * No longer a filter — the Pack Type facet was removed 2026-08-19. Keep the
+   * field: its draw sits in the middle of the seeded sequence, so deleting it
+   * re-rolls the whole catalog and moves every documented count. It also still
+   * decides pack composition, a *Solid Size Pack* carrying one size for the
+   * whole carton where the others spread across the product's size run.
+   */
   packType: string;
   fabric: string;
   /** Minimum order quantity, in pieces */

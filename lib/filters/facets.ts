@@ -5,7 +5,6 @@ import {
   FABRICS,
   ALL_SIZES,
   OFFERS,
-  PACK_TYPES,
   SELLERS,
 } from "@/lib/catalog/seed";
 import type { Product } from "@/lib/catalog/types";
@@ -157,14 +156,6 @@ export const FACETS: FacetDef[] = [
     options: MARGIN_BUCKETS.map(({ id, label }) => ({ id, label })),
   },
   {
-    id: "packType",
-    label: "Pack Type",
-    panel: "checkbox",
-    searchable: false,
-    valuesOf: (p) => [slug(p.packType)],
-    options: PACK_TYPES.map((p) => ({ id: slug(p.name), label: p.name })),
-  },
-  {
     id: "size",
     label: "Size",
     panel: "checkbox",
@@ -300,7 +291,6 @@ const COMMON_RAIL: RailEntry[] = [
   { id: "brand", label: "Brands", facetIds: ["brand"] },
   { id: "price", label: "Price Range", facetIds: ["price"] },
   { id: "margin", label: "Margin", facetIds: ["margin"] },
-  { id: "packType", label: "Pack Type", facetIds: ["packType"] },
   // Not in the Figma rail, which predates the facet. Placed with the other
   // garment attributes rather than at the top, so the designed order above it
   // is left alone — worth a designer's call, since size is the filter an

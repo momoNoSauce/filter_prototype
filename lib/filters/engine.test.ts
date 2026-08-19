@@ -517,3 +517,32 @@ describe("the pack a card shows, and is judged by", () => {
     expect(activeVariant(outside, ["3xl"])).toBe(outside.variants[0]);
   });
 });
+
+describe("Pack Type is no longer a filter, but is still a product property", () => {
+  const catalog = getCatalog();
+
+  it("has no facet, no rail row in either variant, and no URL", () => {
+    expect(FACET_BY_ID.has("packType")).toBe(false);
+    for (const variant of ["bottom-bar", "top-chips"] as const) {
+      expect(getRail(variant).some((r) => r.id === "packType")).toBe(false);
+      expect(getRailFacetIds(variant).has("packType")).toBe(false);
+    }
+    // Nothing left to undo it with, so it must not survive in a link either.
+    expect(parseSelections(new URLSearchParams("packType=solid-size-pack"))).toEqual({});
+  });
+
+  it("keeps the field, because the seed leans on it twice", () => {
+    // Its draw sits mid-sequence — deleting it re-rolls the catalog and moves
+    // every documented count. It also still decides pack composition.
+    expect(new Set(catalog.map((p) => p.packType))).toEqual(
+      new Set(["Solid Size Pack", "Mixed Size Pack", "Assorted Colour Pack"]),
+    );
+
+    for (const product of catalog) {
+      const solid = product.packType === "Solid Size Pack";
+      for (const variant of product.variants) {
+        expect(variant.sizes.length === 1).toBe(solid);
+      }
+    }
+  });
+});

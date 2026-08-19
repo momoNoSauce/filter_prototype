@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-08-18
+Last updated: 2026-08-19
 
 Live: **https://filterprototype.vercel.app** — **password-protected** since
 2026-08-14. **Leave the username blank** and enter the password; only the password is checked. It lives in the `SITE_PASSWORD` env var on Vercel
@@ -97,6 +97,16 @@ Local: `npm run dev` → http://localhost:3000.
 
 **Size sits between Pack Type and Colour in both rails** — a new entry Figma's rail predates. Placed with the other garment attributes so the designed order above it is untouched, which **wants a designer's call**: size is the filter an apparel buyer reaches for first, and this is not the top.
 
+### 2026-08-19 — Pack Type removed as a filter
+
+Gone from the Filters rail in both variants, on request. A **departure from Figma's rail**, which carries it, and worth recording as one.
+
+It was removed from `FACETS` as well as from the rail, rather than just the rail. A facet with no control left is the trap the `hasOffer` rail entry exists to avoid: `?packType=` would still filter, Clear Filters would not clear it, the badge would not count it, and nothing on screen would show or undo it. Dropping it from the registry means `parseSelections` ignores the parameter outright.
+
+**The `packType` field on the product stays**, and two tests now hold that. Its draw sits in the middle of the seeded sequence, so deleting it would re-roll the whole catalog and move every documented count; and since 2026-08-18 it also decides pack composition — a *Solid Size Pack* carries one size for the whole carton where the others spread across the product's size run. Verified unchanged after the removal: 1,070 total, Girls 97, Men 575, `₹900 & above` 37, all seven category counts and all thirteen size counts identical.
+
+Rails are now **A 12 rows, B 13**, still differing by Category alone.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -116,7 +126,7 @@ Local: `npm run dev` → http://localhost:3000.
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 57 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 59 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## Variant B — top chips instead of a bottom bar
 
