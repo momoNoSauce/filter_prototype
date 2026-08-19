@@ -6,7 +6,7 @@ import { ActionFooter } from "@/components/ui/ActionFooter";
 import {
   FACET_BY_ID,
   FILTER_VERTICALS,
-  dropOrphanedAttributes,
+  dropOrphanedSelections,
   getRail,
   getRailFacetIds,
   type VerticalMode,
@@ -91,7 +91,7 @@ export function FilterScreen({
 
   const toggle = (facetId: string, optionId: string) =>
     setDraft((current) =>
-      dropOrphanedAttributes(toggleSelection(current, facetId, optionId), verticalMode),
+      dropOrphanedSelections(toggleSelection(current, facetId, optionId), verticalMode),
     );
 
   return (

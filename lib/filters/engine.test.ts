@@ -16,7 +16,7 @@ import { contextChips } from "./contextChips";
 import { FACET_BY_ID, getRail, getRailFacetIds } from "./facets";
 import { defaultVariant } from "@/lib/catalog/types";
 import { activeVariant, activeVariantIndex, sizeOptionId } from "./activeVariant";
-import { PV_FACET_IDS, dropOrphanedAttributes } from "./facets";
+import { PV_FACET_IDS, dropOrphanedSelections } from "./facets";
 import { verticalRoutes, verticalScope } from "@/lib/catalog/scope";
 import { CATEGORIES as CATS } from "@/lib/catalog/seed";
 
@@ -346,14 +346,40 @@ describe("the rail, now identical in both variants", () => {
     expect(getRailFacetIds().has("gender")).toBe(true);
   });
 
-  it("slots the vertical block after Fabric, not at the end", () => {
-    // The reference puts Fit, Pattern and Sleeve Type mid-rail, between the
-    // garment basics and Price — not after the commercial filters.
+  it("trails the vertical block after the commercial rows, and drops Gender", () => {
+    // A departure from the reference, which interleaves Fit, Pattern and Sleeve
+    // Type up beside Fabric. Five rows landing there pushed Price Range from
+    // 6th to 12th and below the fold, so picking a vertical handed back a rail
+    // the buyer hadn't learned. Gender goes at the same time: category → gender
+    // is 1:1, so the row could only offer the one value everything in scope
+    // already has.
     expect(getRail(["mens-formal-shirts"]).map((r) => r.id)).toEqual([
-      "category", "gender", "brand", "size", "colour", "fabric",
+      "category", "brand", "size", "colour", "fabric",
+      "price", "margin", "moq", "delivery", "offers", "seller", "sellerCity",
       "fit", "pattern", "sleeve", "neck", "closure",
-      "price", "margin", "moq", "delivery", "offers", "seller", "sellerCity", "more",
+      "more",
     ]);
+    expect(getRail(["mens-formal-shirts"]).map((r) => r.id)).not.toContain("gender");
+  });
+
+  it("holds nine rows at the same index whether or not a vertical is picked", () => {
+    // The point of the reorder. Gender leaving and Size arriving cancel, so
+    // everything from Colour to Seller City keeps its position and the rail
+    // stops rearranging itself under the buyer. Brands is the one row that
+    // moves, up into Gender's slot.
+    const multi = getRail().map((r) => r.id);
+    const single = getRail(["mens-formal-shirts"]).map((r) => r.id);
+
+    for (const id of [
+      "colour", "fabric", "price", "margin", "moq",
+      "delivery", "offers", "seller", "sellerCity",
+    ]) {
+      expect(single.indexOf(id), `${id} moved`).toBe(multi.indexOf(id));
+    }
+    expect(multi.indexOf("category")).toBe(single.indexOf("category"));
+    expect(single.indexOf("brand")).toBe(multi.indexOf("brand") - 1);
+    // Price Range specifically — the row that prompted this.
+    expect(single.indexOf("price")).toBe(5);
   });
 
   it("Clear Filters now wipes Category in both variants", () => {
@@ -609,19 +635,60 @@ describe("vertical-specific attributes", () => {
     }
   });
 
+  it("drops a gender selection on the way into a vertical, without moving results", () => {
+    // The Gender row leaves the rail there — one vertical is one audience, so
+    // it could only offer the value everything in scope already has. The
+    // selection has to leave with its control, and because category → gender is
+    // 1:1 it was implied anyway, so the list it was narrowing doesn't move.
+    const entering = { category: shirt, gender: ["men"], seller: ["grasim"] };
+    const kept = dropOrphanedSelections(entering);
+    expect(kept).toEqual({ category: shirt, seller: ["grasim"] });
+    expect(applyFilters(catalog, kept).length).toBe(
+      applyFilters(catalog, entering).length,
+    );
+
+    // Across verticals the row is back, so the selection stands.
+    const across = { gender: ["men"], seller: ["grasim"] };
+    expect(dropOrphanedSelections(across)).toEqual(across);
+
+    // A contradiction is the one case where dropping it moves the count — and
+    // it resolves an empty page rather than causing one, there being no Gender
+    // row left to undo the mismatch.
+    const contradiction = { category: ["girls-t-shirts"], gender: ["men"] };
+    expect(applyFilters(catalog, contradiction).length).toBe(0);
+    expect(dropOrphanedSelections(contradiction)).toEqual({
+      category: ["girls-t-shirts"],
+    });
+    expect(
+      applyFilters(catalog, dropOrphanedSelections(contradiction)).length,
+    ).toBe(97);
+  });
+
+  it("strips a gender from a locked page's URL, the row being gone there too", () => {
+    // C and D settle their vertical by being the page, so the block is always
+    // on and Gender always off. This used to be an ad-hoc `params.delete` in
+    // `PlpScreen`; it belongs with the rest of the guard.
+    expect(
+      parseSelections(new URLSearchParams("gender=men&colour=navy"), {
+        kind: "locked",
+        id: "mens-formal-shirts",
+      }),
+    ).toEqual({ colour: ["navy"] });
+  });
+
   it("drops attribute selections when the vertical they belong to goes", () => {
     const inside = { category: shirt, fit: ["slim-fit"], seller: ["grasim"] };
-    expect(dropOrphanedAttributes(inside)).toEqual(inside);
+    expect(dropOrphanedSelections(inside)).toEqual(inside);
 
     // Leaving the vertical takes the rows off the rail, so the filters they
     // set must go too — otherwise they narrow the list uncounted and
     // unclearable, with no control left to undo them.
-    expect(dropOrphanedAttributes({ ...inside, category: [] })).toEqual({
+    expect(dropOrphanedSelections({ ...inside, category: [] })).toEqual({
       category: [],
       seller: ["grasim"],
     });
     expect(
-      dropOrphanedAttributes({ ...inside, category: [...shirt, ...tee] }),
+      dropOrphanedSelections({ ...inside, category: [...shirt, ...tee] }),
     ).toEqual({ category: [...shirt, ...tee], seller: ["grasim"] });
   });
 
@@ -629,15 +696,15 @@ describe("vertical-specific attributes", () => {
     // M in menswear is not M in womenswear, so a size outlives its vertical
     // only as a filter nothing on screen can explain or undo.
     const inside = { category: shirt, size: ["l"], seller: ["grasim"] };
-    expect(dropOrphanedAttributes(inside)).toEqual(inside);
-    expect(dropOrphanedAttributes({ ...inside, category: [] })).toEqual({
+    expect(dropOrphanedSelections(inside)).toEqual(inside);
+    expect(dropOrphanedSelections({ ...inside, category: [] })).toEqual({
       category: [],
       seller: ["grasim"],
     });
     // ...but it survives on a vertical-scoped page, where the page is the
     // vertical and there is none to leave.
     expect(
-      dropOrphanedAttributes({ size: ["l"] }, { kind: "locked", id: shirt[0] }),
+      dropOrphanedSelections({ size: ["l"] }, { kind: "locked", id: shirt[0] }),
     ).toEqual({ size: ["l"] });
   });
 
@@ -722,8 +789,8 @@ describe("variants C and D — the page is the vertical", () => {
   it("never orphans the attributes, there being no vertical to leave", () => {
     const selections = { fit: ["slim-fit"], neck: ["spread-collar"] };
     // Without a lock this would be stripped — no single category selected.
-    expect(dropOrphanedAttributes(selections)).toEqual({});
-    expect(dropOrphanedAttributes(selections, LOCKED)).toEqual(selections);
+    expect(dropOrphanedSelections(selections)).toEqual({});
+    expect(dropOrphanedSelections(selections, LOCKED)).toEqual(selections);
   });
 
   it("offers no vertical chips, since there is none to pick or remove", () => {

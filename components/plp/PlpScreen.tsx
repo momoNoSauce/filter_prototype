@@ -13,7 +13,7 @@ import {
 } from "@/lib/filters/engine";
 import {
   FILTER_VERTICALS,
-  dropOrphanedAttributes,
+  dropOrphanedSelections,
   getRailFacetIds,
   type PlpVariant,
   type VerticalMode,
@@ -115,13 +115,12 @@ export function PlpScreen({
   useEffect(() => {
     const sync = () => {
       const params = new URLSearchParams(window.location.search);
-      // C and D have no Category or Gender control, so either in a hand-edited
-      // URL would filter with nothing to show or undo it — and could empty the
-      // page outright by naming a different vertical, or the wrong audience.
-      if (verticalMode.kind === "locked") {
-        params.delete("category");
-        params.delete("gender");
-      }
+      // C and D have no Category control, so one in a hand-edited URL would
+      // filter with nothing to show or undo it, and could empty the page
+      // outright by naming a different vertical. `?gender=` is stripped too,
+      // but by `dropOrphanedSelections` inside `parseSelections` — it is
+      // orphaned wherever the block shows, not just here.
+      if (verticalMode.kind === "locked") params.delete("category");
       setSelections(parseSelections(params, verticalMode));
       setSort(parseSort(params));
     };
@@ -134,8 +133,8 @@ export function PlpScreen({
     (raw: Selections, nextSort: SortId) => {
       // A chip tap can leave a single vertical, which takes the attribute rows
       // off the rail with it — their selections must not outlive their
-      // controls. See `dropOrphanedAttributes`.
-      const nextSelections = dropOrphanedAttributes(raw, verticalMode);
+      // controls. See `dropOrphanedSelections`.
+      const nextSelections = dropOrphanedSelections(raw, verticalMode);
       setSelections(nextSelections);
       setSort(nextSort);
       setVisible(PAGE_SIZE);

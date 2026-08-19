@@ -320,9 +320,7 @@ export type PlpVariant = "bottom-bar" | "top-chips";
  *   reference has no category filter at all — you are already inside one,
  *   which is exactly variants C and D, where both rows are gone — and puts
  *   Gender fourth. Together they decide who the garment is for, which a buyer
- *   settles before picking a label off it. Gender is dropped under `locked`
- *   as well: one vertical is one audience, so the row could only ever offer
- *   the single value every product in scope already has.
+ *   settles before picking a label off it.
  * - **Neck Type and Closure Type** follow Fit, Pattern and Sleeve Type, the
  *   three the reference does carry, rather than interleaving.
  * - **Size** keeps the reference's third slot rather than joining the block,
@@ -330,18 +328,40 @@ export type PlpVariant = "bottom-bar" | "top-chips";
  *   beside Brand and Colour, not as a vertical-specific attribute.
  * - **Margin** sits with Price, being the other number a retailer buys on.
  * - **Seller and Seller City** are B2B and land with the commercial filters.
+ * - **The vertical block trails the commercial rows** (2026-08-19), where the
+ *   reference interleaves it up beside Fabric. Interleaving meant picking a
+ *   vertical pushed **Price Range from 6th to 12th** and below the fold, so
+ *   the rail a buyer had learned was not the rail they got back. Moving the
+ *   block past Seller City holds every commercial row still instead.
+ *
+ *   Gender leaving and Size arriving then cancel exactly, so **Colour through
+ *   Seller City sit at the same index in both states** — nine rows that do not
+ *   move. Only Brands shifts, up one into Gender's slot.
  * - **More Filters** stays last, as the catch-all.
  *
- * One ordered list rather than a base plus insertions: with the vertical block
- * now in the middle rather than at the end, slicing around it was going to be
- * the thing that quietly put a row in the wrong place.
+ * One ordered list rather than a base plus insertions — slicing around a block
+ * was going to be the thing that quietly put a row in the wrong place.
  */
-const RAIL_ORDER: (RailEntry & { only?: "filter"; vertical?: true })[] = [
+const RAIL_ORDER: (RailEntry & {
+  only?: "filter";
+  /** Shown only while the vertical block is — inside one vertical, or locked. */
+  vertical?: true;
+  /** The reverse: shown only while the block is *not*. */
+  notVertical?: true;
+})[] = [
   { id: "category", label: "Category", facetIds: ["category"], only: "filter" },
-  // Ahead of Brands, where the reference puts it fourth. Category and Gender
-  // are the two cuts that decide *who the garment is for*, and a buyer settles
-  // that before picking a label off it.
-  { id: "gender", label: "Gender", facetIds: ["gender"], only: "filter" },
+  /*
+   * Ahead of Brands, where the reference puts it fourth. Category and Gender
+   * are the two cuts that decide *who the garment is for*, and a buyer settles
+   * that before picking a label off it.
+   *
+   * It leaves the moment a vertical is settled. Category → gender is 1:1, so
+   * one vertical is one audience and the row could then only offer the single
+   * value every product in scope already has — dead by the same test
+   * `discriminatingOptions` applies to the offer chips. `notVertical` covers
+   * `locked` too, C and D having settled their vertical by being the page.
+   */
+  { id: "gender", label: "Gender", facetIds: ["gender"], notVertical: true },
   { id: "brand", label: "Brands", facetIds: ["brand"] },
   /*
    * Vertical-only, though it keeps its place in the reference order rather
@@ -361,15 +381,6 @@ const RAIL_ORDER: (RailEntry & { only?: "filter"; vertical?: true })[] = [
   // Filters both.
   { id: "fabric", label: "Fabric", facetIds: ["fabric"] },
 
-  // The vertical-specific block. Shown only inside exactly one vertical:
-  // across verticals a Neck Type list offers *Spread Collar* beside *Round
-  // Neck*, which answers nothing anyone is still asking.
-  { id: "fit", label: "Fit", facetIds: ["fit"], vertical: true },
-  { id: "pattern", label: "Pattern", facetIds: ["pattern"], vertical: true },
-  { id: "sleeve", label: "Sleeve Type", facetIds: ["sleeve"], vertical: true },
-  { id: "neck", label: "Neck Type", facetIds: ["neck"], vertical: true },
-  { id: "closure", label: "Closure Type", facetIds: ["closure"], vertical: true },
-
   { id: "price", label: "Price Range", facetIds: ["price"] },
   { id: "margin", label: "Margin", facetIds: ["margin"] },
   { id: "moq", label: "MOQ", facetIds: ["moq"] },
@@ -380,6 +391,22 @@ const RAIL_ORDER: (RailEntry & { only?: "filter"; vertical?: true })[] = [
   { id: "offers", label: "Offers", facetIds: ["hasOffer", "offers"] },
   { id: "seller", label: "Seller", facetIds: ["seller"] },
   { id: "sellerCity", label: "Seller City", facetIds: ["sellerCity"] },
+
+  /*
+   * The vertical-specific block, shown only inside exactly one vertical: across
+   * verticals a Neck Type list offers *Spread Collar* beside *Round Neck*,
+   * which answers nothing anyone is still asking.
+   *
+   * It trails the commercial rows rather than interleaving beside Fabric the
+   * way the reference does — see the header. Five rows landing mid-rail pushed
+   * Price Range six places down and out of sight.
+   */
+  { id: "fit", label: "Fit", facetIds: ["fit"], vertical: true },
+  { id: "pattern", label: "Pattern", facetIds: ["pattern"], vertical: true },
+  { id: "sleeve", label: "Sleeve Type", facetIds: ["sleeve"], vertical: true },
+  { id: "neck", label: "Neck Type", facetIds: ["neck"], vertical: true },
+  { id: "closure", label: "Closure Type", facetIds: ["closure"], vertical: true },
+
   { id: "more", label: "More Filters", facetIds: ["tags"] },
 ];
 
@@ -424,7 +451,10 @@ export function getRail(
   const showVertical = locked || inSingleVertical(category);
 
   return RAIL_ORDER.filter(
-    (row) => !(locked && row.only === "filter") && !(row.vertical && !showVertical),
+    (row) =>
+      !(locked && row.only === "filter") &&
+      !(row.vertical && !showVertical) &&
+      !(row.notVertical && showVertical),
   ).map(({ id, label, facetIds }) => ({ id, label, facetIds }));
 }
 
@@ -441,28 +471,41 @@ export function getRailFacetIds(
 }
 
 /**
- * Drop vertical-specific selections the rail is no longer showing.
+ * Drop selections whose rail row isn't showing.
  *
- * Leaving a single vertical takes their controls off screen with it, and a
- * filter still narrowing the list with nothing left to display or undo it is
+ * A filter still narrowing the list with nothing left to display or undo it is
  * the exact trap the `hasOffer` rail entry exists to avoid — it would survive
  * Clear Filters, go uncounted by the badge, and quietly hide products.
  *
+ * **Two sets trade places across that line, so this guard runs both ways.**
+ * Inside one vertical the attribute rows are on the rail and Gender is off it;
+ * outside one it is the other way round. Whichever side is off screen is the
+ * side that has been orphaned.
+ *
+ * Dropping Gender on the way in costs nothing, category → gender being 1:1: the
+ * selection was implied by the vertical, so the result set is unchanged. The one
+ * case where it *does* move is a contradiction — `?category=girls-t-shirts` with
+ * `?gender=men` — which resolves an empty page rather than causing one.
+ *
  * Applied wherever selections change rather than only in the Filters screen,
- * because a chip tap can leave a vertical too, and `parseSelections` can be
- * handed a URL that was never reachable by clicking at all.
+ * because a chip tap can cross the line too, and `parseSelections` can be handed
+ * a URL that was never reachable by clicking at all.
  */
-export function dropOrphanedAttributes<T extends Record<string, string[]>>(
+export function dropOrphanedSelections<T extends Record<string, string[]>>(
   selections: T,
   mode: VerticalMode = FILTER_VERTICALS,
 ): T {
-  // On a vertical-scoped page the vertical can't be left, so nothing here can
-  // ever be orphaned — and `category` isn't in the selections to prove it.
-  if (mode.kind === "locked") return selections;
-  if (inSingleVertical(selections.category)) return selections;
-  if (!Object.keys(selections).some((id) => PV_FACET_IDS.has(id))) return selections;
+  // Under `locked` the vertical is the page, so the block is always on — and
+  // `category` isn't in the selections to prove it.
+  const showVertical =
+    mode.kind === "locked" || inSingleVertical(selections.category);
+
+  const orphaned = (id: string) =>
+    showVertical ? id === "gender" : PV_FACET_IDS.has(id);
+
+  if (!Object.keys(selections).some(orphaned)) return selections;
 
   return Object.fromEntries(
-    Object.entries(selections).filter(([id]) => !PV_FACET_IDS.has(id)),
+    Object.entries(selections).filter(([id]) => !orphaned(id)),
   ) as T;
 }

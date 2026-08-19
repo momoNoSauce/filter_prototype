@@ -135,7 +135,7 @@ Verified at 360px: A's bar reads Sort · Filters; A's rail is the same thirteen 
 
 **Shirts and tees carry different vocabularies.** `kind: "shirt" | "tee"` on the category picks between them, exactly as gender picks the size vocabulary. The facet's options are the union of both, so the ordinary zero-count rule does the separating — Men's Formal Shirts offers Spread, Button-Down, Cutaway, Mandarin and Club collars; Women's T-Shirts offers Round, Polo, V, Henley and Boat necks. No special case.
 
-**Leaving a vertical drops its attribute selections.** Their rows leave the rail with the vertical, and a filter still narrowing the list with nothing to show or undo it is the trap the `hasOffer` rail entry exists to avoid: it would survive Clear Filters and go uncounted. `dropOrphanedAttributes` runs in `commit` (a chip ✕ can leave a vertical), in the Filters screen's `toggle`, and in `parseSelections`, since `?fit=slim-fit` with no vertical was never reachable by clicking.
+**Leaving a vertical drops its attribute selections.** Their rows leave the rail with the vertical, and a filter still narrowing the list with nothing to show or undo it is the trap the `hasOffer` rail entry exists to avoid: it would survive Clear Filters and go uncounted. `dropOrphanedSelections` runs in `commit` (a chip ✕ can leave a vertical), in the Filters screen's `toggle`, and in `parseSelections`, since `?fit=slim-fit` with no vertical was never reachable by clicking.
 
 **A third PRNG stream** (`attrRand`) carries the five new draws, for the same reason `sizeRand` exists — five more draws on the main stream would have re-rolled the catalog. Verified unchanged: 1,070 total, Girls 97, Men 575, `₹900 & above` 37 and all seven category counts.
 
@@ -154,7 +154,7 @@ A **2×2**. A and B list every category; C and D *are* one. C carries A's bottom
 
 **The vertical is page scope, not a filter** — exactly as the seller already was. `products` arrives pre-scoped and `category` is never a selection, which is what lets the Category row leave the rail without stranding a filter no control could undo. The rail is **17 rows**: everything A and B have minus Category *and Gender*, plus the vertical-specific block, which is now permanently on. Gender goes for the same reason Category does — every category names its audience, so one vertical is one gender, and the row could only offer the single value every product in scope already has. That is a dead control by the same test the offer chips use. The strip carries Price and the three offer chips and no vertical chip — an unremovable one would be a ✕ that isn't there, and a removable one would have to unmake the page.
 
-`lockedVertical` threads through `getRail`, `getRailFacetIds`, `dropOrphanedAttributes`, `contextChips` and `parseSelections`. The last two earn their keep: a hand-edited `?category=girls-t-shirts` or `?gender=girls` on a Men's Formal Shirts page is dropped rather than emptying it, and the attribute guard is disabled because there is no vertical to leave.
+`lockedVertical` threads through `getRail`, `getRailFacetIds`, `dropOrphanedSelections`, `contextChips` and `parseSelections`. The last two earn their keep: a hand-edited `?category=girls-t-shirts` or `?gender=girls` on a Men's Formal Shirts page is dropped rather than emptying it, and the attribute guard is disabled because there is no vertical to leave.
 
 **`/c` and `/d` are the listing.** One URL each, landing already inside a vertical — the state being demonstrated, with no browse path in front of it. `DEMO_VERTICAL` in `scope.ts` picks the pair: Baheti, the storefront the whole demo walks through, and Men's Formal Shirts, the richest shirt vertical at 163 products with every collar and closure populated. Other pairs stay reachable at `/c/seller/[sellerId]/[categoryId]` — 55 each, skipping the ones with no stock rather than serving an empty listing.
 
@@ -236,6 +236,41 @@ Figma **`688:1687`** (`SortbyIcon`) supplies all five rows, exported to `public/
 **`sort-new.svg` is the one that needed assembling.** Its frame is a vector plus a live text layer, so Figma has no single vector-layer export for it — `svgAssets` returns the starburst alone. The frame export carries the exact path data for both, including the `NEW` already outlined, but bundles the section background behind it; that background is the only thing dropped, so no path was authored. The badge is a two-contour ring, so its counter stays transparent and the wordmark reads through the mask rather than filling in.
 
 Verified at 360px, 3×: all five render, no missing assets and no console errors; the `NEW` wordmark is legible inside its badge at 24px; and the tint holds on the active row in both states — Popularity blue by default, and `Price/pc (low → high)` blue with its rupee-and-up-arrow after selection, the list re-sorting to ₹95 first. 80 tests green, lint and typecheck clean, production build clean.
+
+### 2026-08-19 — the rail stops rearranging itself
+
+Two changes, both from watching the rail inside a single vertical.
+
+**Price Range had been falling from 6th to 12th.** The vertical block sat mid-rail beside Fabric, following the reference PLP, so five rows arriving there pushed every commercial row down six places and Price Range below the fold. Picking a vertical handed back a rail the buyer had not learned. **A departure from the reference**, and worth recording as one: the block now trails Seller City, so the commercial rows hold still.
+
+**Gender leaves once a vertical is settled.** Category → gender is 1:1, so inside one vertical the row could only offer the single value every product in scope already has — dead by the same test `discriminatingOptions` applies to the offer chips. This is exactly the argument C and D already made; it was only ever applied where the *page* settled the vertical, and it holds just as well where the *filter* does.
+
+**The two cancel, which is the good part.** Gender leaving and Size arriving swap slots, so **Colour through Seller City sit at the same index in both states** — ten rows that don't move. Brands is the only row that shifts, up one into Gender's old slot.
+
+```
+     MULTI-PV (13)        SINGLE PV (18)       LOCKED C/D (17)
+  1. Category         = Category            Brands
+  2. Gender             Brands              Size
+  3. Brands             Size                Colour
+  4. Colour           = Colour              Fabric
+  5. Fabric           = Fabric              Price Range
+  6. Price Range      = Price Range         Margin
+  7. Margin           = Margin              MOQ
+  8. MOQ              = MOQ                 Delivery Time
+  9. Delivery Time    = Delivery Time       Offers
+ 10. Offers           = Offers              Seller
+ 11. Seller           = Seller              Seller City
+ 12. Seller City      = Seller City         Fit …
+ 13. More Filters       Fit …               More Filters
+```
+
+Size **stayed put** rather than joining the block. It reads as a garment basic beside Brands and Colour, and moving it would have re-broken the alignment it now provides.
+
+**The orphan guard runs both ways now**, and was renamed `dropOrphanedSelections` because `dropOrphanedAttributes` no longer described it. Leaving a vertical drops its attribute selections; entering one drops the gender selection. Dropping Gender on the way in is free — the selection was implied by the vertical, so the result set doesn't move. The single case where it *does* move is a contradiction like `?category=girls-t-shirts&gender=men`, which goes from 0 results to 97: it **resolves** an empty page rather than causing one, there being no Gender row left to undo the mismatch.
+
+C and D's `?gender=` strip folded into the same guard, replacing an ad-hoc `params.delete("gender")` in `PlpScreen`. One owner, and the rule was never specific to those pages. `params.delete("category")` stays, category not being something the guard sees under `locked`.
+
+Verified at 360px: the three rails read exactly as above; no Gender row inside a vertical in A or B; Price Range 6th and above the fold with 163 results under Men's Formal Shirts; the contradiction URL renders 97 rather than an empty page and the badge reads 1; `/c?gender=girls` leaves the badge bare; `?gender=men` alone across verticals still filters and still counts. 83 tests green (three new), lint, typecheck and build clean. As with C and D's stale `?category=`, a stale `?gender=` in the address bar is **ignored rather than rewritten** — the next commit cleans it.
 
 ### Verified working
 

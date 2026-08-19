@@ -1,4 +1,4 @@
-import { FACETS, FILTER_VERTICALS, dropOrphanedAttributes, type VerticalMode } from "./facets";
+import { FACETS, FILTER_VERTICALS, dropOrphanedSelections, type VerticalMode } from "./facets";
 import { DEFAULT_SORT, SORT_OPTIONS, type Selections, type SortId } from "./engine";
 
 /**
@@ -22,7 +22,7 @@ export function parseSelections(
   // on the rail to show or undo it. Under `locked` the page supplies the
   // vertical instead of the query string — without knowing that, the guard
   // would strip every attribute the moment the page loaded.
-  return dropOrphanedAttributes(selections, mode);
+  return dropOrphanedSelections(selections, mode);
 }
 
 export function parseSort(params: URLSearchParams): SortId {
