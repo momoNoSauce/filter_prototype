@@ -206,10 +206,13 @@ function PriceChip({
     <button
       onClick={(e) => onOpen(e.currentTarget)}
       aria-haspopup="menu"
-      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center gap-[4px] rounded-[8px] pr-[10px] pl-[16px] ${
+      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center gap-[4px] rounded-[8px] pr-[10px] pl-[8px] ${
         selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"
       }`}
     >
+      {/* Unlike the offer chips this one has no checkmark to make room for —
+          its state is the fill and the label — so the icon stays in both. */}
+      <ChipIcon src={PRICE_ICON} />
       <span
         className={`text-[14px] leading-[20px] font-medium whitespace-nowrap ${
           selected ? "text-primary" : "text-[#323232]"
@@ -264,6 +267,21 @@ const OFFER_ICONS: Record<string, string> = {
   "offers:free-delivery": "/offers/free-delivery.png",
 };
 
+const PRICE_ICON = "/offers/price.png";
+
+/**
+ * A chip's leading art.
+ *
+ * A 26px `object-contain` box, not a fixed height: these are different aspects
+ * and sizing by height alone left the square ones 20px on their longest edge
+ * while the landscape ones reached 26. The longest edge is what the eye
+ * compares, so the box equalises that.
+ */
+function ChipIcon({ src }: { src: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img alt="" className="size-[26px] shrink-0 object-contain" src={src} />;
+}
+
 function FilterChip({
   label,
   icon,
@@ -294,14 +312,7 @@ function FilterChip({
         leading ? "pl-[8px]" : "pl-[16px]"
       }`}
     >
-      {!selected && icon && (
-        // A 26px box with `object-contain`, not a fixed height: these are
-        // different aspects, and sizing by height alone left the square one
-        // 20px on its longest edge while the two landscape ones reached 26.
-        // The box equalises the longest edge, which is what the eye compares.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img alt="" className="size-[26px] shrink-0 object-contain" src={icon} />
-      )}
+      {!selected && icon && <ChipIcon src={icon} />}
       {selected && (
         <svg viewBox="0 0 18 18" className="size-[20px] shrink-0" aria-hidden>
           <path
