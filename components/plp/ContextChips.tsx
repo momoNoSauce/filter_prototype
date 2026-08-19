@@ -295,8 +295,12 @@ function FilterChip({
       }`}
     >
       {!selected && icon && (
+        // A 26px box with `object-contain`, not a fixed height: these are
+        // different aspects, and sizing by height alone left the square one
+        // 20px on its longest edge while the two landscape ones reached 26.
+        // The box equalises the longest edge, which is what the eye compares.
         // eslint-disable-next-line @next/next/no-img-element
-        <img alt="" className="h-[20px] w-auto shrink-0" src={icon} />
+        <img alt="" className="size-[26px] shrink-0 object-contain" src={icon} />
       )}
       {selected && (
         <svg viewBox="0 0 18 18" className="size-[20px] shrink-0" aria-hidden>
