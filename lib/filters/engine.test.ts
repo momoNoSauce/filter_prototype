@@ -642,7 +642,6 @@ describe("vertical-specific attributes", () => {
 
 describe("variants C and D — the page is the vertical", () => {
   const LOCKED = { kind: "locked", id: "mens-formal-shirts" } as const;
-  const BROWSE = { kind: "browse" } as const;
   const scope = verticalScope("baheti", LOCKED.id)!;
 
   it("scopes the catalog by vertical, and by seller unless it is the storefront", () => {
@@ -700,21 +699,6 @@ describe("variants C and D — the page is the vertical", () => {
 
     // The unscoped strip does the opposite with the same products.
     expect(contextChips(scope.products, {}).every((c) => c.kind === "vertical")).toBe(true);
-  });
-
-  it("browsing a seller keeps Gender but loses Category and the block", () => {
-    // C and D's seller page: several verticals in scope, so Gender is a live
-    // control again, but a vertical is navigated into rather than ticked.
-    const rail = getRail(undefined, BROWSE).map((r) => r.id);
-    expect(rail).not.toContain("category");
-    expect(rail).toContain("gender");
-    for (const id of PV_FACET_IDS) expect(rail).not.toContain(id);
-    expect(getRailFacetIds(undefined, BROWSE).has("category")).toBe(false);
-
-    // The strip still offers every vertical — what changes is what a tap does.
-    const chips = contextChips(getCatalog(), {}, BROWSE);
-    expect(chips.every((c) => c.kind === "vertical")).toBe(true);
-    expect(chips).toHaveLength(7);
   });
 
   it("filters and counts inside the vertical like any other page", () => {

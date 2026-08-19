@@ -20,10 +20,10 @@ Home → tap *Baheti Garments* → PLP → filter and sort. Two control layouts 
 |---|---|---|---|
 | **Variant A** | `/` | `/seller/baheti` | Sort · Filters pinned to the bottom |
 | **Variant B** | `/b` | `/b/seller/baheti` | The same two as chips at the top, no bottom bar |
-| **Variant C** | `/c` | `/c/seller/baheti` → `/c/seller/baheti/mens-formal-shirts` | Bottom bar; verticals browsed into |
-| **Variant D** | `/d` | `/d/seller/baheti` → `/d/seller/baheti/mens-formal-shirts` | Top chips; verticals browsed into |
+| **Variant C** | — | `/c` | Bottom bar, already inside one vertical |
+| **Variant D** | — | `/d` | Top chips, already inside one vertical |
 
-A and B *filter* to a vertical; C and D *browse into* one, so there is no Category control at either level. Together they make a 2×2 of that against control placement. All four are closed loops — start at the home URL and the whole journey stays in the variant.
+A and B start across every category; C and D start *inside* one, so there is no Category control at all. Together they make a 2×2 of that against control placement. `/c` and `/d` are the listing itself — other seller/vertical pairs are at `/c/seller/[sellerId]/[categoryId]`.
 
 Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop. Only the controls differ, so a preference between them is about control placement. Switch by editing the URL; each variant is a closed loop and neither inherits the other's state.
 

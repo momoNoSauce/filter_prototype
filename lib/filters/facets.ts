@@ -363,17 +363,11 @@ export const inSingleVertical = (category?: string[]) => category?.length === 1;
  * - `filter` — A and B. A vertical is a facet like any other: Category is a
  *   rail row, the chips toggle it, and the attribute block appears once
  *   exactly one is picked.
- * - `browse` — C and D's seller page. Verticals are **navigated into** rather
- *   than filtered, so there is no Category row and the chips are links. No
- *   attribute block either: several verticals are still in scope.
- * - `locked` — C and D's vertical page. The vertical *is* the page. No
- *   Category row, no Gender row (one vertical is one audience), no vertical
- *   chips, and the attribute block permanently on.
+ * - `locked` — C and D. The vertical *is* the page. No Category row, no Gender
+ *   row (one vertical is one audience), no vertical chips, and the attribute
+ *   block permanently on.
  */
-export type VerticalMode =
-  | { kind: "filter" }
-  | { kind: "browse" }
-  | { kind: "locked"; id: string };
+export type VerticalMode = { kind: "filter" } | { kind: "locked"; id: string };
 
 export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
 
@@ -400,8 +394,7 @@ const GENDER_ENTRY: RailEntry = { id: "gender", label: "Gender", facetIds: ["gen
  * vertical, so a Category control would be a lie the back button has to
  * correct, and since every category names its audience one vertical is one
  * gender, leaving a Gender row that can only offer the single value every
- * product in scope already has. Under `browse` only Category goes, verticals
- * being reached by navigating rather than ticking.
+ * product in scope already has.
  */
 export function getRail(
   category?: string[],
@@ -410,13 +403,9 @@ export function getRail(
   const base =
     mode.kind === "locked"
       ? [...COMMON_RAIL]
-      : mode.kind === "browse"
-        ? [GENDER_ENTRY, ...COMMON_RAIL]
-        : [CATEGORY_ENTRY, GENDER_ENTRY, ...COMMON_RAIL];
+      : [CATEGORY_ENTRY, GENDER_ENTRY, ...COMMON_RAIL];
 
-  const showAttributes =
-    mode.kind === "locked" || (mode.kind === "filter" && inSingleVertical(category));
-  if (!showAttributes) return base;
+  if (mode.kind !== "locked" && !inSingleVertical(category)) return base;
 
   // Ahead of *More Filters*, which is the catch-all and should stay last.
   const tail = base.length - 1;
@@ -454,9 +443,7 @@ export function dropOrphanedAttributes<T extends Record<string, string[]>>(
   // On a vertical-scoped page the vertical can't be left, so nothing here can
   // ever be orphaned — and `category` isn't in the selections to prove it.
   if (mode.kind === "locked") return selections;
-  // Browsing, several verticals are in scope and the block is never shown, so
-  // an attribute could only have arrived from a hand-written URL.
-  if (mode.kind === "filter" && inSingleVertical(selections.category)) return selections;
+  if (inSingleVertical(selections.category)) return selections;
   if (!Object.keys(selections).some((id) => PV_FACET_IDS.has(id))) return selections;
 
   return Object.fromEntries(

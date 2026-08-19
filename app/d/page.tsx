@@ -1,9 +1,16 @@
-import { HomeScreen } from "@/components/home/HomeScreen";
+import { notFound } from "next/navigation";
+import { VerticalPlp } from "@/components/plp/VerticalPlp";
+import { DEMO_VERTICAL } from "@/lib/catalog/scope";
 
 /**
- * Variant D entry point — the same home screen, with the seller cards leading
- * to /d/seller/[sellerId], so `/d` walks the whole journey in Variant D.
+ * Variant D — **the demo link**. `/d` lands straight inside a single product
+ * vertical, which is the state being shown: no browse path in front of it,
+ * because the point is the listing, not how you got there.
+ *
+ * Any other seller/vertical pair is at /d/seller/[sellerId]/[categoryId].
  */
 export default function Page() {
-  return <HomeScreen basePath="/d" />;
+  const screen = VerticalPlp({ ...DEMO_VERTICAL, variant: "top-chips" });
+  if (!screen) notFound();
+  return screen;
 }

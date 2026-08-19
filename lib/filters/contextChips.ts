@@ -31,15 +31,10 @@ export type ContextChip =
  *   open question is *which vertical*, so it offers those.
  * - **Inside exactly one** — the vertical leads, still removable by its ✕ so
  *   the strip is also the way back out, and price and offers follow it.
- * - **`locked`** (C and D's vertical page) — the *page* is a vertical, so there
- *   is no vertical to offer and none to remove. The strip is price and offers
- *   only. Leading it with an unremovable chip would be a ✕ that isn't there,
- *   and a removable one would have to unmake the page.
- *
- * Under `browse` (C and D's seller page) nothing changes here: no vertical is
- * ever selected, so the first branch offers all of them, as it does in A and B
- * before anything is picked. What differs is what a tap does — the screen
- * navigates into the vertical instead of ticking it.
+ * - **`locked`** (C and D) — the *page* is a vertical, so there is no vertical
+ *   to offer and none to remove. The strip is price and offers only. Leading
+ *   it with an unremovable chip would be a ✕ that isn't there, and a removable
+ *   one would have to unmake the page.
  *
  * Pure, and separate from the rendering, because the interesting part is this
  * selection rule rather than the markup.

@@ -43,5 +43,15 @@ export function verticalRoutes(): { sellerId: string; categoryId: string }[] {
   );
 }
 
+/**
+ * What `/c` and `/d` land on. Baheti is the storefront the whole demo walks
+ * through, and Men's Formal Shirts is the richest shirt vertical — 163
+ * products, every collar and closure populated.
+ */
+export const DEMO_VERTICAL = {
+  sellerId: STOREFRONT.id,
+  categoryId: "mens-formal-shirts",
+} as const;
+
 export type VerticalScope = NonNullable<ReturnType<typeof verticalScope>>;
 export type { Product };

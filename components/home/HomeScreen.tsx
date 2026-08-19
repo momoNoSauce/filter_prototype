@@ -7,8 +7,9 @@ import { SELLERS } from "@/lib/catalog/seed";
  * point: tap "Baheti Garments" to land on the seller PLP.
  *
  * `basePath` keeps the whole journey inside one variant — the seller cards
- * link to /seller/…, /b/seller/…, /c/seller/… or /d/seller/…, so someone handed
- * a variant's link never falls back into another halfway through.
+ * link to /seller/... or /b/seller/... so someone handed the Variant B link
+ * never falls back into Variant A halfway through. C and D have no home: they
+ * are a single screen, landed on directly.
  *
  * The design's third seller card is "Pawan footwear", which has no catalog
  * behind it, so Grasim Fabrics takes that slot and every card here navigates
@@ -22,7 +23,7 @@ const FEATURED = [
 
 const CAROUSEL = [1, 2, 3, 4, 5].map((n) => `/figma/home/carousel-${n}.png`);
 
-export function HomeScreen({ basePath = "" }: { basePath?: "" | "/b" | "/c" | "/d" }) {
+export function HomeScreen({ basePath = "" }: { basePath?: "" | "/b" }) {
   const catalog = getCatalog();
 
   return (

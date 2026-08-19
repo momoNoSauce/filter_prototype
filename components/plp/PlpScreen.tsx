@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type { Product } from "@/lib/catalog/types";
 import {
   applyFilters,
@@ -66,7 +66,6 @@ export function PlpScreen({
   products,
   variant = "bottom-bar",
   verticalMode = FILTER_VERTICALS,
-  verticalBasePath,
   homeHref,
 }: {
   title: string;
@@ -79,23 +78,12 @@ export function PlpScreen({
    */
   verticalMode?: VerticalMode;
   /**
-   * Where a vertical chip leads, minus the vertical: `/c/seller/grasim`, to
-   * which the category id is appended. Supplied by C and D's seller page,
-   * where a vertical is browsed into rather than ticked; absent in A and B,
-   * where the chip toggles a filter instead.
-   *
-   * A prefix rather than a function, because these screens are rendered from
-   * Server Components and a function can't cross that boundary.
-   */
-  verticalBasePath?: string;
-  /**
    * `null` on C and D: they have no home of their own, and any href would
    * land the session in a different variant. See `AppBar`.
    */
   homeHref?: string | null;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   // The query string is the shareable record of state, but local state is the
   // source of truth — that keeps filtering instant instead of round-tripping
   // through the router on every tick.
@@ -128,12 +116,13 @@ export function PlpScreen({
   useEffect(() => {
     const sync = () => {
       const params = new URLSearchParams(window.location.search);
-      // Neither C nor D has a Category control at either level — one browses
-      // into a vertical, the other is one — so `?category=` in a hand-edited
-      // URL would filter with nothing to show or undo it. On the vertical page
-      // `?gender=` goes too, for the same reason its row does.
-      if (verticalMode.kind !== "filter") params.delete("category");
-      if (verticalMode.kind === "locked") params.delete("gender");
+      // C and D have no Category or Gender control, so either in a hand-edited
+      // URL would filter with nothing to show or undo it — and could empty the
+      // page outright by naming a different vertical, or the wrong audience.
+      if (verticalMode.kind === "locked") {
+        params.delete("category");
+        params.delete("gender");
+      }
       setSelections(parseSelections(params, verticalMode));
       setSort(parseSort(params));
     };
@@ -173,15 +162,8 @@ export function PlpScreen({
     [products, selections, verticalMode],
   );
 
-  const toggleChip = (facetId: string, optionId: string) => {
-    // In C and D a vertical chip is a way *into* the vertical, not a filter to
-    // tick — tapping it leaves this page for that vertical's own.
-    if (facetId === "category" && verticalBasePath) {
-      router.push(`${verticalBasePath}/${optionId}`);
-      return;
-    }
+  const toggleChip = (facetId: string, optionId: string) =>
     commit(toggleSelection(selections, facetId, optionId), sort);
-  };
 
   /**
    * The Price menu is anchored under its chip but rendered at the root, since

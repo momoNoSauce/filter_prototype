@@ -1,9 +1,16 @@
-import { HomeScreen } from "@/components/home/HomeScreen";
+import { notFound } from "next/navigation";
+import { VerticalPlp } from "@/components/plp/VerticalPlp";
+import { DEMO_VERTICAL } from "@/lib/catalog/scope";
 
 /**
- * Variant C entry point — the same home screen, with the seller cards leading
- * to /c/seller/[sellerId], so `/c` walks the whole journey in Variant C.
+ * Variant C — **the demo link**. `/c` lands straight inside a single product
+ * vertical, which is the state being shown: no browse path in front of it,
+ * because the point is the listing, not how you got there.
+ *
+ * Any other seller/vertical pair is at /c/seller/[sellerId]/[categoryId].
  */
 export default function Page() {
-  return <HomeScreen basePath="/c" />;
+  const screen = VerticalPlp({ ...DEMO_VERTICAL, variant: "bottom-bar" });
+  if (!screen) notFound();
+  return screen;
 }
