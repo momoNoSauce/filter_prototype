@@ -20,7 +20,6 @@ import {
 } from "@/lib/filters/facets";
 import { buildQuery, parseSelections, parseSort } from "@/lib/filters/urlState";
 import { AppBar } from "./AppBar";
-import { GoldStrip } from "./GoldStrip";
 import { SIZE_FACET_ID } from "@/lib/filters/activeVariant";
 import { ProductCard } from "./ProductCard";
 import { BottomActionBar } from "./BottomActionBar";
@@ -51,8 +50,8 @@ type Overlay = "sort" | "filters" | null;
  * Two interaction models over the same screen, so they can be compared:
  *
  * - `bottom-bar` — Sort and Filters pinned to the bottom (Figma 638:2836).
- * - `top-chips`  — the same two as chips under the GOLD strip (Figma
- *                  644:4011), and no bottom bar.
+ * - `top-chips`  — the same two as chips under the app bar (Figma 644:4011),
+ *                  and no bottom bar.
  *
  * Since Category left the bar on 2026-08-19 the two are **identical in every
  * other respect** — same rail, same facets, same card, same catalog, same
@@ -218,7 +217,6 @@ export function PlpScreen({
           // the default and put them one tap from another variant's home.
           homeHref={homeHref === undefined ? (variant === "top-chips" ? "/b" : "/") : homeHref}
         />
-        <GoldStrip />
         {variant === "top-chips" ? (
           <TopChipBar
             sortActive={sortActive}

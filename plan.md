@@ -19,7 +19,7 @@ Home → tap *Baheti Garments* → PLP → filter and sort. Two control layouts 
 | | Home | PLP | Controls |
 |---|---|---|---|
 | **Variant A** | `/` | `/seller/[sellerId]` | Sort · Filters pinned to the bottom (Figma `638:2836`) |
-| **Variant B** | `/b` | `/b/seller/[sellerId]` | The same two as chips under the GOLD strip (Figma `644:4011`), no bottom bar |
+| **Variant B** | `/b` | `/b/seller/[sellerId]` | The same two as chips under the app bar (Figma `644:4011`), no bottom bar |
 | **Variant C** | — | `/c` | Bottom bar, already inside one vertical |
 | **Variant D** | — | `/d` | Top chips, already inside one vertical |
 
@@ -50,7 +50,7 @@ Figma `Filter-and-Sort` — `hdArN93DmnLu5JDB46SOwd`, section `651:4873`. Everyt
 
 Design width **360px**. Tokens are mapped into `app/globals.css` under `@theme` using their Figma variable names: `primary/default #004FFA`, `primary/subtle #CCDCFE`, `text/heading #1A1C1F`, `Secondary/Orange-500 #FF7711`, `Orange-400 #FF923F`.
 
-Fonts: **Roboto** throughout, **Inter** for button labels only (`Clear Filters`, `Show N results`), **Rowdies** for the GOLD wordmark — all three are in the design.
+Fonts: **Roboto** throughout and **Inter** for button labels only (`Clear Filters`, `Show N results`). Rowdies set the GOLD wordmark and went with it on 2026-08-19.
 
 All icons and images are the exact assets exported from Figma, in `public/figma/`. Nothing was redrawn.
 

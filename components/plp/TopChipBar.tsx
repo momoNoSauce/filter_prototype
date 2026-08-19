@@ -22,7 +22,7 @@ import { CHIP_H, ChipStrip } from "./ContextChips";
  * chip work left for the designer — settled towards M3, since it is the shape
  * the majority of the row already carries. Reversing it is this one value.
  *
- * It is pinned below the GOLD strip rather than scrolling with the list: in
+ * It is pinned below the app bar rather than scrolling with the list: in
  * this variant it is the *only* way to reach Sort and Filters, so it can never
  * be allowed to scroll out of reach.
  *

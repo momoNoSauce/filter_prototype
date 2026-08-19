@@ -4,7 +4,7 @@ import { getCatalog } from "@/lib/catalog/products";
 import { SELLERS } from "@/lib/catalog/seed";
 
 /**
- * Variant B of the PLP — Sort and Filter as chips under the GOLD strip, no
+ * Variant B of the PLP — Sort and Filter as chips under the app bar, no
  * bottom bar, no Gender control.
  *
  * Deliberately a separate route rather than a query flag, so each variant has

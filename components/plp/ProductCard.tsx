@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { activeVariantIndex } from "@/lib/filters/activeVariant";
 import { SetPills } from "./SetPills";
-import { BulkOfferTag, GenericOfferTag, GoldSchemeTag } from "./Tags";
+import { BulkOfferTag, GenericOfferTag } from "./Tags";
 
 const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
@@ -126,10 +126,9 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
 
         {product.offers.length > 0 && (
           <div className="flex w-full flex-wrap items-center gap-[4px]">
-            {product.offers.includes("GOLD Target Scheme") && <GoldSchemeTag />}
             {product.offers.includes("Bulk Offer") && <BulkOfferTag />}
             {product.offers
-              .filter((o) => o !== "GOLD Target Scheme" && o !== "Bulk Offer")
+              .filter((o) => o !== "Bulk Offer")
               .map((offer) => (
                 <GenericOfferTag key={offer} label={offer} />
               ))}

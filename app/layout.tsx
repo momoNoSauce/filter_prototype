@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Roboto, Rowdies } from "next/font/google";
+import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import { DeviceFrame } from "@/components/DeviceFrame";
 
@@ -7,13 +7,6 @@ const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
   weight: ["300", "400", "500", "700"],
-});
-
-// Only used for the "GOLD" wordmark in the membership strip and scheme tag.
-const rowdies = Rowdies({
-  variable: "--font-rowdies",
-  subsets: ["latin"],
-  weight: ["700"],
 });
 
 // The design uses Inter for button labels ("Clear Filters", "Show N results")
@@ -41,7 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${roboto.variable} ${rowdies.variable} ${inter.variable}`}
+      className={`${roboto.variable} ${inter.variable}`}
     >
       <body>
         <DeviceFrame>{children}</DeviceFrame>

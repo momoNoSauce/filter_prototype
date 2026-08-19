@@ -20,7 +20,7 @@ export type ContextChip =
   | { kind: "filter"; facetId: string; option: CountedOption };
 
 /**
- * Which contextual chips the strip below the GOLD bar should carry.
+ * Which contextual chips the strip below the app bar should carry.
  *
  * Shared by both variants: in A it is the whole of that strip, in B it follows
  * the Sort and Filter chips after the divider the frame already draws for it.
@@ -86,7 +86,7 @@ export function contextChips(
  * drop out, as they do everywhere.
  *
  * `only` keeps the list to the two specific offers asked for. Bulk Offer and
- * GOLD Target Scheme stay in the Filters panel rather than the strip.
+ * Bulk Offer stays in the Filters panel rather than the strip.
  */
 const OFFER_CHIPS: { facetId: string; only?: string[] }[] = [
   { facetId: "hasOffer" },

@@ -17,7 +17,7 @@ import type { CountedOption } from "@/lib/filters/engine";
 export const CHIP_H = "h-[44px]";
 
 /**
- * The strip below the GOLD bar. In Variant A it holds only these; in B it
+ * The strip below the app bar. In Variant A it holds only these; in B it
  * follows the Sort and Filter chips, after the divider the frame already draws
  * as the boundary for them.
  *
@@ -279,9 +279,14 @@ function FilterChip({
       onClick={onClick}
       role="checkbox"
       aria-checked={selected}
-      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center gap-[8px] rounded-[8px] pr-[16px] ${
-        selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"
-      } ${leading ? "pl-[8px]" : "pl-[16px]"}`}
+      // 4px beside the icon, 8px beside the checkmark. The icon is wider than
+      // the check and carries its own visual padding, so M3's 8dp read loose
+      // on it while being right for the glyph.
+      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center rounded-[8px] pr-[16px] ${
+        !selected && icon ? "gap-[4px]" : "gap-[8px]"
+      } ${selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"} ${
+        leading ? "pl-[8px]" : "pl-[16px]"
+      }`}
     >
       {!selected && icon && (
         // eslint-disable-next-line @next/next/no-img-element

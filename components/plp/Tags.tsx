@@ -1,33 +1,3 @@
-import { GoldGlyph } from "./GoldStrip";
-
-/** Figma 638:2787 — the GOLD Target Scheme pill. */
-export function GoldSchemeTag() {
-  return (
-    <span className="flex h-[16px] shrink-0 items-center gap-[2px] rounded-[4px] bg-[linear-gradient(to_right,#faecff,#f1c7ff)] px-[4px]">
-      <span className="relative size-[12px] shrink-0 overflow-hidden rounded-[6px] bg-white">
-        <GoldGlyph className="absolute inset-0 size-full" />
-      </span>
-      <span className="text-[8px] tracking-[0.0304px] whitespace-nowrap">
-        <span className="gold-text font-display leading-[1.5]">GOLD </span>
-        <span className="gold-text leading-[1.5] font-bold">Target Scheme </span>
-      </span>
-      <span className="relative inline-grid shrink-0 place-items-start">
-        {/* eslint-disable @next/next/no-img-element */}
-        <img
-          alt=""
-          className="col-start-1 row-start-1 size-[12px]"
-          src="/figma/icons/lock-ring.svg"
-        />
-        <img
-          alt=""
-          className="col-start-1 row-start-1 mt-[2px] ml-[2px] size-[8px] object-cover"
-          src="/figma/icons/padlock.png"
-        />
-        {/* eslint-enable @next/next/no-img-element */}
-      </span>
-    </span>
-  );
-}
 
 /**
  * Figma 638:2788 — the BULK Offer pill. The icon is a crop out of a larger

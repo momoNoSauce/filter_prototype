@@ -234,7 +234,14 @@ export const FABRICS = [
 
 export const OFFERS = [
   { name: "Bulk Offer", chance: 0.42 },
-  { name: "GOLD Target Scheme", chance: 0.55 },
+  /*
+   * Retired 2026-08-19 with the rest of the GOLD branding, but **still drawn**.
+   * `OFFERS.filter` runs its predicate once per entry, so deleting this one
+   * would take a `rand()` call out of the middle of the sequence and re-roll
+   * the entire catalog — every count in the docs with it. Drawn and discarded
+   * costs nothing and keeps the seed where it is.
+   */
+  { name: "GOLD Target Scheme", chance: 0.55, retired: true },
   { name: "Cashback", chance: 0.22 },
   { name: "Free Delivery", chance: 0.16 },
 ];
@@ -573,7 +580,9 @@ export function generateCatalog(): Product[] {
     const pattern = weightedPick(attrRand, attrs.pattern, (a) => a.weight).name;
     const sleeve = weightedPick(attrRand, attrs.sleeve, (a) => a.weight).name;
 
-    const offers = OFFERS.filter((o) => rand() < o.chance).map((o) => o.name);
+    const offers = OFFERS.filter((o) => rand() < o.chance)
+      .filter((o) => !o.retired)
+      .map((o) => o.name);
     const code = 1000 + Math.floor(rand() * 8999);
 
     products.push({

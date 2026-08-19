@@ -178,6 +178,14 @@ A supplied PNG, 20px, leading the chip. **The checkmark replaces it when selecte
 
 It sits in `public/offers/` rather than `public/figma/`: that folder is Figma exports, and a file's location shouldn't imply an origin it doesn't have. At 48×37 it has almost no headroom above the 20px it renders at, so it will soften on a 3× display — **wants a vector**. Only Cashback has art; the map in `ContextChips.tsx` takes more without a code change.
 
+### 2026-08-19 — GOLD removed
+
+The membership strip and the `GOLD Target Scheme` tag are both gone from all four prototypes, along with `GoldStrip.tsx`, `GoldGlyph`, the three `gold-*.svg` exports, the `.gold-text` gradient, its seven colour tokens and the Rowdies webfont, which only ever set that wordmark. The chip strip now sits directly under the app bar.
+
+**The offer is still drawn, and discarded.** `OFFERS.filter` runs its predicate once per entry, so deleting the row would have taken a `rand()` call out of the middle of the sequence and re-rolled the entire catalog — every count in these docs with it. It carries `retired: true`, is dropped after the draw, and is filtered out of the Offers facet so no permanently-empty option is listed.
+
+Verified unchanged: 1,070 total, Girls 97, Men 575, `₹900 & above` 37, all seven category counts. The Offers facet is now Bulk Offer (473), Cashback (240), Free Delivery (160), with Seller Offer at 667; no product carries a GOLD offer. GOLD appears nowhere in A, B, C or D.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.

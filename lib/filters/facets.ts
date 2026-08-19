@@ -235,7 +235,9 @@ export const FACETS: FacetDef[] = [
     panel: "checkbox",
     searchable: false,
     valuesOf: (p) => p.offers.map(slug),
-    options: OFFERS.map((o) => ({ id: slug(o.name), label: o.name })),
+    // Retired offers are still drawn, to hold the seed — see OFFERS — but no
+    // product carries one, so listing it would be a permanently empty option.
+    options: OFFERS.filter((o) => !o.retired).map((o) => ({ id: slug(o.name), label: o.name })),
   },
   {
     /*

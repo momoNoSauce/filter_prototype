@@ -37,13 +37,6 @@
   --color-viewdetails: #f8faf7; /* View Details strip */
   --color-hairline: #cccccc;
   --color-rail: #f5f5f5; /* facet rail (unselected) */
-  --color-gold-from: #6909b8; /* GOLD gradient start */
-  --color-gold-via: #9e1ea7;
-  --color-gold-to: #a922a3; /* GOLD gradient end */
-  --color-gold-price: #ffdb99; /* ₹99 in the membership strip */
-  --color-gold-strike: #d4d4d4;
-  --color-tag-gold-from: #faecff;
-  --color-tag-gold-to: #f1c7ff;
 
   --font-sans: var(--font-roboto), "Roboto", system-ui, sans-serif;
   --font-display: var(--font-rowdies), "Rowdies", cursive;
@@ -251,13 +244,4 @@ input {
 }
 
 /* The GOLD wordmark: gradient-filled text, used in tags and the join button */
-.gold-text {
-  background-image: linear-gradient(
-    to top,
-    var(--color-gold-from),
-    var(--color-gold-to)
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+
