@@ -306,29 +306,25 @@ const COMMON_RAIL: RailEntry[] = [
   { id: "more", label: "More Filters", facetIds: ["fabric", "tags"] },
 ];
 
-/** Variant B only — in A the bottom bar owns Category. */
+/** First in both rails. */
 const CATEGORY_ENTRY: RailEntry = { id: "category", label: "Category", facetIds: ["category"] };
 
-/** In both rails: first in A, second in B, directly under Category. */
+/** Second in both rails, directly under Category. */
 const GENDER_ENTRY: RailEntry = { id: "gender", label: "Gender", facetIds: ["gender"] };
 
 /**
- * The Filters rail, which differs by variant — and only by **Category**.
+ * The Filters rail — now **identical in both variants**.
  *
- * Variant A hands Category to the bottom bar, so it must not also appear here:
- * one facet behind two controls is how they come to disagree, and it would
- * double-report, once as the Category badge and again inside the Filters
- * count.
+ * Category moved out of A's bottom bar and into this rail on 2026-08-19, so
+ * the last facet-level difference between the variants is gone. What remains
+ * between them is Sort and Filters at the bottom versus the same two as chips
+ * at the top, which is the only thing the A/B was ever meant to test.
  *
- * Gender is in both. It is largely redundant now that every category names its
- * audience ("Girl's T-Shirts"), but redundant is not useless — it is a faster
- * top-level cut than ticking three category tiles — and a variant with no
- * gender control at all leaves `?gender=` links with nothing to show them.
- *
- * Everything else is common, so the two rails differ by exactly one row.
+ * The `variant` parameter went with the difference. Carrying one nothing reads
+ * would only claim a distinction the code no longer makes; if the rails ever
+ * need to diverge again, it comes back at that point.
  */
-export function getRail(variant: PlpVariant): RailEntry[] {
-  if (variant === "bottom-bar") return [GENDER_ENTRY, ...COMMON_RAIL];
+export function getRail(): RailEntry[] {
   return [CATEGORY_ENTRY, GENDER_ENTRY, ...COMMON_RAIL];
 }
 
@@ -337,6 +333,6 @@ export function getRail(variant: PlpVariant): RailEntry[] {
  * draft — notably Clear Filters — must filter through this, so a facet the
  * screen doesn't display can never be cleared by it.
  */
-export function getRailFacetIds(variant: PlpVariant): Set<string> {
-  return new Set(getRail(variant).flatMap((entry) => entry.facetIds));
+export function getRailFacetIds(): Set<string> {
+  return new Set(getRail().flatMap((entry) => entry.facetIds));
 }

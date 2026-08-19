@@ -18,8 +18,8 @@ Home → tap *Baheti Garments* → PLP → filter and sort. Two control layouts 
 
 | | Home | PLP | Controls |
 |---|---|---|---|
-| **Variant A** | `/` | `/seller/baheti` | Category · Sort · Filters pinned to the bottom |
-| **Variant B** | `/b` | `/b/seller/baheti` | Sort and Filter chips at the top, no bottom bar |
+| **Variant A** | `/` | `/seller/baheti` | Sort · Filters pinned to the bottom |
+| **Variant B** | `/b` | `/b/seller/baheti` | The same two as chips at the top, no bottom bar |
 
 Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop. Only the controls differ, so a preference between them is about control placement. Switch by editing the URL; each variant is a closed loop and neither inherits the other's state.
 

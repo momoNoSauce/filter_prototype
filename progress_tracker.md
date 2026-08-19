@@ -107,26 +107,44 @@ It was removed from `FACETS` as well as from the rail, rather than just the rail
 
 Rails are now **A 12 rows, B 13**, still differing by Category alone.
 
+### 2026-08-19 — Category leaves the bottom bar
+
+Removed from Variant A's bottom bar on request and returned to the Filters rail as an ordinary facet, first row, exactly as it already worked in B. **A's bar is now Sort and Filters**, two slots.
+
+The trigger was that a facet reachable from both a bar slot and a chip kept generating edge cases the bar was the wrong place to settle: should the slot hide once a single vertical is picked, which control owns the count, what is Clear Filters allowed to touch. One control, one owner.
+
+Three consequences, all intended:
+
+- **The Filters badge counts category now.** A's badge used to exclude it because the bar reported it separately; nothing else carries a badge any more, so nothing is double-reported.
+- **Clear Filters wipes category in A.** It used to survive, because clearing a filter from a screen that never showed it is a silent surprise. The screen shows it.
+- **`CategorySheet.tsx` is deleted**, along with its `Clear all` / `Show N results` footer — the same precedent as `GenderSheet` when its slot went. Multi-select is unaffected: the rail's `TileGrid` was always multi-select. The Filters screen is now the only draft surface, so it is the only place the `Selection discarded` toast fires.
+
+`getRail` and `getRailFacetIds` **no longer take a variant**, because there is nothing left for it to select, and `FilterScreen` dropped its `variant` prop with them.
+
+**The A/B is now clean.** Card, catalog, engine, rail and facets are identical; where Sort and Filters sit is the entire variable. That closes backlog item 10, which had been open since the variant was added.
+
+Verified at 360px: A's bar reads Sort · Filters; A's rail is the same thirteen rows as B's, headed by Category; picking *Girl's T-Shirts* gives `Show 97 results`, `?category=girls-t-shirts` and a Filters badge of 1; Clear Filters returns the URL to bare; and the chip route still writes category and is picked up by the badge.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
 - Per-option counts recompute against other facets, not their own.
 - **Facet pruning:** Girls cuts Category from 7 tiles to 1 (*Girl's T-Shirts*, 97 results); Men cuts it to 3 (575). *Boy's Casual T-Shirts* cuts Brands from 10 tiles to 2.
 - Selected-but-zero options stay visible so they can be unticked.
-- Category sheet in A: multi-selects, footer total tracks the draft, apply writes `?category=mens-casual-shirts,mens-casual-t-shirts` and the bar badge reads 2 while Filters stays bare.
+- ~~Category sheet in A~~ — *superseded 2026-08-19, the sheet is gone.* Category is now a rail facet in both variants: picking *Girl's T-Shirts* gives `Show 97 results`, writes `?category=girls-t-shirts`, and the Filters badge reads 1.
 - Contextual chips, both variants: none picked → the seven vertical chips with thumbnails; one picked → that chip leads with its ✕, then Price and the three offers; a second vertical → back to the full vertical list. Ticking Cashback correctly drops the Seller Offer chip, every remaining product having an offer.
 - Price dropdown: opens anchored under its chip, ticking two bands writes `price=p-200,p-400` and the closed chip reads `Price (2)`. Girl's T-Shirts offers only the two bands its ₹110–320 range reaches; Men's Formal Shirts keeps `₹900 & above`. Anchoring clamps to the frame when the chip has scrolled right.
 - The green ✕ removes the vertical and leaves other filters standing — `price=…` survives, and stays reachable because Price Range is a rail facet in both variants.
-- Discard toast on the Category sheet, all seven cases: scrim / close X / Escape after a selection each toast; untouched dismiss, tick-then-untick, and apply each stay silent; the toast clears itself by 3.2s.
+- ~~Discard toast on the Category sheet~~ — *superseded 2026-08-19.* The Filters screen is the only draft surface left, and its cases are covered in the line below.
 - Discard toast on the Filters screen, both variants: edit then ✕ toasts; untouched ✕, `Show N results`, and tick-then-Clear-Filters (net zero) each stay silent. In B it sits 24px off the bottom, there being no bar to clear.
 - A's rail is Gender plus the eleven common entries; B's is the same list with Category added on top. Exactly one row apart.
-- Clear Filters does **not** wipe Category in A (the bar owns it) but does wipe Gender (the rail shows it); the Category sheet's `Clear all` wipes only Category.
+- Clear Filters wipes Category in **both** variants since 2026-08-19, the rail showing it in both. Verified in A: pick a category, Clear Filters, URL returns to bare and the badge clears.
 - Sort dot appears on non-default sort and clears on return to Popularity.
 - Sheet motion measured frame by frame: enter decelerates (92→29→12→4px steps), exit accelerates (10→34→73→171px), then unmounts.
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 59 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 57 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## Variant B — top chips instead of a bottom bar
 
@@ -134,8 +152,8 @@ An A/B of control placement, added 2026-08-12. Same card, catalog, engine and sh
 
 | | Home | PLP | Controls |
 |---|---|---|---|
-| **Variant A** | `/` | `/seller/baheti` | Category · Sort · Filters at the bottom; Gender heads the Filters rail |
-| **Variant B** | `/b` | `/b/seller/baheti` | Sort + Filter chips at the top, no bottom bar; Category and Gender both in the Filters rail |
+| **Variant A** | `/` | `/seller/baheti` | Sort · Filters at the bottom |
+| **Variant B** | `/b` | `/b/seller/baheti` | The same two as chips at the top, no bottom bar |
 
 Switching is by URL — chosen over an on-screen toggle so nothing that isn't product chrome appears on a screen being judged.
 
@@ -158,8 +176,8 @@ Ordered by consequence. None of these block a demo.
    | `VIEW DETAILS` | `#FF7711` | 2.53:1 | — | 2.53:1 ❌ | 4.5:1 |
    The margin now clears AA outright. The grey improves but still misses at 12px, so it stays listed. `VIEW DETAILS` is untouched and is now the worst offender on the card — the live app renders it blue, which would close it too, but that was left for a deliberate call rather than folded into a format pass.
    Audience is kirana retailers on mid-range Android in poor light.
-10. **The variants still differ in more than control placement, but by less than they did.** The gap is now one facet: A reaches Category from the bottom bar, B from the rail. Everything else, Gender included, is identical. A stated preference for B is closer to being about the chips alone than at any earlier point, though not purely so.
-    *Resolved along the way:* A's checkbox-that-behaves-exclusively Gender mismatch is gone — Gender is an ordinary multi-select rail facet in both variants now, so no control claims exclusivity anywhere.
+10. ~~**The variants still differ in more than control placement.**~~ **Closed 2026-08-19.** Category left A's bottom bar for the Filters rail, so the last facet-level difference is gone: same card, catalog, engine, rail and facets, and where Sort and Filters sit is the entire variable. A stated preference is now about control placement and nothing else, which is what the A/B was for.
+    *Resolved along the way:* A's checkbox-that-behaves-exclusively Gender mismatch went earlier — Gender is an ordinary multi-select rail facet in both variants, so no control claims exclusivity anywhere.
 4. **Tiles show no counts** while every checkbox row does — you can't judge whether a category is worth tapping.
 5. **Hidden zero-count options** are right for the pruning demo but break the user's mental map; most Indian ecommerce greys out instead. A conscious call, not an inherited default.
 6. **No loading / skeleton / stale-results state anywhere.** Filtering is instant only because the catalog is in memory; against a real API it won't be, and the prototype is quietly setting an expectation engineering can't meet.

@@ -7,7 +7,6 @@ import {
   FACET_BY_ID,
   getRail,
   getRailFacetIds,
-  type PlpVariant,
 } from "@/lib/filters/facets";
 import {
   countMatching,
@@ -33,7 +32,6 @@ export function FilterScreen({
   onApply,
   onClose,
   onDiscard,
-  variant,
 }: {
   products: Product[];
   selections: Selections;
@@ -41,19 +39,14 @@ export function FilterScreen({
   onClose: () => void;
   /**
    * Closed on the ✕ while holding edits that were never applied. This screen
-   * can be carrying a dozen of them, so losing the lot in silence is worse
-   * here than on the Category sheet. Fires only when something would actually
-   * be lost.
+   * can be carrying a dozen of them, and since the Category sheet went it is
+   * the only draft surface left, so silence here is the only way a discard
+   * could go unannounced. Fires only when something would actually be lost.
    */
   onDiscard: () => void;
-  /**
-   * Decides the rail, and only by one row: Variant A hands Category to the
-   * bottom bar, so it is absent here. Gender is in both.
-   */
-  variant: PlpVariant;
 }) {
-  const RAIL = getRail(variant);
-  const RAIL_FACET_IDS = getRailFacetIds(variant);
+  const RAIL = getRail();
+  const RAIL_FACET_IDS = getRailFacetIds();
 
   const [draft, setDraft] = useState<Selections>(selections);
   const [activeRail, setActiveRail] = useState(RAIL[0].id);
@@ -191,10 +184,11 @@ export function FilterScreen({
       <ActionFooter
         primaryLabel={`Show ${total.toLocaleString("en-IN")} results`}
         clearDisabled={ownedCount === 0}
-        // Clears only what this screen owns. In Variant A that spares Category
-        // — it is set from the bottom bar and isn't listed here, so wiping it
-        // from a button whose effect the user can't see would be a silent
-        // surprise. In B it clears Category too, because B displays it.
+        // Clears only what this screen owns — which is now everything, in
+        // both variants, Category included. The rule stays expressed as a
+        // filter over RAIL_FACET_IDS rather than a blanket reset: a facet the
+        // screen doesn't display must never be wiped by a button whose effect
+        // the user can't see.
         onClear={() =>
           setDraft((current) =>
             Object.fromEntries(

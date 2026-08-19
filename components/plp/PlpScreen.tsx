@@ -23,38 +23,35 @@ import { ChipStrip, ContextChips, PriceMenu } from "./ContextChips";
 import { contextChips } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
 import { SortSheet } from "@/components/sheets/SortSheet";
-import { CategorySheet } from "@/components/sheets/CategorySheet";
 import { FilterScreen } from "@/components/filters/FilterScreen";
 import { Toast } from "@/components/ui/Toast";
 
 const PAGE_SIZE = 8;
 
 /**
- * One string for both draft surfaces. The Category sheet and the Filters
- * screen lose a draft the same way, and giving the same event two wordings
- * would read as two different things happening.
+ * The Filters screen is now the only draft surface — the Category sheet went
+ * with the bottom-bar slot that opened it (2026-08-19). Kept as a named
+ * constant rather than inlined, because the moment a second draft surface
+ * appears it must say the same thing: one event, one wording.
  */
 const DISCARDED = "Selection discarded";
 
 /** Kept in step with `PriceMenu`'s own width, so the clamp can't be wrong. */
 const MENU_WIDTH = 180;
 
-type Overlay = "sort" | "category" | "filters" | null;
+type Overlay = "sort" | "filters" | null;
 
 /**
  * Two interaction models over the same screen, so they can be compared:
  *
- * - `bottom-bar` — Category · Sort · Filters pinned to the bottom (Figma
- *                  638:2836). Category is a multi-select quick action in its
- *                  own sheet, and is therefore absent from the Filters rail.
- * - `top-chips`  — Sort and Filter as chips under the GOLD strip (Figma
- *                  644:4011), no bottom bar, so Category is an ordinary rail
- *                  facet instead.
+ * - `bottom-bar` — Sort and Filters pinned to the bottom (Figma 638:2836).
+ * - `top-chips`  — the same two as chips under the GOLD strip (Figma
+ *                  644:4011), and no bottom bar.
  *
- * Gender is a rail facet in both, so the rails differ by exactly one row.
- *
- * The card, the catalog and the engine are shared, so the comparison stays
- * about how the controls are reached.
+ * Since Category left the bar on 2026-08-19 the two are **identical in every
+ * other respect** — same rail, same facets, same card, same catalog, same
+ * engine. Where those two controls sit is now the entire variable, which is
+ * the cleanest the A/B has been.
  */
 export type { PlpVariant };
 
@@ -68,10 +65,7 @@ export function PlpScreen({
   variant?: PlpVariant;
 }) {
   const pathname = usePathname();
-  // Variant A reaches Category through the bottom-bar sheet, so the Filters
-  // rail there must not list it; B has no bottom bar and keeps it in the rail.
-  const categoryInSheet = variant === "bottom-bar";
-  const railFacetIds = getRailFacetIds(variant);
+  const railFacetIds = getRailFacetIds();
 
   // The query string is the shareable record of state, but local state is the
   // source of truth — that keeps filtering instant instead of round-tripping
@@ -170,11 +164,10 @@ export function PlpScreen({
     }
   };
 
-  const categoryCount = selections.category?.length ?? 0;
   const sortActive = sort !== DEFAULT_SORT;
-  // Counts exactly what the Filters screen owns in this variant. In A that
-  // excludes category (the bottom bar reports it with its own badge) but
-  // includes gender; in B it includes both, because that screen shows both.
+  // Counts exactly what the Filters screen owns — which, since Category
+  // rejoined the rail, is every facet in both variants. Nothing is reported
+  // twice, because nothing else carries a badge any more.
   const filterCount = Object.entries(selections).reduce(
     (sum, [facetId, chosen]) => sum + (railFacetIds.has(facetId) ? chosen.length : 0),
     0,
@@ -241,10 +234,8 @@ export function PlpScreen({
       {variant === "bottom-bar" && (
         <div className="shrink-0">
           <BottomActionBar
-            categoryCount={categoryCount}
             sortActive={sortActive}
             filterCount={filterCount}
-            onCategory={() => setOverlay("category")}
             onSort={() => setOverlay("sort")}
             onFilters={() => setOverlay("filters")}
           />
@@ -259,21 +250,10 @@ export function PlpScreen({
         />
       )}
 
-      {overlay === "category" && categoryInSheet && (
-        <CategorySheet
-          products={products}
-          selections={selections}
-          onApply={(next) => commit(next, sort)}
-          onDiscard={() => showToast(DISCARDED)}
-          onClose={() => setOverlay(null)}
-        />
-      )}
-
       {overlay === "filters" && (
         <FilterScreen
           products={products}
           selections={selections}
-          variant={variant}
           onApply={(next) => commit(next, sort)}
           onDiscard={() => showToast(DISCARDED)}
           onClose={() => setOverlay(null)}

@@ -318,7 +318,7 @@ describe("sameSelections — what decides whether a discard is announced", () =>
   });
 });
 
-describe("the rail differs by variant, and only by Category", () => {
+describe("the rail, now identical in both variants", () => {
   it("keeps both facets in the engine either way", () => {
     expect(FACET_BY_ID.has("gender")).toBe(true);
     expect(FACET_BY_ID.has("category")).toBe(true);
@@ -328,72 +328,56 @@ describe("the rail differs by variant, and only by Category", () => {
     });
   });
 
-  it("Variant A shows Gender but not Category — the bottom bar owns Category", () => {
-    const rail = getRail("bottom-bar");
-    const owned = getRailFacetIds("bottom-bar");
-    expect(owned.has("category")).toBe(false);
-    expect(owned.has("gender")).toBe(true);
-    expect(rail.some((r) => r.id === "category")).toBe(false);
-    expect(rail[0].id).toBe("gender");
-  });
-
-  it("Variant B adds Category on top, and changes nothing else", () => {
-    const rail = getRail("top-chips");
-    const owned = getRailFacetIds("top-chips");
-    expect(owned.has("category")).toBe(true);
-    expect(owned.has("gender")).toBe(true);
+  it("heads the rail with Category, then Gender", () => {
+    // Category left Variant A's bottom bar on 2026-08-19 and rejoined the
+    // rail, so there is one rail rather than two.
+    const rail = getRail();
     expect(rail[0].id).toBe("category");
     expect(rail[1].id).toBe("gender");
-    // The rails differ by exactly one row.
-    expect(rail.slice(1)).toEqual(getRail("bottom-bar"));
-    expect(rail.length).toBe(getRail("bottom-bar").length + 1);
+    expect(getRailFacetIds().has("category")).toBe(true);
+    expect(getRailFacetIds().has("gender")).toBe(true);
   });
 
-  it("Variant A's Clear must not wipe the Category it never displayed", () => {
+  it("Clear Filters now wipes Category in both variants", () => {
+    // It used to survive in A, because the bottom bar owned it and clearing a
+    // filter from a screen that never showed it is a silent surprise. The
+    // screen shows it now, so the surprise is gone and so is the exception.
     const draft = {
       category: ["girls-t-shirts"],
       gender: ["women"],
       seller: ["grasim"],
       colour: ["navy"],
     };
-    const owned = getRailFacetIds("bottom-bar");
-    const cleared = Object.fromEntries(
-      Object.entries(draft).filter(([id]) => !owned.has(id)),
-    );
-    // Gender goes, because A's rail shows it; Category survives, because the
-    // bottom bar owns it.
-    expect(cleared).toEqual({ category: ["girls-t-shirts"] });
-  });
-
-  it("Variant B's Clear does wipe Category too, because it shows it", () => {
-    const draft = { category: ["girls-t-shirts"], gender: ["women"], seller: ["grasim"] };
-    const owned = getRailFacetIds("top-chips");
+    const owned = getRailFacetIds();
     const cleared = Object.fromEntries(
       Object.entries(draft).filter(([id]) => !owned.has(id)),
     );
     expect(cleared).toEqual({});
   });
 
-  it("Variant A's Filters badge counts gender but not the category the bar reports", () => {
+  it("counts category in the Filters badge, since nothing else reports it", () => {
     const selections = {
       category: ["girls-t-shirts", "womens-t-shirts"],
       gender: ["women"],
       seller: ["grasim"],
     };
-    const owned = getRailFacetIds("bottom-bar");
+    const owned = getRailFacetIds();
     const badge = Object.entries(selections).reduce(
-      (sum, [id, chosen]) => sum + (owned.has(id) ? chosen.length : 0),
+      (sum, [facetId, chosen]) => sum + (owned.has(facetId) ? chosen.length : 0),
       0,
     );
-    // Gender and seller; the two categories are the Category badge's to show.
-    expect(badge).toBe(2);
+    // Two categories, a gender and a seller — all four, where A used to
+    // report two here and two on the bar.
+    expect(badge).toBe(4);
   });
 
-  it("Category multi-selects, which is why its sheet needs an Apply", () => {
-    const one = toggleSelection({}, "category", "mens-casual-shirts");
-    expect(toggleSelection(one, "category", "mens-casual-t-shirts")).toEqual({
-      category: ["mens-casual-shirts", "mens-casual-t-shirts"],
-    });
+  it("leaves the variants differing by nothing the engine can see", () => {
+    // The whole point of the move: the A/B is now purely about where Sort and
+    // Filters sit. If this ever fails, the comparison has stopped being clean.
+    expect(getRail()).toEqual(getRail());
+    expect([...getRailFacetIds()].sort()).toEqual(
+      [...new Set(getRail().flatMap((r) => r.facetIds))].sort(),
+    );
   });
 });
 
@@ -521,12 +505,10 @@ describe("the pack a card shows, and is judged by", () => {
 describe("Pack Type is no longer a filter, but is still a product property", () => {
   const catalog = getCatalog();
 
-  it("has no facet, no rail row in either variant, and no URL", () => {
+  it("has no facet, no rail row, and no URL", () => {
     expect(FACET_BY_ID.has("packType")).toBe(false);
-    for (const variant of ["bottom-bar", "top-chips"] as const) {
-      expect(getRail(variant).some((r) => r.id === "packType")).toBe(false);
-      expect(getRailFacetIds(variant).has("packType")).toBe(false);
-    }
+    expect(getRail().some((r) => r.id === "packType")).toBe(false);
+    expect(getRailFacetIds().has("packType")).toBe(false);
     // Nothing left to undo it with, so it must not survive in a link either.
     expect(parseSelections(new URLSearchParams("packType=solid-size-pack"))).toEqual({});
   });

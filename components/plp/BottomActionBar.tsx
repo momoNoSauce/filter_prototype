@@ -4,47 +4,34 @@
  * Figma 638:2836 — the bottom bar.
  * White, a -4px 4px 10% shadow, each item flex-1 with pt-4 pb-8.
  *
- * The frame's first slot is Gender. It holds **Category** instead: the
- * categories name their audience now ("Boy's Casual Shirts"), so gender no
- * longer earns a control of its own, and Category is what a retailer reaches
- * for first.
+ * **Sort and Filters only** since 2026-08-19. The frame's first slot was
+ * Gender and then briefly Category; Category now lives in the Filters rail
+ * like every other facet, because a facet behind both a bar slot and a chip
+ * kept raising questions this bar was the wrong place to answer — whether to
+ * hide the slot once a vertical was picked, which control owned the count,
+ * and what Clear Filters was allowed to touch. One control, one owner.
+ *
+ * It also leaves the two variants differing by nothing but where these two
+ * controls sit, which is the only thing the A/B was meant to compare.
  *
  * The count badge is an addition — the frames give no way to tell a filtered
- * list from an unfiltered one, and a demo needs that legible.
- *
- * Each control reports its own state, and only its own. Sort holds at most one
- * value, so it gets a dot; Category and Filters can each hold many, so they
- * get counts. Category is excluded from the Filters count, because it is set
- * from here and is absent from that screen's rail.
- *
- * `tag.svg` stands in for a Category glyph. The design has no bottom-bar
- * Category slot and so no icon for one; this is an existing Figma export
- * rather than a drawn asset, but it is also the Sort sheet's "Recently Added"
- * icon. Worth a designed replacement.
+ * list from an unfiltered one, and a demo needs that legible. Sort holds at
+ * most one value, so it gets a dot; Filters holds many, so it gets a count,
+ * and that count now includes category.
  */
 export function BottomActionBar({
-  categoryCount,
   sortActive,
   filterCount,
-  onCategory,
   onSort,
   onFilters,
 }: {
-  categoryCount: number;
   sortActive: boolean;
   filterCount: number;
-  onCategory: () => void;
   onSort: () => void;
   onFilters: () => void;
 }) {
   return (
     <div className="flex w-full items-center justify-center gap-[18px] bg-white drop-shadow-[0px_-4px_4px_rgba(0,0,0,0.1)]">
-      <BarItem
-        label="Category"
-        icon="/figma/icons/tag.svg"
-        badge={categoryCount}
-        onClick={onCategory}
-      />
       <BarItem label="Sort" icon="/figma/icons/sort.svg" dot={sortActive} onClick={onSort} />
       <BarItem
         label="Filters"

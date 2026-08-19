@@ -89,12 +89,16 @@ function Checkbox({ checked }: { checked: boolean }) {
  * - `fixed` — the frame exactly: 68px cells, 4px gaps, left-aligned from a
  *   14px inset. Three fit the 240px filter panel with 6px to spare, which is
  *   what Figma draws.
- * - `fill` — cells divide the container evenly instead, with a 64px floor. For
- *   the Category sheet, which has no frame of its own: it is 360px wide, so
- *   left-aligned 68px cells fit four and strand a whole empty column at the
- *   right. Filling puts five across and no dead edge. The 56px square, the 4px
- *   gaps and the 36px label box are untouched — only the cell's spare width
- *   moves.
+ * - `fill` — cells divide the container evenly instead, with a 64px floor. The
+ *   56px square, the 4px gaps and the 36px label box are untouched; only the
+ *   cell's spare width moves.
+ *
+ * **`fill` has no caller.** It was built for the Category sheet, which was
+ * 360px wide and had no frame of its own — left-aligned 68px cells fit four
+ * there and stranded an empty column, so filling put five across with no dead
+ * edge. That sheet went with A's bottom-bar slot on 2026-08-19. Kept because
+ * the geometry is the answer for any wide, undesigned tile surface and is
+ * cheap to leave standing; delete it if none appears.
  */
 export function TileGrid({
   options,
