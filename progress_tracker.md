@@ -127,9 +127,11 @@ Verified at 360px: A's bar reads Sort · Filters; A's rail is the same thirteen 
 
 ### 2026-08-19 — vertical-specific attributes
 
-**Fit · Neck Type · Sleeve Type · Pattern · Closure Type**, plus **Fabric** lifted out of *More Filters* to sit beside them. Of the eight attributes asked for, three already existed: `PRODUCT_COLOR` and `AVAILABLE_SIZES` are the `colour` and `size` rail facets, left where they are because both are useful across verticals, and `FABRIC_MATERIAL` only needed surfacing.
+**Fit · Neck Type · Sleeve Type · Pattern · Closure Type.** Of the eight attributes asked for, three already existed: `PRODUCT_COLOR` and `AVAILABLE_SIZES` are the `colour` and `size` rail facets, left where they are because both are useful across verticals.
 
-**They appear only inside exactly one product vertical**, which is what "focuses on a single PV" has to mean in practice — across verticals a Neck Type list offers *Spread Collar* beside *Round Neck*, and answers no question anyone is asking while still deciding between shirts and tees. The rail runs **13 rows normally, 19 inside a vertical**, and it follows the *draft*, so ticking a second vertical takes the block away again without waiting for `Show N results`.
+**Fabric is not one of the vertical-specific five**, though it was asked for with them. Its values don't vary by vertical — Cotton and Denim mean the same on a shirt as on a tee, where a collar has no tee equivalent at all — so it became an ordinary rail row beside Colour and left *More Filters*, which now holds Product Tags alone. It was briefly in both places, which is one facet behind two controls.
+
+**They appear only inside exactly one product vertical**, which is what "focuses on a single PV" has to mean in practice — across verticals a Neck Type list offers *Spread Collar* beside *Round Neck*, and answers no question anyone is asking while still deciding between shirts and tees. The rail runs **14 rows normally, 19 inside a vertical**, and it follows the *draft*, so ticking a second vertical takes the block away again without waiting for `Show N results`.
 
 **Shirts and tees carry different vocabularies.** `kind: "shirt" | "tee"` on the category picks between them, exactly as gender picks the size vocabulary. The facet's options are the union of both, so the ordinary zero-count rule does the separating — Men's Formal Shirts offers Spread, Button-Down, Cutaway, Mandarin and Club collars; Women's T-Shirts offers Round, Polo, V, Henley and Boat necks. No special case.
 
@@ -137,9 +139,9 @@ Verified at 360px: A's bar reads Sort · Filters; A's rail is the same thirteen 
 
 **A third PRNG stream** (`attrRand`) carries the five new draws, for the same reason `sizeRand` exists — five more draws on the main stream would have re-rolled the catalog. Verified unchanged: 1,070 total, Girls 97, Men 575, `₹900 & above` 37 and all seven category counts.
 
-Verified at 360px: rail 13 rows with no vertical and 19 with one; Neck Type reads `Spread Collar (64) · Button-Down (42) · Cutaway (12) · Mandarin (32) · Club (13)` under Men's Formal Shirts and the five necklines under Women's T-Shirts; ticking V-Neck writes `?category=womens-t-shirts&neck=v-neck` with a badge of 2; removing the vertical by its chip ✕ returns the URL to bare and clears the badge, taking `neck=` with it. Drill-down works — Men's Formal + Slim Fit + Spread Collar + Full Sleeve is 8 of 163.
+Verified at 360px: rail 14 rows with no vertical and 19 with one; Neck Type reads `Spread Collar (64) · Button-Down (42) · Cutaway (12) · Mandarin (32) · Club (13)` under Men's Formal Shirts and the five necklines under Women's T-Shirts; ticking V-Neck writes `?category=womens-t-shirts&neck=v-neck` with a badge of 2; removing the vertical by its chip ✕ returns the URL to bare and clears the badge, taking `neck=` with it. Drill-down works — Men's Formal + Slim Fit + Spread Collar + Full Sleeve is 8 of 163.
 
-**Open for the designer:** the block sits after Offers and before *More Filters*, so it is 12 rows down. These are the most specific filters available once a vertical is settled, but Price, Brands and Delivery are the commercially primary ones. Worth a call on the order.
+The block sits after Offers and before *More Filters*, 13 rows down — raised as a question and **left there deliberately** (2026-08-19), Price, Brands and Delivery being the commercially primary rows.
 
 ### Verified working
 

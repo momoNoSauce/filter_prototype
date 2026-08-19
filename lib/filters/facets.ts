@@ -314,13 +314,18 @@ const COMMON_RAIL: RailEntry[] = [
   // apparel buyer reaches for first.
   { id: "size", label: "Size", facetIds: ["size"] },
   { id: "colour", label: "Colour", facetIds: ["colour"] },
+  // Not vertical-specific despite being asked for alongside them: Cotton and
+  // Denim mean the same on a shirt as on a tee, where a collar has no tee
+  // equivalent at all. So it sits here, once, rather than appearing in the
+  // vertical block and again in More Filters.
+  { id: "fabric", label: "Fabric", facetIds: ["fabric"] },
   { id: "seller", label: "Seller", facetIds: ["seller"] },
   { id: "sellerCity", label: "Seller City", facetIds: ["sellerCity"] },
   // `hasOffer` is reached from a chip, but it has to be listed here too, or a
   // chip-applied filter would survive Clear Filters and go uncounted by the
   // Filters badge with no control left to undo it once the chip strip changes.
   { id: "offers", label: "Offers", facetIds: ["hasOffer", "offers"] },
-  { id: "more", label: "More Filters", facetIds: ["fabric", "tags"] },
+  { id: "more", label: "More Filters", facetIds: ["tags"] },
 ];
 
 /**
@@ -332,15 +337,16 @@ const COMMON_RAIL: RailEntry[] = [
  * anyone is asking while still deciding between shirts and tees. Inside one
  * vertical they are the filters that remain.
  *
- * Fabric leads the block. It is the one attribute here that already existed,
- * buried in *More Filters* — worth surfacing beside its siblings once they are
- * on screen, and it stays in *More Filters* the rest of the time so it never
- * becomes unreachable.
+ * Fabric is deliberately **not** here, though it was asked for alongside them.
+ * Its values don't vary by vertical — Cotton and Denim mean the same on a
+ * shirt as on a tee, where a collar has no tee equivalent at all — so it is an
+ * ordinary rail row instead, visible whether or not a vertical is settled.
  */
-const PV_RAIL: RailEntry[] = [
-  { id: "fabric", label: "Fabric", facetIds: ["fabric"] },
-  ...PV_ATTRIBUTES.map(({ id, label }) => ({ id, label, facetIds: [id] })),
-];
+const PV_RAIL: RailEntry[] = PV_ATTRIBUTES.map(({ id, label }) => ({
+  id,
+  label,
+  facetIds: [id],
+}));
 
 /**
  * The facets `PV_RAIL` owns, for the orphan check below. Typed as strings

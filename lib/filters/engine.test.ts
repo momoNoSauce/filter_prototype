@@ -548,11 +548,16 @@ describe("vertical-specific attributes", () => {
     expect(getRail(["mens-formal-shirts", "womens-t-shirts"]).map((r) => r.id)).toEqual(base);
   });
 
-  it("surfaces Fabric beside them, and keeps it reachable otherwise", () => {
-    // It lives in More Filters the rest of the time, so it never disappears.
-    expect(getRail(shirt).map((r) => r.id)).toContain("fabric");
-    expect(getRail().find((r) => r.id === "more")?.facetIds).toContain("fabric");
-    expect(getRailFacetIds().has("fabric")).toBe(true);
+  it("keeps Fabric out of the block, and in the rail exactly once", () => {
+    // Asked for alongside them, but its values don't vary by vertical, so it
+    // is an ordinary row — available with or without one, and listed in a
+    // single place rather than here and in More Filters both.
+    for (const category of [undefined, shirt, tee]) {
+      expect(getRail(category).filter((r) => r.facetIds.includes("fabric"))).toHaveLength(1);
+      expect(getRailFacetIds(category).has("fabric")).toBe(true);
+    }
+    expect(getRail().find((r) => r.id === "more")?.facetIds).toEqual(["tags"]);
+    expect(PV_FACET_IDS.has("fabric")).toBe(false);
   });
 
   it("leaves More Filters last, wherever the block lands", () => {
