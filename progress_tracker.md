@@ -186,6 +186,16 @@ The membership strip and the `GOLD Target Scheme` tag are both gone from all fou
 
 Verified unchanged: 1,070 total, Girls 97, Men 575, `₹900 & above` 37, all seven category counts. The Offers facet is now Bulk Offer (473), Cashback (240), Free Delivery (160), with Seller Offer at 667; no product carries a GOLD offer. GOLD appears nowhere in A, B, C or D.
 
+### 2026-08-19 — a count the tap can honour
+
+**The Size panel could promise a result it couldn't deliver.** Found by random-walking the filters rather than by reading them: 13 of 400 walks that only ever ticked options the UI was showing ended on "No products match".
+
+Replayed: colour=White, price ₹600–900, closure=Snap Button left two products; the Size panel offered *2XL* as `(1)`; tapping it gave an empty page. `p-0079`'s pack #1 is `L/1, XL/1` at **₹610**, inside the band — but the pack carrying 2XL is **₹575**, outside it. Picking a size moved the product out of a *price* filter, which a tally taken with Size skipped cannot see.
+
+This was the trade-off recorded when Size went in, where the consequence was called "narrow". It wasn't: it could hand a shopper an empty listing from an option labelled `(1)`.
+
+**Size is now counted by applying each option** rather than tallying it — thirteen options, one filter pass each, a couple of milliseconds. Only Size needs it, being the only facet whose selection changes another facet's values. Two tests hold the line: promised-equals-delivered across five filter states, and a 60-walk drill asserting a visible option can never lead to an empty page. The drill is slow by nature and carries an explicit 30s budget; it is here because no hand-written case would have found this.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -205,7 +215,7 @@ Verified unchanged: 1,070 total, Girls 97, Men 575, `₹900 & above` 37, all sev
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 73 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 75 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## The four variants
 
