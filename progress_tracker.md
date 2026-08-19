@@ -168,7 +168,7 @@ Verified at 360px: `/c` and `/d` both land on Men's Formal Shirts; rail 17 rows 
 
 ### 2026-08-19 — a glyph on the Filters header
 
-`filter_alt.svg` at 18px, 8px before the heading. Not in the frame, which has the heading alone; added on request. It is the glyph the Filters control itself carries, so the screen reads as the one that button opened, and it is black in the export — the heading's colour — so it renders as an `<img>` rather than through `MaskIcon`.
+`filter_alt.svg` at **24px**, 8px before the heading — the export's own size. It went in at 18 and read as an afterthought beside the heading; native also avoids resampling a thin glyph. Not in the frame, which has the heading alone; added on request. It is the glyph the Filters control itself carries, so the screen reads as the one that button opened, and it is black in the export — the heading's colour — so it renders as an `<img>` rather than through `MaskIcon`.
 
 Worth noting the frames were already inconsistent here: A's bottom bar uses `filter_alt.svg` and B and D's chip uses `funnel.svg`. The header follows the bar.
 

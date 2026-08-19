@@ -101,9 +101,12 @@ export function FilterScreen({
           {/* The same glyph the Filters control carries, so the screen is
               visibly the one that button opened. Black in the export, which is
               the heading's colour, so it needs no `MaskIcon` tint.
-              eslint-disable-next-line @next/next/no-img-element */}
+
+              24px is the export's own size — it was being downscaled to 18 and
+              read as an afterthought beside the heading. Native also means no
+              resampling, which matters on a glyph this thin. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt="" className="size-[18px] shrink-0" src="/figma/icons/filter_alt.svg" />
+          <img alt="" className="size-[24px] shrink-0" src="/figma/icons/filter_alt.svg" />
           <p className="truncate text-[16px] font-medium text-black">Filters</p>
         </div>
         <button
