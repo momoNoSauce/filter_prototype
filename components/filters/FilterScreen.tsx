@@ -97,7 +97,15 @@ export function FilterScreen({
   return (
     <div className="absolute inset-0 z-50 flex flex-col bg-white">
       <div className="flex w-full shrink-0 items-center justify-between border-b border-[#dedede] bg-white px-[14px] py-[12px]">
-        <p className="text-[16px] font-medium text-black">Filters</p>
+        <div className="flex min-w-0 items-center gap-[8px]">
+          {/* The same glyph the Filters control carries, so the screen is
+              visibly the one that button opened. Black in the export, which is
+              the heading's colour, so it needs no `MaskIcon` tint.
+              eslint-disable-next-line @next/next/no-img-element */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img alt="" className="size-[18px] shrink-0" src="/figma/icons/filter_alt.svg" />
+          <p className="truncate text-[16px] font-medium text-black">Filters</p>
+        </div>
         <button
           aria-label="Close filters"
           onClick={dismiss}

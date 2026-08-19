@@ -166,6 +166,12 @@ A **2×2**. A and B list every category; C and D *are* one. C carries A's bottom
 
 Verified at 360px: `/c` and `/d` both land on Men's Formal Shirts; rail 17 rows with neither Category nor Gender and the attribute block on; title reads the category; strip is Price · Seller Offer · Cashback · Free Delivery; C has a Sort/Filters bottom bar and D has neither; rail is 17 rows headed by Delivery Time, with neither Category nor Gender; ticking Spread Collar gives `Show 64 results` and `?neck=spread-collar`; a stale `?category=` is ignored while `?fit=` survives.
 
+### 2026-08-19 — a glyph on the Filters header
+
+`filter_alt.svg` at 18px, 8px before the heading. Not in the frame, which has the heading alone; added on request. It is the glyph the Filters control itself carries, so the screen reads as the one that button opened, and it is black in the export — the heading's colour — so it renders as an `<img>` rather than through `MaskIcon`.
+
+Worth noting the frames were already inconsistent here: A's bottom bar uses `filter_alt.svg` and B and D's chip uses `funnel.svg`. The header follows the bar.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
