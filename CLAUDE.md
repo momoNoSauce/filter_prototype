@@ -135,6 +135,7 @@ Sizes and the vertical-specific attributes each draw from **their own PRNG strea
 | Area | Decision |
 |---|---|
 | Default sort | **Popularity**, and omitted from the URL (bare URL = Popularity) |
+| Sort options | Popularity · Recently Added · Price/pc low→high · **Price/pc high→low** · Highest Margin. High→low added 2026-08-19 in all four variants — one `SORT_OPTIONS` entry, one `sortProducts` case, since every variant reads the same list. Both price sorts read the pack the card prints, not pack #1. It **shares low→high's `currency-inr.svg`** until a distinct glyph is exported — the only pair in the sheet with the same icon |
 | Sort sheet | Tap applies **and closes** — no Apply button in the design |
 | Bottom bar | **Sort and Filters only** (2026-08-19). The frame's first slot was Gender, then briefly Category; Category now lives in the Filters rail like every other facet. A facet behind both a bar slot and a chip kept raising questions the bar was the wrong place to answer — whether to hide the slot once a vertical was picked, which control owned the count, what Clear Filters was allowed to touch. One control, one owner |
 | Category | An ordinary rail facet, **first**, in both variants. It spent 2026-08-13 to 08-19 as a multi-select bottom-bar sheet in A; that sheet and its `Clear all` / `Show N results` footer are deleted, following the `GenderSheet` precedent — when a bar slot goes, the sheet it opened goes with it. Multi-select survives, because the rail's `TileGrid` was always multi-select |

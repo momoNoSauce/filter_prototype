@@ -9,6 +9,8 @@ const ICONS: Record<SortId, string> = {
   popularity: "/figma/icons/trend-up.svg",
   recent: "/figma/icons/tag.svg",
   price_asc: "/figma/icons/currency-inr.svg",
+  // Shares low→high's glyph until a distinct one is exported.
+  price_desc: "/figma/icons/currency-inr.svg",
   margin_desc: "/figma/icons/percent.svg",
 };
 

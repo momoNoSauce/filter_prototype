@@ -9,6 +9,7 @@ import {
   sameSelections,
   sortProducts,
   toggleSelection,
+  type Selections,
 } from "./engine";
 import { buildQuery, parseSelections, parseSort } from "./urlState";
 import { contextChips } from "./contextChips";
@@ -711,6 +712,33 @@ describe("variants C and D — the page is the vertical", () => {
     const necks = facetOptionsWithCounts(scope.products, {}, "neck");
     expect(necks.reduce((n, o) => n + o.count, 0)).toBe(scope.products.length);
     expect(necks.every((o) => o.label.includes("Collar"))).toBe(true);
+  });
+});
+
+describe("sorting by price", () => {
+  const catalog = getCatalog();
+
+  it("runs high → low as the exact reverse of low → high", () => {
+    const asc = sortProducts(catalog, "price_asc").map((p) => defaultVariant(p).pricePerPc);
+    const desc = sortProducts(catalog, "price_desc").map((p) => defaultVariant(p).pricePerPc);
+
+    expect(asc).toEqual([...asc].sort((a, b) => a - b));
+    expect(desc).toEqual([...desc].sort((a, b) => b - a));
+    expect(desc).toEqual([...asc].reverse());
+  });
+
+  it("reads the pack the card prints, as low → high does", () => {
+    const sizes = ["m", "l"];
+    const hits = applyFilters(catalog, { size: sizes });
+    const printed = sortProducts(hits, "price_desc", sizes).map(
+      (p) => activeVariant(p, sizes).pricePerPc,
+    );
+    expect(printed).toEqual([...printed].sort((a, b) => b - a));
+  });
+
+  it("round-trips through the URL and is not the default", () => {
+    expect(buildQuery({}, "price_desc")).toBe("?sort=price_desc");
+    expect(parseSort(new URLSearchParams("sort=price_desc"))).toBe("price_desc");
   });
 });
 

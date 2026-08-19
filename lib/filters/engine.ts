@@ -5,12 +5,13 @@ import { FACETS, FACET_BY_ID, type FacetOption } from "./facets";
 /** facetId -> selected option ids. Absent or empty means "no constraint". */
 export type Selections = Record<string, string[]>;
 
-export type SortId = "popularity" | "recent" | "price_asc" | "margin_desc";
+export type SortId = "popularity" | "recent" | "price_asc" | "price_desc" | "margin_desc";
 
 export const SORT_OPTIONS: { id: SortId; label: string }[] = [
   { id: "popularity", label: "Popularity" },
   { id: "recent", label: "Recently Added" },
   { id: "price_asc", label: "Price/pc (low → high)" },
+  { id: "price_desc", label: "Price/pc (high → low)" },
   { id: "margin_desc", label: "Highest Margin" },
 ];
 
@@ -167,6 +168,10 @@ export function sortProducts(products: Product[], sort: SortId, sizes?: string[]
     case "price_asc":
       return sorted.sort(
         (a, b) => activeVariant(a, sizes).pricePerPc - activeVariant(b, sizes).pricePerPc,
+      );
+    case "price_desc":
+      return sorted.sort(
+        (a, b) => activeVariant(b, sizes).pricePerPc - activeVariant(a, sizes).pricePerPc,
       );
     case "margin_desc":
       return sorted.sort(

@@ -196,6 +196,14 @@ This was the trade-off recorded when Size went in, where the consequence was cal
 
 **Size is now counted by applying each option** rather than tallying it — thirteen options, one filter pass each, a couple of milliseconds. Only Size needs it, being the only facet whose selection changes another facet's values. Two tests hold the line: promised-equals-delivered across five filter states, and a 60-walk drill asserting a visible option can never lead to an empty page. The drill is slow by nature and carries an explicit 30s budget; it is here because no hand-written case would have found this.
 
+### 2026-08-19 — Price high → low
+
+Added to the Sort sheet in all four variants: one `SORT_OPTIONS` entry and one `sortProducts` case, every variant reading the same list. Like low→high it ranks on the pack the card actually prints, so a size filter moves it too.
+
+It **shares low→high's `currency-inr.svg`** for now, the only pair in the sheet with the same icon — a distinct glyph is wanted.
+
+Verified at 360px: the row appears in A, B, C and D; `?sort=price_desc` round-trips; and the PRICE/PC figures on screen run 1085 → 1020 descending against 230 → 275 ascending.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -215,7 +223,7 @@ This was the trade-off recorded when Size went in, where the consequence was cal
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 75 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 78 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## The four variants
 
