@@ -200,7 +200,7 @@ This was the trade-off recorded when Size went in, where the consequence was cal
 
 Added to the Sort sheet in all four variants: one `SORT_OPTIONS` entry and one `sortProducts` case, every variant reading the same list. Like low→high it ranks on the pack the card actually prints, so a size filter moves it too.
 
-Each direction now has its **own supplied glyph** (`public/sort/`, outside `public/figma/` since they aren't exports). They render through `MaskIcon` like the rest of the sheet — a mask reads only the alpha channel, so a black PNG still tints to primary on the active row. **The arrow is the magnitude, not the list**: up for low→high, prices ascending as you read down.
+Each direction now has its own glyph. They render through `MaskIcon` like the rest of the sheet — a mask reads only the alpha channel, so a black glyph still tints to primary on the active row. **The arrow is the magnitude, not the list**: up for low→high, prices ascending as you read down. *(The two supplied PNGs this shipped with were superseded later the same day — see below.)*
 
 Verified at 360px: the row appears in A, B, C and D; `?sort=price_desc` round-trips; and the PRICE/PC figures on screen run 1085 → 1020 descending against 230 → 275 ascending.
 
@@ -221,6 +221,21 @@ This is the argument the catalog already made by sizing kids in age bands and ad
 It keeps its slot beside Brands and Colour rather than joining the block, reading as a garment basic rather than a vertical-specific attribute.
 
 Verified at 360px: no Size row in A or B until a vertical is picked, present in C and D; `?size=l` on a seller page leaves the badge bare while `?size=2xl` on `/c` counts 1.
+
+### 2026-08-19 — a designed glyph set for the Sort sheet
+
+Figma **`688:1687`** (`SortbyIcon`) supplies all five rows, exported to `public/figma/icons/sort-*.svg`. The two supplied PNGs from earlier the same day are superseded and `public/sort/` is deleted.
+
+**The point is that they are a set, drawn at one weight**, so the sheet takes the whole set rather than picking per row. Two rows had been borrowing:
+
+- `recent` stood in **`tag.svg`**, which is also the *Recently Added* glyph elsewhere — one asset doing double duty, the same complaint that put a Category glyph on the open-questions list.
+- `popularity` took **`trend-up.svg`**, a visibly heavier cut of the same trending arrow, filled `#014FFA` and owned by the PLP. Beside four regular-weight glyphs it read as a different family.
+
+`sort-percent.svg` matches the library's `percent.svg` **byte for byte** and is still written as its own file. Reusing the shared one on a byte-match was the first cut of this change and was wrong: the set is the unit that gets reweighted, so a redraw has to land in one place instead of depending on a coincidence between two glyphs with different owners.
+
+**`sort-new.svg` is the one that needed assembling.** Its frame is a vector plus a live text layer, so Figma has no single vector-layer export for it — `svgAssets` returns the starburst alone. The frame export carries the exact path data for both, including the `NEW` already outlined, but bundles the section background behind it; that background is the only thing dropped, so no path was authored. The badge is a two-contour ring, so its counter stays transparent and the wordmark reads through the mask rather than filling in.
+
+Verified at 360px, 3×: all five render, no missing assets and no console errors; the `NEW` wordmark is legible inside its badge at 24px; and the tint holds on the active row in both states — Popularity blue by default, and `Price/pc (low → high)` blue with its rupee-and-up-arrow after selection, the list re-sorting to ₹95 first. 80 tests green, lint and typecheck clean, production build clean.
 
 ### Verified working
 
