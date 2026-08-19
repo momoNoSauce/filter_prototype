@@ -206,11 +206,21 @@ Verified at 360px: the row appears in A, B, C and D; `?sort=price_desc` round-tr
 
 ### 2026-08-19 — rail reordered to a reference PLP
 
-The Filters rail now runs **Category · Brands · Size · Colour · Gender · Fabric · Fit · Pattern · Sleeve Type · Neck Type · Closure Type · Price Range · Margin · MOQ · Delivery Time · Offers · Seller · Seller City · More Filters**, following a screengrab of a reference apparel PLP rather than the Figma frame — which sequenced these rows before most of them existed, and has no opinion about the ten it never drew.
+The Filters rail now runs **Category · Gender · Brands · Size · Colour · Fabric · Fit · Pattern · Sleeve Type · Neck Type · Closure Type · Price Range · Margin · MOQ · Delivery Time · Offers · Seller · Seller City · More Filters**, following a screengrab of a reference apparel PLP rather than the Figma frame — which sequenced these rows before most of them existed, and has no opinion about the ten it never drew.
 
-Four departures, each where the reference has no equivalent. **Category leads**: the reference carries no category filter because you are already inside one, which is precisely C and D, where the row is gone. **Neck Type and Closure Type** trail Fit, Pattern and Sleeve Type, the three the reference does carry. **Margin** sits beside Price, being the other number a retailer buys on. **Seller and Seller City** are B2B and land with the commercial filters.
+Departures, each where the reference has no equivalent. **Category and Gender lead**, ahead of Brands: the reference carries no category filter because you are already inside one — precisely C and D, where both rows are gone — and puts Gender fourth. The two together settle who the garment is for, which a buyer does before picking a label off it. **Neck Type and Closure Type** trail Fit, Pattern and Sleeve Type, the three the reference does carry. **Margin** sits beside Price, being the other number a retailer buys on. **Seller and Seller City** are B2B and land with the commercial filters.
 
 The composition changed shape with it: one ordered `RAIL_ORDER` array carrying `only: "filter"` and `vertical: true` flags, rather than a base list with the vertical block spliced in before the last row. With the block now mid-rail instead of at the end, slicing around it was the thing that would quietly put a row in the wrong place. A test pins the full sequence in both states, so the next reorder has to be a decision.
+
+### 2026-08-19 — Size is vertical-only
+
+**M in menswear is not M in womenswear.** A single Size row spanning verticals merged two different garments' measurements behind one checkbox, so it now appears on the same terms as Fit and Neck Type: inside exactly one vertical, or on a vertical-scoped page. It is cleared along with them when the vertical goes, and a bare `?size=` with no vertical is ignored — otherwise a size would keep filtering with no row left to explain or undo it.
+
+This is the argument the catalog already made by sizing kids in age bands and adults in letters, carried the rest of the way.
+
+It keeps its slot beside Brands and Colour rather than joining the block, reading as a garment basic rather than a vertical-specific attribute.
+
+Verified at 360px: no Size row in A or B until a vertical is picked, present in C and D; `?size=l` on a seller page leaves the badge bare while `?size=2xl` on `/c` counts 1.
 
 ### Verified working
 
@@ -231,7 +241,7 @@ The composition changed shape with it: one ordered `RAIL_ORDER` array carrying `
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 79 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 80 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## The four variants
 

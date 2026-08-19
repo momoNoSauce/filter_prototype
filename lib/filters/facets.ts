@@ -316,11 +316,18 @@ export type PlpVariant = "bottom-bar" | "top-chips";
  *
  * Departures from the reference, all because the reference has no equivalent:
  *
- * - **Category leads.** The reference has no category filter because you are
- *   already inside one — which is exactly variants C and D, where this row is
- *   gone. In A and B it is the primary cut and belongs first.
+ * - **Category and Gender lead**, in that order, ahead of Brands. The
+ *   reference has no category filter at all — you are already inside one,
+ *   which is exactly variants C and D, where both rows are gone — and puts
+ *   Gender fourth. Together they decide who the garment is for, which a buyer
+ *   settles before picking a label off it. Gender is dropped under `locked`
+ *   as well: one vertical is one audience, so the row could only ever offer
+ *   the single value every product in scope already has.
  * - **Neck Type and Closure Type** follow Fit, Pattern and Sleeve Type, the
  *   three the reference does carry, rather than interleaving.
+ * - **Size** keeps the reference's third slot rather than joining the block,
+ *   even though it is shown on the same terms — it reads as a garment basic
+ *   beside Brand and Colour, not as a vertical-specific attribute.
  * - **Margin** sits with Price, being the other number a retailer buys on.
  * - **Seller and Seller City** are B2B and land with the commercial filters.
  * - **More Filters** stays last, as the catch-all.
@@ -331,12 +338,23 @@ export type PlpVariant = "bottom-bar" | "top-chips";
  */
 const RAIL_ORDER: (RailEntry & { only?: "filter"; vertical?: true })[] = [
   { id: "category", label: "Category", facetIds: ["category"], only: "filter" },
-  { id: "brand", label: "Brands", facetIds: ["brand"] },
-  { id: "size", label: "Size", facetIds: ["size"] },
-  { id: "colour", label: "Colour", facetIds: ["colour"] },
-  // Dropped under `locked`: one vertical is one audience, so the row could
-  // only offer the single value every product in scope already has.
+  // Ahead of Brands, where the reference puts it fourth. Category and Gender
+  // are the two cuts that decide *who the garment is for*, and a buyer settles
+  // that before picking a label off it.
   { id: "gender", label: "Gender", facetIds: ["gender"], only: "filter" },
+  { id: "brand", label: "Brands", facetIds: ["brand"] },
+  /*
+   * Vertical-only, though it keeps its place in the reference order rather
+   * than joining the block below.
+   *
+   * A size means nothing across verticals: M in menswear is not M in
+   * womenswear, so a single M row spanning both would merge two different
+   * garments' measurements behind one checkbox. The catalog already splits
+   * kids from adults — age bands against letters — and this is the same
+   * argument carried the rest of the way.
+   */
+  { id: "size", label: "Size", facetIds: ["size"], vertical: true },
+  { id: "colour", label: "Colour", facetIds: ["colour"] },
   // Not vertical-specific despite being asked for with them — Cotton and Denim
   // mean the same on a shirt as on a tee, where a collar has no tee equivalent
   // at all. So it sits here always, rather than in the block and in More

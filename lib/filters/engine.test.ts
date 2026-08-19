@@ -336,8 +336,10 @@ describe("the rail, now identical in both variants", () => {
     // Ordered after a reference PLP (2026-08-19) rather than the Figma frame,
     // which sequenced these before most of them existed. Pinned in full so a
     // future reorder has to be a decision rather than a drift.
+    // Size is absent here: it is vertical-only, M in menswear not being M in
+    // womenswear. It reappears in its reference slot inside a vertical.
     expect(getRail().map((r) => r.id)).toEqual([
-      "category", "brand", "size", "colour", "gender", "fabric",
+      "category", "gender", "brand", "colour", "fabric",
       "price", "margin", "moq", "delivery", "offers", "seller", "sellerCity", "more",
     ]);
     expect(getRailFacetIds().has("category")).toBe(true);
@@ -348,7 +350,7 @@ describe("the rail, now identical in both variants", () => {
     // The reference puts Fit, Pattern and Sleeve Type mid-rail, between the
     // garment basics and Price — not after the commercial filters.
     expect(getRail(["mens-formal-shirts"]).map((r) => r.id)).toEqual([
-      "category", "brand", "size", "colour", "gender", "fabric",
+      "category", "gender", "brand", "size", "colour", "fabric",
       "fit", "pattern", "sleeve", "neck", "closure",
       "price", "margin", "moq", "delivery", "offers", "seller", "sellerCity", "more",
     ]);
@@ -623,8 +625,25 @@ describe("vertical-specific attributes", () => {
     ).toEqual({ category: [...shirt, ...tee], seller: ["grasim"] });
   });
 
+  it("clears a size when the vertical it was chosen in goes", () => {
+    // M in menswear is not M in womenswear, so a size outlives its vertical
+    // only as a filter nothing on screen can explain or undo.
+    const inside = { category: shirt, size: ["l"], seller: ["grasim"] };
+    expect(dropOrphanedAttributes(inside)).toEqual(inside);
+    expect(dropOrphanedAttributes({ ...inside, category: [] })).toEqual({
+      category: [],
+      seller: ["grasim"],
+    });
+    // ...but it survives on a vertical-scoped page, where the page is the
+    // vertical and there is none to leave.
+    expect(
+      dropOrphanedAttributes({ size: ["l"] }, { kind: "locked", id: shirt[0] }),
+    ).toEqual({ size: ["l"] });
+  });
+
   it("refuses to honour an attribute in a URL that has no vertical", () => {
     expect(parseSelections(new URLSearchParams("fit=slim-fit"))).toEqual({});
+    expect(parseSelections(new URLSearchParams("size=l"))).toEqual({});
     // ...unless the page itself is the vertical, as in C and D, where the
     // query string never carries the category at all.
     expect(parseSelections(new URLSearchParams("fit=slim-fit"), { kind: "locked", id: "mens-formal-shirts" })).toEqual({
@@ -645,10 +664,12 @@ describe("vertical-specific attributes", () => {
     expect(hits.length).toBeLessThan(applyFilters(catalog, { category: shirt }).length);
   });
 
-  it("registers exactly the five attributes as vertical-specific", () => {
-    expect([...PV_FACET_IDS].sort()).toEqual([...ATTRS].sort());
-    // Fabric is shared, not vertical-specific — it must survive leaving a
-    // vertical, because More Filters still shows it.
+  it("registers the vertical-specific facets, Size among them", () => {
+    // Size joins them so that leaving a vertical clears it too — otherwise a
+    // size would keep filtering with no row left to show or undo it.
+    expect([...PV_FACET_IDS].sort()).toEqual([...ATTRS, "size"].sort());
+    // Fabric is shared, not vertical-specific: Cotton means the same on a
+    // shirt as on a tee, so it survives leaving a vertical.
     expect(PV_FACET_IDS.has("fabric")).toBe(false);
   });
 });
