@@ -1,4 +1,4 @@
-import { FACETS, dropOrphanedAttributes } from "./facets";
+import { FACETS, FILTER_VERTICALS, dropOrphanedAttributes, type VerticalMode } from "./facets";
 import { DEFAULT_SORT, SORT_OPTIONS, type Selections, type SortId } from "./engine";
 
 /**
@@ -6,7 +6,10 @@ import { DEFAULT_SORT, SORT_OPTIONS, type Selections, type SortId } from "./engi
  * That gives the demo a working back button and shareable links to any
  * particular combination.
  */
-export function parseSelections(params: URLSearchParams, locked?: string): Selections {
+export function parseSelections(
+  params: URLSearchParams,
+  mode: VerticalMode = FILTER_VERTICALS,
+): Selections {
   const selections: Selections = {};
   for (const facet of FACETS) {
     const raw = params.get(facet.id);
@@ -16,10 +19,10 @@ export function parseSelections(params: URLSearchParams, locked?: string): Selec
     if (chosen.length) selections[facet.id] = chosen;
   }
   // `?fit=slim-fit` with no single vertical would filter the list with no row
-  // on the rail to show or undo it. `locked` is variants C and D, where the
-  // page supplies the vertical instead of the query string — without it the
-  // guard would strip every attribute the moment the page loaded.
-  return dropOrphanedAttributes(selections, locked);
+  // on the rail to show or undo it. Under `locked` the page supplies the
+  // vertical instead of the query string — without knowing that, the guard
+  // would strip every attribute the moment the page loaded.
+  return dropOrphanedAttributes(selections, mode);
 }
 
 export function parseSort(params: URLSearchParams): SortId {

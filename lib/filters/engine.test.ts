@@ -614,7 +614,7 @@ describe("vertical-specific attributes", () => {
     expect(parseSelections(new URLSearchParams("fit=slim-fit"))).toEqual({});
     // ...unless the page itself is the vertical, as in C and D, where the
     // query string never carries the category at all.
-    expect(parseSelections(new URLSearchParams("fit=slim-fit"), "mens-formal-shirts")).toEqual({
+    expect(parseSelections(new URLSearchParams("fit=slim-fit"), { kind: "locked", id: "mens-formal-shirts" })).toEqual({
       fit: ["slim-fit"],
     });
     expect(
@@ -641,8 +641,9 @@ describe("vertical-specific attributes", () => {
 });
 
 describe("variants C and D — the page is the vertical", () => {
-  const LOCKED = "mens-formal-shirts";
-  const scope = verticalScope("baheti", LOCKED)!;
+  const LOCKED = { kind: "locked", id: "mens-formal-shirts" } as const;
+  const BROWSE = { kind: "browse" } as const;
+  const scope = verticalScope("baheti", LOCKED.id)!;
 
   it("scopes the catalog by vertical, and by seller unless it is the storefront", () => {
     expect(scope.products).toHaveLength(163);
@@ -650,7 +651,7 @@ describe("variants C and D — the page is the vertical", () => {
     // Baheti aggregates, so every seller's stock in this vertical is in scope.
     expect(new Set(scope.products.map((p) => p.sellerId)).size).toBeGreaterThan(1);
 
-    const one = verticalScope("grasim", LOCKED)!;
+    const one = verticalScope("grasim", LOCKED.id)!;
     expect(one.products.every((p) => p.sellerId === "grasim")).toBe(true);
     expect(one.products.length).toBeLessThan(scope.products.length);
   });
@@ -660,7 +661,7 @@ describe("variants C and D — the page is the vertical", () => {
       expect(verticalScope(route.sellerId, route.categoryId)!.products.length).toBeGreaterThan(0);
     }
     expect(verticalScope("baheti", "not-a-category")).toBeNull();
-    expect(verticalScope("not-a-seller", LOCKED)).toBeNull();
+    expect(verticalScope("not-a-seller", LOCKED.id)).toBeNull();
   });
 
   it("drops Category and Gender, and keeps the attribute block on", () => {
@@ -699,6 +700,21 @@ describe("variants C and D — the page is the vertical", () => {
 
     // The unscoped strip does the opposite with the same products.
     expect(contextChips(scope.products, {}).every((c) => c.kind === "vertical")).toBe(true);
+  });
+
+  it("browsing a seller keeps Gender but loses Category and the block", () => {
+    // C and D's seller page: several verticals in scope, so Gender is a live
+    // control again, but a vertical is navigated into rather than ticked.
+    const rail = getRail(undefined, BROWSE).map((r) => r.id);
+    expect(rail).not.toContain("category");
+    expect(rail).toContain("gender");
+    for (const id of PV_FACET_IDS) expect(rail).not.toContain(id);
+    expect(getRailFacetIds(undefined, BROWSE).has("category")).toBe(false);
+
+    // The strip still offers every vertical — what changes is what a tap does.
+    const chips = contextChips(getCatalog(), {}, BROWSE);
+    expect(chips.every((c) => c.kind === "vertical")).toBe(true);
+    expect(chips).toHaveLength(7);
   });
 
   it("filters and counts inside the vertical like any other page", () => {

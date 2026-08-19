@@ -156,13 +156,15 @@ A **2×2**. A and B list every category; C and D *are* one. C carries A's bottom
 
 `lockedVertical` threads through `getRail`, `getRailFacetIds`, `dropOrphanedAttributes`, `contextChips` and `parseSelections`. The last two earn their keep: a hand-edited `?category=girls-t-shirts` or `?gender=girls` on a Men's Formal Shirts page is dropped rather than emptying it, and the attribute guard is disabled because there is no vertical to leave.
 
-**Linked directly**, as chosen — no `/c` or `/d` home or seller page. 55 pages each, seller × vertical, skipping the pairs with no stock rather than serving an empty listing.
+**Each is a closed three-level loop** — `/c` → `/c/seller/[id]` → tap a vertical chip → `/c/seller/[id]/[cat]` — so all four variants are handed over the same way. Built as a dead-end first, on the answer to "how is C reached"; changed once the URLs were seen. 55 vertical pages each, seller × vertical, skipping the pairs with no stock rather than serving an empty listing.
+
+**`VerticalMode` is the axis**, and every screen takes one: `filter` (A and B), `browse` (C and D's seller page — chips are links, Category leaves the rail, Gender stays because several verticals are in scope, 13 rows), `locked` (the vertical page, 17 rows). `verticalBasePath` is a string rather than a callback because these screens render from Server Components, where a function can't cross the boundary — caught by the build, not by review.
 
 **Two bugs caught in verification, both silent.** `parseSelections` applied the orphan guard without knowing the page was locked, so every attribute in a URL was stripped on load. And `homeHref ?? default` swallowed the explicit `null` that means "no home button", leaving C and D one tap from another variant's home — the exact leak the prop exists to prevent.
 
 **App bar: no home button, title at 18px.** The two go together. C and D have no home of their own, so every href leads out of the variant; dropping the button frees 36px, which the title needs because the frame's 20px was sized for a seller name. *Men's Casual T-Shirts* measures 191px against the 157px the full bar leaves, and 172px against the 193px it leaves without home. All seven category labels now fit; A and B are untouched at 20px.
 
-Verified at 360px: title reads the category; strip is Price · Seller Offer · Cashback · Free Delivery; C has a Sort/Filters bottom bar and D has neither; rail is 17 rows headed by Delivery Time, with neither Category nor Gender; ticking Spread Collar gives `Show 64 results` and `?neck=spread-collar`; a stale `?category=` is ignored while `?fit=` survives.
+Verified at 360px, both loops walked end to end: `/c` → seller → chip tap → the vertical page, and the same in `/d`; seller rail 13 rows with Gender and no Category, vertical rail 17 with neither and the attribute block on; title reads the category; strip is Price · Seller Offer · Cashback · Free Delivery; C has a Sort/Filters bottom bar and D has neither; rail is 17 rows headed by Delivery Time, with neither Category nor Gender; ticking Spread Collar gives `Show 64 results` and `?neck=spread-collar`; a stale `?category=` is ignored while `?fit=` survives.
 
 ### Verified working
 
@@ -183,7 +185,7 @@ Verified at 360px: title reads the category; strip is Price · Seller Offer · C
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 73 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 74 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## Variant B — top chips instead of a bottom bar
 

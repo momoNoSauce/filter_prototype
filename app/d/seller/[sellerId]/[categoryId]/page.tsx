@@ -11,10 +11,10 @@ import { verticalRoutes, verticalScope } from "@/lib/catalog/scope";
  * could do anything a URL change couldn't undo. The vertical-specific
  * attributes are therefore always on.
  *
- * Linked directly — there is no /d home or seller page, by choice, so the app
- * bar carries **no home button**: every href it could hold leads out of the
- * variant. Back is the way out. That also buys the title the width it needs,
- * these pages being titled by category rather than by seller.
+ * Reached by browsing: /d → /d/seller/[sellerId] → tap a vertical chip. The
+ * app bar still carries **no home button** here, now for the plainer reason
+ * that the title needs the width — these pages are titled by category, and the
+ * frame's 20px was sized for a seller name. Back walks the loop it came down.
  */
 export function generateStaticParams() {
   return verticalRoutes();
@@ -33,7 +33,7 @@ export default async function VerticalPageVariantD({
       title={scope.category.label}
       products={scope.products}
       variant="top-chips"
-      lockedVertical={scope.category.id}
+      verticalMode={{ kind: "locked", id: scope.category.id }}
       homeHref={null}
     />
   );

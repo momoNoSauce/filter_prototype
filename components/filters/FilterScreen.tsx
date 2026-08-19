@@ -5,9 +5,11 @@ import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
 import {
   FACET_BY_ID,
+  FILTER_VERTICALS,
   dropOrphanedAttributes,
   getRail,
   getRailFacetIds,
+  type VerticalMode,
 } from "@/lib/filters/facets";
 import {
   countMatching,
@@ -33,7 +35,7 @@ export function FilterScreen({
   onApply,
   onClose,
   onDiscard,
-  lockedVertical,
+  verticalMode = FILTER_VERTICALS,
 }: {
   products: Product[];
   selections: Selections;
@@ -46,19 +48,16 @@ export function FilterScreen({
    * could go unannounced. Fires only when something would actually be lost.
    */
   onDiscard: () => void;
-  /**
-   * Variants C and D, where the page *is* a vertical: the Category row goes
-   * and the attribute block is always on. See `getRail`.
-   */
-  lockedVertical?: string;
+  /** How this screen treats verticals — see `VerticalMode`. */
+  verticalMode?: VerticalMode;
 }) {
   const [draft, setDraft] = useState<Selections>(selections);
 
   // The rail follows the *draft*, not the applied selections: ticking a single
   // vertical grows the attribute block immediately, and ticking a second one
   // takes it away again, without waiting for "Show N results".
-  const RAIL = getRail(draft.category, lockedVertical);
-  const RAIL_FACET_IDS = getRailFacetIds(draft.category, lockedVertical);
+  const RAIL = getRail(draft.category, verticalMode);
+  const RAIL_FACET_IDS = getRailFacetIds(draft.category, verticalMode);
 
   const [activeRail, setActiveRail] = useState(RAIL[0].id);
   const [query, setQuery] = useState("");
@@ -92,7 +91,7 @@ export function FilterScreen({
 
   const toggle = (facetId: string, optionId: string) =>
     setDraft((current) =>
-      dropOrphanedAttributes(toggleSelection(current, facetId, optionId), lockedVertical),
+      dropOrphanedAttributes(toggleSelection(current, facetId, optionId), verticalMode),
     );
 
   return (

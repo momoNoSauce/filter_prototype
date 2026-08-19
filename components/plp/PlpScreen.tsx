@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { Product } from "@/lib/catalog/types";
 import {
   applyFilters,
@@ -11,7 +11,13 @@ import {
   type Selections,
   type SortId,
 } from "@/lib/filters/engine";
-import { dropOrphanedAttributes, getRailFacetIds, type PlpVariant } from "@/lib/filters/facets";
+import {
+  FILTER_VERTICALS,
+  dropOrphanedAttributes,
+  getRailFacetIds,
+  type PlpVariant,
+  type VerticalMode,
+} from "@/lib/filters/facets";
 import { buildQuery, parseSelections, parseSort } from "@/lib/filters/urlState";
 import { AppBar } from "./AppBar";
 import { GoldStrip } from "./GoldStrip";
@@ -59,20 +65,29 @@ export function PlpScreen({
   title,
   products,
   variant = "bottom-bar",
-  lockedVertical,
+  verticalMode = FILTER_VERTICALS,
+  verticalBasePath,
   homeHref,
 }: {
   title: string;
   products: Product[];
   variant?: PlpVariant;
   /**
-   * Variants C and D: the page is one product vertical, `products` is already
-   * scoped to it, and the vertical is **not** a selection. It is page scope,
-   * the way the seller already is — which is what takes the Category row off
-   * the rail and the vertical chips out of the strip, and what keeps the
-   * attribute block permanently on.
+   * How this screen treats verticals — see `VerticalMode`. Under `locked`,
+   * `products` arrives already scoped and the vertical is **not** a selection:
+   * it is page scope, the way the seller already is.
    */
-  lockedVertical?: string;
+  verticalMode?: VerticalMode;
+  /**
+   * Where a vertical chip leads, minus the vertical: `/c/seller/grasim`, to
+   * which the category id is appended. Supplied by C and D's seller page,
+   * where a vertical is browsed into rather than ticked; absent in A and B,
+   * where the chip toggles a filter instead.
+   *
+   * A prefix rather than a function, because these screens are rendered from
+   * Server Components and a function can't cross that boundary.
+   */
+  verticalBasePath?: string;
   /**
    * `null` on C and D: they have no home of their own, and any href would
    * land the session in a different variant. See `AppBar`.
@@ -80,6 +95,7 @@ export function PlpScreen({
   homeHref?: string | null;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   // The query string is the shareable record of state, but local state is the
   // source of truth — that keeps filtering instant instead of round-tripping
   // through the router on every tick.
@@ -112,28 +128,26 @@ export function PlpScreen({
   useEffect(() => {
     const sync = () => {
       const params = new URLSearchParams(window.location.search);
-      // A vertical-scoped page has no Category or Gender control, so either in
-      // a hand-edited URL would filter with nothing to show or undo it — and
-      // could empty the page outright by naming a different vertical, or the
-      // wrong audience for this one.
-      if (lockedVertical) {
-        params.delete("category");
-        params.delete("gender");
-      }
-      setSelections(parseSelections(params, lockedVertical));
+      // Neither C nor D has a Category control at either level — one browses
+      // into a vertical, the other is one — so `?category=` in a hand-edited
+      // URL would filter with nothing to show or undo it. On the vertical page
+      // `?gender=` goes too, for the same reason its row does.
+      if (verticalMode.kind !== "filter") params.delete("category");
+      if (verticalMode.kind === "locked") params.delete("gender");
+      setSelections(parseSelections(params, verticalMode));
       setSort(parseSort(params));
     };
     sync();
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
-  }, [lockedVertical]);
+  }, [verticalMode]);
 
   const commit = useCallback(
     (raw: Selections, nextSort: SortId) => {
       // A chip tap can leave a single vertical, which takes the attribute rows
       // off the rail with it — their selections must not outlive their
       // controls. See `dropOrphanedAttributes`.
-      const nextSelections = dropOrphanedAttributes(raw, lockedVertical);
+      const nextSelections = dropOrphanedAttributes(raw, verticalMode);
       setSelections(nextSelections);
       setSort(nextSort);
       setVisible(PAGE_SIZE);
@@ -144,7 +158,7 @@ export function PlpScreen({
         `${pathname}${buildQuery(nextSelections, nextSort)}`,
       );
     },
-    [pathname, lockedVertical],
+    [pathname, verticalMode],
   );
 
   const results = useMemo(
@@ -155,12 +169,19 @@ export function PlpScreen({
   // Product-vertical chips until a single vertical is settled, then price and
   // offer chips. Same strip and same rule in both variants.
   const chips = useMemo(
-    () => contextChips(products, selections, lockedVertical),
-    [products, selections, lockedVertical],
+    () => contextChips(products, selections, verticalMode),
+    [products, selections, verticalMode],
   );
 
-  const toggleChip = (facetId: string, optionId: string) =>
+  const toggleChip = (facetId: string, optionId: string) => {
+    // In C and D a vertical chip is a way *into* the vertical, not a filter to
+    // tick — tapping it leaves this page for that vertical's own.
+    if (facetId === "category" && verticalBasePath) {
+      router.push(`${verticalBasePath}/${optionId}`);
+      return;
+    }
     commit(toggleSelection(selections, facetId, optionId), sort);
+  };
 
   /**
    * The Price menu is anchored under its chip but rendered at the root, since
@@ -192,7 +213,7 @@ export function PlpScreen({
   // Follows the applied selections, so the badge counts exactly the rows the
   // Filters screen would show if opened right now — attribute rows included
   // once a single vertical is settled.
-  const railFacetIds = getRailFacetIds(selections.category, lockedVertical);
+  const railFacetIds = getRailFacetIds(selections.category, verticalMode);
 
   const sortActive = sort !== DEFAULT_SORT;
   // Counts exactly what the Filters screen owns — which, since Category
@@ -290,7 +311,7 @@ export function PlpScreen({
         <FilterScreen
           products={products}
           selections={selections}
-          lockedVertical={lockedVertical}
+          verticalMode={verticalMode}
           onApply={(next) => commit(next, sort)}
           onDiscard={() => showToast(DISCARDED)}
           onClose={() => setOverlay(null)}

@@ -5,6 +5,7 @@ import {
   type CountedOption,
   type Selections,
 } from "./engine";
+import { FILTER_VERTICALS, type VerticalMode } from "./facets";
 
 /**
  * The strip carries three kinds of chip, and they render differently enough
@@ -30,10 +31,15 @@ export type ContextChip =
  *   open question is *which vertical*, so it offers those.
  * - **Inside exactly one** — the vertical leads, still removable by its ✕ so
  *   the strip is also the way back out, and price and offers follow it.
- * - **`locked`** (variants C and D) — the *page* is a vertical, so there is no
- *   vertical to offer and none to remove. The strip is price and offers only.
- *   Leading it with an unremovable chip would be a ✕ that isn't there, and a
- *   removable one would have to unmake the page.
+ * - **`locked`** (C and D's vertical page) — the *page* is a vertical, so there
+ *   is no vertical to offer and none to remove. The strip is price and offers
+ *   only. Leading it with an unremovable chip would be a ✕ that isn't there,
+ *   and a removable one would have to unmake the page.
+ *
+ * Under `browse` (C and D's seller page) nothing changes here: no vertical is
+ * ever selected, so the first branch offers all of them, as it does in A and B
+ * before anything is picked. What differs is what a tap does — the screen
+ * navigates into the vertical instead of ticking it.
  *
  * Pure, and separate from the rendering, because the interesting part is this
  * selection rule rather than the markup.
@@ -41,8 +47,9 @@ export type ContextChip =
 export function contextChips(
   products: Product[],
   selections: Selections,
-  locked?: string,
+  mode: VerticalMode = FILTER_VERTICALS,
 ): ContextChip[] {
+  const locked = mode.kind === "locked";
   const picked = selections.category ?? [];
   const verticals = locked ? [] : facetOptionsWithCounts(products, selections, "category");
 
