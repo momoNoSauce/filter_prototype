@@ -82,7 +82,7 @@ export function ContextChips({
           <FilterChip
             key={`${chip.facetId}:${chip.option.id}`}
             label={chip.option.label}
-            icon={OFFER_ICONS[chip.option.id]}
+            icon={OFFER_ICONS[`${chip.facetId}:${chip.option.id}`]}
             selected={selected}
             onClick={() => onToggle(chip.facetId, chip.option.id)}
           />
@@ -246,7 +246,7 @@ function PriceChip({
  * on 2026-08-14 by taking the pills to 8px too, so the whole row is one radius.
  */
 /**
- * Leading art for an offer chip, by option id.
+ * Leading art for an offer chip, keyed by **facet and option**.
  *
  * Supplied as PNGs rather than exported from Figma, which is why they sit in
  * `public/offers/` and not `public/figma/` — the latter is exports only, and a
@@ -254,12 +254,14 @@ function PriceChip({
  * enough to have little headroom above the 20px they render at; vectors would
  * be better if any turn up.
  *
- * Seller Offer has none: it means *any offer at all*, so there is nothing
- * specific to draw.
+ * Both parts of the key, because Seller Offer's option id is the bare `any` —
+ * it is the catch-all on its own `hasOffer` facet — and a one-word id like
+ * that is exactly the sort another facet acquires later.
  */
 const OFFER_ICONS: Record<string, string> = {
-  cashback: "/offers/cashback.png",
-  "free-delivery": "/offers/free-delivery.png",
+  "hasOffer:any": "/offers/seller-offer.png",
+  "offers:cashback": "/offers/cashback.png",
+  "offers:free-delivery": "/offers/free-delivery.png",
 };
 
 function FilterChip({
