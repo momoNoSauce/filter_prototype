@@ -18,6 +18,7 @@ import {
   toggleSelection,
   type Selections,
 } from "@/lib/filters/engine";
+import { needsSearch } from "@/lib/filters/panelFit";
 import { SearchField } from "./SearchField";
 import { OptionRow, TileGrid } from "./OptionRows";
 
@@ -87,7 +88,38 @@ export function FilterScreen({
     0,
   );
 
-  const searchable = rail.facetIds.some((id) => FACET_BY_ID.get(id)?.searchable);
+  /*
+   * The open panel's options, computed once rather than inside the render
+   * loop: the search field's visibility is decided from how many there are,
+   * and then the very same lists are what get rendered.
+   */
+  const panelFacets = rail.facetIds.map((facetId) => {
+    const facet = FACET_BY_ID.get(facetId)!;
+    return { facet, options: facetOptionsWithCounts(products, draft, facetId) };
+  });
+
+  /*
+   * The field is earned, not declared. It replaced a static `searchable` flag
+   * on 2026-08-20, which five facets set and none of them needed — Category,
+   * Brands, Colour, Seller and Seller City all fit inside the panel whole, so
+   * the field spent 56px of the fold searching a list you could already see.
+   * Now it appears only when the options overflow, and goes away again when
+   * pruning shortens them. See `lib/filters/panelFit.ts`.
+   */
+  const searchable = needsSearch(
+    panelFacets.map(({ facet, options }) => ({
+      panel: facet.panel,
+      optionCount: options.length,
+    })),
+  );
+
+  /*
+   * A panel can stop overflowing while a query is still in the box — tick
+   * enough options and the list prunes below the threshold, taking the field
+   * with it. Dropping the query with the field keeps a hidden control from
+   * going on filtering.
+   */
+  const activeQuery = searchable ? query : "";
 
   const toggle = (facetId: string, optionId: string) =>
     setDraft((current) =>
@@ -158,22 +190,26 @@ export function FilterScreen({
 
         {/* Panel */}
         <div className="no-scrollbar flex w-[240px] shrink-0 flex-col overflow-y-auto">
-          {searchable && <SearchField value={query} onChange={setQuery} />}
-          {!searchable && <div className="h-[10px] shrink-0" />}
+          {searchable ? (
+            <SearchField value={query} onChange={setQuery} />
+          ) : (
+            <div className="h-[10px] shrink-0" />
+          )}
 
-          {rail.facetIds.map((facetId) => {
-            const facet = FACET_BY_ID.get(facetId)!;
-            const options = facetOptionsWithCounts(products, draft, facetId).filter(
-              (option) =>
-                !query || option.label.toLowerCase().includes(query.toLowerCase()),
-            );
+          {panelFacets.map(({ facet, options: counted }) => {
+            const facetId = facet.id;
+            const options = activeQuery
+              ? counted.filter((option) =>
+                  option.label.toLowerCase().includes(activeQuery.toLowerCase()),
+                )
+              : counted;
             const chosen = draft[facetId] ?? [];
 
             return (
               <div key={facetId} className="flex w-full flex-col">
                 {/* Only "More Filters" stacks several facets, so only it needs
                     headings to tell them apart. */}
-                {rail.facetIds.length > 1 && (
+                {panelFacets.length > 1 && (
                   <p className="px-[14px] pt-[12px] pb-[4px] text-[13px] font-bold text-[#767676]">
                     {facet.label}
                   </p>
