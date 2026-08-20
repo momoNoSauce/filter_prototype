@@ -90,7 +90,7 @@ export function SetPills({
                   (screengrab, 2026-08-14). Was `Set of 6`; the caps are the
                   app's, and they also hold the small top line apart from the
                   bold breakup under it. */}
-              <span className="w-full text-[10px] font-medium whitespace-nowrap">
+              <span className="w-full text-[11px] font-medium whitespace-nowrap">
                 SET OF {variant.setOf}
               </span>
               <span className="w-full text-[16px] font-bold whitespace-nowrap">

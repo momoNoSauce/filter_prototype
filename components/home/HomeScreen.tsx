@@ -49,7 +49,7 @@ export function HomeScreen({ basePath = "" }: { basePath?: "" | "/b" }) {
           <div className="flex h-[40px] items-center gap-[10px] rounded-[100px] bg-[#3d78ff] px-[14px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img alt="" className="size-[16px] shrink-0" src="/figma/home/search.svg" />
-            <span className="flex-1 text-[14px] text-white/90">
+            <span className="flex-1 text-[15px] text-white/90">
               Search for &lsquo;kurtas&rsquo;
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -105,8 +105,14 @@ export function HomeScreen({ basePath = "" }: { basePath?: "" | "/b" }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img alt="" className="size-[24px] shrink-0" src="/figma/home/doc.svg" />
           <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
-            <p className="text-[12.407px] text-black">Activate your account!</p>
-            <p className="truncate text-[10.634px] text-[#656565]">
+            {/* 13/12px, up from the frame's fractional 12.407/10.634
+                (2026-08-20). Unlike the hero above it, this is a message with
+                an instruction in it rather than banner art, so it is read.
+                12px is the ceiling for the second line, not a preference: it
+                has 272px once the icon and both insets are taken out, and the
+                string measures ~271px there — 13px truncates it. */}
+            <p className="text-[13px] text-black">Activate your account!</p>
+            <p className="truncate text-[12px] text-[#656565]">
               Complete verification and start ordering from Solv!
             </p>
           </div>
@@ -138,12 +144,18 @@ export function HomeScreen({ basePath = "" }: { basePath?: "" | "/b" }) {
                   <p className="w-full truncate text-[15px] leading-[18px] font-medium text-heading">
                     {seller.name}
                   </p>
+                  {/* 11px, and the second label the 2026-08-20 type pass had
+                      to leave alone. The card is 152px wide with a 6px inset,
+                      so the line has 140px: `1,070 products | 9k+ orders` needs
+                      133px at 11px and 145px at 12px, where `truncate` bites
+                      and eats the word `orders`. Raising it needs a wider card,
+                      which is the frame's dimension, not a type change. */}
                   <p className="w-full truncate text-[11px] leading-[18px] text-muted">
                     {count.toLocaleString("en-IN")} products | {featured.orders} orders
                   </p>
                 </div>
                 {featured.badge && (
-                  <span className="absolute top-[6px] left-[6px] rounded-[4px] bg-orange-500 px-[8px] py-[2px] text-[10px] text-white">
+                  <span className="absolute top-[6px] left-[6px] rounded-[4px] bg-orange-500 px-[8px] py-[2px] text-[11px] text-white">
                     {featured.badge}
                   </span>
                 )}

@@ -185,7 +185,7 @@ export function FilterScreen({
                 } ${index > 0 ? "border-t border-[#dedede]" : ""}`}
               >
                 <span
-                  className={`min-w-0 flex-1 text-[14px] ${
+                  className={`min-w-0 flex-1 text-[15px] ${
                     active ? "font-bold text-primary" : "font-medium text-[#323232]"
                   }`}
                 >
@@ -221,13 +221,13 @@ export function FilterScreen({
                 {/* Only "More Filters" stacks several facets, so only it needs
                     headings to tell them apart. */}
                 {panelFacets.length > 1 && (
-                  <p className="px-[14px] pt-[12px] pb-[4px] text-[12px] font-bold text-[#767676]">
+                  <p className="px-[14px] pt-[12px] pb-[4px] text-[13px] font-bold text-[#767676]">
                     {facet.label}
                   </p>
                 )}
 
                 {options.length === 0 ? (
-                  <p className="px-[14px] py-[16px] text-[13px] text-muted">
+                  <p className="px-[14px] py-[16px] text-[14px] text-muted">
                     No options match.
                   </p>
                 ) : facet.panel === "tile" ? (

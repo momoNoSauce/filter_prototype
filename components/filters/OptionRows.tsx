@@ -34,7 +34,7 @@ export function OptionRow({
         />
       )}
       <span
-        className={`ml-[8px] flex min-w-0 flex-1 items-center gap-[4px] text-[14px] ${
+        className={`ml-[8px] flex min-w-0 flex-1 items-center gap-[4px] text-[15px] ${
           selected ? "text-primary" : "text-[#323232]"
         }`}
       >
@@ -176,7 +176,17 @@ export function TileGrid({
                 elements. Together on one, the explicit 36px wins over the
                 clamp's two-line height, so a label needing three lines is
                 cropped mid-glyph at 36 of its 39px instead of ellipsised.
-                Wrapper reserves the space; inner clamps and ellipsises. */}
+                Wrapper reserves the space; inner clamps and ellipsises.
+
+                **11px stays**, and it is the one label the 2026-08-20 type
+                pass could not raise. The 68px cell is a tuned fit rather than a
+                round number: `Men's Formal` measures ~66px at 11px and clears
+                68 at 12px, so the third word is pushed onto a third line and
+                the clamp ellipsises it — tried, and the panel came back reading
+                `Men's Formal…` and `Men's Casual T-…`, which loses the one
+                thing the label adds to the photo. Raising this needs a wider
+                cell or a taller label box, i.e. a change to the designed grid,
+                not to the type. */}
             <span className="h-[36px] w-full">
               <span
                 className={`line-clamp-2 text-center text-[11px] leading-[13px] ${

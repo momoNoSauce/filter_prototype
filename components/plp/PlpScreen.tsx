@@ -377,12 +377,12 @@ function EmptyState({ onClear }: { onClear: () => void }) {
   return (
     <div className="flex w-full flex-1 flex-col items-center justify-center gap-[12px] px-[24px] text-center">
       <p className="text-[16px] font-bold text-black">No products match</p>
-      <p className="text-[13px] text-muted">
+      <p className="text-[14px] text-muted">
         Try removing a filter or two to widen the results.
       </p>
       <button
         onClick={onClear}
-        className="mt-[4px] flex h-[40px] cursor-pointer items-center rounded-[24px] bg-primary px-[24px] font-ui text-[14px] font-medium text-white"
+        className="mt-[4px] flex h-[40px] cursor-pointer items-center rounded-[24px] bg-primary px-[24px] font-ui text-[15px] font-medium text-white"
       >
         Clear Filters
       </button>

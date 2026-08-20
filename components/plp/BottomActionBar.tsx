@@ -65,7 +65,7 @@ function BarItem({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img alt="" className="size-full" src={icon} />
         {!!badge && (
-          <span className="absolute -top-[4px] -right-[8px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-primary px-[4px] text-[9px] font-bold text-white">
+          <span className="absolute -top-[4px] -right-[8px] flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-primary px-[4px] text-[11px] font-bold text-white">
             {badge}
           </span>
         )}

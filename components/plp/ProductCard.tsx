@@ -34,7 +34,7 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
       <div className="relative flex w-full flex-col items-start gap-[16px] bg-white px-[12px] pt-[24px] pb-[8px]">
         {product.bestSeller && (
           <div className="absolute top-0 left-0 flex h-[20px] items-center gap-[6px] rounded-br-[12px] bg-orange-400 px-[8px]">
-            <p className="text-[12px] font-bold whitespace-nowrap text-white">Best Seller</p>
+            <p className="text-[13px] font-bold whitespace-nowrap text-white">Best Seller</p>
           </div>
         )}
 
@@ -73,7 +73,7 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
                 `MRP/PC` upper and `SET of:` mixed. Reproduced rather than
                 tidied, since matching the format is the point; one to raise
                 with the designer along with the other card notes. */}
-            <p className="mt-[5px] flex w-full items-center gap-[10px] text-[12px] leading-[16px] font-bold text-muted">
+            <p className="mt-[5px] flex w-full items-center gap-[10px] text-[13px] leading-[16px] font-bold text-muted">
               <span>MRP/PC {inr(variant.mrp)}</span>
               <span className="font-normal opacity-60">|</span>
               <span>SET of: {variant.setOf}</span>
@@ -100,8 +100,17 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
                   it was `Price/ pc`, with a stray space after the slash.
                   `leading-none` on both this and the price below: the measured
                   gap between them is 11.7px of clear space, and default leading
-                  buries most of that inside the boxes where it can't be set. */}
-              <p className="w-full text-[9px] leading-none font-bold text-muted">PRICE/PC</p>
+                  buries most of that inside the boxes where it can't be set.
+
+                  **11px, not the frame's 9** (2026-08-20). This was the
+                  smallest type in the app and it labels the one number the
+                  whole card is built around, which is the worst possible place
+                  to be illegible. `leading-none` means the box *is* the font
+                  size, so the block grows by exactly the 2px added here — the
+                  measurements that were taken off the screengrab are gaps
+                  (`mt-[7px]` to the price, 10px price-to-margin baseline) and
+                  none of them move. */}
+              <p className="w-full text-[11px] leading-none font-bold text-muted">PRICE/PC</p>
 
               {/* No shipping-fee line under the price. It read `+₹50 shipping
                   fee`, was carried over from an earlier cut of the card, and
@@ -124,7 +133,7 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
                 <p className="shrink-0 text-[26px] leading-none font-medium whitespace-nowrap text-black">
                   {inr(variant.pricePerPc)}
                 </p>
-                <p className="text-[14px] whitespace-nowrap text-margin">
+                <p className="text-[15px] whitespace-nowrap text-margin">
                   <span className="font-bold">{variant.marginPct}%</span>
                   <span className="font-normal"> margin</span>
                 </p>
@@ -152,7 +161,7 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
       </div>
 
       <div className="flex h-[32px] w-full items-center justify-end gap-[8px] border-t-[0.5px] border-hairline bg-viewdetails px-[12px]">
-        <p className="text-[12px] font-medium text-orange-500 underline">VIEW DETAILS</p>
+        <p className="text-[13px] font-medium text-orange-500 underline">VIEW DETAILS</p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           alt=""

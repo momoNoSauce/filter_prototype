@@ -299,6 +299,62 @@ The wrapper that held the line went with it: its `gap-[4px]` existed only to sep
 
 Verified at 360px, 3×: zero occurrences of "shipping fee" in A, B, C and D, and none after scrolling A; price and margin sit exactly where they did; no console errors. 85 tests green — determinism held, which is the thing that would have broken had the draw gone with the line.
 
+### 2026-08-20 — the type was small for 360px
+
+Raised on request. The pass was **a floor, not a multiplier**: the tier that was
+failing was 9–12px, and the top of the scale was already at or above what the
+live app sets, so scaling everything would have moved numbers that were measured
+rather than chosen.
+
+**What moved.** `PRICE/PC` 9 → 11px, which was the smallest type in the app and
+labels the one number the card is built around. The offer tags 10 → 12px with
+their pill 16 → 18px. `SET OF n` 10 → 11px. Both badge counters (the Filters
+count in A and C, the chip count in B and D) 9/10 → 11px, boxes to 17px. The
+muted `MRP/PC ₹390 | SET of: 2` line 12 → 13px, and `Best Seller`, `VIEW
+DETAILS`, the panel facet headings and the Price-menu counts with it. Every 14px
+control label — checkbox rows, rail rows, all three chip kinds, `Clear Filters`,
+`Show N results`, the empty state — to 15px. Toast and zero-results copy 13 →
+14px. The margin 14 → 15px, which its `items-baseline` row was already written
+to absorb. On the home screen the activate-account card left the frame's
+fractional 12.407/10.634 for 13/12 — unlike the hero above it, that card carries
+an instruction rather than banner art, and 12px is the ceiling for its second
+line rather than a preference: the string measures ~271px in the 272px it has
+once the icon and both insets are out, so 13px would truncate it.
+
+**What was held, and why.** The **26px price** and the **title's 16px pitch**
+were rebuilt from pixel measurements of the live-app screengrab on 2026-08-14,
+and the open question there records the app setting its price at ~24px — this
+side is already the larger of the two. The **app bar titles** stay at 20px in A
+and B and 18px in C and D because they are width-capped, not taste-capped:
+*Men's Casual T-Shirts* measures 172px against the 193px the compact bar leaves,
+so a step up overflows the longest label. The **home hero** keeps its fractional
+Figma sizes, being an absolutely-positioned composition rather than copy.
+
+**Two sites refused the raise**, both boxed by a frame dimension rather than by
+the type, and both now carry a comment saying so:
+
+- **Tile-grid labels stay at 11px.** The 68px cell is a tuned fit — `Men's
+  Formal` measures ~66px at 11px and clears 68 at 12px, which pushes the third
+  word onto a third line and the clamp ellipsises it. Tried it; the panel came
+  back reading `Men's Formal…` and `Men's Casual T-…`, losing the only thing the
+  label adds to the photo.
+- **The home seller card's stat line stays at 11px.** The card is 152px with a
+  6px inset, so the line has 140px: `1,070 products | 9k+ orders` needs 133px at
+  11px and 145px at 12px, where `truncate` bites and eats `orders`.
+
+Raising either needs a wider cell or a wider card — a change to the frame, and a
+designer's call rather than ours.
+
+**Verified by audit rather than by eye.** A DOM pass over `/`, `/seller/baheti`,
+`/c`, `/d` and all thirteen Filters rail panels, flagging any text element whose
+`scrollWidth` exceeds its box, any `line-clamp` actually biting, and anything
+crossing 360px outside a horizontal scroller — then **diffed against the same
+audit on the baseline**, which is what separated the two real regressions above
+from what was already there. Final diff is two lines, both pre-existing: a long
+seller name in the 240px panel, which already truncated at 14px and truncates a
+little earlier at 15. Lint, typecheck and production build clean; 85 tests green
+at the time, and re-run green after merging the search-field work below.
+
 ### 2026-08-20 — the search field is earned rather than declared
 
 **Every facet that showed a search field fit inside the fold.** The flag was static — `searchable: true` on Category, Brands, Colour, Seller and Seller City — and measured against the panel it sits in, not one of them needed it:
@@ -549,6 +605,7 @@ Ordered by consequence. None of these block a demo.
 5. **Hidden zero-count options** are right for the pruning demo but break the user's mental map; most Indian ecommerce greys out instead. A conscious call, not an inherited default.
 6. **No loading / skeleton / stale-results state anywhere.** Filtering is instant only because the catalog is in memory; against a real API it won't be, and the prototype is quietly setting an expectation engineering can't meet.
 7. **Touch targets** below guideline: sheet close X is 15px, set pills 40px (both from the design).
+11. **Two type sizes are held below 12px by frame dimensions**, not by choice — see the 2026-08-20 entry. The tile-grid label (11px, boxed by the 68px cell) and the home seller card's stat line (11px, boxed by the 152px card) were the only sites the type pass could not raise. Both need a wider cell or card to move, which is a designer's call.
 8. **Accessibility**, if this becomes the reference build: filter rows use `aria-pressed` where `role="checkbox"` + `aria-checked` is correct; sheets don't trap focus; the scrim is a full-viewport `<button>` announced as a giant "Close".
 9. **Pagination dots under the set pills** imply snapping the free-scrolling row doesn't do.
 
