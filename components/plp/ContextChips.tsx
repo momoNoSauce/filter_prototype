@@ -157,11 +157,14 @@ function VerticalChip({
         )}
       </span>
 
-      {/* Two lines deep, as the frame sets it. See the header on why the box is
-          76px: it is where the longest vertical name still breaks rather than
-          clamping, which is the rule the frame's own 68px box followed at 11px. */}
+      {/* Two lines deep, as the frame sets it. The box tracks the type size,
+          which is the rule the frame's own 68px box followed at 11px: it has to
+          be wide enough that the longest vertical name breaks rather than
+          clamping. 68 at 11px became 76 at 12px, and **13px wants 82**
+          (2026-08-20) — `Men's Casual T-Shirts` is the one that decides it.
+          Two lines at 13px is ~31px, still inside `CHIP_H`. */}
       <span
-        className={`line-clamp-2 max-w-[76px] text-left text-[12px] leading-[normal] font-medium ${
+        className={`line-clamp-2 max-w-[82px] text-left text-[13px] leading-[normal] font-medium ${
           selected ? "text-primary" : "text-black/90 opacity-74"
         }`}
       >
@@ -214,7 +217,7 @@ function PriceChip({
           its state is the fill and the label — so the icon stays in both. */}
       <ChipIcon src={PRICE_ICON} />
       <span
-        className={`text-[14px] leading-[20px] font-medium whitespace-nowrap ${
+        className={`text-[15px] leading-[20px] font-medium whitespace-nowrap ${
           selected ? "text-primary" : "text-[#323232]"
         }`}
       >
@@ -326,7 +329,7 @@ function FilterChip({
         </svg>
       )}
       <span
-        className={`text-[14px] leading-[20px] font-medium whitespace-nowrap ${
+        className={`text-[15px] leading-[20px] font-medium whitespace-nowrap ${
           selected ? "text-primary" : "text-[#323232]"
         }`}
       >
@@ -402,13 +405,13 @@ export function PriceMenu({
                 )}
               </span>
               <span
-                className={`flex-1 truncate text-[14px] ${
+                className={`flex-1 truncate text-[15px] ${
                   on ? "font-medium text-primary" : "text-[#323232]"
                 }`}
               >
                 {option.label}
               </span>
-              <span className="shrink-0 text-[12px] text-muted">{option.count}</span>
+              <span className="shrink-0 text-[13px] text-muted">{option.count}</span>
             </button>
           );
         })}

@@ -24,13 +24,13 @@ export function ActionFooter({
       <button
         onClick={onClear}
         disabled={clearDisabled}
-        className="flex h-[40px] cursor-pointer items-center rounded-[999px] border border-[#dedede] bg-[#f7f7f7] px-[14px] font-ui text-[14px] leading-[20px] font-medium text-[#323232] disabled:opacity-40"
+        className="flex h-[40px] cursor-pointer items-center rounded-[999px] border border-[#dedede] bg-[#f7f7f7] px-[14px] font-ui text-[15px] leading-[20px] font-medium text-[#323232] disabled:opacity-40"
       >
         {clearLabel}
       </button>
       <button
         onClick={onPrimary}
-        className="flex h-[40px] cursor-pointer items-center justify-center rounded-[24px] bg-primary px-[24px] font-ui text-[14px] leading-[20px] font-medium text-white"
+        className="flex h-[40px] cursor-pointer items-center justify-center rounded-[24px] bg-primary px-[24px] font-ui text-[15px] leading-[20px] font-medium text-white"
       >
         {primaryLabel}
       </button>

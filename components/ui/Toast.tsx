@@ -42,7 +42,7 @@ export function Toast({
         role="status"
         aria-live="polite"
         onAnimationEnd={onDone}
-        className="animate-toast max-w-full truncate rounded-[999px] bg-[#323232] px-[16px] py-[8px] text-[13px] leading-[16px] font-medium text-white shadow-[0px_2px_8px_rgba(0,0,0,0.25)]"
+        className="animate-toast max-w-full truncate rounded-[999px] bg-[#323232] px-[16px] py-[8px] text-[14px] leading-[16px] font-medium text-white shadow-[0px_2px_8px_rgba(0,0,0,0.25)]"
       >
         {text}
       </div>

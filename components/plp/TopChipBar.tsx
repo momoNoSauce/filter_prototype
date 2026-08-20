@@ -106,14 +106,14 @@ function Chip({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img alt="" className="size-[20px]" src={icon} />
       <span
-        className={`text-[14px] leading-[16px] font-bold whitespace-nowrap ${
+        className={`text-[15px] leading-[16px] font-bold whitespace-nowrap ${
           active ? "text-primary" : "text-black/90 opacity-74"
         }`}
       >
         {label}
       </span>
       {!!badge && (
-        <span className="flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-primary px-[4px] text-[10px] font-bold text-white">
+        <span className="flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-primary px-[4px] text-[11px] font-bold text-white">
           {badge}
         </span>
       )}
