@@ -499,6 +499,23 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### The bottom bar is out (2026-08-20)
+
+The basket bar owns the foot of a SOLV listing — it is in the live app's own
+screengrab, and `SHOW_CART_BAR` is the only reason ours isn't showing. A pinned
+Sort · Filters bar is a second bar competing for that edge, so the placement
+question answered itself and the A/B is over.
+
+- Work is on the **top-chip screens only: `/b`, `/d` and `/userjourney`**.
+- `/userjourney/seller/kartik` moved onto `variant="top-chips"` the same day.
+  Sort, Filters, the chip strip, the discard toast and the rail all behave as
+  they do in B; verified end to end (Sort → *Recently Added*, Filters → *Gender
+  → Women*, 1 badge, vertical settled, Size on the rail).
+- **A and C are parked, not deleted.** The routes stay live and shareable and
+  the `bottom-bar` branch of `PlpScreen` stays with them; nothing further goes
+  in. A park is reversible, and deleting the pair would take the comparison
+  that produced this decision with it.
+
 #### Deliberately not built
 
 - **The home rails are inert.** *Order Again* and *Top Brands* are drawn in

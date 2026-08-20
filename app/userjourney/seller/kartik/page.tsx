@@ -26,7 +26,13 @@ export default function Page() {
       // block below, which is the app's own inconsistency, not ours.
       title={KARTIK.name.toUpperCase()}
       products={getKartikCatalog()}
-      variant="bottom-bar"
+      // **Top chips, not the bottom bar** (2026-08-20). The basket bar owns the
+      // foot of this screen in the live app — `SHOW_CART_BAR` only hides it —
+      // so a pinned Sort/Filters bar would be a second bar competing for the
+      // same edge. That is what ruled the bottom-bar placement out generally;
+      // the journey is where it was concrete, since it is the one screen here
+      // that has a basket bar at all.
+      variant="top-chips"
       homeHref="/userjourney"
       card={JourneyProductCard}
       // No Share on this bar in the screengrab, and dropping it is also what

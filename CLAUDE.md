@@ -40,12 +40,24 @@ deprecated in Next 16 and renamed. Same behaviour, different file and export.
 
 Both render the identical card, catalog, engine and sheets. **Only the controls differ**, so a preference between them is about control placement and nothing else. Don't let them drift apart in any other respect.
 
-| | Home | PLP | Controls |
-|---|---|---|---|
-| **Variant A** | `/` | `/seller/[sellerId]` | Sort · Filters pinned to the bottom (Figma `638:2836`) |
-| **Variant B** | `/b` | `/b/seller/[sellerId]` | The same two as chips under the app bar (Figma `644:4011`), no bottom bar |
-| **Variant C** | — | **`/c`** | Bottom bar, already inside one vertical |
-| **Variant D** | — | **`/d`** | Top chips, already inside one vertical |
+| | Home | PLP | Controls | |
+|---|---|---|---|---|
+| **Variant A** | `/` | `/seller/[sellerId]` | Sort · Filters pinned to the bottom (Figma `638:2836`) | **parked** |
+| **Variant B** | `/b` | `/b/seller/[sellerId]` | The same two as chips under the app bar (Figma `644:4011`), no bottom bar | live |
+| **Variant C** | — | **`/c`** | Bottom bar, already inside one vertical | **parked** |
+| **Variant D** | — | **`/d`** | Top chips, already inside one vertical | live |
+
+> **The bottom bar lost the A/B** (2026-08-20). The basket bar owns the foot of a
+> SOLV listing — it is in the live app's own screengrab — so a pinned Sort ·
+> Filters bar is a second bar competing for the same edge, and one of the two has
+> to give. Work is now on the **top-chip screens only: `/b`, `/d` and
+> `/userjourney`**, and `/userjourney/seller/kartik` moved onto top chips the same
+> day for exactly this reason.
+>
+> A and C are **parked, not deleted**: the routes stay live and shareable, the
+> `bottom-bar` branch of `PlpScreen` stays with them, and nothing further goes
+> into either. Everything below still describes all four, because a park is
+> reversible and a rewrite of these notes wouldn't be.
 
 C and D (2026-08-19) make it a **2×2**: A and B start across every category, C and D start *inside* one. `/c` and `/d` **are the listing** — one URL, no browse path in front, because the point is the state, not how you got there. Other pairs are at `/c/seller/[sellerId]/[categoryId]`; `DEMO_VERTICAL` in `scope.ts` is the one the bare URL lands on.
 
@@ -106,6 +118,11 @@ as it already does for the product card.
   which A–D then took on 2026-08-20 — so that is no longer a difference.
 - **`PlpScreen` took props, not a copy** — `card`, `appBar`, `aboveList`,
   `belowList`, `listClassName`. There is still one PLP screen.
+- **The storefront runs `variant="top-chips"`** (2026-08-20, was `bottom-bar`).
+  This is the screen that settled the question for the whole prototype: the live
+  app puts the basket bar at the foot of a listing, `SHOW_CART_BAR` only hides
+  ours, and two bars cannot share that edge. Flipping `SHOW_CART_BAR` back to
+  `true` now costs nothing, the bottom being free.
 - **`SHOW_CART_BAR = false`** in `StorefrontChrome.tsx` hides the basket bar on
   both journey screens. Kept whole rather than deleted: nothing fills a basket
   here, so it could only print the screengrab's fixed ₹717.
