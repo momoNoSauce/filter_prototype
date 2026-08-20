@@ -116,6 +116,15 @@ as it already does for the product card.
   `#f5f8ff`, no `Best Seller`. A–D keep theirs, being signed off. The cost is two
   card designs in one prototype; watch it. It led on the blue `VIEW DETAILS`,
   which A–D then took on 2026-08-20 — so that is no longer a difference.
+- **The whole card opens the product**, not the `VIEW DETAILS` strip alone
+  (corrected 2026-08-20): the strip is a signpost for buyers who haven't learnt
+  that the card opens, which is how the live app behaves. A **stretched link** —
+  `absolute inset-0` at `z-10`, last in the DOM, carrying the title as its
+  accessible name — rather than a wrapper, because `<a>` may not wrap interactive
+  content and the pack pills are buttons; they lift to `z-20`, so a pill
+  re-prices the card and everything else navigates. **A–D are untouched**: their
+  `VIEW DETAILS` has never navigated, the main catalog having no detail route, so
+  there is nothing there to widen the target to.
 - **`PlpScreen` took props, not a copy** — `card`, `appBar`, `aboveList`,
   `belowList`, `listClassName`. There is still one PLP screen.
 - **The storefront runs `variant="top-chips"`** (2026-08-20, was `bottom-bar`).

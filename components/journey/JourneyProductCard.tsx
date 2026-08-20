@@ -55,7 +55,7 @@ export function JourneyProductCard({
   const freeDelivery = product.offers.includes("Free Delivery");
 
   return (
-    <div className="w-full shrink-0 overflow-hidden rounded-[12px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.10)]">
+    <div className="relative w-full shrink-0 overflow-hidden rounded-[12px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.10)]">
       <div className="relative flex w-full flex-col items-start px-[12px] pt-[12px] pb-[10px]">
         {/*
           The cashback ribbon. Measured 20px tall in `#fb9805`, sitting flush
@@ -150,7 +150,9 @@ export function JourneyProductCard({
           </div>
         )}
 
-        <div className="mt-[12px] w-full">
+        {/* `z-20` lifts the pills over the card-wide link below — picking a pack
+            re-prices this card and must not navigate. */}
+        <div className="relative z-20 mt-[12px] w-full">
           <SetPills
             variants={product.variants}
             selected={variantIndex}
@@ -171,10 +173,7 @@ export function JourneyProductCard({
         screengrab gives no narrower hit area, and 12px of label sits under the
         touch floor by itself.
       */}
-      <Link
-        href={`/userjourney/product/${product.id}`}
-        className="flex h-[35px] w-full items-center justify-end gap-[8px] border-t border-[#ebebeb] bg-[#f5f8ff] px-[12px]"
-      >
+      <div className="flex h-[35px] w-full items-center justify-end gap-[8px] border-t border-[#ebebeb] bg-[#f5f8ff] px-[12px]">
         <p className="text-[13px] font-medium text-primary underline">VIEW DETAILS</p>
         {/* The exported chevron is orange, for the shared card's orange label.
             `MaskIcon` reads only the alpha channel, so the same untouched asset
@@ -186,7 +185,28 @@ export function JourneyProductCard({
           className="h-[10px] w-[6px] shrink-0"
           color="var(--color-primary)"
         />
-      </Link>
+      </div>
+
+      {/*
+        **The whole card is the tap target** (2026-08-20, corrected): it was the
+        `VIEW DETAILS` strip alone, on the reading that the strip is the control.
+        It isn't — the strip is a signpost for buyers who haven't learnt that the
+        card opens, which is how the live app behaves, so the link covers the
+        card and the strip is now plain markup inside it.
+
+        A stretched link rather than a wrapper, because a card contains buttons:
+        `<a>` may not wrap interactive content, and wrapping it anyway makes the
+        pack pills unreachable. This sits over the card at `z-10` and the pills
+        lift themselves to `z-20`, so a tap on a pill re-prices the card and a
+        tap anywhere else opens the product. It is last in the DOM so it is not
+        the first thing a screen reader meets, and it carries the title as its
+        name, the words `VIEW DETAILS` being no use read out of context.
+      */}
+      <Link
+        href={`/userjourney/product/${product.id}`}
+        aria-label={product.title}
+        className="absolute inset-0 z-10"
+      />
     </div>
   );
 }

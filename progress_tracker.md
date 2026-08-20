@@ -499,6 +499,22 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### The whole card is the tap target (2026-08-20)
+
+Corrected on feedback: the journey card linked from its `VIEW DETAILS` strip
+alone, on the reading that the strip is the control. It isn't — the strip exists
+to teach a new buyer that the card opens, and the live app opens on a tap
+anywhere.
+
+- A **stretched link**: `absolute inset-0`, `z-10`, last in the DOM, with the
+  product title as its accessible name. Not a wrapper — `<a>` may not wrap
+  interactive content, and the pack pills are buttons.
+- The pills lift to `z-20`, so picking a pack re-prices the card and does not
+  navigate. Verified: title, image and strip all open the product; a pill stays
+  on the listing.
+- **A–D unchanged.** Their `VIEW DETAILS` has never navigated — there is no
+  detail route for the main catalog — so there is no target to widen.
+
 #### The floating mic is on the listings too (2026-08-20)
 
 Asked for, and the live app has one: it appears in three of the four
