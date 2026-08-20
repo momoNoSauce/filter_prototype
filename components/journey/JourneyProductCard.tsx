@@ -69,7 +69,7 @@ export function JourneyProductCard({
           <div className="absolute top-0 left-0 flex h-[20px] items-center gap-[5px] rounded-br-[8px] bg-[#fb9805] pr-[10px] pl-[8px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img alt="" className="h-[11px] w-[14px] object-contain" src="/offers/cashback.png" />
-            <span className="text-[12px] font-bold whitespace-nowrap text-white">
+            <span className="text-[13px] font-bold whitespace-nowrap text-white">
               {inr(cashback)} Cashback
             </span>
           </div>
@@ -98,7 +98,7 @@ export function JourneyProductCard({
             <p className="line-clamp-3 w-full text-[14px] leading-[17px] font-bold text-black">
               {product.title}
             </p>
-            <p className="mt-[6px] flex w-full items-center gap-[10px] text-[12px] leading-[16px] font-medium text-muted">
+            <p className="mt-[6px] flex w-full items-center gap-[10px] text-[13px] leading-[16px] font-medium text-muted">
               <span>MRP/PC {inr(variant.mrp)}</span>
               <span className="font-normal opacity-60">|</span>
               {/* `Set of:` title case with the double space after the colon —
@@ -108,14 +108,14 @@ export function JourneyProductCard({
               <span>Set of:&nbsp; {variant.setOf}</span>
             </p>
 
-            <p className="mt-[14px] w-full text-[10px] leading-none font-medium text-muted">
+            <p className="mt-[14px] w-full text-[11px] leading-none font-medium text-muted">
               PRICE/PC
             </p>
             <div className="mt-[7px] flex w-full items-baseline gap-[10px]">
               <p className="shrink-0 text-[26px] leading-none font-medium whitespace-nowrap text-black">
                 {inr(variant.pricePerPc)}
               </p>
-              <p className="text-[14px] whitespace-nowrap text-margin">
+              <p className="text-[15px] whitespace-nowrap text-margin">
                 <span className="font-bold">{variant.marginPct}%</span>
                 <span className="font-normal"> margin</span>
               </p>
@@ -129,6 +129,15 @@ export function JourneyProductCard({
           `#014ffa`; the `primary` token is used instead, indistinguishable at
           this size and on-brand. Insets are 12px from the card edge, matching
           the card's own padding.
+
+          **The box is 22, not the measured 20**, and the label 12 rather than
+          11 — this card was written in a parallel worktree while the type pass
+          of 2026-08-20 was raising the 9–12px tier everywhere else, and missed
+          it. Brought onto the same floor afterwards. A deliberate departure from
+          1:1 for the reason that pass gives: this tier names the offer a kirana
+          retailer is being asked to act on, in poor light, and legibility beats
+          matching a screengrab pixel for pixel. The box grew by exactly the 2px
+          the type did, so the shape is still the app's.
         */}
         {(freeDelivery || cashback !== undefined) && (
           <div className="mt-[12px] flex w-full flex-wrap items-center gap-[8px]">
@@ -166,7 +175,7 @@ export function JourneyProductCard({
         href={`/userjourney/product/${product.id}`}
         className="flex h-[35px] w-full items-center justify-end gap-[8px] border-t border-[#ebebeb] bg-[#f5f8ff] px-[12px]"
       >
-        <p className="text-[12px] font-medium text-primary underline">VIEW DETAILS</p>
+        <p className="text-[13px] font-medium text-primary underline">VIEW DETAILS</p>
         {/* The exported chevron is orange, for the shared card's orange label.
             `MaskIcon` reads only the alpha channel, so the same untouched asset
             tints to primary here — the same route the Sort sheet's glyphs take.
@@ -185,10 +194,10 @@ export function JourneyProductCard({
 /** One outlined offer pill — 20px, 1px primary border, icon then label. */
 function OfferPill({ icon, label }: { icon: string; label: string }) {
   return (
-    <span className="flex h-[20px] shrink-0 items-center gap-[5px] rounded-[6px] border border-primary bg-white pr-[8px] pl-[6px]">
+    <span className="flex h-[22px] shrink-0 items-center gap-[5px] rounded-[6px] border border-primary bg-white pr-[8px] pl-[6px]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img alt="" className="h-[11px] w-[14px] object-contain" src={icon} />
-      <span className="text-[11px] font-medium whitespace-nowrap text-primary">
+      <span className="text-[12px] font-medium whitespace-nowrap text-primary">
         {label}
       </span>
     </span>
