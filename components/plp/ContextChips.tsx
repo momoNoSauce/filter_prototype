@@ -47,8 +47,8 @@ export function ContextChips({
   chips: ContextChip[];
   selections: Record<string, string[]>;
   onToggle: (facetId: string, optionId: string) => void;
-  /** Passes the chip element so the menu can be anchored under it. */
-  onOpenPrice: (anchor: HTMLElement, options: CountedOption[]) => void;
+  /** Opens the Price sheet over the bands this strip was built with. */
+  onOpenPrice: (options: CountedOption[]) => void;
 }) {
   return (
     <>
@@ -60,7 +60,7 @@ export function ContextChips({
               key="price"
               options={chip.options}
               chosen={chosen}
-              onOpen={(el) => onOpenPrice(el, chip.options)}
+              onOpen={() => onOpenPrice(chip.options)}
             />
           );
         }
@@ -183,7 +183,10 @@ function VerticalChip({
 }
 
 /**
- * Price: one chip opening a dropdown over the bands, rather than a chip each.
+ * Price: one chip opening a **bottom sheet** over the bands, rather than a chip
+ * each. It was an anchored dropdown until 2026-08-20; see `PriceSheet` for why
+ * it moved, and note that the chip no longer has to hand its own element up so
+ * the overlay can be positioned against it.
  *
  * The label carries the state so the closed chip still says what's applied —
  * the band's own name when one is picked, a count beyond that.
@@ -195,7 +198,7 @@ function PriceChip({
 }: {
   options: CountedOption[];
   chosen: string[];
-  onOpen: (anchor: HTMLElement) => void;
+  onOpen: () => void;
 }) {
   const selected = chosen.length > 0;
   const label =
@@ -207,8 +210,8 @@ function PriceChip({
 
   return (
     <button
-      onClick={(e) => onOpen(e.currentTarget)}
-      aria-haspopup="menu"
+      onClick={onOpen}
+      aria-haspopup="dialog"
       className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center gap-[4px] rounded-[8px] pr-[10px] pl-[8px] ${
         selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"
       }`}
@@ -336,86 +339,5 @@ function FilterChip({
         {label}
       </span>
     </button>
-  );
-}
-
-/**
- * The Price dropdown: a Material menu anchored under its chip.
- *
- * It renders at the screen root rather than inside the strip, because the
- * strip scrolls horizontally under `overflow-x-auto`, which would clip a
- * child menu. `left` and `top` are measured against the root when it opens.
- *
- * Each tap applies immediately — matching the chips beside it, which also
- * commit on tap — so there is no Apply button.
- */
-export function PriceMenu({
-  options,
-  chosen,
-  left,
-  top,
-  onToggle,
-  onClose,
-}: {
-  options: CountedOption[];
-  chosen: string[];
-  left: number;
-  top: number;
-  onToggle: (optionId: string) => void;
-  onClose: () => void;
-}) {
-  return (
-    <>
-      <button
-        aria-label="Close"
-        onClick={onClose}
-        className="absolute inset-0 z-40 cursor-default"
-      />
-      <div
-        role="menu"
-        style={{ left, top }}
-        className="absolute z-50 w-[180px] overflow-hidden rounded-[8px] border border-[#dedede] bg-white py-[4px] shadow-[0px_4px_12px_rgba(0,0,0,0.18)]"
-      >
-        {options.map((option) => {
-          const on = chosen.includes(option.id);
-          return (
-            <button
-              key={option.id}
-              role="menuitemcheckbox"
-              aria-checked={on}
-              onClick={() => onToggle(option.id)}
-              className="flex h-[40px] w-full cursor-pointer items-center gap-[8px] px-[12px] text-left"
-            >
-              <span
-                className={`flex size-[18px] shrink-0 items-center justify-center rounded-[3px] ${
-                  on ? "bg-primary" : "border-[1.5px] border-[#767676] bg-white"
-                }`}
-              >
-                {on && (
-                  <svg viewBox="0 0 20 20" className="size-[13px]" aria-hidden>
-                    <path
-                      d="M4 10.5l4 4 8-8"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </span>
-              <span
-                className={`flex-1 truncate text-[15px] ${
-                  on ? "font-medium text-primary" : "text-[#323232]"
-                }`}
-              >
-                {option.label}
-              </span>
-              <span className="shrink-0 text-[13px] text-muted">{option.count}</span>
-            </button>
-          );
-        })}
-      </div>
-    </>
   );
 }

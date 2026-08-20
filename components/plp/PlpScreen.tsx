@@ -25,10 +25,11 @@ import { SIZE_FACET_ID } from "@/lib/filters/activeVariant";
 import { ProductCard } from "./ProductCard";
 import { BottomActionBar } from "./BottomActionBar";
 import { TopChipBar } from "./TopChipBar";
-import { ChipStrip, ContextChips, PriceMenu } from "./ContextChips";
+import { ChipStrip, ContextChips } from "./ContextChips";
 import { contextChips } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
 import { SortSheet } from "@/components/sheets/SortSheet";
+import { PriceSheet } from "@/components/sheets/PriceSheet";
 import { FilterScreen } from "@/components/filters/FilterScreen";
 import { Toast } from "@/components/ui/Toast";
 
@@ -41,9 +42,6 @@ const PAGE_SIZE = 8;
  * appears it must say the same thing: one event, one wording.
  */
 const DISCARDED = "Selection discarded";
-
-/** Kept in step with `PriceMenu`'s own width, so the clamp can't be wrong. */
-const MENU_WIDTH = 180;
 
 type Overlay = "sort" | "filters" | null;
 
@@ -116,14 +114,12 @@ export function PlpScreen({
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
-  const [priceMenu, setPriceMenu] = useState<{
-    options: CountedOption[];
-    left: number;
-    top: number;
-  } | null>(null);
+  // The Price bands, or null when the sheet is closed. The options are carried
+  // rather than recomputed, so the sheet shows the counts the chip was tapped
+  // with.
+  const [priceSheet, setPriceSheet] = useState<CountedOption[] | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
   // Ids rather than the text alone, so discarding twice in a row replays the
   // animation instead of React seeing an identical element and leaving the
   // finished one on screen.
@@ -197,23 +193,6 @@ export function PlpScreen({
   const toggleChip = (facetId: string, optionId: string) =>
     commit(toggleSelection(selections, facetId, optionId), sort);
 
-  /**
-   * The Price menu is anchored under its chip but rendered at the root, since
-   * the chip strip scrolls under `overflow-x-auto` and would clip it. Measured
-   * against the root on open, and clamped so a chip scrolled to the right edge
-   * can't push the menu off the frame.
-   */
-  const openPriceMenu = (anchor: HTMLElement, options: CountedOption[]) => {
-    const root = rootRef.current?.getBoundingClientRect();
-    if (!root) return;
-    const chip = anchor.getBoundingClientRect();
-    setPriceMenu({
-      options,
-      left: Math.max(8, Math.min(chip.left - root.left, root.width - MENU_WIDTH - 8)),
-      top: chip.bottom - root.top + 4,
-    });
-  };
-
   // Cards are heavy, and there can be 1,070 of them. Render a page at a time
   // and extend as the list scrolls.
   const onScroll = () => {
@@ -241,9 +220,10 @@ export function PlpScreen({
   );
 
   return (
-    // `relative` so the Price menu can be positioned against this frame rather
-    // than the page, which is what makes the measured offsets meaningful.
-    <div ref={rootRef} className="relative flex h-full flex-col bg-page">
+    // `relative` so the sheets and the Filters screen cover this frame rather
+    // than the page. It outlived the Price dropdown it was added for, which
+    // measured its offsets against this box.
+    <div className="relative flex h-full flex-col bg-page">
       <div className="shrink-0">
         <AppBar
           title={title}
@@ -264,7 +244,7 @@ export function PlpScreen({
               chips={chips}
               selections={selections}
               onToggle={toggleChip}
-              onOpenPrice={openPriceMenu}
+              onOpenPrice={setPriceSheet}
             />
           </TopChipBar>
         ) : (
@@ -277,7 +257,7 @@ export function PlpScreen({
               chips={chips}
               selections={selections}
               onToggle={toggleChip}
-              onOpenPrice={openPriceMenu}
+              onOpenPrice={setPriceSheet}
             />
             </ChipStrip>
           )
@@ -345,16 +325,14 @@ export function PlpScreen({
         />
       )}
 
-      {priceMenu && (
-        <PriceMenu
-          options={priceMenu.options}
+      {priceSheet && (
+        <PriceSheet
+          options={priceSheet}
           chosen={selections.price ?? []}
-          left={priceMenu.left}
-          top={priceMenu.top}
-          // Applies live, like the chips beside it. The menu stays open so
+          // Applies live, like the chips beside it. The sheet stays open so
           // several bands can be ticked without reopening it.
           onToggle={(optionId) => toggleChip("price", optionId)}
-          onClose={() => setPriceMenu(null)}
+          onClose={() => setPriceSheet(null)}
         />
       )}
 

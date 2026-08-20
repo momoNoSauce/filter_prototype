@@ -499,6 +499,23 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### Price is a bottom sheet (2026-08-20)
+
+The Price chip opened an anchored dropdown; on request it now opens the same
+`Sheet` shell Sort uses. The strip has one way of opening things instead of two,
+and the positioning arithmetic the dropdown needed — root-relative `left`/`top`,
+a clamp so a right-scrolled chip couldn't push it off the frame, `MENU_WIDTH`,
+`rootRef` — is gone with it.
+
+- **No glyph column**, unlike Sort: the checkbox is the row's leading element.
+- Rows are the Filters screen's own `OptionRow`, so Price Range looks the same
+  wherever it is reached, counts included.
+- **Applies live and stays open**, where Sort commits and closes — Sort holds one
+  value, this holds several.
+- Verified on `/b`, `/d` and `/userjourney`: bands tick live into the query
+  string, the sheet survives two ticks, the chip reads `Price (2)`, and the ✕
+  closes it.
+
 #### The bottom bar is out (2026-08-20)
 
 The basket bar owns the foot of a SOLV listing — it is in the live app's own
