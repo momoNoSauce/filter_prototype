@@ -27,8 +27,6 @@ export interface FacetDef {
   id: string;
   label: string;
   panel: PanelType;
-  /** Show the search field above the options */
-  searchable: boolean;
   /**
    * The option ids this product belongs to. Returning several is legitimate —
    * "Within 3 days" and "Within 5 days" both match a 2-day product — and the
@@ -107,7 +105,6 @@ const PV_ATTRIBUTE_FACETS: FacetDef[] = PV_ATTRIBUTES.map(({ id, label }) => ({
   id,
   label,
   panel: "checkbox",
-  searchable: false,
   valuesOf: (p) => [slug(p[id])],
   options: PV_ATTRIBUTE_OPTIONS[id].map((name) => ({ id: slug(name), label: name })),
 }));
@@ -117,7 +114,6 @@ export const FACETS: FacetDef[] = [
     id: "category",
     label: "Category",
     panel: "tile",
-    searchable: true,
     valuesOf: (p) => {
       const id = CATEGORY_ID_BY_LABEL.get(p.category);
       return id ? [id] : [];
@@ -132,7 +128,6 @@ export const FACETS: FacetDef[] = [
     id: "delivery",
     label: "Delivery Time",
     panel: "checkbox",
-    searchable: false,
     valuesOf: (p) => DELIVERY_BUCKETS.filter((b) => p.deliveryDays <= b.maxDays).map((b) => b.id),
     options: DELIVERY_BUCKETS.map(({ id, label }) => ({ id, label })),
   },
@@ -140,7 +135,6 @@ export const FACETS: FacetDef[] = [
     id: "moq",
     label: "MOQ",
     panel: "range",
-    searchable: false,
     valuesOf: (p) => bucketId(MOQ_BUCKETS, p.moq),
     options: MOQ_BUCKETS.map(({ id, label }) => ({ id, label })),
   },
@@ -149,7 +143,6 @@ export const FACETS: FacetDef[] = [
     label: "Brands",
     // Same tile grid as Category.
     panel: "tile",
-    searchable: true,
     valuesOf: (p) => [slug(p.brand)],
     options: [...BRANDS]
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -159,7 +152,6 @@ export const FACETS: FacetDef[] = [
     id: "price",
     label: "Price Range",
     panel: "range",
-    searchable: false,
     valuesOf: (p, sizes) => bucketId(PRICE_BUCKETS, activeVariant(p, sizes).pricePerPc),
     options: PRICE_BUCKETS.map(({ id, label }) => ({ id, label })),
   },
@@ -167,7 +159,6 @@ export const FACETS: FacetDef[] = [
     id: "margin",
     label: "Margin",
     panel: "range",
-    searchable: false,
     valuesOf: (p, sizes) => bucketId(MARGIN_BUCKETS, activeVariant(p, sizes).marginPct),
     options: MARGIN_BUCKETS.map(({ id, label }) => ({ id, label })),
   },
@@ -175,7 +166,6 @@ export const FACETS: FacetDef[] = [
     id: "size",
     label: "Size",
     panel: "checkbox",
-    searchable: false,
     /**
      * Every size the product is made in, unioned across its packs — so ticking
      * L returns anything with at least one pack carrying L, and ticking M and
@@ -193,7 +183,6 @@ export const FACETS: FacetDef[] = [
     id: "colour",
     label: "Colour",
     panel: "swatch",
-    searchable: true,
     valuesOf: (p) => [slug(p.colour)],
     options: COLOURS.map((c) => ({ id: slug(c.name), label: c.name, hex: c.hex })),
   },
@@ -201,7 +190,6 @@ export const FACETS: FacetDef[] = [
     id: "seller",
     label: "Seller",
     panel: "checkbox",
-    searchable: true,
     valuesOf: (p) => [p.sellerId],
     options: SELLERS.map((s) => ({ id: s.id, label: s.name })),
   },
@@ -209,7 +197,6 @@ export const FACETS: FacetDef[] = [
     id: "sellerCity",
     label: "Seller City",
     panel: "checkbox",
-    searchable: true,
     valuesOf: (p) => [slug(p.sellerCity)],
     options: [...new Set(SELLERS.map((s) => s.city))]
       .sort()
@@ -225,7 +212,6 @@ export const FACETS: FacetDef[] = [
     id: "hasOffer",
     label: "Seller Offer",
     panel: "checkbox",
-    searchable: false,
     valuesOf: (p) => (p.offers.length ? ["any"] : []),
     options: [{ id: "any", label: "Seller Offer" }],
   },
@@ -233,7 +219,6 @@ export const FACETS: FacetDef[] = [
     id: "offers",
     label: "Offers",
     panel: "checkbox",
-    searchable: false,
     valuesOf: (p) => p.offers.map(slug),
     // Retired offers are still drawn, to hold the seed — see OFFERS — but no
     // product carries one, so listing it would be a permanently empty option.
@@ -255,7 +240,6 @@ export const FACETS: FacetDef[] = [
     id: "gender",
     label: "Gender",
     panel: "checkbox",
-    searchable: false,
     valuesOf: (p) => [p.gender],
     options: [
       { id: "men", label: "Men" },
@@ -269,7 +253,6 @@ export const FACETS: FacetDef[] = [
     id: "fabric",
     label: "Fabric",
     panel: "checkbox",
-    searchable: false,
     valuesOf: (p) => [slug(p.fabric)],
     options: FABRICS.map((f) => ({ id: slug(f.name), label: f.name })),
   },
@@ -278,7 +261,6 @@ export const FACETS: FacetDef[] = [
     id: "tags",
     label: "Product Tags",
     panel: "checkbox",
-    searchable: false,
     valuesOf: (p) => (p.bestSeller ? ["best-seller"] : []),
     options: [{ id: "best-seller", label: "Best Seller" }],
   },

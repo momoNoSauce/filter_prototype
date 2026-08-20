@@ -204,17 +204,42 @@ export const BRANDS: { name: string; weight: number; categories: string[] }[] = 
   },
 ];
 
+/*
+ * Twenty colours, ordered by weight so the panel reads commonest-first.
+ *
+ * It was ten until 2026-08-20, and ten fit inside the fold — 520px of rows in
+ * a 690px panel — which left the search field above them with nothing to do.
+ * Twenty runs to 1,040px and is the first facet in the app that genuinely
+ * needs searching; see `lib/filters/panelFit.ts`.
+ *
+ * Safe for the seed: `weightedPick` draws exactly one `rand()` however long
+ * the array is, so the sequence never shifts and every documented count holds
+ * — 1,070 total, Girls 97, Men 575, `₹900 & above` 37, the seven category
+ * counts and the thirteen size counts. Only colour's own distribution moves,
+ * which is the point. `dark` picks between the two product renders, so every
+ * entry needs one.
+ */
 export const COLOURS: { name: string; hex: string; dark: boolean; weight: number }[] = [
   { name: "Black", hex: "#1a1a1a", dark: true, weight: 16 },
   { name: "White", hex: "#ffffff", dark: false, weight: 15 },
   { name: "Grey", hex: "#8a8a8a", dark: false, weight: 14 },
   { name: "Navy", hex: "#1f3a5f", dark: true, weight: 12 },
   { name: "Blue", hex: "#2f6fd0", dark: true, weight: 11 },
+  { name: "Red", hex: "#c0392b", dark: true, weight: 10 },
   { name: "Beige", hex: "#d9c9a8", dark: false, weight: 9 },
   { name: "Maroon", hex: "#7b2434", dark: true, weight: 8 },
+  { name: "Green", hex: "#2e7d4f", dark: true, weight: 8 },
   { name: "Olive", hex: "#6b7845", dark: true, weight: 6 },
+  { name: "Teal", hex: "#17807e", dark: true, weight: 6 },
   { name: "Pink", hex: "#e79ab3", dark: false, weight: 5 },
+  { name: "Purple", hex: "#6b4c9a", dark: true, weight: 5 },
+  { name: "Brown", hex: "#6f4e37", dark: true, weight: 5 },
+  { name: "Sky Blue", hex: "#7fb8e0", dark: false, weight: 5 },
   { name: "Mustard", hex: "#e9c94a", dark: false, weight: 4 },
+  { name: "Rust", hex: "#b5551f", dark: true, weight: 4 },
+  { name: "Lavender", hex: "#b9a7d6", dark: false, weight: 3 },
+  { name: "Cream", hex: "#f2ead8", dark: false, weight: 3 },
+  { name: "Coral", hex: "#f07a5f", dark: false, weight: 3 },
 ];
 
 export const PACK_TYPES = [

@@ -299,6 +299,30 @@ The wrapper that held the line went with it: its `gap-[4px]` existed only to sep
 
 Verified at 360px, 3×: zero occurrences of "shipping fee" in A, B, C and D, and none after scrolling A; price and margin sit exactly where they did; no console errors. 85 tests green — determinism held, which is the thing that would have broken had the draw gone with the line.
 
+### 2026-08-20 — the search field is earned rather than declared
+
+**Every facet that showed a search field fit inside the fold.** The flag was static — `searchable: true` on Category, Brands, Colour, Seller and Seller City — and measured against the panel it sits in, not one of them needed it:
+
+| Facet | Options | Height | Panel |
+|---|---|---|---|
+| Category | 7 tiles | 288px | 690px |
+| Brands | 10 tiles | 384px | 690px |
+| Colour | 10 rows | 520px | 690px |
+| Seller | 8 rows | 416px | 690px |
+| Seller City | 6 rows | 312px | 690px |
+
+So the field cost 56px of the fold to search a list already on screen. The flag is deleted and the rule is now the honest one: **show it when the options overflow.** `lib/filters/panelFit.ts` holds the arithmetic, and because it works on counts rather than the DOM it also **takes the field away again** when pruning shortens a list — which a static flag can't do.
+
+**Computed, not measured.** `scrollHeight > clientHeight` is the literal reading of "below the fold" and was rejected: the server can't measure, so SSR would render no field and the client would add one after hydration — a 56px shift every time a panel opened, on a prototype where server/client agreement is load-bearing. The constants are the rendered sizes (800px frame − 49px header − 61px footer = 690px; `OptionRow` 52px; tiles 96px, three across), and they work out to **14 checkbox rows or 22 tiles**. A test pins both thresholds, so changing a row height in the markup without following it here fails rather than moving the field a row.
+
+**Colour went from ten colours to twenty**, because otherwise nothing in the app overflows and the rule has nothing to demonstrate. Red, Green, Teal, Purple, Brown, Sky Blue, Rust, Lavender, Cream and Coral join the ten, ordered by weight so the panel still reads commonest-first. **Determinism held**, and this is the reason it could: `weightedPick` takes exactly one `rand()` however long the array is, so the sequence never shifted. Verified unchanged — 1,070 total, Girls 97, Men 575, `₹900 & above` 37, all seven category counts and all thirteen size counts. Only colour's own distribution moved, which is the point; every product's `image` still falls out of its `dark` flag, so all twenty carry one.
+
+**One trap worth recording.** The visibility decision runs on the option counts *before* the query narrows them — deciding on the queried list would let the field delete itself from under the cursor as soon as you typed enough to make the remainder fit. And when a panel does stop overflowing, `activeQuery` drops the query with the field, so a control nobody can see can't go on filtering.
+
+Verified at 360px, 3×: Colour shows the field over twenty colours (Black 108 … Coral), twelve above the fold; Seller, Seller City, Brands and Category show none; typing `bl` in Colour narrows to Black, Blue and Sky Blue with the field still there; `?category=girls-t-shirts&size=12-13y` prunes Colour to five and the field gives its 56px back; `/d` behaves as `/` does. No console errors. 94 tests green (nine new), lint, typecheck and production build clean.
+
+*A false start worth noting:* the first screenshot pass showed no change at all, because port 3000 was already held by another worktree's dev server and this one had quietly taken 3001 — every shot was of somebody else's code. Check the port before believing a screenshot in a multi-worktree checkout.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -318,7 +342,7 @@ Verified at 360px, 3×: zero occurrences of "shipping fee" in A, B, C and D, and
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.
 - Size, at 360px in Chromium: the panel lists all thirteen options with live counts (XS 49 … 12-13Y 28); `?gender=girls` leaves only age bands (27/53/47/43/25/7); `size=3xl` gives `Show 30 results` and writes `?size=3xl`.
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
-- 80 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
+- 94 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
 ## The four variants
 
