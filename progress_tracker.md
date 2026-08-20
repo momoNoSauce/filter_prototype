@@ -501,9 +501,18 @@ Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 
 #### Deliberately not built
 
-- **Home is built only as far as the banner.** *Order Again* and *Top Brands*
-  are labelled stubs — a stub that looks like content invites a tap and reads
-  as a bug, where a labelled gap reads as a decision.
+- **The home rails are inert.** *Order Again* and *Top Brands* are drawn in
+  full (2026-08-20) but nothing there navigates: the products are Magic Fit's,
+  out of the live app, and match nothing in either catalog. Both rails are
+  `overflow-x-hidden` like the banner — each shows the sliver of a further card
+  the screengrab shows, and a peek you can scroll to and find blank reads as a
+  bug where one you can't reads as the carousel it stands in for.
+- **Rangmayee's brand tile is a `#d9d9d9` placeholder.** It is the second tile
+  in the screengrab, and the floating mic sits over its right quarter — taking
+  the last letter of the wordmark and the tail of the tagline with it. A crop
+  with a hole in it or a hand-set imitation of somebody's logo are both worse
+  than the placeholder this repo already uses for brand art it doesn't have. A
+  supplied logo file drops straight in at `public/journey/home/`.
 - **The cart bar is hidden**, `SHOW_CART_BAR = false` (on request). Kept whole:
   there is no basket to fill, so it could only print the screengrab's fixed
   ₹717, and a total that never moves invites the question of why. One constant

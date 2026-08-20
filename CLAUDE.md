@@ -111,6 +111,20 @@ as it already does for the product card.
   here, so it could only print the screengrab's fixed ₹717.
 - The **seller header scrolls away** with the listing (it renders *inside* the
   scroller); the app bar and chip strip stay fixed.
+- **`Order Again` and `Top Brands` are built** (2026-08-20), so the home screen is
+  now the screengrab end to end. Both are **inert** — the products are Magic Fit's
+  and match nothing in either catalog — and both are `overflow-x-hidden`, like the
+  banner above them: each shows the sliver of a further card the screengrab shows,
+  and a peek you can scroll to and find blank reads as a bug. The page below the
+  blue is **`#f7f7f7`**, not white. Every box is measured off the screengrab at 3×
+  and checked by re-measuring our own render: 148×155 product cards at a 15px
+  inset, 156×159 brand tiles at 11px, both rails on the same 168px pitch. **Only
+  Magic Fit's tile could be cropped** — the floating mic sits over the right
+  quarter of Rangmayee's, taking the last letter of the wordmark with it, so that
+  one gets the `#d9d9d9` placeholder this repo already uses for brand art it
+  doesn't have. Two departures from the screengrab, both deliberate: `Margin` is
+  set in `muted` where the app's own grey measures `#a1a1a1` (2.2:1), and the
+  card title ellipsises on the word where Android breaks mid-word.
 
 **Quirks reproduced rather than tidied**, per instruction: the seller name
 appears three ways across two screens (`Kartik exporters` / `KARTIK EXPORTERS` /
@@ -124,9 +138,8 @@ on the detail bar; the search placeholder reads `"Vanadana Sarees"`.
 Dropping Share is also what makes the title fit — `KARTIK EXPORTERS` truncated to
 `KARTIK EXPOR…` at 20px with it in place.
 
-**Not built, on purpose:** home beyond the banner (*Order Again* and *Top Brands*
-are labelled stubs), a second gallery image (only front renders exist), and a
-working basket. Men's cards still show a button-up — no men's tee render exists
+**Not built, on purpose:** a second gallery image (only front renders exist) and
+a working basket. Men's cards still show a button-up — no men's tee render exists
 in any screengrab, the same ask already open against the main catalog.
 
 ## Design source — always pull from Figma, never eyeball
