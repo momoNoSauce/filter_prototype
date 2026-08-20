@@ -73,6 +73,8 @@ Two functions do the real work:
 
 That second rule is the whole thing. Counting a facet against its own selections would zero out every unselected option the moment you ticked one, and the panel would collapse. Excluding it is what makes ticking *Grasim* still show a live count for *Gagan*, while *Girls* correctly erases *Men's Formal Shirts* from Category.
 
+**Size is the one facet counted by filtering rather than tallying**, because its selection moves which pack a product is priced by and so can push it out of another facet's band — a tally taken with Size skipped can't see that, and once offered an option labelled `(1)` that returned an empty page. Each of its thirteen options is applied **on its own** alongside the other facets' selections, which is the same own-facet-excluded question, just answered by a filter pass. Applying `selected ∪ option` instead looks equivalent and isn't: Size is OR-within-a-facet, so a union only widens, and every option would inherit the current selection's count and never fall to zero — which is precisely how kids' age bands turned up inside Women's T-Shirts on 2026-08-20.
+
 Options that fall to zero are hidden. Anything currently selected stays visible even at zero, so a selection can never become impossible to undo.
 
 ### The active pack — `lib/filters/activeVariant.ts`
@@ -87,7 +89,7 @@ Twenty facets behind thirteen rail entries, rising to eighteen inside a single p
 
 `FACETS` is everything the engine knows about; `getRail()` is what the Filters screen displays. It takes no variant since 2026-08-19: Category left A's bottom bar and rejoined the rail, so both variants show the same thirteen rows, headed by Category then Gender — and the same eighteen inside one vertical, where Gender drops out and the attribute block joins at the end.
 
-**Gender** stays despite every category naming its audience — it is a faster cut than ticking three tiles, and dropping it would leave `?gender=` links with no UI.
+**Gender** stays despite every category naming its audience — it is a faster cut than ticking three tiles, and dropping it would leave `?gender=` links with no UI. But only *across* verticals: settle on one and it goes, category → gender being 1:1, so it could then only offer the single value everything in scope already has.
 
 `getRailFacetIds()` is the set that anything mutating the draft (notably Clear Filters) must filter through, so a facet the screen doesn't show can never be cleared by it. That guard now excludes nothing, but it is kept as a filter rather than a blanket reset so it still holds if the rails ever diverge again.
 
@@ -179,7 +181,7 @@ Several of these were revised during review — the current state is what's list
 
 ## Verification
 
-- `npm test` — 80 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, and the size facet's match-and-active-pack rules.
+- `npm test` — 85 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, the size facet's match-and-active-pack rules, and the rail order pinned in both states.
 - `npm run dev`, then Chrome DevTools at exactly 360px, and compare each screen against its Figma frame.
 - Widen past 480px to confirm the phone mockup appears and the app still renders at 360.
 

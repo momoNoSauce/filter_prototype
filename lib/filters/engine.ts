@@ -109,12 +109,25 @@ export function facetOptionsWithCounts(
     return facet.options
       .map((option) => ({
         ...option,
-        // What the shopper is about to have: this option added to whatever is
-        // already ticked, which is what tapping it does.
-        count: applyFilters(products, {
-          ...selections,
-          [facetId]: [...new Set([...selected, option.id])],
-        }).length,
+        /*
+         * The option **on its own**, with the rest of the selections applied —
+         * the same own-facet-excluded question the tally below asks, just
+         * answered by filtering instead of counting.
+         *
+         * It must not be `selected ∪ option`, the shape this carried until
+         * 2026-08-20. Size is OR-within-a-facet, so a union can only ever
+         * widen: once one size was ticked, every other option inherited at
+         * least that selection's count, nothing could fall to zero, and the
+         * hide-at-zero rule stopped firing. Pick Women's T-Shirts, tick S, and
+         * the panel offered `2-3Y` — an age band no adult vertical carries —
+         * showing S's own count back at you.
+         *
+         * Replacing rather than skipping is the part that matters: the size
+         * filter has to actually run, or the active pack doesn't move and the
+         * count goes back to promising results a tap can't deliver.
+         */
+        count: applyFilters(products, { ...selections, [facetId]: [option.id] })
+          .length,
       }))
       .filter((option) => option.count > 0 || selected.includes(option.id));
   }

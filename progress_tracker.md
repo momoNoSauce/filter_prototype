@@ -272,6 +272,23 @@ C and D's `?gender=` strip folded into the same guard, replacing an ad-hoc `para
 
 Verified at 360px: the three rails read exactly as above; no Gender row inside a vertical in A or B; Price Range 6th and above the fold with 163 results under Men's Formal Shirts; the contradiction URL renders 97 rather than an empty page and the badge reads 1; `/c?gender=girls` leaves the badge bare; `?gender=men` alone across verticals still filters and still counts. 83 tests green (three new), lint, typecheck and build clean. As with C and D's stale `?category=`, a stale `?gender=` in the address bar is **ignored rather than rewritten** — the next commit cleans it.
 
+### 2026-08-20 — the Size panel offered sizes the vertical doesn't carry
+
+Reported: pick Women's T-Shirts, open Filters, tick **S** — and the panel starts offering `2-3Y`, `4-5Y` and the rest of the kids' age bands. Before ticking anything it listed the seven letters correctly.
+
+**The count was `selected ∪ option`.** Added on 2026-08-19 with the counting fix, on the reasoning that a count should say what the tap delivers. But Size is OR-within-a-facet, so a union can only ever *widen*: with S ticked, `2-3Y` was counted as `S ∪ 2-3Y`, which is just S's own 55 products, because no adult vertical carries an age band. Every unticked option inherited the current selection's count, none could reach zero, and the hide-at-zero rule stopped firing across the whole panel. The displayed numbers were wrong in the same way — every row showed at least the current result count.
+
+**Each option is now applied on its own** — `{...selections, size: [option]}` — which is the own-facet-excluded question the tally already asks for every other facet. Ticking a seller still shows live counts for the others; Size now behaves the same way, and its counts stay put as you tick rather than climbing.
+
+Two properties had to survive the change, and both do:
+
+- **Replacing, not skipping.** The size filter still runs, so the active pack still moves. Skipping it is what caused the original 2026-08-19 bug, where an option labelled `(1)` handed back an empty page.
+- **A visible option can never lead to an empty page.** If the option alone returns *n* > 0, then `selected ∪ option` returns at least *n*, a union only widening. The guarantee is if anything stronger than before.
+
+The count no longer equals what a tap returns — it under-promises when something is already ticked. That is exactly the contract every other facet has, so the test that pinned the old equality was replaced rather than patched: the count now equals the option applied alone, and a separate test asserts the tap never undershoots it.
+
+Verified at 360px: Women's T-Shirts + S reads `XS (16) · S (55) · M (83) · L (94) · XL (71) · 2XL (33) · 3XL (10)` with no age bands, and `Show 55 results`; the counts are identical before and after ticking; Girl's T-Shirts + 4-5Y shows the six age bands and no letters. 85 tests green (two new, one rewritten), lint, typecheck and build clean.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.

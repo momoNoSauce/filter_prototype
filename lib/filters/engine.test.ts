@@ -845,7 +845,16 @@ describe("sorting by price", () => {
 describe("a count the tap can honour", () => {
   const catalog = getCatalog();
 
-  it("promises exactly what ticking a size delivers, price filter and all", () => {
+  const BASES: Selections[] = [
+    {},
+    { price: ["p-900"] },
+    { colour: ["white"], price: ["p-900"], closure: ["snap-button"] },
+    { margin: ["m-60"], category: ["mens-formal-shirts"] },
+    { size: ["m"], price: ["p-400"] },
+    { category: ["womens-t-shirts"], size: ["s"] },
+  ];
+
+  it("counts a size on its own, the way every other facet is counted", () => {
     /*
      * The failure this exists for, measured 2026-08-19: colour=White,
      * price ₹600–900, closure=Snap Button left two products; the Size panel
@@ -853,22 +862,57 @@ describe("a count the tap can honour", () => {
      * `p-0079` is ₹610, inside the band, but the pack carrying 2XL is ₹575,
      * outside it — so picking the size moved the product out of a *price*
      * filter, which a tally taken with size ignored can't see.
+     *
+     * The count is the option applied *alone* alongside the other facets —
+     * own-facet-excluded, exactly what the tally computes for everything else.
+     * It is deliberately not `selected ∪ option`; see the bug below.
      */
-    const bases: Selections[] = [
-      {},
-      { price: ["p-900"] },
-      { colour: ["white"], price: ["p-900"], closure: ["snap-button"] },
-      { margin: ["m-60"], category: ["mens-formal-shirts"] },
-      { size: ["m"], price: ["p-400"] },
-    ];
-
-    for (const base of bases) {
+    for (const base of BASES) {
       for (const option of facetOptionsWithCounts(catalog, base, "size")) {
+        const alone = { ...base, size: [option.id] };
+        expect(applyFilters(catalog, alone).length).toBe(option.count);
+      }
+    }
+  });
+
+  it("hides sizes the vertical doesn't carry, even once one is ticked", () => {
+    /*
+     * Reported 2026-08-20: pick Women's T-Shirts, open Filters, tick S — and
+     * the panel started offering `2-3Y`, `4-5Y` and the rest of the kids' age
+     * bands, which no adult vertical carries.
+     *
+     * The count had been `selected ∪ option`. Size is OR-within-a-facet, so a
+     * union only ever widens: every unticked option inherited S's own count,
+     * none could reach zero, and hide-at-zero stopped firing entirely.
+     */
+    const bands = /^\d+-\d+Y$/;
+    const labels = (selections: Selections) =>
+      facetOptionsWithCounts(catalog, selections, "size").map((o) => o.label);
+
+    const women = { category: ["womens-t-shirts"] };
+    expect(labels(women).some((l) => bands.test(l))).toBe(false);
+    expect(labels({ ...women, size: ["s"] }).some((l) => bands.test(l))).toBe(false);
+    // And the mirror: a kids' vertical offers no letters, ticked or not.
+    const girls = { category: ["girls-t-shirts"] };
+    expect(labels(girls).every((l) => bands.test(l))).toBe(true);
+    expect(labels({ ...girls, size: ["4-5y"] }).every((l) => bands.test(l))).toBe(true);
+  });
+
+  it("never shows a count a tap would undershoot", () => {
+    // Ticking widens, Size being OR-within-a-facet, so what the tap delivers is
+    // always at least the number on the row — and never zero, which is the
+    // guarantee the empty-page walk below leans on.
+    for (const base of BASES) {
+      for (const option of facetOptionsWithCounts(catalog, base, "size")) {
+        if ((base.size ?? []).includes(option.id)) continue;
         const ticked = {
           ...base,
           size: [...new Set([...(base.size ?? []), option.id])],
         };
-        expect(applyFilters(catalog, ticked).length).toBe(option.count);
+        expect(option.count).toBeGreaterThan(0);
+        expect(applyFilters(catalog, ticked).length).toBeGreaterThanOrEqual(
+          option.count,
+        );
       }
     }
   });
