@@ -499,6 +499,20 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### The floating mic is on the listings too (2026-08-20)
+
+Asked for, and the live app has one: it appears in three of the four
+screengrabs, over the home and over both listing screens. `components/ui/MicFab`
+now serves all of them.
+
+- **Inert**, `pointer-events-none` — no voice search behind it, and taps fall
+  through to the card underneath.
+- Re-measured in the move: 47px circle, 2px `#023d8c` ring, 13 × 21 glyph, 20px
+  right, 78px up. The home's had been eyeballed at 54px and 18px up.
+- 78px clears A and C's control bar and the journey's basket bar alike, so the
+  PLP anchors it to the frame rather than to whatever is under the list — which
+  is also what keeps it still while the listing scrolls.
+
 #### Price is a bottom sheet (2026-08-20)
 
 The Price chip opened an anchored dropdown; on request it now opens the same

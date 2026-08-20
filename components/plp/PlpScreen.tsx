@@ -30,6 +30,7 @@ import { contextChips } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
 import { SortSheet } from "@/components/sheets/SortSheet";
 import { PriceSheet } from "@/components/sheets/PriceSheet";
+import { MicFab } from "@/components/ui/MicFab";
 import { FilterScreen } from "@/components/filters/FilterScreen";
 import { Toast } from "@/components/ui/Toast";
 
@@ -305,6 +306,11 @@ export function PlpScreen({
           on the screen and the filter controls stay put as the listing changes
           under them. */}
       {belowList}
+
+      {/* Anchored to the frame rather than the list, so it stays put as the
+          listing scrolls under it — which is what the screengrabs show, and the
+          reason it can't live inside the scroller. */}
+      <MicFab />
 
       {overlay === "sort" && (
         <SortSheet

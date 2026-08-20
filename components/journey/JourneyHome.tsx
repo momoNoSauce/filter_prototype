@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MicFab } from "@/components/ui/MicFab";
 
 /**
  * The journey's home screen, rebuilt from the live app's screengrab.
@@ -148,11 +149,9 @@ export function JourneyHome() {
         </div>
       </div>
 
-      {/* The floating mic, bottom right in both screengrabs. Inert. */}
-      <div className="pointer-events-none absolute right-[16px] bottom-[18px] flex size-[54px] items-center justify-center rounded-full border-[3px] border-[#0b2f8a] bg-white">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img alt="" className="h-[26px] w-[18px]" src="/figma/icons/microphone.png" />
-      </div>
+      {/* The floating mic. Shared with every listing since 2026-08-20, and
+          re-measured in the move — see `MicFab`. */}
+      <MicFab />
     </div>
   );
 }
