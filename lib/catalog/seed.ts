@@ -512,6 +512,14 @@ function buildVariants(
       mrp,
       pricePerPc,
       marginPct,
+      /*
+       * Nothing reads this any more — the card's `+₹50 shipping fee` line went
+       * on 2026-08-20, not being a real charge. The draw stays exactly where it
+       * is: it sits mid-sequence, so removing the `rand()` would shift every
+       * draw after it and re-roll the whole catalog, moving every count in the
+       * docs. Same reason `packType` outlived its filter and the retired GOLD
+       * offer is still drawn and discarded.
+       */
       shippingFee: roundTo(30 + rand() * 90, 10),
     };
   });

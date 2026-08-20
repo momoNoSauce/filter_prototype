@@ -84,7 +84,8 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
 
                 The margin used to sit in its own `flex-1` column, which pushed
                 it to the card's right edge — about 40px clear of the price, and
-                bottom-aligned to the shipping line rather than to the price.
+                bottom-aligned to a since-removed shipping line rather than to
+                the price.
                 Measured, the app sets it **10px** after the price and on the
                 **same baseline**: price and margin ink bottoms land within
                 0.3px of each other in both sampled cards, and the 10px gap is
@@ -102,22 +103,30 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
                   buries most of that inside the boxes where it can't be set. */}
               <p className="w-full text-[9px] leading-none font-bold text-muted">PRICE/PC</p>
 
-              <div className="mt-[7px] flex w-full flex-col items-start gap-[4px]">
-                <div className="flex w-full items-baseline gap-[10px]">
-                  <p className="shrink-0 text-[26px] leading-none font-medium whitespace-nowrap text-black">
-                    {inr(variant.pricePerPc)}
-                  </p>
-                  <p className="text-[14px] whitespace-nowrap text-margin">
-                    <span className="font-bold">{variant.marginPct}%</span>
-                    <span className="font-normal"> margin</span>
-                  </p>
-                </div>
-                {/* Kept, though the screengrab has no such line: it is real
-                    per-order cost the seed carries, and dropping information to
-                    match a screenshot is the designer's call, not this pass's.
-                    It sits under the price, where the old column had it. */}
-                <p className="text-[9px] font-normal text-muted">
-                  +{inr(variant.shippingFee)} shipping fee
+              {/* No shipping-fee line under the price. It read `+₹50 shipping
+                  fee`, was carried over from an earlier cut of the card, and
+                  isn't a real charge — removed on request, 2026-08-20, which
+                  also brings the card back in line with the live app's
+                  screengrab, where no such line appears.
+
+                  `variant.shippingFee` still exists and is still drawn. Its
+                  `rand()` sits mid-sequence in the seed, so deleting it would
+                  re-roll the entire catalog and move every documented count —
+                  the same reason `packType` survived losing its filter and the
+                  retired GOLD offer is still drawn and thrown away. Nothing
+                  reads it now; price and margin never did.
+
+                  The wrapper that held this line went with it, its `gap-[4px]`
+                  having existed only to separate the two. The measurements that
+                  matter are untouched: 7px from `PRICE/PC` to the price, and
+                  the 10px baseline gap from price to margin. */}
+              <div className="mt-[7px] flex w-full items-baseline gap-[10px]">
+                <p className="shrink-0 text-[26px] leading-none font-medium whitespace-nowrap text-black">
+                  {inr(variant.pricePerPc)}
+                </p>
+                <p className="text-[14px] whitespace-nowrap text-margin">
+                  <span className="font-bold">{variant.marginPct}%</span>
+                  <span className="font-normal"> margin</span>
                 </p>
               </div>
             </div>

@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-08-19
+Last updated: 2026-08-20
 
 Live: **https://filterprototype.vercel.app** — **password-protected** since
 2026-08-14. **Leave the username blank** and enter the password; only the password is checked. It lives in the `SITE_PASSWORD` env var on Vercel
@@ -289,6 +289,16 @@ The count no longer equals what a tap returns — it under-promises when somethi
 
 Verified at 360px: Women's T-Shirts + S reads `XS (16) · S (55) · M (83) · L (94) · XL (71) · 2XL (33) · 3XL (10)` with no age bands, and `Show 55 results`; the counts are identical before and after ticking; Girl's T-Shirts + 4-5Y shows the six age bands and no letters. 85 tests green (two new, one rewritten), lint, typecheck and build clean.
 
+### 2026-08-20 — the shipping-fee line is gone
+
+`+₹50 shipping fee` under the price is **not a real charge**, and is removed from the card in all four variants. It had been kept as an open question since 2026-08-14 — "real per-order cost the seed carries, say the word and it goes" — and the word was said. It also closes the last disagreement between our card and the live app's screengrab, which has no such line.
+
+**`variant.shippingFee` stays on the type and is still drawn.** Its `rand()` sits mid-sequence inside the pack loop, so deleting it would shift every draw after it and re-roll the whole catalog, moving every count in these docs. It is simply unread now — the same treatment `packType` got when it lost its filter, and the retired GOLD offer when it lost its tag. Price and margin never read it, so nothing else moves.
+
+The wrapper that held the line went with it: its `gap-[4px]` existed only to separate the two rows. The measured spacing is untouched — 7px from `PRICE/PC` to the price, 10px on the baseline from price to margin.
+
+Verified at 360px, 3×: zero occurrences of "shipping fee" in A, B, C and D, and none after scrolling A; price and margin sit exactly where they did; no console errors. 85 tests green — determinism held, which is the thing that would have broken had the draw gone with the line.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -343,7 +353,7 @@ Ordered by consequence. None of these block a demo.
    | Text | Was | Ratio | Now | Ratio | AA needs |
    |---|---|---|---|---|---|
    | `65% margin` | `#39B54A` | 2.66:1 | `#004FFA` (`primary`) | **6.0:1** ✅ | 4.5:1 |
-   | MRP / Price per pc / shipping | `#999999` | 2.85:1 | `#7F7F7F` | 4.0:1 ⚠️ | 4.5:1 |
+   | MRP / Price per pc | `#999999` | 2.85:1 | `#7F7F7F` | 4.0:1 ⚠️ | 4.5:1 |
    | `VIEW DETAILS` | `#FF7711` | 2.53:1 | — | 2.53:1 ❌ | 4.5:1 |
    The margin now clears AA outright. The grey improves but still misses at 12px, so it stays listed. `VIEW DETAILS` is untouched and is now the worst offender on the card — the live app renders it blue, which would close it too, but that was left for a deliberate call rather than folded into a format pass.
    Audience is kirana retailers on mid-range Android in poor light.
@@ -373,7 +383,7 @@ Ordered by consequence. None of these block a demo.
 4. Baheti Garments is treated as a storefront aggregating multiple sellers, since the app bar says Baheti while the Seller facet lists other companies. Confirm, or scope it to one seller and drop the Seller facet there.
 5. A stray `$299.99` row sits at the bottom of the filter rail in Figma (`638:3712`) and was skipped as an artefact; `Margin` is SemiBold while its eleven rail siblings are Medium.
 6. **Four things the live-app screengrab raises** (2026-08-14), now that the card follows it rather than the frame:
-   - **The screengrab has no shipping-fee line.** Ours keeps `+₹50 shipping fee` under the price — it is real per-order cost the seed carries, and dropping information to match a screenshot is a designer's call, not a format pass's. Say the word and it goes.
+   - ~~**The screengrab has no shipping-fee line.**~~ **Closed 2026-08-20** — the word was said. `+₹50 shipping fee` is not a real charge and is gone from the card in all four variants; the field is still drawn and simply unread, its `rand()` sitting mid-sequence. The card and the screengrab now agree here.
    - **`VIEW DETAILS` is blue in the live app**, orange `#FF7711` here. Left alone deliberately, but it is now the **worst contrast on the card** at 2.53:1 — the only one of the three original failures still open, and taking the app's blue would close it.
    - **Price measures ~24px in the app**, 26px here per the frame. A 2px delta, left rather than overriding Figma silently.
    - **The app is inconsistent with its own label** — card 1 reads `SET of:` and card 2 `Set of:`. Reproduced as `SET of:`; confirm which is intended.
