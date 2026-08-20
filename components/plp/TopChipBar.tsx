@@ -64,7 +64,12 @@ export function TopChipBar({
 }) {
   return (
     <ChipStrip>
-      <Chip icon="/figma/icons/caret-down.svg" label="Sort" dot={sortActive} onClick={onSort} />
+      {/* `sort.svg`, not the frame's caret (2026-08-20, on request). A caret
+          says "this opens" and nothing about what it opens, where the glyph
+          beside `Filter` names its control; this is also the same
+          `SortAscending` the bottom bar has always carried, so the two
+          placements now differ in placement alone. */}
+      <Chip icon="/figma/icons/sort.svg" label="Sort" dot={sortActive} onClick={onSort} />
       <Chip
         icon="/figma/icons/funnel.svg"
         label="Filter"
