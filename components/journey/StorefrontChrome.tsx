@@ -38,7 +38,7 @@ export function SellerHeader({ name }: { name: string }) {
         <p className="truncate text-[18px] leading-[22px] font-bold text-black">{name}</p>
         {/* Inert: there is no "More info" screengrab, so it renders and doesn't
             navigate rather than inventing a sheet the real app may not have. */}
-        <p className="text-[14px] leading-[18px] font-medium text-primary">More info ›</p>
+        <p className="text-[15px] leading-[18px] font-medium text-primary">More info ›</p>
       </div>
     </div>
   );
@@ -72,13 +72,13 @@ export function CartBar({
         <img alt="" className="size-full" src="/figma/icons/orders.svg" />
         {/* Sat at `-left-[6px]` and clipped against the 360px frame edge, the
             bar starting at 14px. Kept inside the glyph instead. */}
-        <span className="absolute -top-[3px] left-0 flex size-[18px] items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
+        <span className="absolute -top-[3px] left-0 flex size-[17px] items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
           {count}
         </span>
       </span>
       <div className="flex min-w-0 flex-1 flex-col items-start">
         <p className="text-[20px] leading-[24px] font-bold text-primary">{inr(total)}</p>
-        <p className="text-[11px] leading-[14px] font-medium text-muted">
+        <p className="text-[13px] leading-[16px] font-medium text-muted">
           + ₹0 DELIVERY CHARGES
         </p>
       </div>

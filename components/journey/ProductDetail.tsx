@@ -121,7 +121,7 @@ export function ProductDetail({ product }: { product: Product }) {
                 <p className="text-[26px] leading-none font-medium whitespace-nowrap text-black">
                   {inr(variant.pricePerPc)}
                 </p>
-                <p className="text-[13px] whitespace-nowrap text-margin">
+                <p className="text-[15px] whitespace-nowrap text-margin">
                   <span className="font-bold">{variant.marginPct}%</span>
                   <span className="font-normal"> margin</span>
                 </p>
