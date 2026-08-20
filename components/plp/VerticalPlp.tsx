@@ -21,10 +21,13 @@ export function VerticalPlp({
   sellerId,
   categoryId,
   variant,
+  productBasePath,
 }: {
   sellerId: string;
   categoryId: string;
   variant: PlpVariant;
+  /** Passed by D's routes only — C is parked and has no detail route. */
+  productBasePath?: string;
 }) {
   const scope = verticalScope(sellerId, categoryId);
   if (!scope) return null;
@@ -39,6 +42,7 @@ export function VerticalPlp({
       // No home button: these have no home of their own, and the title needs
       // the width — see `AppBar`.
       homeHref={null}
+      productBasePath={productBasePath}
     />
   );
 }

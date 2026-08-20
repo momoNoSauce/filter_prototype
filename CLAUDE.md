@@ -122,9 +122,9 @@ as it already does for the product card.
   `absolute inset-0` at `z-10`, last in the DOM, carrying the title as its
   accessible name — rather than a wrapper, because `<a>` may not wrap interactive
   content and the pack pills are buttons; they lift to `z-20`, so a pill
-  re-prices the card and everything else navigates. **A–D are untouched**: their
-  `VIEW DETAILS` has never navigated, the main catalog having no detail route, so
-  there is nothing there to widen the target to.
+  re-prices the card and everything else navigates. **B and D took the same
+  treatment the same day**, along with a detail route each — see *The detail
+  screen is shared*. A and C stay inert, being parked.
 - **`PlpScreen` took props, not a copy** — `card`, `appBar`, `aboveList`,
   `belowList`, `listClassName`. There is still one PLP screen.
 - **The storefront runs `variant="top-chips"`** (2026-08-20, was `bottom-bar`).
@@ -167,6 +167,30 @@ Dropping Share is also what makes the title fit — `KARTIK EXPORTERS` truncated
 **Not built, on purpose:** a second gallery image (only front renders exist) and
 a working basket. Men's cards still show a button-up — no men's tee render exists
 in any screengrab, the same ask already open against the main catalog.
+
+### The detail screen is shared
+
+`components/journey/ProductDetail` serves **`/userjourney`, `/b` and `/d`**
+(2026-08-20). It is the only detail design that exists — Figma draws the home,
+the PLP and the sheets, and the live app's screengrab is the only source for
+this screen — so B and D reuse it rather than inventing a second one for the
+same app. It is parameterised, not copied: `homeHref` keeps each variant a
+closed loop, and `cartBadge` has **no default**, so the journey's `3` (its
+screengrab's) stays the journey's and B and D show no badge.
+
+Routes are `{base}/product/[productId]` — `/b`, `/d`, `/userjourney` — and the
+cards link there through **`productBasePath`**, a string on `PlpScreen`. A
+builder function was the first try and the build rejects it outright: these
+pages are Server Components and `PlpScreen` is a Client one, so a function prop
+cannot cross the boundary. A and C pass nothing and their cards don't navigate.
+
+B and D's detail routes are **dynamic, not pre-rendered**: 1,070 products each
+would double a build for screens a demo opens two of. The journey's is dynamic
+for the same reason.
+
+The known mismatch carries over — a card titled *… T-Shirts for Girls* opens a
+detail screen showing the Figma button-up, four of the seven categories being
+tees with no tee render. It is the same ask already open against the card.
 
 ## Design source — always pull from Figma, never eyeball
 

@@ -26,5 +26,14 @@ export default async function SellerPageVariantB({
   const products =
     sellerId === "baheti" ? catalog : catalog.filter((p) => p.sellerId === sellerId);
 
-  return <PlpScreen title={seller.name} products={products} variant="top-chips" />;
+  return (
+    <PlpScreen
+      title={seller.name}
+      products={products}
+      variant="top-chips"
+      // The whole card opens the product. A and C pass nothing here and their
+      // cards stay inert — they are parked, and have no detail route.
+      productBasePath="/b"
+    />
+  );
 }

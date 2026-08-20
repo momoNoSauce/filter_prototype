@@ -35,6 +35,7 @@ export default function Page() {
       variant="top-chips"
       homeHref="/userjourney"
       card={JourneyProductCard}
+      productBasePath="/userjourney"
       // No Share on this bar in the screengrab, and dropping it is also what
       // lets `KARTIK EXPORTERS` fit at 20px instead of truncating.
       appBar={{ showShare: false, cartBadge: 3 }}

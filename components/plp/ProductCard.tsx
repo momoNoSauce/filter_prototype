@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useState } from "react";
 import { MaskIcon } from "@/components/ui/MaskIcon";
 import type { Product } from "@/lib/catalog/types";
@@ -10,7 +12,21 @@ import { BulkOfferTag, GenericOfferTag } from "./Tags";
 const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 /** Figma 638:2768 — the PLP product card. */
-export function ProductCard({ product, sizes }: { product: Product; sizes?: string[] }) {
+export function ProductCard({
+  product,
+  sizes,
+  href,
+}: {
+  product: Product;
+  sizes?: string[];
+  /**
+   * Where the card opens. **The whole card is the target** where there is one —
+   * `VIEW DETAILS` is the signpost for buyers who haven't learnt that, not the
+   * control. Absent on A and C, which are parked and have no detail route, and
+   * the card is then plain markup that navigates nowhere.
+   */
+  href?: string;
+}) {
   // Which pack the card opens on: pack #1 normally, and under a size filter
   // the first pack carrying a selected size — the same pack the engine ranked
   // this card by, so the price shown is the price it was sorted on.
@@ -31,7 +47,7 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
   const variant = product.variants[variantIndex];
 
   return (
-    <div className="flex w-full shrink-0 flex-col items-start overflow-clip rounded-[12px] drop-shadow-[0px_4px_2px_rgba(0,0,0,0.15)]">
+    <div className="relative flex w-full shrink-0 flex-col items-start overflow-clip rounded-[12px] drop-shadow-[0px_4px_2px_rgba(0,0,0,0.15)]">
       <div className="relative flex w-full flex-col items-start gap-[16px] bg-white px-[12px] pt-[24px] pb-[8px]">
         {product.bestSeller && (
           <div className="absolute top-0 left-0 flex h-[20px] items-center gap-[6px] rounded-br-[12px] bg-orange-400 px-[8px]">
@@ -154,11 +170,15 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
           </div>
         )}
 
-        <SetPills
-          variants={product.variants}
-          selected={variantIndex}
-          onSelect={setOverride}
-        />
+        {/* `z-20` lifts the pills over the card-wide link below — picking a
+            pack re-prices this card and must not navigate. */}
+        <div className="relative z-20 w-full">
+          <SetPills
+            variants={product.variants}
+            selected={variantIndex}
+            onSelect={setOverride}
+          />
+        </div>
       </div>
 
       <div className="flex h-[32px] w-full items-center justify-end gap-[8px] border-t-[0.5px] border-hairline bg-viewdetails px-[12px]">
@@ -172,6 +192,15 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
           color="var(--color-primary)"
         />
       </div>
+
+      {/* The card-wide link. A stretched `<a>` rather than a wrapper, because
+          `<a>` may not wrap interactive content and the pack pills are buttons;
+          they lift to `z-20` and everything else falls through to this. Last in
+          the DOM so it isn't the first thing a screen reader meets, and named by
+          the product, `VIEW DETAILS` being no use read out of context. */}
+      {href && (
+        <Link href={href} aria-label={product.title} className="absolute inset-0 z-10" />
+      )}
     </div>
   );
 }

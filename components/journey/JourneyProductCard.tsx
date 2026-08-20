@@ -34,9 +34,12 @@ const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 export function JourneyProductCard({
   product,
   sizes,
+  href,
 }: {
   product: Product;
   sizes?: string[];
+  /** Where the card opens — the route's to decide, not the card's. */
+  href?: string;
 }) {
   // Same rule as the shared card: pack #1, or under a size filter the first
   // pack carrying a selected size — the pack the engine ranked this card by.
@@ -202,11 +205,9 @@ export function JourneyProductCard({
         the first thing a screen reader meets, and it carries the title as its
         name, the words `VIEW DETAILS` being no use read out of context.
       */}
-      <Link
-        href={`/userjourney/product/${product.id}`}
-        aria-label={product.title}
-        className="absolute inset-0 z-10"
-      />
+      {href && (
+        <Link href={href} aria-label={product.title} className="absolute inset-0 z-10" />
+      )}
     </div>
   );
 }

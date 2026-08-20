@@ -26,7 +26,27 @@ const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
  * The set pills are the shared `SetPills`, so picking a pack re-prices this
  * screen exactly as it re-prices a card, and `SET CONTAINS` follows the pack.
  */
-export function ProductDetail({ product }: { product: Product }) {
+export function ProductDetail({
+  product,
+  homeHref = "/userjourney",
+  cartBadge,
+}: {
+  product: Product;
+  /**
+   * Home, so the screen stays inside the variant that opened it — the same rule
+   * `PlpScreen` and `HomeScreen` follow. It defaults to the journey because that
+   * is the route this screen was built from; B and D pass their own.
+   */
+  homeHref?: string;
+  /**
+   * Basket count on the orders glyph. **No default**: the journey's 3 is its
+   * screengrab's, so the journey route passes it, and B and D — which have no
+   * basket — pass nothing and get no badge. A default of 3 here would be handed
+   * straight back by `cartBadge={undefined}`, which is how the badge first
+   * turned up on B.
+   */
+  cartBadge?: number;
+}) {
   const [selected, setSelected] = useState(0);
   const variant = product.variants[selected];
   const cashback = product.cashback;
@@ -37,7 +57,7 @@ export function ProductDetail({ product }: { product: Product }) {
       <div className="shrink-0">
         {/* Titled by the brand, per the screengrab. Home returns to the journey
             home so the route stays a closed loop, as A and B are. */}
-        <AppBar title={product.brand} homeHref="/userjourney" cartBadge={3} />
+        <AppBar title={product.brand} homeHref={homeHref} cartBadge={cartBadge} />
       </div>
 
       <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pb-[12px]">

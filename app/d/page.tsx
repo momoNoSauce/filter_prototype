@@ -10,7 +10,11 @@ import { DEMO_VERTICAL } from "@/lib/catalog/scope";
  * Any other seller/vertical pair is at /d/seller/[sellerId]/[categoryId].
  */
 export default function Page() {
-  const screen = VerticalPlp({ ...DEMO_VERTICAL, variant: "top-chips" });
+  const screen = VerticalPlp({
+    ...DEMO_VERTICAL,
+    variant: "top-chips",
+    productBasePath: "/d",
+  });
   if (!screen) notFound();
   return screen;
 }

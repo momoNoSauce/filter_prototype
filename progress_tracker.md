@@ -512,8 +512,18 @@ anywhere.
 - The pills lift to `z-20`, so picking a pack re-prices the card and does not
   navigate. Verified: title, image and strip all open the product; a pill stays
   on the listing.
-- **A–D unchanged.** Their `VIEW DETAILS` has never navigated — there is no
-  detail route for the main catalog — so there is no target to widen.
+- **B and D followed the same day**, with a detail route each at
+  `/b/product/[productId]` and `/d/product/[productId]`. Both render the
+  journey's `ProductDetail`, that being the only detail design in existence,
+  parameterised by `homeHref` so each variant stays a closed loop and by
+  `cartBadge` so only the journey carries its screengrab's 3.
+- Cards link through **`productBasePath`**, a string. A builder function failed
+  the build: the pages are Server Components and `PlpScreen` is a Client one, so
+  a function prop cannot cross the boundary.
+- **A and C pass nothing and stay inert**, being parked.
+- Verified on all three: tapping a card body opens the product, a pack pill
+  stays on the listing, and Home returns to `/b`, `/d` or `/userjourney`
+  respectively.
 
 #### The floating mic is on the listings too (2026-08-20)
 

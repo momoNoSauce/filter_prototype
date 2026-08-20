@@ -67,6 +67,7 @@ export function PlpScreen({
   verticalMode = FILTER_VERTICALS,
   homeHref,
   card: Card = ProductCard,
+  productBasePath,
   appBar,
   aboveList,
   belowList,
@@ -93,7 +94,17 @@ export function PlpScreen({
    * the only PLP, and duplicating 400 lines of filter state is exactly the drift
    * the variants are supposed to be free of.
    */
-  card?: (props: { product: Product; sizes?: string[] }) => ReactNode;
+  card?: (props: { product: Product; sizes?: string[]; href?: string }) => ReactNode;
+  /**
+   * The route a card opens under — `"/b"`, `"/d"`, `"/userjourney"`. The card's
+   * link is `{base}/product/{id}`, which every variant with a detail route
+   * follows. **A string, not a builder**: these pages are Server Components and
+   * this screen is a Client one, so a function prop cannot cross the boundary —
+   * the build fails outright on it, which is how this was found. Absent means
+   * the cards don't navigate, which is A and C: parked, and with no detail
+   * route of their own.
+   */
+  productBasePath?: string;
   /** Extra app-bar props, for the journey's no-Share / cart-badge bar. */
   appBar?: { showShare?: boolean; cartBadge?: number };
   /** Storefront chrome above the list — the journey's seller header block. */
@@ -286,6 +297,9 @@ export function PlpScreen({
                 key={product.id}
                 product={product}
                 sizes={selections[SIZE_FACET_ID]}
+                href={
+                  productBasePath ? `${productBasePath}/product/${product.id}` : undefined
+                }
               />
             ))
         )}

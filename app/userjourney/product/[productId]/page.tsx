@@ -19,5 +19,6 @@ export default async function Page({
   const product = getKartikCatalog().find((p) => p.id === productId);
   if (!product) notFound();
 
-  return <ProductDetail product={product} />;
+  // 3 in the basket, as the screengrab has it. B and D pass none.
+  return <ProductDetail product={product} cartBadge={3} />;
 }

@@ -16,7 +16,12 @@ export default async function VerticalPageVariantD({
   params,
 }: PageProps<"/d/seller/[sellerId]/[categoryId]">) {
   const { sellerId, categoryId } = await params;
-  const screen = VerticalPlp({ sellerId, categoryId, variant: "top-chips" });
+  const screen = VerticalPlp({
+    sellerId,
+    categoryId,
+    variant: "top-chips",
+    productBasePath: "/d",
+  });
   if (!screen) notFound();
   return screen;
 }
