@@ -48,3 +48,10 @@ next-env.d.ts
 # nothing in the app serves them. Assets the app DOES serve live in
 # public/figma and public/categories and are tracked.
 /design/
+
+# Claude Code worktrees (local tooling state)
+/.claude/
+
+# Live-app screengrabs the /userjourney route was measured from.
+# Same class as /design/ — reference source, nothing in the app serves them.
+/userflow/
