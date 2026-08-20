@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import type { Product } from "@/lib/catalog/types";
 import {
@@ -15,6 +15,7 @@ import {
   FILTER_VERTICALS,
   dropOrphanedSelections,
   getRailFacetIds,
+  settledVertical,
   type PlpVariant,
   type VerticalMode,
 } from "@/lib/filters/facets";
@@ -66,6 +67,11 @@ export function PlpScreen({
   variant = "bottom-bar",
   verticalMode = FILTER_VERTICALS,
   homeHref,
+  card: Card = ProductCard,
+  appBar,
+  aboveList,
+  belowList,
+  listClassName = "gap-[12px] px-[16px] pt-[16px] pb-[16px]",
 }: {
   title: string;
   products: Product[];
@@ -81,6 +87,25 @@ export function PlpScreen({
    * land the session in a different variant. See `AppBar`.
    */
   homeHref?: string | null;
+  /**
+   * The card to render. Defaults to the shared `ProductCard`, which A, B, C and
+   * D all use; the user journey passes its own, rebuilt 1:1 from a newer
+   * screengrab. A prop rather than a second copy of this screen — `PlpScreen` is
+   * the only PLP, and duplicating 400 lines of filter state is exactly the drift
+   * the variants are supposed to be free of.
+   */
+  card?: (props: { product: Product; sizes?: string[] }) => ReactNode;
+  /** Extra app-bar props, for the journey's no-Share / cart-badge bar. */
+  appBar?: { showShare?: boolean; cartBadge?: number };
+  /** Storefront chrome above the list — the journey's seller header block. */
+  aboveList?: ReactNode;
+  /** Chrome below the list, above any bottom bar — the journey's cart bar. */
+  belowList?: ReactNode;
+  /**
+   * The list container's spacing and surface. Defaults to the shared 16px
+   * inset; the journey measured 9px against its screengrab, on `#f7f7f7`.
+   */
+  listClassName?: string;
 }) {
   const pathname = usePathname();
   // The query string is the shareable record of state, but local state is the
@@ -121,20 +146,29 @@ export function PlpScreen({
       // but by `dropOrphanedSelections` inside `parseSelections` — it is
       // orphaned wherever the block shows, not just here.
       if (verticalMode.kind === "locked") params.delete("category");
-      setSelections(parseSelections(params, verticalMode));
+      // `products` is passed so a link whose Gender cut settles a vertical keeps
+      // its Size and attributes on load — the rail shows those rows on such a
+      // page, so stripping them would be the bug.
+      setSelections(parseSelections(params, verticalMode, products));
       setSort(parseSort(params));
     };
     sync();
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
-  }, [verticalMode]);
+  }, [verticalMode, products]);
 
   const commit = useCallback(
     (raw: Selections, nextSort: SortId) => {
       // A chip tap can leave a single vertical, which takes the attribute rows
       // off the rail with it — their selections must not outlive their
-      // controls. See `dropOrphanedSelections`.
-      const nextSelections = dropOrphanedSelections(raw, verticalMode);
+      // controls. See `dropOrphanedSelections`. The settled vertical is read
+      // from `raw`, not from the applied state: this call decides what the next
+      // state is allowed to contain.
+      const nextSelections = dropOrphanedSelections(
+        raw,
+        verticalMode,
+        settledVertical(products, raw, verticalMode),
+      );
       setSelections(nextSelections);
       setSort(nextSort);
       setVisible(PAGE_SIZE);
@@ -145,7 +179,7 @@ export function PlpScreen({
         `${pathname}${buildQuery(nextSelections, nextSort)}`,
       );
     },
-    [pathname, verticalMode],
+    [pathname, verticalMode, products],
   );
 
   const results = useMemo(
@@ -192,8 +226,10 @@ export function PlpScreen({
 
   // Follows the applied selections, so the badge counts exactly the rows the
   // Filters screen would show if opened right now — attribute rows included
-  // once a single vertical is settled.
-  const railFacetIds = getRailFacetIds(selections.category, verticalMode);
+  // once a single vertical is settled, whether a Category tick or a Gender cut
+  // settled it.
+  const settled = settledVertical(products, selections, verticalMode);
+  const railFacetIds = getRailFacetIds(selections.category, verticalMode, settled);
 
   const sortActive = sort !== DEFAULT_SORT;
   // Counts exactly what the Filters screen owns — which, since Category
@@ -215,6 +251,7 @@ export function PlpScreen({
           // home button", and nullish-coalescing would swallow it back into
           // the default and put them one tap from another variant's home.
           homeHref={homeHref === undefined ? (variant === "top-chips" ? "/b" : "/") : homeHref}
+          {...appBar}
         />
         {variant === "top-chips" ? (
           <TopChipBar
@@ -250,15 +287,21 @@ export function PlpScreen({
       <div
         ref={listRef}
         onScroll={onScroll}
-        className="no-scrollbar flex min-h-0 flex-1 flex-col items-start gap-[12px] overflow-y-auto px-[16px] pt-[16px] pb-[16px]"
+        className={`no-scrollbar flex min-h-0 flex-1 flex-col items-start overflow-y-auto ${listClassName}`}
       >
+        {/* Inside the scroller, not above it, so storefront chrome scrolls away
+            with the listing rather than staying pinned — the seller block is
+            context you read once, and 66px of it is worth more as results. The
+            app bar and the chip strip stay fixed; only this scrolls. */}
+        {aboveList}
+
         {results.length === 0 ? (
           <EmptyState onClear={() => commit({}, sort)} />
         ) : (
           results
             .slice(0, visible)
             .map((product) => (
-              <ProductCard
+              <Card
                 key={product.id}
                 product={product}
                 sizes={selections[SIZE_FACET_ID]}
@@ -277,6 +320,11 @@ export function PlpScreen({
           />
         </div>
       )}
+
+      {/* Below the Sort/Filters bar, not above it: the basket is the last thing
+          on the screen and the filter controls stay put as the listing changes
+          under them. */}
+      {belowList}
 
       {overlay === "sort" && (
         <SortSheet

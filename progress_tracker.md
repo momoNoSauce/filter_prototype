@@ -323,6 +323,168 @@ Verified at 360px, 3×: Colour shows the field over twenty colours (Black 108 �
 
 *A false start worth noting:* the first screenshot pass showed no change at all, because port 3000 was already held by another worktree's dev server and this one had quietly taken 3001 — every shot was of somebody else's code. Check the port before believing a screenshot in a multi-worktree checkout.
 
+### 2026-08-20 — the user journey, a fifth route
+
+A named flow rather than a variant: **`/userjourney`**, built from four
+screengrabs of the live app. The brief was a specific buyer's path — a garment
+seller in Imphal after trendy women's tees their catchment doesn't carry — and
+the point is that the whole path clicks, not that it tests a control placement.
+
+```
+/userjourney                          home, banner only
+/userjourney/seller/kartik            the storefront
+/userjourney/product/[productId]      the detail screen
+```
+
+Home → tap the **Kartik exporters** banner → storefront → Filters → *Gender →
+Women* → Sort → *Recently Added* → Size → S, M, L → tap a card → detail.
+Verified end to end at 360px.
+
+**Kartik exporters is a banner, not a seller card.** That was the first thing
+the screengrabs corrected: it is a Zenifit co-branded promo on the home
+carousel ("Get up to 80% Margin on Men's, women's & kids T-shirts"), and the
+whole banner is the tap target, the frame giving no narrower hit area.
+
+**Its catalog is separate, on its own PRNG streams** (`lib/catalog/kartik.ts`).
+540 Zenifit products across **three tee verticals only** — Men's Casual
+T-Shirts 222, Women's T-Shirts 197, Boy's Casual T-Shirts 121. It is not part
+of the 1,070 and nothing in A–D can see it, which is the whole reason it is its
+own module: adding products to the main sequence would have moved every count
+in these docs. A test asserts the main catalog still reads 1,070 / Girls 97 /
+Men 575 and carries no Zenifit.
+
+**No Girl's T-Shirts, and that is load-bearing.** It leaves exactly one
+women's vertical, so *Gender → Women* settles a single PV on its own — which
+turned out to be the one thing the journey needed that the code could not do.
+
+#### The blocker: a vertical can be settled without being ticked
+
+`inSingleVertical` tested the **category selection**, so after a Gender cut
+nothing was settled, and Size — vertical-only since 2026-08-19 — never joined
+the rail. The journey's S/M/L step had no control to tap.
+
+`settledVertical` replaces that test with one about **scope**: the vertical is
+settled when the products in scope span exactly one category, however they got
+that way. That honours the original reason the rule exists — *M in menswear is
+not M in womenswear* stops being true the moment one vertical is in scope, and
+it never mattered which control narrowed it.
+
+**Only Category and Gender can settle it.** Those two decide who the garment is
+for; everything else describes the garment. Letting a colour or a price band
+count would make five rows appear and vanish as a buyer ticks unrelated boxes —
+exactly what the 2026-08-19 reorder set out to stop.
+
+**Two questions had been sharing one flag, and splitting them found a bug.**
+Whether the attribute rows *show* is about scope. Whether Gender is *orphaned*
+is narrower: only a ticked category implies the gender, so only then can the
+row go. Shared, a Gender cut that settled a vertical took the Gender row off the
+rail while its selection survived — a live filter with nothing to show or undo
+it, the precise trap `dropOrphanedSelections` exists to prevent. Caught by a
+test, not by reading. `dropOrphanedSelections` and `getRail` now take the
+settled vertical as a third argument, defaulting to `null` so every existing
+caller behaves exactly as before.
+
+`parseSelections` takes the page's products for the same reason: without them a
+shared link like `?gender=women&size=s,m,l` had its Size stripped on load, on a
+page whose rail shows Size.
+
+Rails, measured in the browser: **13 rows across three verticals; 19 after
+*Gender → Women*** — Size plus the five attributes join and **Gender stays**,
+because it is the control holding the cut. That is one more than the documented
+18, and it is the intended consequence: where a *Category* tick settles the
+vertical, Gender still leaves and it is still 18.
+
+#### The card is a second design, deliberately
+
+The storefront screengrab is a newer cut than the one A–D's card was measured
+against, and differs in four ways: an orange `#fb9805` cashback ribbon breaking
+the top-left corner, outlined `FREE DELIVERY` / `₹100 Cashback` pills under the
+price, `VIEW DETAILS` **blue** on a `#f5f8ff` strip rather than orange, and no
+`Best Seller` flag. `JourneyProductCard` is journey-only on request — A–D are
+signed off and must not drift in anything but where their controls sit. **The
+cost is two card designs in one prototype**, which is the thing to watch.
+
+Side effect worth having: the live app's blue takes `VIEW DETAILS` from 2.53:1
+to AA on this route, closing the worst contrast failure on the card. It stays
+open on A–D.
+
+`PlpScreen` gained `card`, `appBar`, `aboveList`, `belowList` and
+`listClassName` rather than a second copy of the screen — duplicating 400 lines
+of filter state is the drift the variants exist to be free of.
+
+#### Measured, not eyeballed
+
+The screengrabs are **1080×2400, exactly 3× the 360px design**, so every device
+pixel divides cleanly — the same property that let the card be measured in
+August. Values were read off the raw RGB rather than estimated: page `#f7f7f7`,
+card 9px inset at 12px radius, ribbon 20px, offer pills 20px with a 1px border,
+the `VIEW DETAILS` strip 35px on `#f5f8ff` over a 1px `#ebebeb` rule. The pill
+border and the margin figure both measure `#0066ff`, the familiar off-token
+slip, so the `primary` token is used.
+
+All imagery is cropped from the screengrabs, nothing redrawn: four tee renders,
+the banner, the storefront tile, and five header glyphs cropped *with* their
+blue background so the logo's arc and the bell's dot survive.
+
+#### Quirks reproduced rather than tidied
+
+- The name appears **three ways in two screens** — `Kartik exporters` on the
+  banner, `KARTIK EXPORTERS` in the app bar, `Kartik Exporters` in the header.
+- `Set of:  1` is title case and double-spaced here; the listing card says
+  `SET of:` from the older screengrab. The app disagrees with itself.
+- Titles disagree too: `Half Sleeves` on the kids' tee, `Half sleeves` on the
+  women's, and the adult line carries its fit where the kids' line drops it.
+  Encoded as a rule from **one sample each** — worth confirming.
+- Kids' garments read **Unisex**, the screengrab's own word for a boys' tee.
+- `MRP/PC` is primary blue on the detail screen and grey on the listing card.
+- Share is absent from the storefront bar and present on the detail bar.
+- The search placeholder reads `"Vanadana Sarees"`, set verbatim.
+
+Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
+`KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
+
+#### Deliberately not built
+
+- **Home is built only as far as the banner.** *Order Again* and *Top Brands*
+  are labelled stubs — a stub that looks like content invites a tap and reads
+  as a bug, where a labelled gap reads as a decision.
+- **The cart bar is hidden**, `SHOW_CART_BAR = false` (on request). Kept whole:
+  there is no basket to fill, so it could only print the screengrab's fixed
+  ₹717, and a total that never moves invites the question of why. One constant
+  brings it back on both screens.
+- **The seller header scrolls away** with the listing rather than staying
+  pinned — it is context you read once, and 66px of it is worth more as
+  results. The app bar and chip strip stay fixed.
+- **One image in the detail gallery.** The real screen shows front and back;
+  only front crops exist, so it is centred rather than repeating the front and
+  calling it a back view. It still scrolls, so a second render needs no change.
+- **Men's cards show a button-up shirt.** No men's tee render exists in any
+  screengrab — the same ask already open against the main catalog, more visible
+  here because everything is a tee.
+- **The quantity stepper is live but local.** It moves its own number and
+  nothing else, the cart total being fixed.
+
+#### Verified
+
+- Rails: A 13, B 13, C 17, D 17, A+1 category 18, B+1 category 18 — unchanged.
+  Bottom bar present in A, C and the journey; absent in B and D.
+- The journey: `Show 164 results` at `?gender=women&size=s,m,l`, matching the
+  count computed from the catalog independently. Size offers letters only, no
+  age bands. The active pack moves to one carrying a ticked size.
+- 109 tests green (15 new), lint, typecheck and production build clean.
+
+#### Open
+
+- **Is the cart bar hide-on-scroll?** It is in one screengrab and absent in the
+  other, scrolled further down the same listing. Two stills can't prove a
+  behaviour, so it is pinned — and now hidden anyway.
+- A's control says `Filters`, B and D's chip says `Filter`. The frames already
+  disagreed on the glyph (`filter_alt.svg` vs `funnel.svg`); the label differs
+  too, which was not recorded until now. In an A/B about control placement, a
+  different word is a second variable.
+- The three-casing seller name, the two `Set of:` spellings, and the inferred
+  title-casing rule all want a designer's confirmation.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.

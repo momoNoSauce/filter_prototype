@@ -404,6 +404,59 @@ export const PV_FACET_IDS: Set<string> = new Set(
 export const inSingleVertical = (category?: string[]) => category?.length === 1;
 
 /**
+ * The one product vertical in play, or `null` when none or several are.
+ *
+ * **A vertical can be settled without being ticked.** Ticking a Category tile
+ * is the obvious way, but a Gender cut does it too: category → gender is 1:1, so
+ * on a storefront carrying one women's vertical, *Gender → Women* leaves exactly
+ * one PV standing. That matters because Size and the five attribute rows are
+ * vertical-only, and the reason they are is about **scope, not about which
+ * control narrowed it** — "M in menswear is not M in womenswear" stops being
+ * true the moment only one vertical is in scope, however it got that way.
+ * Testing the category *selection* alone left the rail with no Size row on a
+ * page that had already narrowed to one vertical.
+ *
+ * **Only Category and Gender can settle it.** Those two are what decide who the
+ * garment is for; everything else describes the garment. Letting any incidental
+ * narrowing count — a colour that happens to exist in one vertical, a price band
+ * only one line reaches — would make five rows appear and disappear as a buyer
+ * ticks unrelated boxes, which is exactly what the 2026-08-19 reorder set out to
+ * stop.
+ */
+export function settledVertical(
+  products: { category: string; gender: string }[],
+  /**
+   * Any selections object. Typed as the general record rather than
+   * `{ category, gender }` so callers can pass what they already hold — only
+   * those two keys are ever read, for the reason above.
+   */
+  selections: Readonly<Record<string, string[] | undefined>>,
+  mode: VerticalMode = FILTER_VERTICALS,
+): string | null {
+  // Under `locked` the vertical *is* the page and was never a selection.
+  if (mode.kind === "locked") return mode.id;
+  if (inSingleVertical(selections.category)) return selections.category![0];
+
+  const genders = selections.gender;
+  if (!genders?.length) return null;
+
+  const cats = selections.category;
+  const ids = new Set<string>();
+  for (const p of products) {
+    const id = CATEGORY_ID_BY_LABEL.get(p.category);
+    if (!id) continue;
+    // Respect a multi-category selection too: Girls' + Women's tees narrowed to
+    // Women is still one vertical.
+    if (cats?.length && !cats.includes(id)) continue;
+    if (!genders.includes(p.gender)) continue;
+    ids.add(id);
+    if (ids.size > 1) return null;
+  }
+  return ids.size === 1 ? [...ids][0] : null;
+}
+
+
+/**
  * How a screen treats product verticals — the axis C and D added.
  *
  * - `filter` — A and B. A vertical is a facet like any other: Category is a
@@ -428,15 +481,29 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
 export function getRail(
   category?: string[],
   mode: VerticalMode = FILTER_VERTICALS,
+  settled: string | null = null,
 ): RailEntry[] {
   const locked = mode.kind === "locked";
-  const showVertical = locked || inSingleVertical(category);
+  /*
+   * **Two questions, not one.** Whether Gender is *redundant* is narrow: only a
+   * ticked category (or a page that fixes the vertical) implies the gender, so
+   * only then can the row go without stranding the selection. Whether the
+   * vertical-specific rows *show* is about scope, and a Gender cut narrows scope
+   * just as effectively.
+   *
+   * Sharing one flag meant a Gender cut that settled a vertical took the Gender
+   * row off the rail while its selection survived — a live filter with no
+   * control to show or undo it, which is the exact trap `dropOrphanedSelections`
+   * exists to prevent. Caught by a test, not by reading.
+   */
+  const genderRedundant = locked || inSingleVertical(category);
+  const showVertical = genderRedundant || settled !== null;
 
   return RAIL_ORDER.filter(
     (row) =>
       !(locked && row.only === "filter") &&
       !(row.vertical && !showVertical) &&
-      !(row.notVertical && showVertical),
+      !(row.notVertical && genderRedundant),
   ).map(({ id, label, facetIds }) => ({ id, label, facetIds }));
 }
 
@@ -448,8 +515,9 @@ export function getRail(
 export function getRailFacetIds(
   category?: string[],
   mode: VerticalMode = FILTER_VERTICALS,
+  settled: string | null = null,
 ): Set<string> {
-  return new Set(getRail(category, mode).flatMap((entry) => entry.facetIds));
+  return new Set(getRail(category, mode, settled).flatMap((entry) => entry.facetIds));
 }
 
 /**
@@ -472,18 +540,33 @@ export function getRailFacetIds(
  * Applied wherever selections change rather than only in the Filters screen,
  * because a chip tap can cross the line too, and `parseSelections` can be handed
  * a URL that was never reachable by clicking at all.
+ *
+ * **The two questions are not the same question**, which one flag used to
+ * assume. Whether the attribute rows are showing is about scope — a vertical
+ * settled by a Gender cut shows them just as much as one settled by a Category
+ * tick. Whether Gender is *orphaned* is narrower: only a category that was
+ * actually ticked makes the Gender selection redundant, because only then was it
+ * implied. Dropping Gender whenever scope narrowed would delete the very cut
+ * that narrowed it — the filter would erase itself the instant it succeeded, and
+ * widening scope back would re-show the row, hand the vertical back, and
+ * oscillate.
  */
 export function dropOrphanedSelections<T extends Record<string, string[]>>(
   selections: T,
   mode: VerticalMode = FILTER_VERTICALS,
+  settled: string | null = null,
 ): T {
   // Under `locked` the vertical is the page, so the block is always on — and
   // `category` isn't in the selections to prove it.
-  const showVertical =
+  const byCategory =
     mode.kind === "locked" || inSingleVertical(selections.category);
+  // Scope may be one vertical without a category selection saying so.
+  const showVertical = byCategory || settled !== null;
 
-  const orphaned = (id: string) =>
-    showVertical ? id === "gender" : PV_FACET_IDS.has(id);
+  const orphaned = (id: string) => {
+    if (byCategory) return id === "gender";
+    return showVertical ? false : PV_FACET_IDS.has(id);
+  };
 
   if (!Object.keys(selections).some(orphaned)) return selections;
 

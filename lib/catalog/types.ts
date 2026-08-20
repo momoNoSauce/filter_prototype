@@ -59,6 +59,14 @@ export interface Product {
   moq: number;
   deliveryDays: number;
   offers: string[];
+  /**
+   * The rupee value on a Cashback offer, which the journey's card prints twice
+   * — an orange corner ribbon and a pill under the price. Optional because only
+   * Kartik's storefront carries amounts: the main catalog's cards name the
+   * offer without pricing it, and inventing a figure there would change four
+   * signed-off variants. Set only when `offers` includes "Cashback".
+   */
+  cashback?: number;
   bestSeller: boolean;
   /** Days since listing — lower is newer. Drives "Recently Added". */
   listedDaysAgo: number;

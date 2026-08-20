@@ -9,6 +9,7 @@ import {
   dropOrphanedSelections,
   getRail,
   getRailFacetIds,
+  settledVertical,
   type VerticalMode,
 } from "@/lib/filters/facets";
 import {
@@ -56,9 +57,11 @@ export function FilterScreen({
 
   // The rail follows the *draft*, not the applied selections: ticking a single
   // vertical grows the attribute block immediately, and ticking a second one
-  // takes it away again, without waiting for "Show N results".
-  const RAIL = getRail(draft.category, verticalMode);
-  const RAIL_FACET_IDS = getRailFacetIds(draft.category, verticalMode);
+  // takes it away again, without waiting for "Show N results". A Gender cut
+  // that leaves one vertical standing does the same — see `settledVertical`.
+  const settled = settledVertical(products, draft, verticalMode);
+  const RAIL = getRail(draft.category, verticalMode, settled);
+  const RAIL_FACET_IDS = getRailFacetIds(draft.category, verticalMode, settled);
 
   const [activeRail, setActiveRail] = useState(RAIL[0].id);
   const [query, setQuery] = useState("");
@@ -122,9 +125,17 @@ export function FilterScreen({
   const activeQuery = searchable ? query : "";
 
   const toggle = (facetId: string, optionId: string) =>
-    setDraft((current) =>
-      dropOrphanedSelections(toggleSelection(current, facetId, optionId), verticalMode),
-    );
+    setDraft((current) => {
+      const next = toggleSelection(current, facetId, optionId);
+      // Recomputed from `next`, not from the render's `settled`: unticking the
+      // Gender that settled the vertical has to orphan the attribute rows in
+      // the same update that removes them from the rail.
+      return dropOrphanedSelections(
+        next,
+        verticalMode,
+        settledVertical(products, next, verticalMode),
+      );
+    });
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col bg-white">

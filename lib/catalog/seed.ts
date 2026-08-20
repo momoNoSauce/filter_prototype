@@ -7,7 +7,7 @@ import type { Gender, Product, Seller, Variant } from "./types";
  * every reload and between server and client — a mismatch would both hydrate
  * badly and make the demo look broken.
  */
-function mulberry32(seed: number) {
+export function mulberry32(seed: number) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -271,7 +271,7 @@ export const OFFERS = [
   { name: "Free Delivery", chance: 0.16 },
 ];
 
-const DELIVERY_DAYS = [
+export const DELIVERY_DAYS = [
   { days: 1, weight: 12 },
   { days: 2, weight: 24 },
   { days: 3, weight: 28 },
@@ -279,7 +279,7 @@ const DELIVERY_DAYS = [
   { days: 7, weight: 14 },
 ];
 
-const MOQS = [
+export const MOQS = [
   { qty: 2, weight: 10 },
   { qty: 4, weight: 22 },
   { qty: 6, weight: 18 },
@@ -289,7 +289,7 @@ const MOQS = [
   { qty: 50, weight: 6 },
 ];
 
-const GENDER_LABEL: Record<Gender, string> = {
+export const GENDER_LABEL: Record<Gender, string> = {
   men: "Men",
   women: "Women",
   boys: "Boys",
@@ -305,8 +305,8 @@ const GENDER_LABEL: Record<Gender, string> = {
  * category list does: pick Girls and every letter size leaves the Size panel,
  * pick Men and every age band does.
  */
-const ADULT_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"];
-const KIDS_SIZES = ["2-3Y", "4-5Y", "6-7Y", "8-9Y", "10-11Y", "12-13Y"];
+export const ADULT_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"];
+export const KIDS_SIZES = ["2-3Y", "4-5Y", "6-7Y", "8-9Y", "10-11Y", "12-13Y"];
 
 export const ALL_SIZES = [...ADULT_SIZES, ...KIDS_SIZES];
 
@@ -324,7 +324,7 @@ export const ALL_SIZES = [...ADULT_SIZES, ...KIDS_SIZES];
  * apparel sits — but not so far that XS or 3XL becomes unreachable. An option
  * that can never appear is worse than no option.
  */
-const ADULT_RUNS = [
+export const ADULT_RUNS = [
   { start: 1, len: 2, weight: 12 }, // S–M
   { start: 2, len: 2, weight: 16 }, // M–L
   { start: 3, len: 2, weight: 14 }, // L–XL
@@ -338,7 +338,7 @@ const ADULT_RUNS = [
   { start: 0, len: 7, weight: 2 }, //  the full range, rare
 ];
 
-const KIDS_RUNS = [
+export const KIDS_RUNS = [
   { start: 0, len: 2, weight: 14 }, // 2-3Y–4-5Y
   { start: 1, len: 2, weight: 16 }, // 4-5Y–6-7Y
   { start: 2, len: 2, weight: 16 }, // 6-7Y–8-9Y
@@ -400,7 +400,7 @@ const SHIRT_ATTRIBUTES = {
   ],
 };
 
-const TEE_ATTRIBUTES = {
+export const TEE_ATTRIBUTES = {
   closure: [
     { name: "Pullover", weight: 74 },
     { name: "Henley Placket", weight: 16 },
@@ -461,7 +461,7 @@ export const PV_ATTRIBUTE_OPTIONS: Record<PvAttributeId, string[]> = Object.from
 const SET_SIZES = [2, 4, 6, 10, 12];
 
 
-function weightedPick<T>(rand: () => number, items: T[], weightOf: (item: T) => number): T {
+export function weightedPick<T>(rand: () => number, items: T[], weightOf: (item: T) => number): T {
   const total = items.reduce((sum, item) => sum + weightOf(item), 0);
   let roll = rand() * total;
   for (const item of items) {
@@ -508,7 +508,7 @@ function buildBreakup(roll: number, run: string[], solid: boolean, setOf: number
   return window.map((size, i) => ({ size, qty: qty[i] })).filter((part) => part.qty > 0);
 }
 
-function buildVariants(
+export function buildVariants(
   rand: () => number,
   run: string[],
   solid: boolean,

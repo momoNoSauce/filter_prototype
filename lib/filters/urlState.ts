@@ -1,4 +1,10 @@
-import { FACETS, FILTER_VERTICALS, dropOrphanedSelections, type VerticalMode } from "./facets";
+import {
+  FACETS,
+  FILTER_VERTICALS,
+  dropOrphanedSelections,
+  settledVertical,
+  type VerticalMode,
+} from "./facets";
 import { DEFAULT_SORT, SORT_OPTIONS, type Selections, type SortId } from "./engine";
 
 /**
@@ -9,6 +15,18 @@ import { DEFAULT_SORT, SORT_OPTIONS, type Selections, type SortId } from "./engi
 export function parseSelections(
   params: URLSearchParams,
   mode: VerticalMode = FILTER_VERTICALS,
+  /**
+   * The page's in-scope products, so a vertical settled by a Gender cut is
+   * recognised on load and not just after a click. Without it, a shared link
+   * like `?gender=women&size=s,m,l` on a storefront with one women's vertical
+   * would have its Size stripped as orphaned — the rail shows Size on that page,
+   * so stripping it is the bug, not the guard.
+   *
+   * Optional because most callers have no scope to offer and the old behaviour
+   * is the right default: no products means nothing can settle a vertical except
+   * an explicit category or `locked`.
+   */
+  products: { category: string; gender: string }[] = [],
 ): Selections {
   const selections: Selections = {};
   for (const facet of FACETS) {
@@ -22,7 +40,11 @@ export function parseSelections(
   // on the rail to show or undo it. Under `locked` the page supplies the
   // vertical instead of the query string — without knowing that, the guard
   // would strip every attribute the moment the page loaded.
-  return dropOrphanedSelections(selections, mode);
+  return dropOrphanedSelections(
+    selections,
+    mode,
+    settledVertical(products, selections, mode),
+  );
 }
 
 export function parseSort(params: URLSearchParams): SortId {

@@ -54,6 +54,10 @@ C and D (2026-08-19) make it a **2×2**: A and B start across every category, C 
 - **`filter`** (A, B) — a vertical is a facet. Category is a rail row, chips toggle it. **13 rows** across verticals; **18** inside exactly one, where the attribute block joins and Gender leaves.
 - **`locked`** (C, D) — the vertical *is* the page. No Category, no Gender, no vertical chips, attribute block permanently on. **17 rows.**
 
+**A vertical can be settled without being ticked** (2026-08-20). `settledVertical` in `facets.ts` asks whether the products *in scope* span exactly one category, not whether one was selected — so on a tee-only storefront `Gender → Women` settles a PV on its own and Size joins the rail. That is the original rationale carried through: *M in menswear is not M in womenswear* stops being true the moment one vertical is in scope, whichever control narrowed it. **Only Category and Gender may settle it** — those two decide who the garment is for, and letting a colour or price band count would make five rows appear and vanish as a buyer ticks unrelated boxes, which is what the 2026-08-19 reorder existed to stop.
+
+Two questions had been sharing one flag, and splitting them found a bug: a Gender cut that settled a vertical took the Gender row off the rail **while its selection survived**, leaving a live filter nothing could show or undo. Whether the attribute rows *show* is about scope; whether Gender is *orphaned* is narrower — only a ticked category implies the gender. So the rail there is **19 rows**, Gender included, where a Category tick still gives 18. `getRail` and `dropOrphanedSelections` take the settled vertical as a third argument defaulting to `null`, so every prior caller is unchanged; `parseSelections` takes the page's products, or a shared `?gender=women&size=s,m,l` loses its Size on load.
+
 C and D carry **no home button**, which gives the title room — they are titled by category and the frame's 20px was sized for a seller name.
 
 **The two rails are now identical.** Category rejoined A's rail on 2026-08-19, so where Sort and Filters sit is the entire variable — the cleanest the A/B has been.
@@ -67,6 +71,63 @@ Separate routes rather than a query flag — chosen so each has its own shareabl
 - `AppBar` takes `homeHref`, because a hardcoded `/` silently drops a Variant B session into Variant A mid-demo.
 
 The journey is Home → tap *Baheti Garments* → PLP → filter and sort. Variant A is the default; Variant B is the same journey with the controls moved.
+
+## `/userjourney` — a named flow, not a fifth variant
+
+Added 2026-08-20 and **outside the 2×2**: it demonstrates one buyer's path end to
+end rather than testing a control placement. A garment seller in Imphal wants
+trendy women's tees their catchment doesn't carry.
+
+```
+/userjourney                      home — banner only
+/userjourney/seller/kartik        Kartik Exporters' storefront
+/userjourney/product/[productId]  the detail screen
+```
+
+Home → tap the **Kartik exporters** banner → storefront → *Gender → Women* →
+*Recently Added* → S/M/L → tap a card → detail.
+
+**Source is four screengrabs of the live app, not Figma** — at 1080×2400, exactly
+3× the design, so values were read off the raw pixels. They live in `userflow/`
+(untracked). Where the screengrab and Figma disagree here, the screengrab wins,
+as it already does for the product card.
+
+- **`lib/catalog/kartik.ts`** — 540 Zenifit tees on **their own PRNG streams**,
+  in three verticals (Men's Casual T-Shirts, Women's T-Shirts, Boy's Casual
+  T-Shirts). Not part of the 1,070; nothing in A–D can see it. That separation is
+  the point — products in the main sequence would move every documented count. A
+  test asserts 1,070 / Girls 97 / Men 575 and no Zenifit in the main catalog.
+  **No Girl's T-Shirts, deliberately**: it leaves exactly one women's vertical,
+  which is what lets a Gender cut settle a PV and unlock Size.
+- **`JourneyProductCard`** — a **second card design, this route only**. Orange
+  `#fb9805` cashback ribbon, outlined offer pills, `VIEW DETAILS` blue on
+  `#f5f8ff`, no `Best Seller`. A–D keep theirs, being signed off. The cost is two
+  card designs in one prototype; watch it. Side effect worth having: the app's
+  blue takes `VIEW DETAILS` from 2.53:1 to AA here.
+- **`PlpScreen` took props, not a copy** — `card`, `appBar`, `aboveList`,
+  `belowList`, `listClassName`. There is still one PLP screen.
+- **`SHOW_CART_BAR = false`** in `StorefrontChrome.tsx` hides the basket bar on
+  both journey screens. Kept whole rather than deleted: nothing fills a basket
+  here, so it could only print the screengrab's fixed ₹717.
+- The **seller header scrolls away** with the listing (it renders *inside* the
+  scroller); the app bar and chip strip stay fixed.
+
+**Quirks reproduced rather than tidied**, per instruction: the seller name
+appears three ways across two screens (`Kartik exporters` / `KARTIK EXPORTERS` /
+`Kartik Exporters`); `Set of:  1` is title case and double-spaced here where the
+listing card says `SET of:`; titles set `Half Sleeves` on kids' and `Half
+sleeves` on adults', the adult line alone carrying its fit — a rule inferred from
+**one sample each**; kids' garments read `Unisex`; `MRP/PC` is blue on the detail
+screen and grey on the card; Share is absent from the storefront bar and present
+on the detail bar; the search placeholder reads `"Vanadana Sarees"`.
+
+Dropping Share is also what makes the title fit — `KARTIK EXPORTERS` truncated to
+`KARTIK EXPOR…` at 20px with it in place.
+
+**Not built, on purpose:** home beyond the banner (*Order Again* and *Top Brands*
+are labelled stubs), a second gallery image (only front renders exist), and a
+working basket. Men's cards still show a button-up — no men's tee render exists
+in any screengrab, the same ask already open against the main catalog.
 
 ## Design source — always pull from Figma, never eyeball
 

@@ -22,9 +22,20 @@ import { useRouter } from "next/navigation";
 export function AppBar({
   title,
   homeHref = "/",
+  showShare = true,
+  cartBadge,
 }: {
   title: string;
   homeHref?: string | null;
+  /**
+   * The user journey's storefront bar has no Share icon — the screengrab of the
+   * live app doesn't carry one there. Dropping it also gives the title back
+   * 36px, which `KARTIK EXPORTERS` needs: at 20px it truncated to
+   * `KARTIK EXPOR…` with Share in place.
+   */
+  showShare?: boolean;
+  /** Basket count on the orders glyph, as the live app shows it. */
+  cartBadge?: number;
 }) {
   const router = useRouter();
   const compact = homeHref === null;
@@ -61,10 +72,19 @@ export function AppBar({
       <div className="flex shrink-0 items-center gap-[12px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img alt="Search" className="size-[22px]" src="/figma/icons/search.svg" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img alt="Share" className="size-[24px]" src="/figma/icons/share.svg" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img alt="Orders" className="h-[23px] w-[24px]" src="/figma/icons/orders.svg" />
+        {showShare && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="Share" className="size-[24px]" src="/figma/icons/share.svg" />
+        )}
+        <span className="relative block h-[23px] w-[24px] shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img alt="Orders" className="size-full" src="/figma/icons/orders.svg" />
+          {cartBadge !== undefined && (
+            <span className="absolute -top-[6px] -right-[6px] flex size-[16px] items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+              {cartBadge}
+            </span>
+          )}
+        </span>
       </div>
     </div>
   );
