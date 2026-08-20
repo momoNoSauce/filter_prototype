@@ -65,8 +65,8 @@ describe("the search field is earned, not declared", () => {
     /*
      * The other half of "earned": a static flag can't do this. Colour needs
      * searching across the catalog and stops needing it once the list is
-     * short — Girl's T-Shirts in 12-13Y is 7 products carrying 5 colours, so
-     * the field gives its 56px back rather than sitting over a list of five.
+     * short — Girl's T-Shirts in 12-13Y is 9 products carrying 6 colours, so
+     * the field gives its 56px back rather than sitting over a list of six.
      *
      * Note the vertical is what makes the size legal here; a bare `?size=` is
      * ignored.
@@ -75,7 +75,7 @@ describe("the search field is earned, not declared", () => {
     const inScope = facetOptionsWithCounts(catalog, narrow, "colour");
 
     expect(needsSearch([block("colour")])).toBe(true);
-    expect(inScope).toHaveLength(5);
+    expect(inScope).toHaveLength(6);
     expect(needsSearch([{ panel: "checkbox", optionCount: inScope.length }])).toBe(false);
   });
 });

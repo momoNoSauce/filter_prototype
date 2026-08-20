@@ -96,7 +96,7 @@ as it already does for the product card.
   in three verticals (Men's Casual T-Shirts, Women's T-Shirts, Boy's Casual
   T-Shirts). Not part of the 1,070; nothing in A–D can see it. That separation is
   the point — products in the main sequence would move every documented count. A
-  test asserts 1,070 / Girls 97 / Men 575 and no Zenifit in the main catalog.
+  test asserts 1,070 / Girls 108 / Men 584 and no Zenifit in the main catalog.
   **No Girl's T-Shirts, deliberately**: it leaves exactly one women's vertical,
   which is what lets a Gender cut settle a PV and unlock Size.
 - **`JourneyProductCard`** — a **second card design, this route only**. Orange
@@ -165,8 +165,42 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 - `lib/filters/facets.ts` — facet registry. Each facet declares `valuesOf(product, sizes?) → string[]`, so tile grids, checkbox lists, range buckets and multi-valued delivery windows all use one code path. Adding a facet is one array entry. `FACETS` is every facet the engine knows; `getRail(category)` is what the Filters screen shows and `getRailFacetIds(category)` is the set anything touching the draft must filter through. Neither takes a variant — the rails are identical since 2026-08-19 — but both take the **category selection**, because the rail grows a vertical-specific block once exactly one vertical is settled. `PlpVariant` still lives here rather than in the component; it now decides only where Sort and Filters sit.
 - `lib/filters/panelFit.ts` — whether a Filters panel's options run past the fold, and so whether it gets a search field. Pure arithmetic over option counts, deliberately **not** a DOM measurement: the server can't measure, so a measured rule would render no field on the server and add one after hydration. Constants are the rendered sizes (690px panel, 52px row, 96px tile row, three across); a test pins the thresholds they produce — 14 rows, 22 tiles — so changing a height in the markup without changing it here fails loudly.
 - `lib/filters/contextChips.ts` — which chips the strip below the GOLD bar carries, given the current selections. Pure and shared by both variants.
-- `lib/catalog/seed.ts` — 1,070 products from a fixed-seed PRNG. Determinism is load-bearing: counts must not shift between reloads or between server and client.
+- `lib/catalog/seed.ts` — 1,070 products from a fixed-seed PRNG. Determinism is load-bearing: counts must not shift between reloads, between server and client, **or between one JS engine and another** — see *The seed must not depend on the engine*.
 - `lib/filters/urlState.ts` — state mirrored to the query string via `history.pushState`; local state stays the source of truth so filtering is instant.
+
+### The seed must not depend on the engine
+
+Added 2026-08-20, after this failed in production for real.
+
+`buildVariants` picked its set sizes with `[...SET_SIZES].sort(() => rand() - 0.5)`.
+A comparator that returns a coin flip is **not a consistent ordering function**,
+so V8 is free to walk the array however it likes — which means it chooses both
+the order that comes out *and* **how many `rand()` calls get consumed** (measured
+here: 6, 7 or 8). That draw sits on the **main** stream inside the per-product
+loop, so a different count re-rolls every product after it.
+
+Vercel builds on **Node 24**; development runs **Node 26**. Same seed, different
+answer — Node 24 shuffled to `2,6,12,10,4`, Node 26 to `6,12,2,4,10`. So the
+deployed catalog was never the catalog the tests and docs described:
+
+| | dev (Node 26) | production (Node 24) |
+|---|---|---|
+| Vertical routes | 55 | 56 |
+| `Men` | 575 | 590 |
+| Category counts | — | five of seven different |
+
+`Girls 97` and the 1,070 total matched by luck; `Men 575` did not. Every test
+passed, on the machine that wrote them.
+
+It is now **Fisher–Yates, exactly `SET_SIZES.length - 1` draws**, whatever the
+values and whatever the engine. The catalog re-rolled once as the price of that
+and every documented count was re-measured; the suite runs green under Node 24
+and Node 26 alike. `lib/catalog/seed.test.ts` pins the draw count per call
+(`1 + 4 + 3 × packs`) so a comparator cannot come back unnoticed.
+
+**The rule this leaves:** a shuffle here takes a draw count fixed by the array's
+length, never by a comparator's answers. `Array.prototype.sort` with a random
+comparator is banned outright, and any new draw still needs its own stream.
 
 ### The one rule that matters
 
@@ -178,20 +212,20 @@ Options that fall to zero are hidden; anything currently selected stays visible 
 
 **The seven categories name their audience** — Women's T-Shirts, Men's Formal Shirts, Men's Casual T-Shirts, Men's Casual Shirts, Girl's T-Shirts, Boy's Casual Shirts, Boy's Casual T-Shirts (merchandising list, 2026-08-12). So category → gender is **1:1**, not many-to-many: `CATEGORIES[].gender` is a single value and the seed reads it rather than drawing one.
 
-That keeps pruning demonstrable and sharpens it — Girls leaves **one** tile of seven (97 results), Men leaves three (575). Gender remains its own facet because each variant reaches it differently, but it is now derivable from category. Don't flatten the weights into a uniform distribution, and don't reintroduce a `genders[]` array.
+That keeps pruning demonstrable and sharpens it — Girls leaves **one** tile of seven (108 results), Men leaves three (584). Gender remains its own facet because each variant reaches it differently, but it is now derivable from category. Don't flatten the weights into a uniform distribution, and don't reintroduce a `genders[]` array.
 
 Two knock-on rules, both easy to undo by accident:
 
 - `plural` is the **gender-free** noun used in product titles, so a card reads "… Casual T-Shirts for Boys" and not "… Boy's Casual T-Shirts for Boys". A test asserts no possessive ever reaches a title.
-- `priceFloor`/`priceCeil` are **per category** — kids' below adults', formal above casual. Men's Formal Shirts runs to ₹1,150 specifically to keep the top Price Range bucket (`₹900 & above`) populated; an option that can never appear is worse than no option.
+- `priceFloor`/`priceCeil` are **per category** — kids' below adults', formal above casual. Men's Formal Shirts runs to ₹1,150 specifically to keep the top Price Range bucket (`₹900 & above`, 36 products) populated; an option that can never appear is worse than no option.
 
 Brands are category-restricted too. Kids' lines carry the fewest, which is what makes Boy's Casual T-Shirts collapse the Brands grid to two tiles.
 
-**Sizes are drawn as a run per product, not per pack.** A garment comes in S–XL and is sold in different quantity splits of that run; it does not draw a fresh size for every carton. This is what makes Size worth filtering on — measured against the old flat table, 2–4 packs unioned into near-total coverage, putting L in 96% of the catalog and M in 93%, so ticking either pruned about 4% and the control was dead. Runs put L at 42% and M at 39%, with every one of the thirteen options between 3% and 42%.
+**Sizes are drawn as a run per product, not per pack.** A garment comes in S–XL and is sold in different quantity splits of that run; it does not draw a fresh size for every carton. This is what makes Size worth filtering on — measured against the old flat table, 2–4 packs unioned into near-total coverage, putting L in 96% of the catalog and M in 93%, so ticking either pruned about 4% and the control was dead. Runs put L at 44% and M at 38%, and the thirteen options span 1.6% (`12-13Y`, 17 products) to 44%.
 
 Kids' lines are sized by **age band** (`2-3Y` … `12-13Y`), adults' by letter (`XS` … `3XL`) — category-restricted exactly the way brands and price bands are, and one more thing the 1:1 category→gender mapping buys: pick Girls and every letter size leaves the Size panel, pick Men and every age band does.
 
-Sizes and the vertical-specific attributes each draw from **their own PRNG stream** (`sizeRand`, `attrRand`). Extra draws on the main stream would have shifted every draw after them, re-rolling the whole catalog and invalidating every count documented here; the per-pack size split reuses the slot the old breakup `pick` occupied. All seven category counts, Girls 97, Men 575 and `₹900 & above` 37 are verified unchanged by both additions. **Any new per-product property needs its own stream for the same reason.**
+Sizes and the vertical-specific attributes each draw from **their own PRNG stream** (`sizeRand`, `attrRand`). Extra draws on the main stream would have shifted every draw after them, re-rolling the whole catalog and invalidating every count documented here; the per-pack size split reuses the slot the old breakup `pick` occupied. Both additions were verified to move nothing. **Any new per-product property needs its own stream for the same reason.** The counts they were checked against were re-based on 2026-08-20 when the set-size shuffle was fixed and the catalog re-rolled once — see *The seed must not depend on the engine*; the current figures are Girls 108, Men 584, `₹900 & above` 36.
 
 ## Decisions already made — do not re-litigate
 
@@ -227,7 +261,7 @@ Sizes and the vertical-specific attributes each draw from **their own PRNG strea
 | Discarded drafts | The **Filters screen** (✕) is now the only draft surface, and fires a **`Selection discarded`** toast when dismissed mid-edit. It fires **only when something would actually be lost**: untouched, or edited back to where it started, stays silent, and so does applying. The check is `sameSelections`, which treats an absent key and an empty array alike and ignores option order. The string stays a named constant so a second draft surface can't word the same event differently |
 | Where the discard check hangs | The Filters screen has no `Sheet`: its ✕ and its `Show N results` are separate handlers, so only the ✕ checks and no `applied` ref is needed. It compares against a **frozen snapshot** of what the screen opened with — comparing against the live `selections` prop fails, because applying updates it while the component is still mounted |
 | Toast | Not in the designs — `components/ui/Toast.tsx`, a dark pill near the bottom. Its lifetime *is* its CSS animation (`.animate-toast`, 2600ms: rise, hold, fade) and `animationend` unmounts it, so the duration lives in one place rather than in keyframes plus a `setTimeout` free to drift. Under `prefers-reduced-motion` it swaps to a fade-only keyframe **at the same duration** — collapsing to 1ms like the sheets do would make it unreadable. The wrapper centres and the pill animates, because a keyframe `transform` would otherwise wipe out a centring `-translate-x-1/2`. `clearsBottomBar` sets the offset: 72px in A to clear the bar, 24px in B, which has none. Keyed by an incrementing id in `PlpScreen` so firing twice replays the animation |
-| Size | Lives on the **pack**, not the product, so a product matches when *any* of its packs carries a selected size. That is plain OR-within-a-facet with no engine exception, which is why Size costs one array entry like everything else. Ticking M **and** L therefore *widens* — 586 products, the union of 412 and 450 — rather than narrowing to packs carrying both. Settled 2026-08-18; the ALL-within-one-pack reading was put up and rejected |
+| Size | Lives on the **pack**, not the product, so a product matches when *any* of its packs carries a selected size. That is plain OR-within-a-facet with no engine exception, which is why Size costs one array entry like everything else. Ticking M **and** L therefore *widens* — 605 products, the union of 404 and 468 — rather than narrowing to packs carrying both. Settled 2026-08-18; the ALL-within-one-pack reading was put up and rejected |
 | The active pack | Under a size filter the card opens on the **leftmost pack carrying a selected size**. Pills run in ascending set size, so that is the smallest pack a retailer can buy their size in — the low-commitment default. Price and margin read **that same pack** for sort and for the Price Range and Margin facets, not pack #1: ranking on a pack the card doesn't print left `Price/pc low → high` showing 63 visibly-descending prices at `size=M,L`. MOQ is a product field and doesn't move. Lives in `activeVariant.ts` |
 | `valuesOf` sees one selection | `valuesOf(product, sizes?)` — the Size selection is the **only** selection any facet may see, and only Price and Margin use it. Passing the one selection that can move a value, rather than the whole set, keeps that dependency visible instead of letting any facet quietly depend on any other. **Size is counted by applying each option, not by tallying it** — every other facet can be tallied in one pass, because one facet's value doesn't depend on another's selections, and Size is the one that breaks that. Tallying it with Size skipped counted products that fall out the moment the pack moves, so the panel could offer an option labelled `(1)` and hand back an empty page (measured 2026-08-19: pack #1 at ₹610 sat inside the price band, the pack carrying the size was ₹575 and outside it). Thirteen options, one filter pass each, a couple of milliseconds. **Each option is applied on its own** — `{...selections, size: [option]}`, replacing the current Size selection rather than joining it. It briefly counted `selected ∪ option` instead, on the reasoning that this is what a tap delivers; because Size is OR-within-a-facet a union can only widen, so once any size was ticked every option inherited that selection's count, nothing could reach zero, and hide-at-zero stopped firing — Women's T-Shirts with S ticked offered `2-3Y` (fixed 2026-08-20). The count now means what it does everywhere else: how many products carry this value, own facet excluded. The empty-page guarantee survives it, since a union can only return more than the option alone. Three tests hold it: the count equals the option applied alone, no vertical shows the other's size vocabulary once one is ticked, and a random walk asserting a visible option can never lead to zero results |
 | Size | **Vertical-only** (2026-08-19) — shown just like Fit and Neck Type, and cleared with them when the vertical goes. A size means nothing across verticals: M in menswear is not M in womenswear, so one M row spanning both would merge two garments' measurements behind a single checkbox. It is the same argument the catalog already makes by splitting kids' age bands from adult letters, carried the rest of the way. It keeps its slot beside Brands and Colour rather than joining the block, reading as a garment basic. A bare `?size=` with no vertical is ignored. Figma's rail predates the facet, and the whole rail is now ordered after a reference apparel PLP rather than the frame — see *Rail order* |

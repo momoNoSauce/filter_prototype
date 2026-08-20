@@ -661,7 +661,7 @@ describe("vertical-specific attributes", () => {
     });
     expect(
       applyFilters(catalog, dropOrphanedSelections(contradiction)).length,
-    ).toBe(97);
+    ).toBe(108);
   });
 
   it("strips a gender from a locked page's URL, the row being gone there too", () => {
@@ -746,7 +746,7 @@ describe("variants C and D — the page is the vertical", () => {
   const scope = verticalScope("baheti", LOCKED.id)!;
 
   it("scopes the catalog by vertical, and by seller unless it is the storefront", () => {
-    expect(scope.products).toHaveLength(163);
+    expect(scope.products).toHaveLength(168);
     expect(scope.products.every((p) => p.category === "Men's Formal Shirts")).toBe(true);
     // Baheti aggregates, so every seller's stock in this vertical is in scope.
     expect(new Set(scope.products.map((p) => p.sellerId)).size).toBeGreaterThan(1);

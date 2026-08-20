@@ -597,6 +597,86 @@ screenshotted at 360px/3× on both cards — label and chevron both computing
 `rgb(0, 79, 250)`, which is `#004ffa` exactly rather than a near-miss blue.
 
 
+### 2026-08-20 — production was serving a different catalog
+
+Found while diffing a local build against a Vercel build line by line, which is
+the only reason anyone would have noticed. **The deployed catalog was not the
+catalog any test or document described.**
+
+`buildVariants` chose its set sizes with `[...SET_SIZES].sort(() => rand() - 0.5)`
+— the shuffle antipattern. A comparator returning a coin flip is not a consistent
+ordering function, so V8 may walk the array however it likes, and that means it
+decides both the order produced **and how many `rand()` calls are consumed**
+(measured: 6, 7 or 8). The draw is on the **main** stream inside the per-product
+loop, so a differing count re-rolls every product after it.
+
+Vercel builds on **Node 24**, this machine runs **Node 26**. Same seed:
+
+| | Node 24 | Node 26 |
+|---|---|---|
+| shuffle of `[2,4,6,10,12]` | `2,6,12,10,4` | `6,12,2,4,10` |
+| vertical routes | 56 | 55 |
+| static pages | 137 | 135 |
+| `Men` | **590** | 575 |
+
+Both Vercel builds printed 56 routes and both local builds 55, across two
+different commits — so it tracked the machine, not the code. `1,070` held (a loop
+count, not a draw) and `Girls 97` held by luck. `Men 575` did not, and five of the
+seven category counts differed. Every test passed on the machine that wrote them.
+
+**Fixed with Fisher–Yates**, which takes exactly `SET_SIZES.length - 1` draws
+whatever the values and whatever the engine. The catalog re-rolled once — the
+price of the numbers being true everywhere instead of in one place — and cannot
+drift again.
+
+Every figure re-measured, and **identical under Node 24 and Node 26**, the full
+suite having been run under both:
+
+| | was | now |
+|---|---|---|
+| Total | 1,070 | 1,070 |
+| Girls / Men | 97 / 575 | **108 / 584** |
+| Women's T-Shirts | 180 | 173 |
+| Men's Formal Shirts | 163 | 168 |
+| Men's Casual T-Shirts | 243 | 222 |
+| Men's Casual Shirts | 169 | 194 |
+| Girl's T-Shirts | 97 | 108 |
+| Boy's Casual Shirts | 101 | 98 |
+| Boy's Casual T-Shirts | 117 | 107 |
+| `₹900 & above` | 37 | 36 |
+| Vertical routes | 55 | 56 (all pairs now stocked) |
+| Sizes XS → 3XL | 49 / 232 / 412 / 450 / 304 / 114 / 30 | 43 / 225 / 404 / 468 / 308 / 116 / 28 |
+| Sizes 2-3Y → 12-13Y | 76 / 156 / 173 / 140 / 81 / 28 | 78 / 168 / 189 / 142 / 62 / 17 |
+| M ∪ L | 586 | 605 |
+| L / M share | 42% / 39% | 44% / 38% |
+| Girls' size spread | 27/53/47/43/25/7 | 28/57/65/47/27/9 |
+| `size=3xl` | 30 | 28 |
+| Two casual categories | 412 | 416 |
+| Journey at `?gender=women&size=s,m,l` | 164 | 156 |
+| Men's Formal drill-down | 8 of 163 | 18 of 168 |
+| Neck Type under Men's Formal | 64/42/12/32/13 | 76/31/20/25/16 |
+
+Unmoved, and checked: 1,070 total, Kartik's 540, all twenty colours non-empty,
+all five price buckets and four margin buckets live, and Boy's Casual T-Shirts
+still collapsing Brands to two tiles (Killer, Monte Carlo). `12-13Y` is now the
+thinnest option at 17 products (1.6%), where the floor used to be about 3% — the
+argument the size runs exist to make still holds, L being 44% rather than 96%.
+
+**The earlier dated entries above are left as written.** Their numbers were true
+when measured and are superseded here; rewriting them would falsify the log.
+`CLAUDE.md`, `plan.md` and the code comments carry the current figures.
+
+**Guard:** `lib/catalog/seed.test.ts` asserts the draw count per `buildVariants`
+call is exactly `1 + 4 + 3 × packs` across 400 seeds and both pack modes, so a
+comparator-driven shuffle can't return unnoticed. It also pins the seven category
+counts. The standing rule: **a shuffle takes a draw count fixed by the array's
+length, never by a comparator's answers.**
+
+One coverage note, deliberately left: *gives no page to a seller with nothing in
+the vertical* no longer has an empty pair to exercise, all 56 now being stocked.
+The filter in `verticalRoutes` stays as the guarantee.
+
+
 ## The four variants
 
 Started as an A/B of control placement on 2026-08-12; C and D added the scope axis on 2026-08-19, making it a 2×2. Same card, catalog and engine throughout, so each comparison stays honest.

@@ -516,7 +516,34 @@ export function buildVariants(
   baseMargin: number,
 ): Variant[] {
   const count = 2 + Math.floor(rand() * 3); // 2–4 packs
-  const sizes = [...SET_SIZES].sort(() => rand() - 0.5).slice(0, count).sort((a, b) => a - b);
+
+  // A full Fisher–Yates over the five set sizes, then take the first `count`.
+  //
+  // This was `[...SET_SIZES].sort(() => rand() - 0.5)`, which is the shuffle
+  // antipattern and broke the one invariant this whole file exists to hold. A
+  // comparator returning a coin flip is not a consistent ordering function, so
+  // V8 is free to walk the array however it likes: both the resulting order and
+  // **the number of `rand()` calls consumed** (measured: 6, 7 or 8) are
+  // implementation-defined. Since this draws from the *main* stream inside the
+  // per-product loop, a different draw count re-rolls every product after it.
+  //
+  // That was not theoretical. Vercel builds on Node 24 and this machine runs
+  // Node 26, and the two disagreed: same seed, Node 24 gave `2,6,12,10,4` and
+  // Node 26 gave `6,12,2,4,10`. Production served a different catalog from the
+  // one every test and every documented count described — 55 vertical routes
+  // locally against 56 there, `Men` 575 against 590, and five of the seven
+  // category counts apart. The tests passed on the machine that wrote them.
+  //
+  // Fisher–Yates takes exactly `SET_SIZES.length - 1` draws, always, whatever
+  // the values are and whatever engine runs it. The catalog re-rolled once when
+  // this landed and cannot drift again. **Any future shuffle here must have a
+  // draw count fixed by the array's length, never by a comparator.**
+  const pool = [...SET_SIZES];
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const sizes = pool.slice(0, count).sort((a, b) => a - b);
 
   return sizes.map((setOf, index) => {
     // Larger packs get a per-piece discount and a better margin.

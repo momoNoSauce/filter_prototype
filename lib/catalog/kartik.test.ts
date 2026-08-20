@@ -39,8 +39,8 @@ describe("Kartik Exporters' catalog", () => {
     // every count in plan.md and progress_tracker.md has moved.
     const main = getCatalog();
     expect(main).toHaveLength(1070);
-    expect(applyFilters(main, { gender: ["girls"] })).toHaveLength(97);
-    expect(applyFilters(main, { gender: ["men"] })).toHaveLength(575);
+    expect(applyFilters(main, { gender: ["girls"] })).toHaveLength(108);
+    expect(applyFilters(main, { gender: ["men"] })).toHaveLength(584);
     expect(main.some((p) => p.brand === ZENIFIT)).toBe(false);
     expect(main.some((p) => p.sellerId === KARTIK.id)).toBe(false);
   });

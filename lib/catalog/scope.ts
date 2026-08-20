@@ -31,8 +31,13 @@ export function verticalScope(sellerId: string, categoryId: string) {
 }
 
 /**
- * Every seller/vertical pair that actually has stock. 56 pairs at most, and
- * fewer in practice — the smallest sellers don't carry all seven.
+ * Every seller/vertical pair that actually has stock.
+ *
+ * 56 pairs at most, and as of the 2026-08-20 seed fix all 56 have stock — the
+ * filter is kept because it is the guarantee, not because it currently drops
+ * anything. Before that fix Tiruppur Knit House, the smallest seller, carried
+ * no Girl's T-Shirts and the count was 55 here while Vercel's older Node built
+ * 56; that divergence is what the fix removed.
  */
 export function verticalRoutes(): { sellerId: string; categoryId: string }[] {
   return SELLERS.flatMap((seller) =>
@@ -45,7 +50,7 @@ export function verticalRoutes(): { sellerId: string; categoryId: string }[] {
 
 /**
  * What `/c` and `/d` land on. Baheti is the storefront the whole demo walks
- * through, and Men's Formal Shirts is the richest shirt vertical — 163
+ * through, and Men's Formal Shirts is the richest shirt vertical — 168
  * products, every collar and closure populated.
  */
 export const DEMO_VERTICAL = {
