@@ -562,6 +562,41 @@ Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 - The card opens on the right pack and scrolls to it. `p-1062` — packs `3XL/2 | 3XL/4 | 3XL/6 | 2XL/10` — under `size=2xl` selects the **fourth** pill, scrolls the row to 35 of a possible 36 so it is fully visible, and prints that pack's `₹465 / 54% margin` rather than pack #1's `₹530 / 44%`. Across every card checked, the selected pill was in view.
 - 94 engine tests green. Lint and typecheck clean. Production build clean. No console errors on any screen, local or production.
 
+### 2026-08-20 — `VIEW DETAILS` is blue
+
+Confirmed on request, closing the second-to-last of the three contrast failures
+inherited from the Figma. The A–D card's `VIEW DETAILS` was orange `#FF7711` at
+**2.53:1** on its `#f8faf7` strip — the worst thing on the card — and is now
+`primary`, measured **5.72:1**, clearing AA at 13px. `JourneyProductCard` had
+already gone blue, so the two card designs agree here rather than diverging.
+
+**The chevron went with it, and needed a different mechanism.** The exported
+asset is *stroked* `#FF7711`, so a blue label sat beside an orange arrow. It now
+renders through `MaskIcon`, which reads only the alpha channel and tints the
+untouched export — the same route `JourneyProductCard` and the Sort sheet glyphs
+take, and the reason `MaskIcon` exists rather than a CSS `filter`.
+
+`--color-orange-500` **stays**. The home screen's badge, the app bar's cart
+counter and the detail screen's quantity stepper all still use it, as white-on-
+orange fills or as a border, none of which is a contrast problem. Only the one
+underlined label read poorly.
+
+Only the body grey remains listed: `#7f7f7f` at 4.0:1, short of 4.5 at 12px.
+
+**A lint trap found on the way, unrelated but worth fixing.** `npx eslint .`
+from the repo root is the documented command, and the two Claude Code worktrees
+under `.claude/` are full checkouts of this repo — so it was linting every
+worktree's copy of the source plus its `node_modules`, reporting **24,197
+problems**, every one of them outside this working tree. `.claude/**` is now in
+`globalIgnores`, and the root command reports 0 again. `.claude/` and `userflow/`
+were also added to `.gitignore`, the latter being reference screengrabs in the
+same class as the already-ignored `design/`.
+
+Verified: 109 tests green, lint and production build clean, and the row
+screenshotted at 360px/3× on both cards — label and chevron both computing
+`rgb(0, 79, 250)`, which is `#004ffa` exactly rather than a near-miss blue.
+
+
 ## The four variants
 
 Started as an A/B of control placement on 2026-08-12; C and D added the scope axis on 2026-08-19, making it a 2×2. Same card, catalog and engine throughout, so each comparison stays honest.
@@ -596,8 +631,8 @@ Ordered by consequence. None of these block a demo.
    |---|---|---|---|---|---|
    | `65% margin` | `#39B54A` | 2.66:1 | `#004FFA` (`primary`) | **6.0:1** ✅ | 4.5:1 |
    | MRP / Price per pc | `#999999` | 2.85:1 | `#7F7F7F` | 4.0:1 ⚠️ | 4.5:1 |
-   | `VIEW DETAILS` | `#FF7711` | 2.53:1 | — | 2.53:1 ❌ | 4.5:1 |
-   The margin now clears AA outright. The grey improves but still misses at 12px, so it stays listed. `VIEW DETAILS` is untouched and is now the worst offender on the card — the live app renders it blue, which would close it too, but that was left for a deliberate call rather than folded into a format pass.
+   | `VIEW DETAILS` | `#FF7711` | 2.53:1 | `#004FFA` (`primary`) | **5.72:1** ✅ | 4.5:1 |
+   **All three original failures are now closed but one** (2026-08-20): `VIEW DETAILS` took the live app's blue on confirmation, 2.53:1 → **5.72:1**, and the chevron beside it went with it. The grey improves but still misses at 12px, so it is the only row still listed.
    Audience is kirana retailers on mid-range Android in poor light.
 10. ~~**The variants still differ in more than control placement.**~~ **Closed 2026-08-19.** Category left A's bottom bar for the Filters rail, so the last facet-level difference is gone: same card, catalog, engine, rail and facets, and where Sort and Filters sit is the entire variable. A stated preference is now about control placement and nothing else, which is what the A/B was for.
     *Resolved along the way:* A's checkbox-that-behaves-exclusively Gender mismatch went earlier — Gender is an ordinary multi-select rail facet in both variants, so no control claims exclusivity anywhere.
@@ -627,6 +662,6 @@ Ordered by consequence. None of these block a demo.
 5. A stray `$299.99` row sits at the bottom of the filter rail in Figma (`638:3712`) and was skipped as an artefact; `Margin` is SemiBold while its eleven rail siblings are Medium.
 6. **Four things the live-app screengrab raises** (2026-08-14), now that the card follows it rather than the frame:
    - ~~**The screengrab has no shipping-fee line.**~~ **Closed 2026-08-20** — the word was said. `+₹50 shipping fee` is not a real charge and is gone from the card in all four variants; the field is still drawn and simply unread, its `rand()` sitting mid-sequence. The card and the screengrab now agree here.
-   - **`VIEW DETAILS` is blue in the live app**, orange `#FF7711` here. Left alone deliberately, but it is now the **worst contrast on the card** at 2.53:1 — the only one of the three original failures still open, and taking the app's blue would close it.
+   - ~~**`VIEW DETAILS` is blue in the live app**, orange `#FF7711` here.~~ **Closed 2026-08-20** — confirmed blue, so A–D took `primary` and the contrast went 2.53:1 → **5.72:1**, clearing AA. The exported chevron is stroked `#FF7711`, so it renders through `MaskIcon` rather than an `<img>`, the route `JourneyProductCard` already took; a blue label beside an orange arrow was the thing to avoid. `--color-orange-500` stays — the badges and the detail screen's quantity stepper still use it, all white-on-orange or as a border.
    - **Price measures ~24px in the app**, 26px here per the frame. A 2px delta, left rather than overriding Figma silently.
    - **The app is inconsistent with its own label** — card 1 reads `SET of:` and card 2 `Set of:`. Reproduced as `SET of:`; confirm which is intended.

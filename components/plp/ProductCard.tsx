@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MaskIcon } from "@/components/ui/MaskIcon";
 import type { Product } from "@/lib/catalog/types";
 import { activeVariantIndex } from "@/lib/filters/activeVariant";
 import { SetPills } from "./SetPills";
@@ -161,12 +162,14 @@ export function ProductCard({ product, sizes }: { product: Product; sizes?: stri
       </div>
 
       <div className="flex h-[32px] w-full items-center justify-end gap-[8px] border-t-[0.5px] border-hairline bg-viewdetails px-[12px]">
-        <p className="text-[13px] font-medium text-orange-500 underline">VIEW DETAILS</p>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          alt=""
-          className="h-[8.446px] w-[5.015px]"
+        <p className="text-[13px] font-medium text-primary underline">VIEW DETAILS</p>
+        {/* The exported chevron is stroked orange, for the label this row used
+            to carry. `MaskIcon` reads only the alpha channel, so the same
+            untouched asset tints to primary and the two stop disagreeing. */}
+        <MaskIcon
           src="/figma/icons/chevron.svg"
+          className="h-[8.446px] w-[5.015px] shrink-0"
+          color="var(--color-primary)"
         />
       </div>
     </div>

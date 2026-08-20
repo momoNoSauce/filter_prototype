@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Claude Code's worktrees are full checkouts of this repo. Left in, `npx
+    // eslint .` from the root — the documented command — lints every worktree's
+    // copy plus its node_modules, which buried the real output under ~24k
+    // findings from files that are not this working tree.
+    ".claude/**",
   ]),
 ]);
 
