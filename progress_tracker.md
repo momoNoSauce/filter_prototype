@@ -572,8 +572,12 @@ scroll up.
   that is already in the basket.
 - **`useHideOnScroll`** now serves the chip strip and both bars. Its one
   argument is the threshold: the strip waits two folds, the bar waits for
-  nothing. The bar translates rather than collapsing a slot, there being nothing
-  below it to take the room.
+  nothing.
+- The bar animates a **collapsing slot**, height and transform together. It
+  shipped translating only, which left its 64px of layout behind: the listing
+  stayed short and `bg-page` showed through where the bar had been, reading as a
+  grey band over the last card. Fixed the same day; `CART_BAR_H` is now the one
+  place that height is declared.
 - Verified: nothing on the listing before adding; add on the PDP → bar on both
   screens; back → still there; scroll down → gone, up → back, on each screen.
   At the design 800px height the detail screen has nothing to scroll once the

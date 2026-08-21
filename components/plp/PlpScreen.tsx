@@ -31,7 +31,7 @@ import type { CountedOption } from "@/lib/filters/engine";
 import { SortSheet } from "@/components/sheets/SortSheet";
 import { PriceSheet } from "@/components/sheets/PriceSheet";
 import { MicFab } from "@/components/ui/MicFab";
-import { CartBar } from "@/components/journey/StorefrontChrome";
+import { CART_BAR_H, CartBar } from "@/components/journey/StorefrontChrome";
 import { useCart } from "@/components/cart/CartProvider";
 import { useHideOnScroll } from "@/components/ui/useHideOnScroll";
 import { FilterScreen } from "@/components/filters/FilterScreen";
@@ -428,12 +428,23 @@ export function PlpScreen({
         is no reflow to animate.
       */}
       {line && (
+        // The slot **collapses as the bar slides**, exactly as the chip strip's
+        // does. Translating alone left the 64px of layout behind it: the listing
+        // stayed short and `bg-page` showed through where the bar had been, which
+        // reads as a grey band clipping the last card rather than as a bar
+        // leaving. Height and transform together, so the list takes the room
+        // back.
         <div
-          className={`shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none ${
-            cartHidden ? "translate-y-full" : "translate-y-0"
-          }`}
+          className="shrink-0 overflow-hidden transition-[height] duration-200 ease-out motion-reduce:transition-none"
+          style={{ height: cartHidden ? 0 : CART_BAR_H }}
         >
-          <CartBar total={line.total} count={1} />
+          <div
+            className={`transition-transform duration-200 ease-out motion-reduce:transition-none ${
+              cartHidden ? "translate-y-full" : "translate-y-0"
+            }`}
+          >
+            <CartBar total={line.total} count={1} />
+          </div>
         </div>
       )}
 

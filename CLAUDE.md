@@ -190,9 +190,13 @@ screengrab), and it is shared, so `/userjourney`, `/b` and `/d` all have it.
   `useHideOnScroll` with the chip strip. One difference, and it is the hook's only
   argument: the strip waits `foldsBeforeHide: 2`, the basket bar waits for
   nothing, because getting out of the way promptly is the whole point of a bar
-  that never leaves otherwise. The bar **translates** rather than collapsing a
-  slot — it sits at the foot of the frame with nothing below it, so there is no
-  reflow to animate. Note the detail screen at 800px tall has nothing to scroll
+  that never leaves otherwise. **Both animate a collapsing slot**, height and
+  transform together: translating alone left the bar's 64px of layout behind it,
+  so the listing stayed short and `bg-page` showed through where the bar had
+  been — which reads as a grey band clipping the last card rather than as a bar
+  leaving (fixed 2026-08-21). `CART_BAR_H` is the one place the height is
+  declared, since a height transition needs a figure at both ends. Note the
+  detail screen at 800px tall has nothing to scroll
   once the bar is up (content 680, viewport 680, measured), so the behaviour shows
   there only on a shorter screen or a longer product.
 - **`SHOW_CART_BAR` is gone.** It hid a bar whose numbers were the screengrab's;

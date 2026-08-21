@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { AppBar } from "@/components/plp/AppBar";
 import { SetPills } from "@/components/plp/SetPills";
-import { CartBar } from "./StorefrontChrome";
+import { CART_BAR_H, CartBar } from "./StorefrontChrome";
 import { useCart } from "@/components/cart/CartProvider";
 import { useHideOnScroll } from "@/components/ui/useHideOnScroll";
 import { FreeDeliveryDialog } from "./FreeDeliveryDialog";
@@ -332,12 +332,19 @@ export function ProductDetail({
         announced by the dialog, not by a charge disappearing.
       */}
       {cartQty > 0 && (
+        // Slot collapses as the bar slides — see the same block in `PlpScreen`
+        // for why translating alone left a grey band behind.
         <div
-          className={`shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none ${
-            cartHidden ? "translate-y-full" : "translate-y-0"
-          }`}
+          className="shrink-0 overflow-hidden transition-[height] duration-200 ease-out motion-reduce:transition-none"
+          style={{ height: cartHidden ? 0 : CART_BAR_H }}
         >
-          <CartBar total={lineTotal} count={1} />
+          <div
+            className={`transition-transform duration-200 ease-out motion-reduce:transition-none ${
+              cartHidden ? "translate-y-full" : "translate-y-0"
+            }`}
+          >
+            <CartBar total={lineTotal} count={1} />
+          </div>
         </div>
       )}
 

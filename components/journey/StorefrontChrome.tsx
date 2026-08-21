@@ -34,6 +34,13 @@ export function SellerHeader({ name }: { name: string }) {
 }
 
 /**
+ * The bar's height, and **the one place it is declared**: the slots that hide it
+ * animate to and from this number, and a height transition needs a figure at
+ * both ends. Keep it in step with the markup below.
+ */
+export const CART_BAR_H = 64;
+
+/**
  * The basket bar the storefront carries at the foot of the screen: running
  * total, delivery line, and the call to action.
  *
