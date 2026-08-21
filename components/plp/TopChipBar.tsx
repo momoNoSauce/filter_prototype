@@ -111,47 +111,42 @@ function Chip({
   return (
     <button
       onClick={onClick}
-      // `gap-[8px]`, up from 4 (2026-08-21): the badge sits on the glyph and a
-      // two-digit count reaches 2px past it either side, so 4px was too tight to
-      // read as a gap. 8 is constant whether the badge is there or not, so the
-      // chip doesn't change width as filters are applied — which was half the
-      // point of moving the badge onto the glyph in the first place.
+      // `gap-[8px]`, up from the frame's 4 (2026-08-21): the leading element is
+      // now sometimes a filled counter rather than a line glyph, and 4px left it
+      // crowding the label. Constant in both states, so the chip's width doesn't
+      // move as filters are applied.
       className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center justify-center gap-[8px] rounded-[8px] border px-[12px] ${
         active ? "border-primary bg-primary-subtle" : "border-[#4d4d4d] bg-white"
       }`}
     >
       {/*
-        The count and the dot sit **on** the glyph, not after the label
-        (2026-08-21) — the treatment the bottom pill already used, and the reason
-        is the row: a badge as a sibling cost the chip 21px of a horizontally
-        scrolling strip (measured: `Filter` 85px → 106px the moment a count
-        appeared), where a badge over the icon costs 3. It also stops the chip
-        changing width as filters are applied, so nothing to its right shuffles.
+        **The count replaces the glyph**, rather than sitting on it (2026-08-21):
+        over the funnel it covered most of it and read as clutter, and beside the
+        label it cost the chip 21px of a horizontally scrolling strip the moment
+        it appeared (`Filter` 85 → 106px, measured). In the icon's place it costs
+        nothing — a one-digit count is 3px narrower than the glyph it stands in
+        for — and the chip stops changing width as filters are applied, which was
+        half the point. The chip still says `Filter` beside it, so the glyph is
+        not what carries the meaning; the number is, and now it has the room.
+
+        The Sort dot stays *on* its glyph: Sort holds one value, so there is no
+        number to swap in, and a dot is small enough not to obscure anything.
       */}
-      <span className="relative size-[20px] shrink-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img alt="" className="size-full" src={icon} />
-        {!!badge && (
-          // **Centred on the glyph's top edge**, not hung off its right corner.
-          // The count is every selected option, so it reaches two digits easily
-          // — at 13 a right-anchored badge grew into the label and touched it,
-          // where a centred one grows 2px each way and never can. The box stays
-          // 17px at 11px: this is a number the buyer reads, and the type pass
-          // raised these counters to 11 for that reason.
-          //
-          // It does cover most of the funnel, which is the trade: the chip says
-          // `Filter` beside it, so the glyph is not the thing carrying the
-          // meaning, and the count is.
-          <span className="absolute -top-[7px] left-1/2 flex h-[17px] min-w-[17px] -translate-x-1/2 items-center justify-center rounded-full bg-primary px-[4px] text-[11px] font-bold text-white">
-            {badge}
-          </span>
-        )}
-        {dot && (
-          // Ringed in the chip's own active fill, so it reads as sitting on the
-          // chip rather than punched through it.
-          <span className="absolute -top-[1px] -right-[2px] size-[8px] rounded-full bg-primary ring-2 ring-primary-subtle" />
-        )}
-      </span>
+      {badge ? (
+        <span className="flex h-[17px] min-w-[17px] shrink-0 items-center justify-center rounded-full bg-primary px-[4px] text-[11px] font-bold text-white">
+          {badge}
+        </span>
+      ) : (
+        <span className="relative size-[20px] shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img alt="" className="size-full" src={icon} />
+          {dot && (
+            // Ringed in the chip's own active fill, so it reads as sitting on
+            // the chip rather than punched through it.
+            <span className="absolute -top-[1px] -right-[2px] size-[8px] rounded-full bg-primary ring-2 ring-primary-subtle" />
+          )}
+        </span>
+      )}
       <span
         className={`text-[15px] leading-[16px] font-bold whitespace-nowrap ${
           active ? "text-primary" : "text-black/90 opacity-74"

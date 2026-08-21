@@ -557,15 +557,18 @@ tiny beside its own photograph. It was 11px, and one of the two sites the
 Asked for, to match the bottom pill and save room in the scrolling strip. It
 does: as a sibling the count cost the `Filter` chip 21px the moment it appeared
 (85 → 106px, measured), and the chip changed width as filters were applied,
-shuffling everything to its right. On the glyph it costs nothing and the chip is
-83/89 in every state — no badge, a dot, `2`, or `13`.
+shuffling everything to its right. In the glyph's place it costs nothing and the chip holds
+83–89px in every state — no badge, a dot, `2`, or `13`.
 
-- **Centred on the glyph's top edge**, not hung off the right corner. The count
-  is every selected option, so two digits are ordinary, and at 13 a
-  right-anchored badge grew into the label and touched it. Centred it grows 2px
-  each way.
-- It covers most of the funnel. Deliberate: the chip says `Filter` beside it, so
-  the glyph is not what carries the meaning — the number is.
+- **It replaces the glyph**, after two attempts at keeping both. Hung off the
+  icon's right corner, a two-digit count grew into the label and touched it;
+  centred on the icon it cleared the label but covered most of the funnel and
+  read as clutter. In the icon's *place* it does neither — and a one-digit count
+  is 3px narrower than the glyph it stands in for.
+- The chip says `Filter` beside it, so the glyph was never what carried the
+  meaning. The number is.
+- **Sort keeps its glyph**, with the dot on it: one value, so there is no number
+  to swap in, and a dot obscures nothing.
 - The chip's gap went **4 → 8px**, constant in both states, so the badge has air
   without the width moving.
 - The box stays **17px at 11px** — the type pass raised these counters to 11
