@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import { DeviceFrame } from "@/components/DeviceFrame";
+import { CartProvider } from "@/components/cart/CartProvider";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -37,7 +38,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${roboto.variable} ${inter.variable}`}
     >
       <body>
-        <DeviceFrame>{children}</DeviceFrame>
+        {/* The basket lives above the routes, so it survives every
+            client-side move between them — see `CartProvider`. */}
+        <CartProvider>
+          <DeviceFrame>{children}</DeviceFrame>
+        </CartProvider>
       </body>
     </html>
   );

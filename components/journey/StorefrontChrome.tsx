@@ -1,19 +1,6 @@
 const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 /**
- * Whether the **storefront listing** shows the basket bar. Off since 2026-08-20,
- * on request, and it stays off: nothing on a listing adds to a basket here, so
- * the bar could only print the screengrab's fixed ₹717, and a total that never
- * moves invites the question of why.
- *
- * **It no longer gates the detail screen** (2026-08-21). That screen has a real
- * basket now — the stepper's count against the pack's price — so its bar appears
- * with the first set added and prints a total it computed. The constant covers
- * the one place the number would still be fiction.
- */
-export const SHOW_CART_BAR = false;
-
-/**
  * The seller block under the app bar — storefront tile, name, `More info ›`.
  *
  * Note the name appears in **three casings across two screens** of the live app:

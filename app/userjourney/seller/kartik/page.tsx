@@ -1,10 +1,6 @@
 import { PlpScreen } from "@/components/plp/PlpScreen";
 import { JourneyProductCard } from "@/components/journey/JourneyProductCard";
-import {
-  CartBar,
-  SHOW_CART_BAR,
-  SellerHeader,
-} from "@/components/journey/StorefrontChrome";
+import { SellerHeader } from "@/components/journey/StorefrontChrome";
 import { KARTIK, getKartikCatalog } from "@/lib/catalog/kartik";
 
 /**
@@ -27,9 +23,9 @@ export default function Page() {
       title={KARTIK.name.toUpperCase()}
       products={getKartikCatalog()}
       // **Top chips, not the bottom bar** (2026-08-20). The basket bar owns the
-      // foot of this screen in the live app — `SHOW_CART_BAR` only hides it —
-      // so a pinned Sort/Filters bar would be a second bar competing for the
-      // same edge. That is what ruled the bottom-bar placement out generally;
+      // foot of this screen in the live app, and since 2026-08-21 in this
+      // prototype too, so a pinned Sort/Filters bar would be a second bar
+      // competing for the same edge. That is what ruled the bottom-bar placement out generally;
       // the journey is where it was concrete, since it is the one screen here
       // that has a basket bar at all.
       variant="top-chips"
@@ -40,9 +36,6 @@ export default function Page() {
       // lets `KARTIK EXPORTERS` fit at 20px instead of truncating.
       appBar={{ showShare: false, cartBadge: 3 }}
       aboveList={<SellerHeader name={KARTIK.name} />}
-      // Hidden for now — see `SHOW_CART_BAR`. Wired rather than removed so it
-      // returns by flipping one constant.
-      belowList={SHOW_CART_BAR ? <CartBar /> : undefined}
       // 9px inset and a 14px gap on `#f7f7f7`, all measured off the screengrab
       // at 3× — against the shared card's 16px on white. **No top padding**:
       // the seller block is the first thing in the scroller and is white, so

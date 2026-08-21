@@ -176,6 +176,28 @@ screengrab), and it is shared, so `/userjourney`, `/b` and `/d` all have it.
 
 - **The line is `price/pc × set size × qty`.** One set of the journey's tee is 4
   pieces at ₹360, so the first `+` is ₹1,440.
+- **The basket persists, and the listing carries it too** (2026-08-21).
+  `CartProvider` holds one line in the **root layout**, above the routes, so it
+  survives every move in the demo — `<Link>` on the cards, `router.push` on home,
+  `router.back()` on the back arrow are all client-side, and state above the
+  router outlives all three. Add from a product, go back, and the listing's bar
+  still carries the total. Deliberately **not** `sessionStorage`: a hard reload
+  should start the demo again, and storage would have to be read in an effect to
+  avoid a hydration mismatch — a bar appearing a frame late on every load, to
+  solve a problem nobody has. Returning to a product restores its **pack, count
+  and total**, so the stepper can't read 0 under a bar that says ₹1,440.
+- **Both bars hide on the way down and return on the way up**, sharing
+  `useHideOnScroll` with the chip strip. One difference, and it is the hook's only
+  argument: the strip waits `foldsBeforeHide: 2`, the basket bar waits for
+  nothing, because getting out of the way promptly is the whole point of a bar
+  that never leaves otherwise. The bar **translates** rather than collapsing a
+  slot — it sits at the foot of the frame with nothing below it, so there is no
+  reflow to animate. Note the detail screen at 800px tall has nothing to scroll
+  once the bar is up (content 680, viewport 680, measured), so the behaviour shows
+  there only on a shorter screen or a longer product.
+- **`SHOW_CART_BAR` is gone.** It hid a bar whose numbers were the screengrab's;
+  both screens now print a total they computed, and the constant had no callers
+  left.
 - **The basket bar appears with the first set** and prints that total, with
   `count={1}` — one line is all this prototype's basket holds. `SHOW_CART_BAR`
   doesn't gate it: that constant exists for a bar whose number would be fiction,

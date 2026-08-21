@@ -5,6 +5,8 @@ import type { Product } from "@/lib/catalog/types";
 import { AppBar } from "@/components/plp/AppBar";
 import { SetPills } from "@/components/plp/SetPills";
 import { CartBar } from "./StorefrontChrome";
+import { useCart } from "@/components/cart/CartProvider";
+import { useHideOnScroll } from "@/components/ui/useHideOnScroll";
 import { FreeDeliveryDialog } from "./FreeDeliveryDialog";
 
 const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
@@ -76,7 +78,13 @@ export function ProductDetail({
    */
   cartBadge?: number;
 }) {
-  const [selected, setSelected] = useState(0);
+  // The basket is held above the routes, so coming back to a product you have
+  // already added restores its pack, its count and its total rather than
+  // greeting you with a zero the bar below plainly contradicts.
+  const { line, setLine } = useCart();
+  const restored = line?.productId === product.id ? line : null;
+
+  const [selected, setSelected] = useState(restored?.variantIndex ?? 0);
   const variant = product.variants[selected];
 
   /**
@@ -85,13 +93,13 @@ export function ProductDetail({
    * the offer dialog all read it, and a count private to the stepper could only
    * ever move its own number.
    */
-  const [qty, setQty] = useState(0);
+  const [qty, setQty] = useState(restored?.qty ?? 0);
   /**
    * What the **basket** shows, which trails `qty` by `CART_DELAY_MS`. Two counts
    * rather than one: the stepper answers the tap immediately and the bar, the
    * band and the badge arrive when the imaginary server has priced the line.
    */
-  const [cartQty, setCartQty] = useState(0);
+  const [cartQty, setCartQty] = useState(restored?.qty ?? 0);
   const lineTotal = cartQty * variant.setOf * variant.pricePerPc;
 
   const [offerOpen, setOfferOpen] = useState(false);
@@ -101,7 +109,7 @@ export function ProductDetail({
    * back under the threshold and over it again congratulates you again — the
    * demoable reading of the two.
    */
-  const lastTotal = useRef(0);
+  const lastTotal = useRef(restored?.total ?? 0);
   /** Survives taps that don't cross, so ++ through the threshold still lands. */
   const offerDue = useRef(false);
   const cartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,6 +124,10 @@ export function ProductDetail({
     },
     [],
   );
+
+  // Out of the way on the way down, back on the way up — the same rule the
+  // listing's bar and chip strip follow.
+  const { hidden: cartHidden, track: trackCart } = useHideOnScroll();
 
   const changeQty = (next: number) => {
     const clamped = Math.max(0, next);
@@ -133,7 +145,16 @@ export function ProductDetail({
     setQty(clamped);
 
     if (cartTimer.current) clearTimeout(cartTimer.current);
-    cartTimer.current = setTimeout(() => setCartQty(clamped), CART_DELAY_MS);
+    cartTimer.current = setTimeout(() => {
+      setCartQty(clamped);
+      // Into the shared basket, so the listing's bar carries it too. Emptying
+      // the stepper empties the basket — one line is all it holds.
+      setLine(
+        clamped > 0
+          ? { productId: product.id, variantIndex: selected, qty: clamped, total }
+          : null,
+      );
+    }, CART_DELAY_MS);
 
     if (offerTimer.current) clearTimeout(offerTimer.current);
     if (offerDue.current) {
@@ -162,7 +183,10 @@ export function ProductDetail({
         />
       </div>
 
-      <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pb-[12px]">
+      <div
+        onScroll={(e) => trackCart(e.currentTarget)}
+        className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pb-[12px]"
+      >
         <p className="px-[14px] pt-[14px] text-[19px] leading-[24px] font-bold text-black">
           {product.title}
         </p>
@@ -179,7 +203,17 @@ export function ProductDetail({
               // otherwise switching to a dearer pack leaves `lastTotal` below
               // the line and the next tap re-congratulates you for nothing.
               const v = product.variants[index];
-              lastTotal.current = cartQty * v.setOf * v.pricePerPc;
+              const repriced = cartQty * v.setOf * v.pricePerPc;
+              lastTotal.current = repriced;
+              // The basket holds this line, so re-pricing the card re-prices it.
+              if (cartQty > 0) {
+                setLine({
+                  productId: product.id,
+                  variantIndex: index,
+                  qty: cartQty,
+                  total: repriced,
+                });
+              }
             }}
           />
         </div>
@@ -288,16 +322,24 @@ export function ProductDetail({
       </div>
 
       {/*
-        The basket bar, and the reason `SHOW_CART_BAR` doesn't gate it here: that
-        constant hides a bar that could only print the screengrab's fixed ₹717,
-        and this one prints a total it computed. It appears with the first set
-        added and carries the line — one item, `price/pc × set size × qty`.
+        The basket bar. It appears with the first set added and carries the
+        line — one item, `price/pc × set size × qty`. `SHOW_CART_BAR` used to
+        gate it and is gone: that constant hid a bar whose numbers were the
+        screengrab's, and both screens now print a total they computed.
 
         The delivery line stays **`+ ₹0 DELIVERY CHARGES`** at every total, as
         both screengrabs have it (decided 2026-08-21). Crossing the threshold is
         announced by the dialog, not by a charge disappearing.
       */}
-      {cartQty > 0 && <CartBar total={lineTotal} count={1} />}
+      {cartQty > 0 && (
+        <div
+          className={`shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none ${
+            cartHidden ? "translate-y-full" : "translate-y-0"
+          }`}
+        >
+          <CartBar total={lineTotal} count={1} />
+        </div>
+      )}
 
       {offerOpen && <FreeDeliveryDialog onClose={() => setOfferOpen(false)} />}
     </div>

@@ -552,6 +552,36 @@ tiny beside its own photograph. It was 11px, and one of the two sites the
   earned at **19 tiles** rather than 22. The test that pins it moved with it —
   which is the point of pinning it.
 
+#### The basket persists, and both bars hide on scroll (2026-08-21)
+
+Asked for: once something is added the bar stays — on the detail screen *and*
+the listing — and it goes down when the buyer scrolls down, back up when they
+scroll up.
+
+- **`CartProvider` in the root layout**, above the routes. Every move in this
+  demo is a client-side navigation, so state above the router survives all of
+  them: add from a product, hit back, and the listing's bar still carries the
+  total. Not `sessionStorage` — a hard reload should start the demo over, and
+  storage would need an effect to avoid a hydration mismatch, which means a bar
+  arriving a frame late on every load.
+- **One line**, which is all this prototype adds, carrying its own `total`: the
+  listing needs the figure and `/b` and `/userjourney` don't share a catalog, so
+  the screen that knows the product prices it once.
+- **Returning to a product restores pack, count and total**, so the stepper
+  can't read 0 under a bar that says ₹1,440. Switching pack re-prices the line
+  that is already in the basket.
+- **`useHideOnScroll`** now serves the chip strip and both bars. Its one
+  argument is the threshold: the strip waits two folds, the bar waits for
+  nothing. The bar translates rather than collapsing a slot, there being nothing
+  below it to take the room.
+- Verified: nothing on the listing before adding; add on the PDP → bar on both
+  screens; back → still there; scroll down → gone, up → back, on each screen.
+  At the design 800px height the detail screen has nothing to scroll once the
+  bar is up (content 680 in a 680 viewport), so that behaviour shows there only
+  on a shorter screen or a longer product — measured at 640px, where it works.
+- **`SHOW_CART_BAR` deleted**: it hid a bar whose numbers were the screengrab's,
+  and both screens now compute their own.
+
 #### Adding to the basket (2026-08-21)
 
 From a fifth screengrab: pressing `+` on the detail screen brings up the basket

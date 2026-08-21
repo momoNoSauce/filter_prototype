@@ -31,6 +31,9 @@ import type { CountedOption } from "@/lib/filters/engine";
 import { SortSheet } from "@/components/sheets/SortSheet";
 import { PriceSheet } from "@/components/sheets/PriceSheet";
 import { MicFab } from "@/components/ui/MicFab";
+import { CartBar } from "@/components/journey/StorefrontChrome";
+import { useCart } from "@/components/cart/CartProvider";
+import { useHideOnScroll } from "@/components/ui/useHideOnScroll";
 import { FilterScreen } from "@/components/filters/FilterScreen";
 import { Toast } from "@/components/ui/Toast";
 
@@ -51,12 +54,6 @@ const DISCARDED = "Selection discarded";
  * always up: a buyer who has barely started scrolling hasn't asked for the room.
  */
 const FOLDS_BEFORE_HIDE = 2;
-
-/**
- * Scroll delta that counts as a direction, in px. Without it a trackpad's
- * one-pixel jitter flips the strip on and off while the list sits still.
- */
-const SCROLL_EPS = 4;
 
 /**
  * Material 3's **level 2** elevation, its own value for a top app bar with
@@ -164,13 +161,22 @@ export function PlpScreen({
   // transition needs a number at both ends, and `auto` isn't one. It stays
   // `null` until after mount, which is also what keeps the server's markup and
   // the first client render identical.
-  const [stripHidden, setStripHidden] = useState(false);
   const [stripH, setStripH] = useState<number | null>(null);
+
+  // Same rule, two thresholds: the strip waits two folds, the basket bar goes
+  // as soon as the buyer scrolls away from it. See `useHideOnScroll`.
+  const { hidden: stripHidden, track: trackStrip } = useHideOnScroll({
+    foldsBeforeHide: FOLDS_BEFORE_HIDE,
+  });
+  const { hidden: cartHidden, track: trackCart } = useHideOnScroll();
+
+  // The basket is held above the routes, so a line added on a detail screen is
+  // still here when the buyer comes back to the listing.
+  const { line } = useCart();
 
   const listRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   /** Last scroll offset, to read direction off. */
-  const lastY = useRef(0);
   // Ids rather than the text alone, so discarding twice in a row replays the
   // animation instead of React seeing an identical element and leaving the
   // finished one on screen.
@@ -261,12 +267,8 @@ export function PlpScreen({
       setVisible((n) => Math.min(n + PAGE_SIZE, results.length));
     }
 
-    const y = el.scrollTop;
-    const dy = y - lastY.current;
-    lastY.current = y;
-    if (y <= el.clientHeight * FOLDS_BEFORE_HIDE) setStripHidden(false);
-    else if (dy > SCROLL_EPS) setStripHidden(true);
-    else if (dy < -SCROLL_EPS) setStripHidden(false);
+    trackStrip(el);
+    trackCart(el);
   };
 
   // Follows the applied selections, so the badge counts exactly the rows the
@@ -414,6 +416,26 @@ export function PlpScreen({
           on the screen and the filter controls stay put as the listing changes
           under them. */}
       {belowList}
+
+      {/*
+        The basket bar, once there is a basket. It is **the same bar the detail
+        screen shows**, reading the same line, which is the point: add from a
+        product and the total follows you back to the listing.
+
+        It slides out on the way down and returns on the way up, like the strip
+        above — `translate-y-full` rather than a height collapse, because it sits
+        at the foot of the frame with nothing below it to take the room, so there
+        is no reflow to animate.
+      */}
+      {line && (
+        <div
+          className={`shrink-0 transition-transform duration-200 ease-out motion-reduce:transition-none ${
+            cartHidden ? "translate-y-full" : "translate-y-0"
+          }`}
+        >
+          <CartBar total={line.total} count={1} />
+        </div>
+      )}
 
       {/* Anchored to the frame rather than the list, so it stays put as the
           listing scrolls under it — which is what the screengrabs show, and the
