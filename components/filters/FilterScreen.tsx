@@ -199,8 +199,24 @@ export function FilterScreen({
           })}
         </div>
 
-        {/* Panel */}
-        <div className="no-scrollbar flex w-[240px] shrink-0 flex-col overflow-y-auto">
+        {/*
+          Panel. **The remaining width, not a fixed 240** (2026-08-21): the frame
+          draws 120 + 240 = 360, and below 480px `DeviceFrame` renders the app
+          edge to edge at `100vw`, so on a 390 or 430px phone those two fixed
+          columns left 30–70px of dead white beside the tiles. The rail keeps its
+          designed 120 — its labels are set to it — and the panel takes the rest,
+          which is what a native layout does and what makes the two agree at
+          exactly 360.
+
+          Everything inside is width-agnostic (`w-full` rows, a wrapping tile
+          grid), so the only visible effect of a wider panel is that the tile grid
+          reflows to four across once it clears 307px. `panelFit.ts` still
+          computes against three across: it decides whether the *server* renders
+          a search field, and the server has no viewport. Its answer stays right
+          at the design width and errs towards offering the field on a wider
+          phone, which is the harmless direction.
+        */}
+        <div className="no-scrollbar flex min-w-0 flex-1 flex-col overflow-y-auto">
           {searchable ? (
             <SearchField value={query} onChange={setQuery} />
           ) : (

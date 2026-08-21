@@ -499,6 +499,33 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### The Filters screen fits a real phone (2026-08-21)
+
+Reported: on desktop Category and Brands look right, on mobile there is dead
+space beside them. Reproduced at 390 and 430px — the rail (120) and the panel
+(240) were both fixed, so they came to exactly 360 and left 30–70px of white
+against the frame edge, since `DeviceFrame` renders edge to edge below 480px.
+Everything else in the app already stretched; this screen was the last fixed
+one.
+
+Two changes, both minimal:
+
+- **The panel takes the remaining width.** The rail keeps its designed 120 —
+  its labels are set to that — and 120 + rest agrees with the frame at exactly
+  360.
+- **The tile grid became one responsive grid**, `auto-fill` on a 72px floor with
+  `1fr` columns, which lands on the frame's three across at 240 and fills
+  anything wider. That also collapsed the two tile layouts into one: `fill` was
+  built for the deleted Category sheet and carried a note to delete it if
+  nothing needed it — what needed it turned out to be this.
+
+Columns stretch rather than multiply (three 96px cells at 430px, not four 72px
+ones), which puts the extra width into the label the cell was widened for.
+Measured at 360 / 390 / 430 / 520: panel 240 / 270 / 310 / 240, cells 72.7 /
+82.7 / 96 / 72.7, three across throughout, 6px right inset, nothing clamped —
+and 520px is the phone-mockup path, so the desktop view the report called
+correct is untouched.
+
 #### The tile labels were raised (2026-08-21)
 
 The complaint: on the image filters — Category and Brands — the label reads as

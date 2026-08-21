@@ -104,31 +104,33 @@ export function TileGrid({
   options,
   selected,
   onToggle,
-  layout = "fixed",
 }: {
   options: CountedOption[];
   selected: string[];
   onToggle: (id: string) => void;
-  layout?: "fixed" | "fill";
 }) {
-  const fill = layout === "fill";
   return (
-    <div
-      className={
-        fill
-          ? // Symmetric insets here, unlike the panel's 14/8 — nothing sits to
-            // the side of this grid, so there's no rail to bias away from.
-            // 8px insets and a 2px column gap rather than the frame's 14/8 and
-            // 4px: they buy back enough width that a five-across cell lands at
-            // 67.2px, close enough to the frame's 68 that "Men's Formal
-            // Shirts" still wraps to two lines instead of three.
-            "grid w-full grid-cols-[repeat(auto-fill,minmax(64px,1fr))] items-start gap-x-[2px] gap-y-[4px] px-[8px]"
-          : // The frame's 14/8 insets and 4px gap gave up 4px each (2026-08-21)
-            // so the cell could go 68 → 72 and carry a 13px label. Three across
-            // is preserved: 10 + 72×3 + 3×2 + 6 = 238 of the panel's 240.
-            "flex w-full flex-wrap items-start gap-[3px] pr-[6px] pl-[10px]"
-      }
-    >
+    /*
+      **One responsive grid** (2026-08-21), where there were two fixed layouts.
+      `auto-fill` with a 72px floor and `1fr` columns lands on the frame's three
+      across at the designed 240px panel — 10 + 72×3 + 3×2 + 6 = 238 of 240 — and
+      spreads to fill anything wider, which is what a phone that isn't 360px needs:
+      `DeviceFrame` renders edge to edge below 480px, so a 430px screen gives the
+      panel 310px, and fixed 72px cells left 70px of dead white beside the tiles.
+
+      Columns stretch rather than multiply at these widths — three 96px cells at
+      430px, not four 72px ones — which is the better half of the trade, since the
+      extra width goes to the label that was the reason for widening the cell in
+      the first place. The tile itself stays the designed 56px, centred.
+
+      The insets are the frame's 14/8 less 4px each, and the gap its 4 less one:
+      that is what bought the cell 68 → 72 when the label went to 13px.
+
+      The old `layout="fill"` variant went with this: it existed for the 360px
+      Category sheet, which was deleted with A's bar slot, and a grid that already
+      fills its container is the thing it was holding the door open for.
+    */
+    <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(72px,1fr))] items-start gap-x-[3px] gap-y-[4px] pr-[6px] pl-[10px]">
       {options.map((option) => {
         const isOn = selected.includes(option.id);
         return (
@@ -137,9 +139,7 @@ export function TileGrid({
             onClick={() => onToggle(option.id)}
             aria-pressed={isOn}
             title={`${option.label} (${option.count})`}
-            className={`flex h-[105px] shrink-0 cursor-pointer flex-col items-center gap-[4px] ${
-              fill ? "w-full" : "w-[72px]"
-            }`}
+            className="flex h-[105px] w-full cursor-pointer flex-col items-center gap-[4px]"
           >
             <span
               className={`relative size-[56px] shrink-0 overflow-hidden rounded-[9.333px] bg-[#d9d9d9] ${
