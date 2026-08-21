@@ -23,8 +23,15 @@ import { CHIP_H, ChipStrip } from "./ContextChips";
  * the majority of the row already carries. Reversing it is this one value.
  *
  * It is pinned below the app bar rather than scrolling with the list: in
- * this variant it is the *only* way to reach Sort and Filters, so it can never
- * be allowed to scroll out of reach.
+ * this variant it is the *only* way to reach Sort and Filters, so it must not
+ * simply scroll away.
+ *
+ * **It does now leave, deliberately** (2026-08-21): `PlpScreen` hides the strip
+ * once the buyer is two folds down and scrolling away from it, and brings it
+ * back on the first upward flick — Amazon's behaviour, asked for. That is not
+ * the same thing as scrolling out of reach: it costs two folds to lose and one
+ * gesture to recover, where a strip that merely scrolled would be gone until you
+ * had scrolled all the way back.
  *
  * The trailing divider is the design's own — the boundary it draws before the
  * contextual chips, which arrive as `children` and share the row and its

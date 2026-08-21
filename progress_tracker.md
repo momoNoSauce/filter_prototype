@@ -499,6 +499,31 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### The chip strip hides on scroll (2026-08-21)
+
+Amazon's behaviour, asked for: the strip leaves once the buyer is **two folds**
+down and still scrolling down, and comes back the moment they scroll up.
+
+- `FOLDS_BEFORE_HIDE = 2`, measured against the **scroller's own height** rather
+  than a pixel count, so it means the same thing on any frame. Above that line
+  the strip is always up.
+- `SCROLL_EPS = 4` px counts as a direction — without it a trackpad's jitter
+  flips the strip on and off while the list sits still.
+- The slot's height collapses *and* the strip slides up, so it reads as leaving
+  rather than being squashed. Both drop under `prefers-reduced-motion`.
+- The height is measured into state: a transition needs a number at both ends,
+  `auto` is not one, and staying `null` until after mount is what keeps the
+  server's markup and the first client render identical.
+- **A departure for B and D**, where the strip is the only way to Sort and
+  Filters — `TopChipBar` said it should never leave. Two folds to lose it and one
+  gesture to recover it is the trade Amazon makes with the same controls; the
+  comment there now says so.
+- Applying a filter scrolls the list to the top, which brings the strip back on
+  its own. A's bottom bar is untouched.
+- Verified on `/b` and `/userjourney`: visible at rest and one fold down, gone
+  at two folds while scrolling down, back on a 100px scroll up, and the listing
+  runs under the app bar with no gap left behind.
+
 #### A rule under the chip strip (2026-08-21)
 
 Asked for: white chips on a white strip over a white listing left the controls

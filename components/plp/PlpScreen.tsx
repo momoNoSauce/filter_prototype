@@ -44,6 +44,20 @@ const PAGE_SIZE = 8;
  */
 const DISCARDED = "Selection discarded";
 
+/**
+ * How far down the listing the chip strip starts hiding — **two folds**, as
+ * asked for, measured against the scroller's own height rather than a fixed
+ * pixel count so it means the same thing on any frame. Above it the strip is
+ * always up: a buyer who has barely started scrolling hasn't asked for the room.
+ */
+const FOLDS_BEFORE_HIDE = 2;
+
+/**
+ * Scroll delta that counts as a direction, in px. Without it a trackpad's
+ * one-pixel jitter flips the strip on and off while the list sits still.
+ */
+const SCROLL_EPS = 4;
+
 type Overlay = "sort" | "filters" | null;
 
 /**
@@ -131,7 +145,19 @@ export function PlpScreen({
   // with.
   const [priceSheet, setPriceSheet] = useState<CountedOption[] | null>(null);
 
+  // Amazon's pattern: the strip gets out of the way once the buyer is well into
+  // the listing, and comes straight back the moment they scroll up. `stripH` is
+  // measured rather than declared, so the collapse can be animated — a height
+  // transition needs a number at both ends, and `auto` isn't one. It stays
+  // `null` until after mount, which is also what keeps the server's markup and
+  // the first client render identical.
+  const [stripHidden, setStripHidden] = useState(false);
+  const [stripH, setStripH] = useState<number | null>(null);
+
   const listRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  /** Last scroll offset, to read direction off. */
+  const lastY = useRef(0);
   // Ids rather than the text alone, so discarding twice in a row replays the
   // animation instead of React seeing an identical element and leaving the
   // finished one on screen.
@@ -205,6 +231,14 @@ export function PlpScreen({
   const toggleChip = (facetId: string, optionId: string) =>
     commit(toggleSelection(selections, facetId, optionId), sort);
 
+  // Re-measured whenever the strip's contents change — the chips rewrite
+  // themselves as a buyer drills in, and a vertical chip's label can run to two
+  // lines. `chips.length` and the variant are the only things that change its
+  // height.
+  useEffect(() => {
+    setStripH(stripRef.current?.offsetHeight ?? null);
+  }, [chips.length, variant]);
+
   // Cards are heavy, and there can be 1,070 of them. Render a page at a time
   // and extend as the list scrolls.
   const onScroll = () => {
@@ -213,6 +247,13 @@ export function PlpScreen({
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 400) {
       setVisible((n) => Math.min(n + PAGE_SIZE, results.length));
     }
+
+    const y = el.scrollTop;
+    const dy = y - lastY.current;
+    lastY.current = y;
+    if (y <= el.clientHeight * FOLDS_BEFORE_HIDE) setStripHidden(false);
+    else if (dy > SCROLL_EPS) setStripHidden(true);
+    else if (dy < -SCROLL_EPS) setStripHidden(false);
   };
 
   // Follows the applied selections, so the badge counts exactly the rows the
@@ -245,35 +286,63 @@ export function PlpScreen({
           homeHref={homeHref === undefined ? (variant === "top-chips" ? "/b" : "/") : homeHref}
           {...appBar}
         />
-        {variant === "top-chips" ? (
-          <TopChipBar
-            sortActive={sortActive}
-            filterCount={filterCount}
-            onSort={() => setOverlay("sort")}
-            onFilters={() => setOverlay("filters")}
+        {/*
+          The strip hides on the way down and returns on the way up — Amazon's
+          behaviour, asked for on 2026-08-21.
+
+          Two things move together: the slot's height collapses so the listing
+          takes the room, and the strip inside slides up so it reads as leaving
+          rather than being squashed. The height is the measured `stripH`, since
+          a transition needs a number at both ends; before it is measured the
+          slot has no height style at all and the strip sits where it always did.
+
+          **This is a departure for B and D**, where the strip is the only route
+          to Sort and Filters — `TopChipBar` says so, and said it should never
+          leave the screen. Amazon hides the same controls behind the same
+          gesture, and scrolling up is how you get them back: one flick, against
+          two folds of scrolling to lose them.
+        */}
+        <div
+          className="overflow-hidden transition-[height] duration-200 ease-out motion-reduce:transition-none"
+          style={stripH !== null ? { height: stripHidden ? 0 : stripH } : undefined}
+        >
+          <div
+            ref={stripRef}
+            className={`transition-transform duration-200 ease-out motion-reduce:transition-none ${
+              stripHidden ? "-translate-y-full" : "translate-y-0"
+            }`}
           >
-            <ContextChips
-              chips={chips}
-              selections={selections}
-              onToggle={toggleChip}
-              onOpenPrice={setPriceSheet}
-            />
-          </TopChipBar>
-        ) : (
-          // Variant A has no Sort or Filter chip, so the strip is the
-          // contextual chips alone — and collapses entirely when there are
-          // none, rather than leaving an empty white band.
-          chips.length > 0 && (
-            <ChipStrip>
+          {variant === "top-chips" ? (
+            <TopChipBar
+              sortActive={sortActive}
+              filterCount={filterCount}
+              onSort={() => setOverlay("sort")}
+              onFilters={() => setOverlay("filters")}
+            >
               <ContextChips
-              chips={chips}
-              selections={selections}
-              onToggle={toggleChip}
-              onOpenPrice={setPriceSheet}
-            />
-            </ChipStrip>
-          )
-        )}
+                chips={chips}
+                selections={selections}
+                onToggle={toggleChip}
+                onOpenPrice={setPriceSheet}
+              />
+            </TopChipBar>
+          ) : (
+            // Variant A has no Sort or Filter chip, so the strip is the
+            // contextual chips alone — and collapses entirely when there are
+            // none, rather than leaving an empty white band.
+            chips.length > 0 && (
+              <ChipStrip>
+                <ContextChips
+                chips={chips}
+                selections={selections}
+                onToggle={toggleChip}
+                onOpenPrice={setPriceSheet}
+              />
+              </ChipStrip>
+            )
+          )}
+          </div>
+        </div>
       </div>
 
       <div
