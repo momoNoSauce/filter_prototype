@@ -15,6 +15,10 @@ import type { Gender } from "./types";
  * into "adult" would put a man on a Women's T-Shirt card, which is the same class
  * of mismatch this replaces. Twenty colours over six pairs is **120 files**.
  *
+ * The files are **JPEG at 276px wide** — 3× the 92px the card draws them at, and
+ * ~16KB each, so 120 of them is under 2MB in the repo. Generated with Magnific's
+ * Nano Banana 2 Lite: a model on seamless white, waist-up, no print or logo.
+ *
  * Nothing here touches the seed's PRNG: the image was always *derived* from the
  * colour rather than drawn, so changing the derivation moves no count.
  */
@@ -31,10 +35,30 @@ export const colourSlug = (name: string) => name.toLowerCase().replace(/\s+/g, "
  * A set rather than a filesystem check: this runs in the browser as well as on
  * the server, and the seed is built in both.
  */
-export const GENERATED_PRODUCT_IMAGES: ReadonlySet<string> = new Set<string>([]);
+export const GENERATED_PRODUCT_IMAGES: ReadonlySet<string> = new Set<string>([
+  "boys-shirt-navy.jpg",
+  "girls-tee-coral.jpg",
+  "men-tee-beige.jpg",
+  "men-tee-black.jpg",
+  "men-tee-blue.jpg",
+  "men-tee-brown.jpg",
+  "men-tee-green.jpg",
+  "men-tee-grey.jpg",
+  "men-tee-maroon.jpg",
+  "men-tee-mustard.jpg",
+  "men-tee-navy.jpg",
+  "men-tee-olive.jpg",
+  "men-tee-pink.jpg",
+  "men-tee-purple.jpg",
+  "men-tee-red.jpg",
+  "men-tee-rust.jpg",
+  "men-tee-sky-blue.jpg",
+  "men-tee-teal.jpg",
+  "men-tee-white.jpg",
+]);
 
 /**
- * `/products/{gender}-{kind}-{colour}.png` when that file has been generated,
+ * `/products/{gender}-{kind}-{colour}.jpg` when that file has been generated,
  * else the Figma render the catalog shipped with.
  */
 export function productImage(
@@ -42,7 +66,7 @@ export function productImage(
   kind: "shirt" | "tee",
   gender: Gender,
 ): string {
-  const file = `${gender}-${kind}-${colourSlug(colour.name)}.png`;
+  const file = `${gender}-${kind}-${colourSlug(colour.name)}.jpg`;
   if (GENERATED_PRODUCT_IMAGES.has(file)) return `/products/${file}`;
   // The two-render fallback, unchanged: dark colours get the black shirt, light
   // ones the grey. Wrong garment for four of seven categories, which is the

@@ -487,7 +487,23 @@ Sizes and the vertical-specific attributes each draw from **their own PRNG strea
 ## Imagery
 
 - **Category tiles** — Unsplash stock in `public/categories/`, credited in `CREDITS.md`. Filenames match the category id (`womens-t-shirts.jpg`), fetched at 336×336 = 6× the 56px tile. All seven are **worn on a model**, because every category names its audience and at 56px a person says who it is for faster than a flat-lay does; they're also picked for seven distinct dominant colours. `boys-casual-t-shirts.jpg` carries an incidental Levi's wordmark — unreadable at tile size, noted in `CREDITS.md`.
-- **Product card renders don't match the T-shirt categories.** Only two shirt renders exist in Figma, and four of the seven categories are now tees, so a card titled "… Casual T-Shirts for Boys" shows a button-up. Pre-existing constraint, more visible than it was. Needs a designer to export tee renders — don't substitute stock photography on the card.
+- **Product images are generated, one per wearer × garment × colour** (2026-08-21,
+  in progress). Only two shirt renders exist in Figma, and four of the seven
+  categories are tees, so every card used to show a button-up in one of two
+  colours — a Coral tee for girls arrived as a grey shirt. `productImage()` in
+  `lib/catalog/productImage.ts` now resolves
+  `/products/{gender}-{kind}-{colour}.jpg` and **falls back to the two Figma
+  renders for anything not yet generated**, so the set can land in batches
+  without a flag day and nothing ever points at a 404.
+  The axis is **`gender × kind`**, six pairs (women-tee, men-tee, men-shirt,
+  girls-tee, boys-tee, boys-shirt) over 20 colours = **120 files**: collapsing
+  women and men into "adult" would put a man on a Women's T-Shirt card, which is
+  the mismatch this removes. Made with Magnific's Nano Banana 2 Lite — model on
+  seamless white, waist-up, no print or logo — at 276px wide, 3× the 92px the
+  card draws, ~16KB each. `GENERATED_PRODUCT_IMAGES` is the manifest of what
+  exists; regenerate it from the directory after each batch rather than editing it
+  by hand. Nothing here touches the seed: the image was always derived from the
+  colour, never drawn.
 - **Brand tiles** — still grey `#d9d9d9` placeholders. Real logos couldn't be sourced (Clearbit's API is retired; Wikipedia/Commons returned unrelated files for 7 of 8 brands). The right input is brand-supplied assets, which also avoids scraping trademarked marks.
 - **Product images** — only two shirt renders exist in the Figma file, assigned by whether the colour is dark or light.
 
