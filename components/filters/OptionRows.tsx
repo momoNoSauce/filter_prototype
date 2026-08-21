@@ -139,10 +139,25 @@ export function TileGrid({
             onClick={() => onToggle(option.id)}
             aria-pressed={isOn}
             title={`${option.label} (${option.count})`}
-            className="flex h-[105px] w-full cursor-pointer flex-col items-center gap-[4px]"
+            // Height is content, not a constant: the tile is square and tracks
+            // the column, so a fixed 105 would clip the label the moment a
+            // wider phone grew the cell. At the design width it comes to
+            // 56.67 + 4 + 45 ≈ 105, which is what `panelFit` still assumes.
+            className="flex w-full cursor-pointer flex-col items-center gap-[4px]"
           >
             <span
-              className={`relative size-[56px] shrink-0 overflow-hidden rounded-[9.333px] bg-[#d9d9d9] ${
+              // **The column less 16px**, square (2026-08-21): the frame's flat
+              // 56px left 20px of air either side of a photograph once a 430px
+              // phone stretched the column to 96, which is what prompted this.
+              // `calc(100% - 16px)` is 8px of breathing room either side, and it
+              // lands on 56.67 at the designed 72.67 column — the frame's 56
+              // within a subpixel — so the 360px rendering is unchanged and only
+              // wider phones see a bigger tile.
+              //
+              // The radius goes proportional with it: 9.333 of 56 is 16.667%,
+              // exactly the frame's corner at the design width and the same
+              // corner at any other.
+              className={`relative aspect-square w-[calc(100%-16px)] shrink-0 overflow-hidden rounded-[16.667%] bg-[#d9d9d9] ${
                 isOn ? "ring-2 ring-primary ring-offset-1" : ""
               }`}
             >

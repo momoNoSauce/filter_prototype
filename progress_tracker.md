@@ -520,11 +520,19 @@ Two changes, both minimal:
   nothing needed it — what needed it turned out to be this.
 
 Columns stretch rather than multiply (three 96px cells at 430px, not four 72px
-ones), which puts the extra width into the label the cell was widened for.
+ones), which puts the extra width into the label the cell was widened for. **The
+tile grows with the column too** — `calc(100% - 16px)`, square, so 8px of air
+either side at any width: a flat 56px left 20px of air either side of a
+photograph once the column reached 96, which was the follow-up complaint. It
+lands on 56.67 at the designed 72.67 column, the frame's 56 within a subpixel.
+The radius went proportional with it (9.333 of 56 = 16.667%), and the cell's
+height is content rather than a fixed 105, which would have clipped the label as
+the tile grew.
+
 Measured at 360 / 390 / 430 / 520: panel 240 / 270 / 310 / 240, cells 72.7 /
-82.7 / 96 / 72.7, three across throughout, 6px right inset, nothing clamped —
-and 520px is the phone-mockup path, so the desktop view the report called
-correct is untouched.
+82.7 / 96 / 72.7, tiles 56.7 / 66.7 / 80 / 56.7, three across throughout,
+nothing clamped — and 520px is the phone-mockup path, so the desktop view the
+report called correct is untouched.
 
 #### The tile labels were raised (2026-08-21)
 

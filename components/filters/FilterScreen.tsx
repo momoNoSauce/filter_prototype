@@ -208,13 +208,17 @@ export function FilterScreen({
           which is what a native layout does and what makes the two agree at
           exactly 360.
 
-          Everything inside is width-agnostic (`w-full` rows, a wrapping tile
-          grid), so the only visible effect of a wider panel is that the tile grid
-          reflows to four across once it clears 307px. `panelFit.ts` still
-          computes against three across: it decides whether the *server* renders
-          a search field, and the server has no viewport. Its answer stays right
-          at the design width and errs towards offering the field on a wider
-          phone, which is the harmless direction.
+          Everything inside is width-agnostic (`w-full` rows, a grid whose
+          columns stretch), so the only visible effect of a wider panel is bigger
+          tiles. `panelFit.ts` still computes against the design width: it decides
+          whether the *server* renders a search field, and the server has no
+          viewport. Its answer is exact at 360 and slightly optimistic beyond it —
+          the columns stay three and the square tiles grow, so rows are taller
+          than the 105 it assumes and a long panel can overflow where it said it
+          wouldn't. The cost is a missing search field on a wide phone, on a
+          list you can still scroll; measuring instead would mean rendering no
+          field on the server and adding one after hydration, which is the 56px
+          shift that rule exists to avoid.
         */}
         <div className="no-scrollbar flex min-w-0 flex-1 flex-col overflow-y-auto">
           {searchable ? (
