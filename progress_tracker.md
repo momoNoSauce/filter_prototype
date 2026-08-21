@@ -576,9 +576,18 @@ on top chips — that call was about which controls its own screengrab shows.
 - Verified on `/` and `/c`: pill at x=60, 240 × 52, 12px off the bottom, sheets
   open, the Sort dot lights.
 
-**Still missing on A and C:** a detail route. `productBasePath` is unset there,
-so their cards don't open and the basket can't be filled from them — one prop
-and one route file each.
+**A and C got their detail routes the same day**, `/product/[productId]` and
+`/c/product/[productId]`, so all four variants are closed loops from listing to
+product to basket. A's base path is the **empty string** — its routes hang off
+`/` — so `productBasePath` is tested with `!== undefined`, not for truthiness,
+or A's cards would silently stop navigating. Verified: a card on `/seller/baheti`
+opens `/product/p-0511`, `+` brings up the bar, Home returns to `/`.
+
+**The pill hides with the chip strip** (asked for): same flag, two folds down,
+sliding clear of the frame by its own height plus its offset and returning on the
+first upward flick. Measured on `/` and `/c`: pill top 736 → 800 with the strip
+69 → 0, and both back on the way up. One gesture, one moment — two thresholds
+would read as a stutter.
 
 #### One card, and it is the journey's (2026-08-21)
 

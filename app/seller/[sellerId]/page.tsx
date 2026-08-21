@@ -22,5 +22,14 @@ export default async function SellerPage({ params }: PageProps<"/seller/[sellerI
   const products =
     sellerId === "baheti" ? catalog : catalog.filter((p) => p.sellerId === sellerId);
 
-  return <PlpScreen title={seller.name} products={products} />;
+  return (
+    <PlpScreen
+      title={seller.name}
+      products={products}
+      // The empty string, not a missing prop: A's routes hang off `/`, the same
+      // convention `HomeScreen`'s `basePath` follows, so a card opens
+      // `/product/[id]`.
+      productBasePath=""
+    />
+  );
 }

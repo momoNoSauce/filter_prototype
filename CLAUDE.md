@@ -59,9 +59,12 @@ Both render the identical card, catalog, engine and sheets. **Only the controls 
 > on top chips — that was a separate call about which controls its screengrab
 > shows, and it is now the source of truth for the card either way.
 >
-> What A and C still lack is a **detail route**: `productBasePath` is unset there,
-> so their cards don't open and the basket can't be filled from them. One prop and
-> one route file each if the comparison needs it.
+> **All four have a detail route** as of the same day: `/product/[productId]`
+> and `/c/product/[productId]` join B's and D's, so every variant is a closed
+> loop from listing to product to basket. Note A's base path is the **empty
+> string** — its routes hang off `/`, the convention `HomeScreen`'s `basePath`
+> already follows — so `productBasePath` is tested with `!== undefined` rather
+> than for truthiness, or A's cards would silently stop navigating.
 
 C and D (2026-08-19) make it a **2×2**: A and B start across every category, C and D start *inside* one. `/c` and `/d` **are the listing** — one URL, no browse path in front, because the point is the state, not how you got there. Other pairs are at `/c/seller/[sellerId]/[categoryId]`; `DEMO_VERTICAL` in `scope.ts` is the one the bare URL lands on.
 
@@ -289,15 +292,17 @@ same app. It is parameterised, not copied: `homeHref` keeps each variant a
 closed loop, and `cartBadge` has **no default**, so the journey's `3` (its
 screengrab's) stays the journey's and B and D show no badge.
 
-Routes are `{base}/product/[productId]` — `/b`, `/d`, `/userjourney` — and the
-cards link there through **`productBasePath`**, a string on `PlpScreen`. A
-builder function was the first try and the build rejects it outright: these
-pages are Server Components and `PlpScreen` is a Client one, so a function prop
-cannot cross the boundary. A and C pass nothing and their cards don't navigate.
+Routes are `{base}/product/[productId]` for **all five paths** — `""` (A), `/b`,
+`/c`, `/d`, `/userjourney` — and the cards link there through
+**`productBasePath`**, a string on `PlpScreen`. A builder function was the first
+try and the build rejects it outright: these pages are Server Components and
+`PlpScreen` is a Client one, so a function prop cannot cross the boundary. **`""`
+and `undefined` are different answers** — A's base path is genuinely empty, so the
+test is `!== undefined`; left undefined, a listing's cards simply don't navigate.
 
-B and D's detail routes are **dynamic, not pre-rendered**: 1,070 products each
-would double a build for screens a demo opens two of. The journey's is dynamic
-for the same reason.
+The detail routes are **dynamic, not pre-rendered**: 1,070 products each would
+double a build for screens a demo opens two of. The journey's is dynamic for the
+same reason.
 
 The known mismatch carries over — a card titled *… T-Shirts for Girls* opens a
 detail screen showing the Figma button-up, four of the seven categories being
@@ -409,7 +414,7 @@ Sizes and the vertical-specific attributes each draw from **their own PRNG strea
 | Sort options | Popularity · Recently Added · Price/pc low→high · **Price/pc high→low** · Highest Margin. High→low added 2026-08-19 in all four variants — one `SORT_OPTIONS` entry, one `sortProducts` case, since every variant reads the same list. Both price sorts read the pack the card prints, not pack #1. **Arrow direction is the magnitude, not the list**: up for low→high, since the prices ascend as you read down — Figma names the up-arrow glyph `low to high`, so the frame agrees. Swap the two paths if it should describe list order instead |
 | Sort sheet glyphs | All five come from Figma **`688:1687`** (`SortbyIcon`), exported to `public/figma/icons/sort-*.svg` (2026-08-19). They are **drawn as a set at one weight**, so the sheet takes the whole set and borrows nothing: `recent` used to stand in `tag.svg` — the Sort sheet's own *Recently Added* glyph doing double duty — and `popularity` used to take `trend-up.svg`, a heavier cut of the same trending arrow that the PLP owns. The pair of supplied price PNGs in `public/sort/` are superseded and that folder is gone. `sort-percent.svg` currently matches the library's `percent.svg` byte for byte and is **still its own file**: the set is the unit that gets reweighted, so a redraw has to land in one place rather than depend on a coincidence between two glyphs with different owners. They run through `MaskIcon`, which reads only the alpha channel, so a black glyph still tints to primary on the active row. `sort-new.svg` is the one assembled by hand — its Figma frame is a vector plus a live text layer, so it has no single vector-layer export; the frame export carries the exact paths for both, including the outlined `NEW`, and only the section background behind it was dropped. Its badge is a two-contour ring, so the counter stays transparent and the wordmark reads through the mask |
 | Sort sheet | Tap applies **and closes** — no Apply button in the design |
-| Bottom bar | A **floating dark pill**, Figma `697:2658` (2026-08-21) — 240 × 52, `#323232`, 1px `#d1d1d1`, 16px radius, `0 0 5.05px rgba(0,0,0,0.3)`, two halves either side of a 32px rule, each a 24px glyph over its label. It **floats over the listing** rather than taking a band off it, 12px above the basket bar or the frame's edge, and the offset transitions so it rides the bar as that slides away. The list carries a `PILL_H + 2 × PILL_GAP` spacer so the last card can clear it. This is the design that un-parked A and C; the full-width white bar (`638:2836`) it replaces is what the basket bar could not share an edge with. Two departures, both standing rules: labels at **15px** not the frame's 14, every 14px control label having moved on 2026-08-20, and the **dot and count stay**, the frame giving no way to tell a filtered list from an unfiltered one. `sort.svg` is the frame's own `SortAscending` and `funnel.svg` its `Funnel`, both black exports rendered white through `MaskIcon`.<br><br>**Sort and Filters only** (2026-08-19). The frame's first slot was Gender, then briefly Category; Category now lives in the Filters rail like every other facet. A facet behind both a bar slot and a chip kept raising questions the bar was the wrong place to answer — whether to hide the slot once a vertical was picked, which control owned the count, what Clear Filters was allowed to touch. One control, one owner |
+| Bottom bar | A **floating dark pill**, Figma `697:2658` (2026-08-21) — 240 × 52, `#323232`, 1px `#d1d1d1`, 16px radius, `0 0 5.05px rgba(0,0,0,0.3)`, two halves either side of a 32px rule, each a 24px glyph over its label. It **floats over the listing** rather than taking a band off it, 12px above the basket bar or the frame's edge, and the offset transitions so it rides the bar as that slides away. The list carries a `PILL_H + 2 × PILL_GAP` spacer so the last card can clear it. **It hides with the chip strip** — the same flag, not a second one: two folds down and it slides clear of the frame by its own height plus its offset, and it returns on the first upward flick. One gesture, one moment, both controls; two thresholds would read as a stutter. This is the design that un-parked A and C; the full-width white bar (`638:2836`) it replaces is what the basket bar could not share an edge with. Two departures, both standing rules: labels at **15px** not the frame's 14, every 14px control label having moved on 2026-08-20, and the **dot and count stay**, the frame giving no way to tell a filtered list from an unfiltered one. `sort.svg` is the frame's own `SortAscending` and `funnel.svg` its `Funnel`, both black exports rendered white through `MaskIcon`.<br><br>**Sort and Filters only** (2026-08-19). The frame's first slot was Gender, then briefly Category; Category now lives in the Filters rail like every other facet. A facet behind both a bar slot and a chip kept raising questions the bar was the wrong place to answer — whether to hide the slot once a vertical was picked, which control owned the count, what Clear Filters was allowed to touch. One control, one owner |
 | Category | An ordinary rail facet, **first**, in both variants. It spent 2026-08-13 to 08-19 as a multi-select bottom-bar sheet in A; that sheet and its `Clear all` / `Show N results` footer are deleted, following the `GenderSheet` precedent — when a bar slot goes, the sheet it opened goes with it. Multi-select survives, because the rail's `TileGrid` was always multi-select |
 | Gender | An ordinary **multi-select** rail facet, second in both A and B, and **only while no single vertical is settled** (2026-08-19). It's a faster cut than ticking three category tiles, and dropping it outright would leave `?gender=` links with no UI — but the moment one vertical is picked it becomes a dead control, category → gender being 1:1, so it could then only offer the one value every product in scope already has. That is the same argument C and D already made by dropping it; it now applies wherever the vertical is settled, not just where the page settles it. Exclusivity was always a property of the control, never the facet, which is why there is no `single` flag in the registry |
 | ~~Category sheet icon~~ | Moot since 2026-08-19. `tag.svg` was standing in for a Category glyph in the bottom bar; there is no bottom-bar Category slot any more, so nothing needs the icon and the open request for a designed one is withdrawn |

@@ -121,13 +121,18 @@ export function PlpScreen({
    */
   card?: (props: { product: Product; sizes?: string[]; href?: string }) => ReactNode;
   /**
-   * The route a card opens under — `"/b"`, `"/d"`, `"/userjourney"`. The card's
+   * The route a card opens under — `""` for A, `"/b"`, `"/c"`, `"/d"`,
+   * `"/userjourney"`. The card's
    * link is `{base}/product/{id}`, which every variant with a detail route
    * follows. **A string, not a builder**: these pages are Server Components and
    * this screen is a Client one, so a function prop cannot cross the boundary —
-   * the build fails outright on it, which is how this was found. Absent means
-   * the cards don't navigate, which is A and C: parked, and with no detail
-   * route of their own.
+   * the build fails outright on it, which is how this was found.
+   *
+   * **`undefined` and `""` are different answers.** A's base path *is* the empty
+   * string — its home is `/`, the same convention `HomeScreen`'s `basePath`
+   * follows — so the test is `!== undefined`, not truthiness. Left undefined the
+   * cards don't navigate at all, which is what every variant did before it had a
+   * detail route.
    */
   productBasePath?: string;
   /** Extra app-bar props, for the journey's no-Share / cart-badge bar. */
@@ -294,6 +299,10 @@ export function PlpScreen({
   // first client render agree.
   const stripElevated = !stripHidden && (variant === "top-chips" || chips.length > 0);
 
+  // Where the floating pill sits: 12px above the basket bar when there is one,
+  // above the frame's edge otherwise.
+  const pillBottom = (line && !cartHidden ? CART_BAR_H : 0) + PILL_GAP;
+
   return (
     // `relative` so the sheets and the Filters screen cover this frame rather
     // than the page. It outlived the Price dropdown it was added for, which
@@ -395,7 +404,9 @@ export function PlpScreen({
                 product={product}
                 sizes={selections[SIZE_FACET_ID]}
                 href={
-                  productBasePath ? `${productBasePath}/product/${product.id}` : undefined
+                  productBasePath === undefined
+                    ? undefined
+                    : `${productBasePath}/product/${product.id}`
                 }
               />
             ))
@@ -420,9 +431,23 @@ export function PlpScreen({
         // 12px above whatever is down there — the bar when the basket has a
         // line, the frame's edge otherwise — and the offset transitions, so it
         // travels with the bar as that slides away instead of jumping.
+        //
+        // **It hides with the chip strip**, on request (2026-08-21) — same flag,
+        // not a second one: the strip's rule is the one the ask named ("like the
+        // bar at the top"), and two controls answering one gesture at one moment
+        // reads as the screen getting out of the way, where two thresholds would
+        // read as a stutter. So it waits two folds, and comes back on the first
+        // upward flick.
         <div
-          style={{ bottom: (line && !cartHidden ? CART_BAR_H : 0) + PILL_GAP }}
-          className="absolute left-1/2 z-30 -translate-x-1/2 transition-[bottom] duration-200 ease-out motion-reduce:transition-none"
+          style={{
+            bottom: pillBottom,
+            // Down and clear of the frame, by exactly its own height plus
+            // whatever it was sitting above — `.device-screen` clips the rest.
+            transform: `translateX(-50%) translateY(${
+              stripHidden ? pillBottom + PILL_H : 0
+            }px)`,
+          }}
+          className="absolute left-1/2 z-30 transition-[bottom,transform] duration-200 ease-out motion-reduce:transition-none"
         >
           <BottomActionBar
             sortActive={sortActive}

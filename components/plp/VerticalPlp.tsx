@@ -26,7 +26,7 @@ export function VerticalPlp({
   sellerId: string;
   categoryId: string;
   variant: PlpVariant;
-  /** Passed by D's routes only — C is parked and has no detail route. */
+  /** `"/c"` or `"/d"` — where a card opens, each variant staying its own loop. */
   productBasePath?: string;
 }) {
   const scope = verticalScope(sellerId, categoryId);
