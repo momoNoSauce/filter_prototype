@@ -1,13 +1,15 @@
 const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 /**
- * Whether the basket bar is shown. **Off since 2026-08-20, on request.**
+ * Whether the **storefront listing** shows the basket bar. Off since 2026-08-20,
+ * on request, and it stays off: nothing on a listing adds to a basket here, so
+ * the bar could only print the screengrab's fixed ₹717, and a total that never
+ * moves invites the question of why.
  *
- * `CartBar` below is kept whole rather than deleted: the journey has no basket
- * to fill, so the bar could only ever print the screengrab's fixed ₹717, and a
- * total that never moves invites the question of why. Flipping this to `true`
- * brings it back on both the storefront and the detail screen at once — which is
- * why it is one exported constant and not a prop threaded through two callers.
+ * **It no longer gates the detail screen** (2026-08-21). That screen has a real
+ * basket now — the stepper's count against the pack's price — so its bar appears
+ * with the first set added and prints a total it computed. The constant covers
+ * the one place the number would still be fiction.
  */
 export const SHOW_CART_BAR = false;
 
@@ -54,9 +56,10 @@ export function SellerHeader({ name }: { name: string }) {
  * would be a behaviour invented from a single missing frame. Flagged as an open
  * question.
  *
- * The figures are fixed, not derived: nothing in this prototype adds to a
- * basket, so a live total would always read ₹0 and the bar would look broken.
- * They are the screengrab's own numbers.
+ * **The defaults are the screengrab's numbers**, for the storefront, which has
+ * no basket to read. The detail screen passes its own: `price/pc × set size ×
+ * qty`, and `count={1}` — one line, which is all this prototype's basket can
+ * hold.
  */
 export function CartBar({
   total = 717,
@@ -78,11 +81,19 @@ export function CartBar({
       </span>
       <div className="flex min-w-0 flex-1 flex-col items-start">
         <p className="text-[20px] leading-[24px] font-bold text-primary">{inr(total)}</p>
-        <p className="text-[13px] leading-[16px] font-medium text-muted">
+        {/*
+          `whitespace-nowrap`, and the button below gave up 6px of padding to
+          pay for it (2026-08-21). The bar was built against a screengrab whose
+          total was ₹717; the first four-digit total wrapped this line in two,
+          because our 13px is a deliberate raise over the app's measured ~10px
+          — see *Type scale* — and 13px needs 150 of the 165px the row has once
+          the button is at the width the screengrab draws it.
+        */}
+        <p className="text-[13px] leading-[16px] font-medium whitespace-nowrap text-muted">
           + ₹0 DELIVERY CHARGES
         </p>
       </div>
-      <div className="flex h-[46px] shrink-0 items-center gap-[6px] rounded-[4px] bg-primary px-[20px]">
+      <div className="flex h-[46px] shrink-0 items-center gap-[6px] rounded-[4px] bg-primary px-[14px]">
         <span className="text-[15px] font-bold whitespace-nowrap text-white">
           GO TO CART
         </span>

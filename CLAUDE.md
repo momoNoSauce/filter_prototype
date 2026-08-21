@@ -133,8 +133,9 @@ as it already does for the product card.
   ours, and two bars cannot share that edge. Flipping `SHOW_CART_BAR` back to
   `true` now costs nothing, the bottom being free.
 - **`SHOW_CART_BAR = false`** in `StorefrontChrome.tsx` hides the basket bar on
-  both journey screens. Kept whole rather than deleted: nothing fills a basket
-  here, so it could only print the screengrab's fixed ₹717.
+  the **storefront listing**, where nothing fills a basket, so it could only
+  print the screengrab's fixed ₹717. Since 2026-08-21 it no longer gates the
+  detail screen — see *Adding to the basket*.
 - The **seller header scrolls away** with the listing (it renders *inside* the
   scroller); the app bar and chip strip stay fixed.
 - **`Order Again` and `Top Brands` are built** (2026-08-20), so the home screen is
@@ -165,8 +166,48 @@ Dropping Share is also what makes the title fit — `KARTIK EXPORTERS` truncated
 `KARTIK EXPOR…` at 20px with it in place.
 
 **Not built, on purpose:** a second gallery image (only front renders exist) and
-a working basket. Men's cards still show a button-up — no men's tee render exists
+a basket beyond one line — `GO TO CART` goes nowhere. Men's cards still show a button-up — no men's tee render exists
 in any screengrab, the same ask already open against the main catalog.
+
+### Adding to the basket
+
+The detail screen's stepper drives a real line (2026-08-21, from a fifth
+screengrab), and it is shared, so `/userjourney`, `/b` and `/d` all have it.
+
+- **The line is `price/pc × set size × qty`.** One set of the journey's tee is 4
+  pieces at ₹360, so the first `+` is ₹1,440.
+- **The basket bar appears with the first set** and prints that total, with
+  `count={1}` — one line is all this prototype's basket holds. `SHOW_CART_BAR`
+  doesn't gate it: that constant exists for a bar whose number would be fiction,
+  and this one is computed. The delivery line stays **`+ ₹0 DELIVERY CHARGES`**
+  at every total, as both screengrabs have it; the threshold is announced by the
+  dialog, not by a charge disappearing.
+- **The app-bar badge follows the basket** — nothing at 0, then `1`. The route's
+  `cartBadge` is only the resting value, because a basket of 3 that the bar's
+  total doesn't include makes the two disagree the moment you add anything.
+- **A green `SUBTOTAL` band** appears above the pricing card once qty > 0: 8px
+  inset, 22px tall, measured. **Its green is recovered arithmetic, not a
+  measurement** — the band only appears in a shot with the dialog up, so the
+  scrim is over it. The app bar's known `#004FFA` reads back as `rgb(7,49,140)`,
+  which puts the scrim at ~44% black; inverting the band's `rgb(71,102,72)` gives
+  `#7fb681`. Replace it with a straight measurement if an undimmed grab turns up.
+- **`FREE_DELIVERY_MIN = 1000`** is a demo constant, not a catalog field: no
+  screengrab states it and no product carries it.
+- **The dialog fires on every upward crossing**, so stepping under the threshold
+  and back over it congratulates you again — chosen over once-per-visit for
+  demoability.
+- **The dialog's card is the screengrab itself**, cropped to its bounding box and
+  corner-clipped at 13px: the message never varies, the truck is artwork nothing
+  in `public/figma/` supplies, and re-typesetting it would only invite the two to
+  drift. The grey scrim pixels left in the crop's four corners are exactly what
+  the radius clips. Live rather than painted: the scrim, the ✕ above the card
+  (`MaskIcon` in white — `close.svg` is black, for the sheets that carry it on
+  white), and an invisible button over the blue band. `animate-dialog-in/out`
+  scales from 92% rather than sliding, a centred surface not having an edge to
+  arrive from.
+- **Not built:** the quantity badge the screengrab shows on the selected pack
+  pill. `SetPills` is shared with A–D's cards, and a badge there would land on
+  screens that have no basket at all.
 
 ### The detail screen is shared
 

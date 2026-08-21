@@ -172,6 +172,38 @@ input {
   }
 }
 
+/*
+ * The offer dialog: it arrives in the middle of the screen rather than from an
+ * edge, so it scales up from 92% as it fades rather than sliding — the same
+ * emphasized easing the sheets use, on the property that suits a centred surface.
+ */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes dialog-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+.animate-dialog-in {
+  animation: dialog-in 260ms cubic-bezier(0.05, 0.7, 0.1, 1) both;
+}
+.animate-dialog-out {
+  animation: dialog-out 200ms cubic-bezier(0.3, 0, 0.8, 0.15) both;
+}
+
 /* Emphasized decelerate — slow settle at the end of the travel. */
 .animate-sheet-in {
   animation: sheet-in 260ms cubic-bezier(0.05, 0.7, 0.1, 1) both;
@@ -235,7 +267,9 @@ input {
   .animate-sheet-in,
   .animate-sheet-out,
   .animate-scrim-in,
-  .animate-scrim-out {
+  .animate-scrim-out,
+  .animate-dialog-in,
+  .animate-dialog-out {
     animation-duration: 1ms;
   }
   .animate-toast {

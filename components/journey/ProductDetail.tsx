@@ -1,12 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { AppBar } from "@/components/plp/AppBar";
 import { SetPills } from "@/components/plp/SetPills";
-import { CartBar, SHOW_CART_BAR } from "./StorefrontChrome";
+import { CartBar } from "./StorefrontChrome";
+import { FreeDeliveryDialog } from "./FreeDeliveryDialog";
 
 const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
+
+/**
+ * The order value that earns free delivery. A demo constant, not a catalog
+ * field: no screengrab states the number and no product carries it, so it lives
+ * in one place with its own name rather than as a bare `1000` in a condition.
+ *
+ * It is what makes this screen demonstrable: one set of the journey's tee is
+ * 4 pieces at ₹360, so **the very first `+` clears it** — ₹1,440 — and the offer
+ * fires without anyone having to hunt for the threshold.
+ */
+const FREE_DELIVERY_MIN = 1000;
+
+/** Recovered, not measured — see `SubtotalBand`. */
+const SUBTOTAL_GREEN = "#7fb681";
 
 /**
  * The product detail screen, built 1:1 from the storefront screengrab
@@ -49,6 +64,35 @@ export function ProductDetail({
 }) {
   const [selected, setSelected] = useState(0);
   const variant = product.variants[selected];
+
+  /**
+   * The basket, such as it is: how many **sets** of the pack above are in it.
+   * Lifted out of `Stepper` on 2026-08-21 — the cart bar, the subtotal band and
+   * the offer dialog all read it, and a count private to the stepper could only
+   * ever move its own number.
+   */
+  const [qty, setQty] = useState(0);
+  const pieces = qty * variant.setOf;
+  const lineTotal = pieces * variant.pricePerPc;
+
+  const [offerOpen, setOfferOpen] = useState(false);
+  /**
+   * The previous line total, to spot the crossing rather than the state. The
+   * dialog fires on **every upward crossing** (decided 2026-08-21), so stepping
+   * back under the threshold and over it again congratulates you again — the
+   * demoable reading of the two.
+   */
+  const lastTotal = useRef(0);
+
+  const changeQty = (next: number) => {
+    const clamped = Math.max(0, next);
+    const total = clamped * variant.setOf * variant.pricePerPc;
+    if (lastTotal.current < FREE_DELIVERY_MIN && total >= FREE_DELIVERY_MIN) {
+      setOfferOpen(true);
+    }
+    lastTotal.current = total;
+    setQty(clamped);
+  };
   const cashback = product.cashback;
   const freeDelivery = product.offers.includes("Free Delivery");
 
@@ -57,7 +101,15 @@ export function ProductDetail({
       <div className="shrink-0">
         {/* Titled by the brand, per the screengrab. Home returns to the journey
             home so the route stays a closed loop, as A and B are. */}
-        <AppBar title={product.brand} homeHref={homeHref} cartBadge={cartBadge} />
+        {/* The badge counts what this prototype's basket holds — nothing, then
+            the one line you added. The route's `cartBadge` is the resting
+            value; a basket of 3 that the bar's total doesn't include would make
+            the two disagree the moment you add anything. */}
+        <AppBar
+          title={product.brand}
+          homeHref={homeHref}
+          cartBadge={qty > 0 ? 1 : cartBadge}
+        />
       </div>
 
       <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pb-[12px]">
@@ -124,6 +176,9 @@ export function ProductDetail({
           )}
         </div>
 
+        {/* The running total, once there is one. */}
+        {qty > 0 && <SubtotalBand total={lineTotal} />}
+
         {/* The pricing card. */}
         <div className="mt-[12px] bg-white px-[14px] py-[14px]">
           <div className="flex items-baseline justify-between gap-[10px]">
@@ -158,7 +213,7 @@ export function ProductDetail({
               A stepper that visibly did nothing would read as broken; one that
               changed a total we can't compute would be a lie.
             */}
-            <Stepper />
+            <Stepper qty={qty} onChange={changeQty} />
           </div>
 
           <p className="mt-[16px] text-[13px] text-muted">
@@ -175,8 +230,42 @@ export function ProductDetail({
         </div>
       </div>
 
-      {/* Hidden with the storefront's — one switch, see `SHOW_CART_BAR`. */}
-      {SHOW_CART_BAR && <CartBar />}
+      {/*
+        The basket bar, and the reason `SHOW_CART_BAR` doesn't gate it here: that
+        constant hides a bar that could only print the screengrab's fixed ₹717,
+        and this one prints a total it computed. It appears with the first set
+        added and carries the line — one item, `price/pc × set size × qty`.
+
+        The delivery line stays **`+ ₹0 DELIVERY CHARGES`** at every total, as
+        both screengrabs have it (decided 2026-08-21). Crossing the threshold is
+        announced by the dialog, not by a charge disappearing.
+      */}
+      {qty > 0 && <CartBar total={lineTotal} count={1} />}
+
+      {offerOpen && <FreeDeliveryDialog onClose={() => setOfferOpen(false)} />}
+    </div>
+  );
+}
+
+/**
+ * The green band above the pricing card — `SUBTOTAL` and the line's total.
+ *
+ * 8px in from both edges and 22px tall, measured off the screengrab. **The green
+ * is recovered arithmetic, not a measurement**: the band only appears in a shot
+ * where the offer dialog is up, so the scrim is over it. Solving the scrim from
+ * the app bar, whose colour we know exactly (`#004FFA` reading back as
+ * `rgb(7,49,140)`, so ~44% black), and inverting the band's `rgb(71,102,72)`
+ * gives `#7fb681`. Worth replacing with a straight measurement off an undimmed
+ * screengrab if one turns up.
+ */
+function SubtotalBand({ total }: { total: number }) {
+  return (
+    <div
+      className="mt-[12px] mr-[8px] ml-[8px] flex h-[22px] items-center justify-between px-[10px]"
+      style={{ backgroundColor: SUBTOTAL_GREEN }}
+    >
+      <span className="text-[13px] font-bold text-white">SUBTOTAL</span>
+      <span className="text-[13px] font-bold text-white">{inr(total)}</span>
     </div>
   );
 }
@@ -191,13 +280,18 @@ function DetailPill({ icon, label }: { icon: string; label: string }) {
   );
 }
 
-function Stepper() {
-  const [qty, setQty] = useState(0);
+function Stepper({
+  qty,
+  onChange,
+}: {
+  qty: number;
+  onChange: (next: number) => void;
+}) {
   return (
     <div className="flex shrink-0 items-center gap-[10px]">
       <button
         aria-label="Decrease quantity"
-        onClick={() => setQty((n) => Math.max(0, n - 1))}
+        onClick={() => onChange(qty - 1)}
         className="flex size-[32px] cursor-pointer items-center justify-center rounded-full border border-orange-500 text-[20px] leading-none text-orange-500"
       >
         −
@@ -207,7 +301,7 @@ function Stepper() {
       </span>
       <button
         aria-label="Increase quantity"
-        onClick={() => setQty((n) => n + 1)}
+        onClick={() => onChange(qty + 1)}
         className="flex size-[32px] cursor-pointer items-center justify-center rounded-full border border-orange-500 text-[20px] leading-none text-orange-500"
       >
         +

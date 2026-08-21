@@ -499,6 +499,35 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### Adding to the basket (2026-08-21)
+
+From a fifth screengrab: pressing `+` on the detail screen brings up the basket
+bar with the line's value, and crossing ₹1,000 throws the app's *Congrats!
+You've unlocked a new offer!* dialog. Shared, so `/userjourney`, `/b` and `/d`
+all have it.
+
+- Line total is `price/pc × set size × qty`. The journey's tee is 4 pieces at
+  ₹360, so the first `+` is ₹1,440 and the offer fires immediately; `/b`'s
+  ₹230 × 2 takes three sets (₹1,380), which is the case that proves the
+  threshold rather than the product.
+- `FREE_DELIVERY_MIN = 1000`, a demo constant — no screengrab states it.
+- **Fires on every upward crossing** (chosen): step under and back over and it
+  congratulates you again.
+- The delivery line stays `+ ₹0 DELIVERY CHARGES` at every total, as both
+  screengrabs have it. The first four-digit total wrapped it in two, so it took
+  `whitespace-nowrap` and the `GO TO CART` button gave up 6px of padding — our
+  13px there is a deliberate raise over the app's measured ~10px.
+- The app-bar badge follows the basket: nothing at 0, then 1. The route's
+  `cartBadge` is only the resting value, so the badge and the bar's total can't
+  disagree.
+- The green `SUBTOTAL` band is measured except for its colour, which is
+  **recovered**: the only shot of it has the dialog's scrim over it, so the
+  scrim was solved from the app bar's known `#004FFA` (~44% black) and the band
+  inverted to `#7fb681`. Worth replacing with a straight measurement.
+- The dialog's card is the screengrab, cropped and corner-clipped at 13px, on
+  instruction — the scrim pixels in its corners are what the radius removes. The
+  scrim, the white ✕ and an invisible button over the blue band are live.
+
 #### The strip is elevated over the listing (2026-08-21)
 
 Asked for: a slight downward shadow with some blur, Material-style, so the
@@ -658,8 +687,12 @@ question answered itself and the A/B is over.
 - **Men's cards show a button-up shirt.** No men's tee render exists in any
   screengrab — the same ask already open against the main catalog, more visible
   here because everything is a tee.
-- **The quantity stepper is live but local.** It moves its own number and
-  nothing else, the cart total being fixed.
+- ~~**The quantity stepper is live but local.**~~ **Closed 2026-08-21** — it
+  now drives a real line: `price/pc × set size × qty`, feeding the subtotal
+  band, the basket bar and the free-delivery dialog. What is still not built is
+  the basket beyond one line: `GO TO CART` goes nowhere, and the pack pill's
+  quantity badge from the screengrab is left off because `SetPills` is shared
+  with A–D's cards, which have no basket at all.
 
 #### Verified
 
