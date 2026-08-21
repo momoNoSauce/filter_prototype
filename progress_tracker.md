@@ -552,6 +552,30 @@ tiny beside its own photograph. It was 11px, and one of the two sites the
   earned at **19 tiles** rather than 22. The test that pins it moved with it —
   which is the point of pinning it.
 
+#### One card, and it is the journey's (2026-08-21)
+
+"Use userjourney as the source of truth." The journey's card moved to
+`components/plp/ProductCard.tsx` and replaced the Figma-derived one, which is
+deleted along with `Tags.tsx` and its `BULK Offer` sprite pill. Every listing —
+`/b`, `/d`, `/userjourney`, and A and C by inheritance — now renders the same
+card, which is what the note calling two card designs "the thing to watch" was
+waiting for.
+
+Two things came across, because the main catalog carries data the journey's
+doesn't:
+
+- **Every offer shows.** `Free Delivery` and `Cashback` keep their artwork;
+  anything else takes the same outlined pill without an icon, in the offer's own
+  casing — `Bulk Offer` is filterable, so a card that didn't name it would leave
+  a filtered result with nothing to explain itself.
+- **`Best Seller` uses the ribbon corner when the ribbon is free.** The
+  screengrab has no flag because a cashback ribbon occupies that corner; that is
+  an argument about the corner, not the flag.
+
+Verified on all three listings: `/b` and `/d` show the ribbon card with a
+`Bulk Offer` pill, the journey unchanged bar the same pill where its catalog
+carries the offer.
+
 #### The basket persists, and both bars hide on scroll (2026-08-21)
 
 Asked for: once something is added the bar stays — on the detail screen *and*

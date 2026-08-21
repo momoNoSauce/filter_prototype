@@ -112,11 +112,12 @@ export function PlpScreen({
    */
   homeHref?: string | null;
   /**
-   * The card to render. Defaults to the shared `ProductCard`, which A, B, C and
-   * D all use; the user journey passes its own, rebuilt 1:1 from a newer
-   * screengrab. A prop rather than a second copy of this screen — `PlpScreen` is
-   * the only PLP, and duplicating 400 lines of filter state is exactly the drift
-   * the variants are supposed to be free of.
+   * The card to render, and `ProductCard` is now the only one — the journey's
+   * card became the app's on 2026-08-21 and the Figma-derived one is deleted.
+   * The prop stays: it is how the journey carried its own card for a day without
+   * a second copy of this screen, and the next screengrab that disagrees with
+   * this one will want the same door. Duplicating 400 lines of filter state is
+   * exactly the drift the variants are supposed to be free of.
    */
   card?: (props: { product: Product; sizes?: string[]; href?: string }) => ReactNode;
   /**

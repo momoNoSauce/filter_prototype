@@ -1,17 +1,41 @@
 "use client";
 
-import Link from "next/link";
-
 import { useState } from "react";
-import { MaskIcon } from "@/components/ui/MaskIcon";
+import Link from "next/link";
 import type { Product } from "@/lib/catalog/types";
 import { activeVariantIndex } from "@/lib/filters/activeVariant";
-import { SetPills } from "./SetPills";
-import { BulkOfferTag, GenericOfferTag } from "./Tags";
+import { SetPills } from "@/components/plp/SetPills";
+import { MaskIcon } from "@/components/ui/MaskIcon";
 
 const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
-/** Figma 638:2768 — the PLP product card. */
+/**
+ * **The** product card, on every listing — rebuilt 1:1 from the live app's
+ * storefront screengrabs (2026-08-20), measured off the raw pixels at 1080×2400,
+ * which is exactly 3× the 360px design so every device pixel divides cleanly.
+ *
+ * It began as the journey's own, beside a Figma-derived card A–D kept, on the
+ * reasoning that the four variants were signed off and must not drift. That note
+ * called two card designs in one prototype "the thing to watch". **On 2026-08-21
+ * the journey became the source of truth** and this replaced the other outright:
+ * the Figma card, `Tags.tsx` and its `BULK Offer` sprite pill are deleted, and
+ * git history is where they live now.
+ *
+ * Two things came across from the deleted card so no catalog data went with it —
+ * the main catalog carries offers and a `bestSeller` flag the journey's does not:
+ *
+ * - **Every offer shows.** `Free Delivery` and `Cashback` keep their artwork;
+ *   anything else — `Bulk Offer` today — takes the same outlined pill without an
+ *   icon, rather than vanishing off a card that used to name it.
+ * - **`Best Seller` uses the ribbon corner when the ribbon is free.** The
+ *   screengrab has no flag because a cashback ribbon occupies that corner, which
+ *   is an argument about the corner, not about the flag: a product with no
+ *   cashback has the corner spare, so the flag goes there.
+ *
+ * `SetPills` is imported unchanged — the shared pills already match the live app
+ * exactly (`SET OF 6` over `M/2, L/2, XL/2`, 40px, filled when selected), that
+ * having been measured off an earlier screengrab of the same app.
+ */
 export function ProductCard({
   product,
   sizes,
@@ -19,23 +43,12 @@ export function ProductCard({
 }: {
   product: Product;
   sizes?: string[];
-  /**
-   * Where the card opens. **The whole card is the target** where there is one —
-   * `VIEW DETAILS` is the signpost for buyers who haven't learnt that, not the
-   * control. Absent on A and C, which are parked and have no detail route, and
-   * the card is then plain markup that navigates nowhere.
-   */
+  /** Where the card opens — the route's to decide, not the card's. */
   href?: string;
 }) {
-  // Which pack the card opens on: pack #1 normally, and under a size filter
-  // the first pack carrying a selected size — the same pack the engine ranked
-  // this card by, so the price shown is the price it was sorted on.
+  // Same rule as the shared card: pack #1, or under a size filter the first
+  // pack carrying a selected size — the pack the engine ranked this card by.
   const auto = activeVariantIndex(product, sizes);
-
-  // Picking a pack re-prices the card, per the selectable-variant decision.
-  // A manual pick outranks the filter, but only until the filter moves the
-  // answer: at that point the card is showing a pack the retailer no longer
-  // asked for, and holding on to it would contradict the list it sits in.
   const [override, setOverride] = useState<number | null>(null);
   const [lastAuto, setLastAuto] = useState(auto);
   if (lastAuto !== auto) {
@@ -46,133 +59,121 @@ export function ProductCard({
   const variantIndex = override ?? auto;
   const variant = product.variants[variantIndex];
 
+  const cashback = product.cashback;
+  const freeDelivery = product.offers.includes("Free Delivery");
+  // Whatever else the catalog put on this product — `Bulk Offer` today. Cashback
+  // is excluded because it is already a pill in its own right, carrying its
+  // amount, and Free Delivery because it has its own artwork above.
+  const otherOffers = product.offers.filter(
+    (offer) => offer !== "Free Delivery" && offer !== "Cashback",
+  );
+
   return (
-    <div className="relative flex w-full shrink-0 flex-col items-start overflow-clip rounded-[12px] drop-shadow-[0px_4px_2px_rgba(0,0,0,0.15)]">
-      <div className="relative flex w-full flex-col items-start gap-[16px] bg-white px-[12px] pt-[24px] pb-[8px]">
-        {product.bestSeller && (
-          <div className="absolute top-0 left-0 flex h-[20px] items-center gap-[6px] rounded-br-[12px] bg-orange-400 px-[8px]">
-            <p className="text-[13px] font-bold whitespace-nowrap text-white">Best Seller</p>
+    <div className="relative w-full shrink-0 overflow-hidden rounded-[12px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.10)]">
+      <div className="relative flex w-full flex-col items-start px-[12px] pt-[12px] pb-[10px]">
+        {/*
+          The cashback ribbon. Measured 20px tall in `#fb9805`, sitting flush
+          into the card's top-left corner with an 8px radius on its inner
+          corner only — `overflow-hidden` on the card squares off the two outer
+          edges against the card's own 12px radius, which is what the screengrab
+          shows. It replaces the shared card's `Best Seller` flag, that corner
+          having one occupant.
+        */}
+        {cashback !== undefined && (
+          <div className="absolute top-0 left-0 flex h-[20px] items-center gap-[5px] rounded-br-[8px] bg-[#fb9805] pr-[10px] pl-[8px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt="" className="h-[11px] w-[14px] object-contain" src="/offers/cashback.png" />
+            <span className="text-[13px] font-bold whitespace-nowrap text-white">
+              {inr(cashback)} Cashback
+            </span>
           </div>
         )}
 
-        <div className="flex w-full items-center gap-[8px]">
-          <div className="flex w-[110px] shrink-0 self-stretch">
+        <div className="mt-[14px] flex w-full items-start gap-[10px]">
+          {/* The tee renders are 276×360 crops out of the screengrabs, so they
+              carry the app's own white surround; `object-contain` keeps that
+              rather than cropping into the garment. */}
+          <div className="flex w-[92px] shrink-0 self-stretch">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               alt=""
-              width={110}
-              height={114}
-              className="w-[110px] self-center object-contain"
+              width={92}
+              height={120}
+              className="w-[92px] self-start object-contain"
               src={product.image}
             />
           </div>
 
-          {/* No `gap` on this column: the four rows sit at four different
-              distances in the live app, and one uniform gap can only be wrong
-              three times. Each row carries its own measured `mt-` instead. */}
+          {/* No uniform `gap`: as on the shared card, the rows sit at different
+              measured distances and one gap can only be right once. */}
           <div className="flex min-w-0 flex-1 flex-col items-start">
-            {/* 16px line pitch, measured off consecutive title lines in the
-                screengrab (373.3 → 389.3 → 405.3, exactly 16 apart). The
-                default 1.5 gave 21px and spread a three-line title over 15
-                extra pixels, which is most of why the card read looser than
-                the app's. */}
-            <p className="line-clamp-2 w-full text-[14px] leading-[16px] font-bold text-black">
+            {/* Three lines here, not two — the screengrab's titles all run to
+                three and the fourth-line clamp is what the app shows. */}
+            <p className="line-clamp-3 w-full text-[14px] leading-[17px] font-bold text-black">
               {product.title}
             </p>
-            {/* `MRP/PC ₹299  |  SET of: 6` — the live app's own line
-                (screengrab, 2026-08-14), replacing `MRP ₹390 Set Size 2pc`.
-                Two things it fixes: the old line never said the MRP was per
-                piece, though it always was, so it read as the pack price and
-                made the margin look wrong; and the pipe separates two figures
-                that used to run together as one phrase.
-
-                The mixed case is the live app's, not a slip of ours — it sets
-                `MRP/PC` upper and `SET of:` mixed. Reproduced rather than
-                tidied, since matching the format is the point; one to raise
-                with the designer along with the other card notes. */}
-            <p className="mt-[5px] flex w-full items-center gap-[10px] text-[13px] leading-[16px] font-bold text-muted">
+            <p className="mt-[6px] flex w-full items-center gap-[10px] text-[13px] leading-[16px] font-medium text-muted">
               <span>MRP/PC {inr(variant.mrp)}</span>
               <span className="font-normal opacity-60">|</span>
-              <span>SET of: {variant.setOf}</span>
+              {/* `Set of:` title case with the double space after the colon —
+                  both the live app's, reproduced rather than tidied. Note the
+                  shared card sets `SET of:` from an older screengrab of the same
+                  screen, so the app is inconsistent with itself here. */}
+              <span>Set of:&nbsp; {variant.setOf}</span>
             </p>
 
-            {/* The price block, rebuilt on 2026-08-14 from pixel measurements
-                of the live app's screengrab rather than from the frame.
-
-                The margin used to sit in its own `flex-1` column, which pushed
-                it to the card's right edge — about 40px clear of the price, and
-                bottom-aligned to a since-removed shipping line rather than to
-                the price.
-                Measured, the app sets it **10px** after the price and on the
-                **same baseline**: price and margin ink bottoms land within
-                0.3px of each other in both sampled cards, and the 10px gap is
-                identical in both. So the two now share one `items-baseline`
-                row, and the margin reads as a property of the price instead of
-                a detached figure across the card.
-
-                `items-baseline` rather than matched paddings: it holds at 26px
-                against 14px whatever either becomes. */}
-            <div className="mt-[15px] flex w-full flex-col items-start">
-              {/* `PRICE/PC`, capitalised to match the live app's screengrab —
-                  it was `Price/ pc`, with a stray space after the slash.
-                  `leading-none` on both this and the price below: the measured
-                  gap between them is 11.7px of clear space, and default leading
-                  buries most of that inside the boxes where it can't be set.
-
-                  **11px, not the frame's 9** (2026-08-20). This was the
-                  smallest type in the app and it labels the one number the
-                  whole card is built around, which is the worst possible place
-                  to be illegible. `leading-none` means the box *is* the font
-                  size, so the block grows by exactly the 2px added here — the
-                  measurements that were taken off the screengrab are gaps
-                  (`mt-[7px]` to the price, 10px price-to-margin baseline) and
-                  none of them move. */}
-              <p className="w-full text-[11px] leading-none font-bold text-muted">PRICE/PC</p>
-
-              {/* No shipping-fee line under the price. It read `+₹50 shipping
-                  fee`, was carried over from an earlier cut of the card, and
-                  isn't a real charge — removed on request, 2026-08-20, which
-                  also brings the card back in line with the live app's
-                  screengrab, where no such line appears.
-
-                  `variant.shippingFee` still exists and is still drawn. Its
-                  `rand()` sits mid-sequence in the seed, so deleting it would
-                  re-roll the entire catalog and move every documented count —
-                  the same reason `packType` survived losing its filter and the
-                  retired GOLD offer is still drawn and thrown away. Nothing
-                  reads it now; price and margin never did.
-
-                  The wrapper that held this line went with it, its `gap-[4px]`
-                  having existed only to separate the two. The measurements that
-                  matter are untouched: 7px from `PRICE/PC` to the price, and
-                  the 10px baseline gap from price to margin. */}
-              <div className="mt-[7px] flex w-full items-baseline gap-[10px]">
-                <p className="shrink-0 text-[26px] leading-none font-medium whitespace-nowrap text-black">
-                  {inr(variant.pricePerPc)}
-                </p>
-                <p className="text-[15px] whitespace-nowrap text-margin">
-                  <span className="font-bold">{variant.marginPct}%</span>
-                  <span className="font-normal"> margin</span>
-                </p>
-              </div>
+            <p className="mt-[14px] w-full text-[11px] leading-none font-medium text-muted">
+              PRICE/PC
+            </p>
+            <div className="mt-[7px] flex w-full items-baseline gap-[10px]">
+              <p className="shrink-0 text-[26px] leading-none font-medium whitespace-nowrap text-black">
+                {inr(variant.pricePerPc)}
+              </p>
+              <p className="text-[15px] whitespace-nowrap text-margin">
+                <span className="font-bold">{variant.marginPct}%</span>
+                <span className="font-normal"> margin</span>
+              </p>
             </div>
           </div>
         </div>
 
-        {product.offers.length > 0 && (
-          <div className="flex w-full flex-wrap items-center gap-[4px]">
-            {product.offers.includes("Bulk Offer") && <BulkOfferTag />}
-            {product.offers
-              .filter((o) => o !== "Bulk Offer")
-              .map((offer) => (
-                <GenericOfferTag key={offer} label={offer} />
-              ))}
+        {/*
+          The offer pills. Measured 20px tall with a 1px `#0066ff` border — the
+          same off-brand blue the margin figure uses, and the same slip class as
+          `#014ffa`; the `primary` token is used instead, indistinguishable at
+          this size and on-brand. Insets are 12px from the card edge, matching
+          the card's own padding.
+
+          **The box is 22, not the measured 20**, and the label 12 rather than
+          11 — this card was written in a parallel worktree while the type pass
+          of 2026-08-20 was raising the 9–12px tier everywhere else, and missed
+          it. Brought onto the same floor afterwards. A deliberate departure from
+          1:1 for the reason that pass gives: this tier names the offer a kirana
+          retailer is being asked to act on, in poor light, and legibility beats
+          matching a screengrab pixel for pixel. The box grew by exactly the 2px
+          the type did, so the shape is still the app's.
+        */}
+        {(freeDelivery || cashback !== undefined || otherOffers.length > 0) && (
+          <div className="mt-[12px] flex w-full flex-wrap items-center gap-[8px]">
+            {freeDelivery && (
+              <OfferPill icon="/offers/free-delivery.png" label="FREE DELIVERY" />
+            )}
+            {cashback !== undefined && (
+              <OfferPill icon="/offers/cashback.png" label={`${inr(cashback)} Cashback`} />
+            )}
+            {/* The offer's own name, not upper-cased: `FREE DELIVERY` is caps
+                in the screengrab and `₹100 Cashback` is not, so the app has no
+                single rule to follow, and `Bulk Offer` is how the catalog and
+                the deleted Figma pill both wrote it. */}
+            {otherOffers.map((offer) => (
+              <OfferPill key={offer} label={offer} />
+            ))}
           </div>
         )}
 
-        {/* `z-20` lifts the pills over the card-wide link below — picking a
-            pack re-prices this card and must not navigate. */}
-        <div className="relative z-20 w-full">
+        {/* `z-20` lifts the pills over the card-wide link below — picking a pack
+            re-prices this card and must not navigate. */}
+        <div className="relative z-20 mt-[12px] w-full">
           <SetPills
             variants={product.variants}
             selected={variantIndex}
@@ -181,26 +182,75 @@ export function ProductCard({
         </div>
       </div>
 
-      <div className="flex h-[32px] w-full items-center justify-end gap-[8px] border-t-[0.5px] border-hairline bg-viewdetails px-[12px]">
+      {/*
+        `VIEW DETAILS` is **blue** here, on a `#f5f8ff` strip 35px tall above a
+        1px `#ebebeb` rule — all three measured. The shared card renders it
+        orange `#FF7711`, which has been the worst contrast on that card at
+        2.53:1; the live app's blue clears AA, so building this route 1:1 closes
+        that failure here. It stays open on A–D, which still use the orange.
+
+        It navigates as of 2026-08-20, the product-detail screengrab having
+        arrived. **The whole strip is the target**, not the words alone: the
+        screengrab gives no narrower hit area, and 12px of label sits under the
+        touch floor by itself.
+      */}
+      <div className="flex h-[35px] w-full items-center justify-end gap-[8px] border-t border-[#ebebeb] bg-[#f5f8ff] px-[12px]">
         <p className="text-[13px] font-medium text-primary underline">VIEW DETAILS</p>
-        {/* The exported chevron is stroked orange, for the label this row used
-            to carry. `MaskIcon` reads only the alpha channel, so the same
-            untouched asset tints to primary and the two stop disagreeing. */}
+        {/* The exported chevron is orange, for the shared card's orange label.
+            `MaskIcon` reads only the alpha channel, so the same untouched asset
+            tints to primary here — the same route the Sort sheet's glyphs take.
+            A CSS `filter` was tried first and came out teal, which is precisely
+            why `MaskIcon` exists rather than a hue rotation. */}
         <MaskIcon
           src="/figma/icons/chevron.svg"
-          className="h-[8.446px] w-[5.015px] shrink-0"
+          className="h-[10px] w-[6px] shrink-0"
           color="var(--color-primary)"
         />
       </div>
 
-      {/* The card-wide link. A stretched `<a>` rather than a wrapper, because
-          `<a>` may not wrap interactive content and the pack pills are buttons;
-          they lift to `z-20` and everything else falls through to this. Last in
-          the DOM so it isn't the first thing a screen reader meets, and named by
-          the product, `VIEW DETAILS` being no use read out of context. */}
+      {/*
+        **The whole card is the tap target** (2026-08-20, corrected): it was the
+        `VIEW DETAILS` strip alone, on the reading that the strip is the control.
+        It isn't — the strip is a signpost for buyers who haven't learnt that the
+        card opens, which is how the live app behaves, so the link covers the
+        card and the strip is now plain markup inside it.
+
+        A stretched link rather than a wrapper, because a card contains buttons:
+        `<a>` may not wrap interactive content, and wrapping it anyway makes the
+        pack pills unreachable. This sits over the card at `z-10` and the pills
+        lift themselves to `z-20`, so a tap on a pill re-prices the card and a
+        tap anywhere else opens the product. It is last in the DOM so it is not
+        the first thing a screen reader meets, and it carries the title as its
+        name, the words `VIEW DETAILS` being no use read out of context.
+      */}
       {href && (
         <Link href={href} aria-label={product.title} className="absolute inset-0 z-10" />
       )}
     </div>
+  );
+}
+
+/**
+ * One outlined offer pill — 20px, 1px primary border, icon then label.
+ *
+ * The icon is optional: the two offers the screengrab draws have artwork, and
+ * anything the catalog adds beyond them takes the same pill without it rather
+ * than borrowing a glyph that means something else.
+ */
+function OfferPill({ icon, label }: { icon?: string; label: string }) {
+  return (
+    <span
+      className={`flex h-[22px] shrink-0 items-center gap-[5px] rounded-[6px] border border-primary bg-white pr-[8px] ${
+        icon ? "pl-[6px]" : "pl-[8px]"
+      }`}
+    >
+      {icon && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt="" className="h-[11px] w-[14px] object-contain" src={icon} />
+      )}
+      <span className="text-[12px] font-medium whitespace-nowrap text-primary">
+        {label}
+      </span>
+    </span>
   );
 }

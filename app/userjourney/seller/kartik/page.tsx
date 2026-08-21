@@ -1,5 +1,4 @@
 import { PlpScreen } from "@/components/plp/PlpScreen";
-import { JourneyProductCard } from "@/components/journey/JourneyProductCard";
 import { SellerHeader } from "@/components/journey/StorefrontChrome";
 import { KARTIK, getKartikCatalog } from "@/lib/catalog/kartik";
 
@@ -30,7 +29,6 @@ export default function Page() {
       // that has a basket bar at all.
       variant="top-chips"
       homeHref="/userjourney"
-      card={JourneyProductCard}
       productBasePath="/userjourney"
       // No Share on this bar in the screengrab, and dropping it is also what
       // lets `KARTIK EXPORTERS` fit at 20px instead of truncating.

@@ -111,11 +111,27 @@ as it already does for the product card.
   test asserts 1,070 / Girls 108 / Men 584 and no Zenifit in the main catalog.
   **No Girl's T-Shirts, deliberately**: it leaves exactly one women's vertical,
   which is what lets a Gender cut settle a PV and unlock Size.
-- **`JourneyProductCard`** — a **second card design, this route only**. Orange
-  `#fb9805` cashback ribbon, outlined offer pills, `VIEW DETAILS` blue on
-  `#f5f8ff`, no `Best Seller`. A–D keep theirs, being signed off. The cost is two
-  card designs in one prototype; watch it. It led on the blue `VIEW DETAILS`,
-  which A–D then took on 2026-08-20 — so that is no longer a difference.
+- **The card here is now *the* card** (2026-08-21). It arrived as
+  `JourneyProductCard`, a second design for this route only — orange `#fb9805`
+  cashback ribbon, outlined offer pills, `VIEW DETAILS` blue on `#f5f8ff`, no
+  `Best Seller` — beside a Figma-derived card A–D kept because they were signed
+  off. That note called two card designs in one prototype the thing to watch; the
+  call came, **the journey is the source of truth**, and it moved to
+  `components/plp/ProductCard.tsx` and replaced the other outright. `Tags.tsx`
+  and its `BULK Offer` sprite pill are deleted with it — git history is where
+  they live. It had already led on the blue `VIEW DETAILS`, which A–D took on
+  2026-08-20.
+  Two things came across so no catalog data went with the old card, the main
+  catalog carrying offers and a `bestSeller` flag the journey's doesn't:
+  **every offer shows** — `Free Delivery` and `Cashback` keep their artwork,
+  anything else (`Bulk Offer` today) takes the same pill without an icon, in the
+  offer's own casing, rather than vanishing off a card that used to name it — and
+  **`Best Seller` takes the ribbon corner when the ribbon is free**, the
+  screengrab having no flag because a cashback ribbon sat in that corner, which
+  is an argument about the corner and not about the flag. `PlpScreen`'s `card`
+  prop stays: it is how one route carried its own card for a day without a second
+  copy of the screen, and the next screengrab that disagrees will want the same
+  door.
 - **The whole card opens the product**, not the `VIEW DETAILS` strip alone
   (corrected 2026-08-20): the strip is a signpost for buyers who haven't learnt
   that the card opens, which is how the live app behaves. A **stretched link** —
