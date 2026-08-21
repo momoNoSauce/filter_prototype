@@ -552,6 +552,25 @@ tiny beside its own photograph. It was 11px, and one of the two sites the
   earned at **19 tiles** rather than 22. The test that pins it moved with it —
   which is the point of pinning it.
 
+#### The chip badge moved onto the glyph (2026-08-21)
+
+Asked for, to match the bottom pill and save room in the scrolling strip. It
+does: as a sibling the count cost the `Filter` chip 21px the moment it appeared
+(85 → 106px, measured), and the chip changed width as filters were applied,
+shuffling everything to its right. On the glyph it costs nothing and the chip is
+83/89 in every state — no badge, a dot, `2`, or `13`.
+
+- **Centred on the glyph's top edge**, not hung off the right corner. The count
+  is every selected option, so two digits are ordinary, and at 13 a
+  right-anchored badge grew into the label and touched it. Centred it grows 2px
+  each way.
+- It covers most of the funnel. Deliberate: the chip says `Filter` beside it, so
+  the glyph is not what carries the meaning — the number is.
+- The chip's gap went **4 → 8px**, constant in both states, so the badge has air
+  without the width moving.
+- The box stays **17px at 11px** — the type pass raised these counters to 11
+  because they are read, and this one is read most.
+
 #### The bottom bar is a floating pill, and A and C are back (2026-08-21)
 
 Figma `697:2658`, supplied: Sort and Filters in a **240 × 52 dark pill**
