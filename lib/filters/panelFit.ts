@@ -33,8 +33,12 @@ export const PANEL_VIEWPORT = 690;
 /** `OptionRow` — `h-[52px]`. */
 export const OPTION_ROW_H = 52;
 
-/** `TileGrid` — 96px cells, three across. */
-export const TILE_ROW_H = 96;
+/**
+ * `TileGrid` — **105px** cells, three across: a 56px tile, a 4px gap and a
+ * three-line 45px label box. It was 96 while the label was 11px on two lines;
+ * both grew on 2026-08-21 so the label could be read beside its own photo.
+ */
+export const TILE_ROW_H = 105;
 export const TILES_PER_ROW = 3;
 
 /** `SearchField` — `pt-[10px]` + a 31.903px input + `pb-[14px]`, rounded. */

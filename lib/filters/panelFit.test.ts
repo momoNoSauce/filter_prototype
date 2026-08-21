@@ -29,10 +29,12 @@ describe("the search field is earned, not declared", () => {
     expect(needsSearch([{ panel: "checkbox", optionCount: 14 }])).toBe(true);
   });
 
-  it("puts the threshold at 22 tiles", () => {
-    // Three across at 96px, so seven rows (21 tiles) fit and the eighth doesn't.
-    expect(needsSearch([{ panel: "tile", optionCount: 21 }])).toBe(false);
-    expect(needsSearch([{ panel: "tile", optionCount: 22 }])).toBe(true);
+  it("puts the threshold at 19 tiles", () => {
+    // Three across at 105px, so six rows (18 tiles) fit and the seventh
+    // doesn't. It was 22 while the cell was 96px — the label went to 13px on
+    // three lines on 2026-08-21 and the row grew with it.
+    expect(needsSearch([{ panel: "tile", optionCount: 18 }])).toBe(false);
+    expect(needsSearch([{ panel: "tile", optionCount: 19 }])).toBe(true);
   });
 
   it("charges a stacked panel for its headings", () => {

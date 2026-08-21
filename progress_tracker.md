@@ -499,6 +499,24 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### The tile labels were raised (2026-08-21)
+
+The complaint: on the image filters — Category and Brands — the label reads as
+tiny beside its own photograph. It was 11px, and one of the two sites the
+2026-08-20 type pass had to leave alone.
+
+- 11px was a fit to the frame's **68px cell**, not a choice: `Men's Formal`
+  measures ~66px there, clears 68 at 12px, and a two-line clamp then ellipsised
+  the third word. So the type could only rise if the grid did.
+- The cell is now **72×105**: 4px off the insets and gap buys the width
+  (10 + 72×3 + 3×2 + 6 = 238 of the panel's 240), and the label box is a 45px
+  **three**-line reserve at **13px**.
+- DOM audit over all seven categories and all ten brands: nothing clamps,
+  nothing overflows its cell, three across preserved.
+- Knock-on: `TILE_ROW_H` 96 → 105 in `panelFit.ts`, so the search field is now
+  earned at **19 tiles** rather than 22. The test that pins it moved with it —
+  which is the point of pinning it.
+
 #### Adding to the basket (2026-08-21)
 
 From a fifth screengrab: pressing `+` on the detail screen brings up the basket

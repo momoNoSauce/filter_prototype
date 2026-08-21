@@ -123,7 +123,10 @@ export function TileGrid({
             // 67.2px, close enough to the frame's 68 that "Men's Formal
             // Shirts" still wraps to two lines instead of three.
             "grid w-full grid-cols-[repeat(auto-fill,minmax(64px,1fr))] items-start gap-x-[2px] gap-y-[4px] px-[8px]"
-          : "flex w-full flex-wrap items-start gap-[4px] pr-[8px] pl-[14px]"
+          : // The frame's 14/8 insets and 4px gap gave up 4px each (2026-08-21)
+            // so the cell could go 68 → 72 and carry a 13px label. Three across
+            // is preserved: 10 + 72×3 + 3×2 + 6 = 238 of the panel's 240.
+            "flex w-full flex-wrap items-start gap-[3px] pr-[6px] pl-[10px]"
       }
     >
       {options.map((option) => {
@@ -134,8 +137,8 @@ export function TileGrid({
             onClick={() => onToggle(option.id)}
             aria-pressed={isOn}
             title={`${option.label} (${option.count})`}
-            className={`flex h-[96px] shrink-0 cursor-pointer flex-col items-center gap-[4px] ${
-              fill ? "w-full" : "w-[68px]"
+            className={`flex h-[105px] shrink-0 cursor-pointer flex-col items-center gap-[4px] ${
+              fill ? "w-full" : "w-[72px]"
             }`}
           >
             <span
@@ -169,27 +172,29 @@ export function TileGrid({
                 </span>
               )}
             </span>
-            {/* Fixed two-line box: the height is reserved even for one-line
-                labels, so every tile on a row lines up.
+            {/* Fixed **three**-line box: the height is reserved even for
+                one-line labels, so every tile on a row lines up.
 
                 The reserved height and the clamp must sit on *different*
-                elements. Together on one, the explicit 36px wins over the
-                clamp's two-line height, so a label needing three lines is
-                cropped mid-glyph at 36 of its 39px instead of ellipsised.
-                Wrapper reserves the space; inner clamps and ellipsises.
+                elements. Together on one, the explicit height wins over the
+                clamp's line count, so a label needing another line is cropped
+                mid-glyph instead of ellipsised. Wrapper reserves the space;
+                inner clamps and ellipsises.
 
-                **11px stays**, and it is the one label the 2026-08-20 type
-                pass could not raise. The 68px cell is a tuned fit rather than a
-                round number: `Men's Formal` measures ~66px at 11px and clears
-                68 at 12px, so the third word is pushed onto a third line and
-                the clamp ellipsises it — tried, and the panel came back reading
-                `Men's Formal…` and `Men's Casual T-…`, which loses the one
-                thing the label adds to the photo. Raising this needs a wider
-                cell or a taller label box, i.e. a change to the designed grid,
-                not to the type. */}
-            <span className="h-[36px] w-full">
+                **13px since 2026-08-21**, up from the 11px the 2026-08-20 type
+                pass had to leave alone — the label read as small next to its own
+                photograph, which was the complaint. 11px was tuned to the
+                frame's 68px cell: `Men's Formal` measures ~66px there and
+                clears 68 at 12px, so the third word went to a third line and a
+                two-line clamp ellipsised it. Raising the type therefore meant
+                changing the grid, as the note here said it would — the cell took
+                4px off the insets and gap to reach 72, and the box grew to three
+                lines. Nothing clamps now: `Men's Formal Shirts` sets as three
+                short lines rather than two truncated ones, which is the reading
+                the photo can't supply on its own. */}
+            <span className="h-[45px] w-full">
               <span
-                className={`line-clamp-2 text-center text-[11px] leading-[13px] ${
+                className={`line-clamp-3 text-center text-[13px] leading-[15px] ${
                   isOn ? "font-bold text-primary" : "font-normal text-[#323232]"
                 }`}
               >
