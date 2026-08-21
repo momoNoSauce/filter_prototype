@@ -1,4 +1,5 @@
 import type { Gender, Product, Seller, Variant } from "./types";
+import { productImage } from "./productImage";
 
 /**
  * Deterministic catalog generator.
@@ -648,7 +649,9 @@ export function generateCatalog(): Product[] {
     products.push({
       id: `p-${String(i + 1).padStart(4, "0")}`,
       title: `${brand.name} ${code} ${fabric.name} ${category.plural} for ${GENDER_LABEL[gender]}, ${colour.name}`,
-      image: colour.dark ? "/figma/products/shirt-black.png" : "/figma/products/shirt-grey.png",
+      // Derived, never drawn — see `productImage`, which falls back to these two
+      // Figma renders for any wearer/garment/colour whose art hasn't landed yet.
+      image: productImage(colour, category.kind, gender),
       brand: brand.name,
       category: category.label,
       gender,
