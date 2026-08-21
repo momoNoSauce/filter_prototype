@@ -499,6 +499,19 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### A rule under the chip strip (2026-08-21)
+
+Asked for: white chips on a white strip over a white listing left the controls
+floating with nothing to say where the band ended. 1px in the app's `hairline`
+(`#cccccc`), edge to edge like the app bar above it — all three chosen rather
+than assumed.
+
+- On `ChipStrip` itself, so B, D and `/userjourney` take it from one place, and
+  A and C inherit it. A flag there would fork the row all of them share.
+- `border-b`, not a child rule: the strip scrolls horizontally and a border does
+  not scroll with its contents.
+- A's strip collapses when there are no chips, and the rule goes with it.
+
 #### The whole card is the tap target (2026-08-20)
 
 Corrected on feedback: the journey card linked from its `VIEW DETAILS` strip

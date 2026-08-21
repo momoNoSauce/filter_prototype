@@ -32,7 +32,14 @@ export const CHIP_H = "h-[44px]";
  */
 export function ChipStrip({ children }: { children: ReactNode }) {
   return (
-    <div className="no-scrollbar flex w-full items-center gap-[8px] overflow-x-auto bg-white py-[12px] pr-[16px] pl-[8px]">
+    // The 1px `hairline` rule underneath (2026-08-21) closes the band: white
+    // chips on a white strip over a white listing left the controls floating
+    // with nothing to say where they stopped. Edge to edge, like the app bar
+    // above it, and on the strip itself so **every** variant gets it from one
+    // place — a flag here would fork the row that A, B, D and the journey all
+    // share. `border-b` rather than a child rule: the strip scrolls
+    // horizontally, and a border doesn't scroll with its contents.
+    <div className="no-scrollbar flex w-full items-center gap-[8px] overflow-x-auto border-b border-hairline bg-white py-[12px] pr-[16px] pl-[8px]">
       {children}
     </div>
   );
