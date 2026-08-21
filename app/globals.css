@@ -173,6 +173,33 @@ input {
 }
 
 /*
+ * Confetti. One keyframe, driven per piece by inline `left`, `animation-delay`,
+ * `animation-duration` and a `--drift` custom property — so the shower is a
+ * table of 24 hand-written pieces rather than anything random, and a screenshot
+ * of it is reproducible. It plays once and stops: this is a celebration, not a
+ * loading state.
+ */
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -24px, 0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift, 0px), 420px, 0) rotate(var(--spin, 540deg));
+    opacity: 0;
+  }
+}
+.animate-confetti {
+  animation: confetti-fall 1600ms cubic-bezier(0.3, 0.6, 0.5, 1) both;
+}
+
+/*
  * The offer dialog: it arrives in the middle of the screen rather than from an
  * edge, so it scales up from 92% as it fades rather than sliding — the same
  * emphasized easing the sheets use, on the property that suits a centred surface.

@@ -196,6 +196,30 @@ screengrab), and it is shared, so `/userjourney`, `/b` and `/d` all have it.
 - **The dialog fires on every upward crossing**, so stepping under the threshold
   and back over it congratulates you again — chosen over once-per-visit for
   demoability.
+- **Two waits, not one** (2026-08-21): the tap moves the stepper at once, the
+  basket answers `CART_DELAY_MS` (450ms) later, and the dialog lands
+  `OFFER_DELAY_MS` (600ms) after that. The real app makes two round trips — the
+  line is priced, then the promotion is evaluated — so firing both at once reads
+  as one canned animation where staggering them reads as a server thinking. The
+  **stepper's own number is never delayed**: a control that lags its own label
+  feels broken, where a total that lags a control feels like a network. Both
+  timers are per-tap and rescheduled by the next one, and cleared on unmount.
+  `cartQty` is the delayed count the bar, band and badge read; `qty` is the
+  stepper's.
+- **`offerDue`** is why `++` from 0 to 3 still fires: the second tap crosses
+  nothing, being already over, and would otherwise cancel the first tap's
+  scheduled dialog. Dropping back under the threshold clears it, and switching
+  pack re-bases `lastTotal` against the pack now being priced.
+- **Confetti over the dialog** — 24 pieces, `z-20` above the card's `z-10`,
+  falling across the whole frame rather than the card alone: a shower that stops
+  at a 282px box reads as a pattern inside a panel. The table is
+  **hand-written, not random**, for the same reason the catalog's seed is fixed —
+  a screenshot of it is reproducible — and each piece drives one keyframe through
+  inline `left`, `animation-delay`, `animation-duration` and `--drift`/`--spin`.
+  Colours are the app's own: `primary`, the cashback orange, the ✕ green, the
+  badge orange. It plays once, and under `prefers-reduced-motion` it is **not
+  rendered at all**, a shower of falling shapes being exactly what that setting
+  is for.
 - **The dialog's card is the screengrab itself**, cropped to its bounding box and
   corner-clipped at 13px: the message never varies, the truck is artwork nothing
   in `public/figma/` supplies, and re-typesetting it would only invite the two to

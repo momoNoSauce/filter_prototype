@@ -10,6 +10,42 @@ const CARD_H = 274;
 const BUTTON_H = 43;
 
 /**
+ * The confetti shower: 24 pieces, **hand-written rather than random**.
+ *
+ * `left` in %, `delay` and `dur` in ms, `drift` the sideways travel, `spin` the
+ * rotation, `w`/`h` the piece, and a colour from the app's own palette —
+ * `primary`, the cashback orange, the ✕ green and the badge orange. A random
+ * table would make every screenshot of this different, which is the same reason
+ * the catalog's seed is fixed; and the pieces read as scattered either way.
+ */
+const CONFETTI = [
+  { left: 4, delay: 0, dur: 1500, drift: 14, spin: 540, w: 7, h: 11, c: "#004ffa" },
+  { left: 11, delay: 180, dur: 1700, drift: -12, spin: -420, w: 6, h: 6, c: "#fb9805" },
+  { left: 17, delay: 60, dur: 1400, drift: 20, spin: 620, w: 9, h: 5, c: "#2e9e42" },
+  { left: 23, delay: 320, dur: 1650, drift: -8, spin: 480, w: 6, h: 10, c: "#ff7711" },
+  { left: 29, delay: 120, dur: 1550, drift: 16, spin: -560, w: 8, h: 8, c: "#004ffa" },
+  { left: 35, delay: 420, dur: 1750, drift: -18, spin: 500, w: 5, h: 9, c: "#fb9805" },
+  { left: 41, delay: 40, dur: 1450, drift: 10, spin: 660, w: 10, h: 6, c: "#2e9e42" },
+  { left: 47, delay: 260, dur: 1600, drift: -14, spin: -520, w: 7, h: 7, c: "#ff7711" },
+  { left: 53, delay: 100, dur: 1700, drift: 18, spin: 580, w: 6, h: 11, c: "#004ffa" },
+  { left: 59, delay: 380, dur: 1500, drift: -10, spin: 440, w: 9, h: 5, c: "#fb9805" },
+  { left: 65, delay: 20, dur: 1650, drift: 12, spin: -600, w: 7, h: 9, c: "#2e9e42" },
+  { left: 71, delay: 300, dur: 1550, drift: -20, spin: 520, w: 6, h: 6, c: "#ff7711" },
+  { left: 77, delay: 160, dur: 1750, drift: 8, spin: 640, w: 8, h: 10, c: "#004ffa" },
+  { left: 83, delay: 440, dur: 1450, drift: -16, spin: -460, w: 5, h: 8, c: "#fb9805" },
+  { left: 89, delay: 80, dur: 1600, drift: 14, spin: 560, w: 9, h: 7, c: "#2e9e42" },
+  { left: 95, delay: 340, dur: 1700, drift: -12, spin: 480, w: 6, h: 10, c: "#ff7711" },
+  { left: 8, delay: 520, dur: 1600, drift: 22, spin: -540, w: 6, h: 8, c: "#2e9e42" },
+  { left: 26, delay: 600, dur: 1500, drift: -6, spin: 500, w: 8, h: 6, c: "#004ffa" },
+  { left: 44, delay: 560, dur: 1700, drift: 10, spin: 620, w: 5, h: 11, c: "#fb9805" },
+  { left: 62, delay: 640, dur: 1550, drift: -18, spin: -580, w: 9, h: 6, c: "#ff7711" },
+  { left: 80, delay: 500, dur: 1650, drift: 16, spin: 460, w: 7, h: 9, c: "#004ffa" },
+  { left: 92, delay: 680, dur: 1500, drift: -10, spin: 600, w: 6, h: 7, c: "#2e9e42" },
+  { left: 14, delay: 720, dur: 1600, drift: 12, spin: -500, w: 8, h: 9, c: "#ff7711" },
+  { left: 68, delay: 760, dur: 1550, drift: -14, spin: 540, w: 6, h: 6, c: "#fb9805" },
+];
+
+/**
  * *Congrats! You've unlocked a new offer!* — the dialog the live app throws when
  * a line crosses the free-delivery threshold.
  *
@@ -56,8 +92,19 @@ export function FreeDeliveryDialog({ onClose }: { onClose: () => void }) {
         }`}
       />
 
+      {/*
+        The confetti falls **over** the card, and over the whole frame rather
+        than the card alone: a shower that stops at a 282px box reads as a
+        pattern inside a panel, where one crossing the screen reads as thrown at
+        it. `pointer-events-none` so the card underneath is still tappable, and
+        **not rendered at all** under `prefers-reduced-motion` — a shower of
+        falling shapes is precisely what that setting is for, so there is nothing
+        to collapse to one frame.
+      */}
+      {!closing && <Confetti />}
+
       <div
-        className={`relative ${closing ? "animate-dialog-out" : "animate-dialog-in"}`}
+        className={`relative z-10 ${closing ? "animate-dialog-out" : "animate-dialog-in"}`}
         style={{ width: CARD_W }}
         onAnimationEnd={(e) => {
           if (closing && e.target === e.currentTarget) onClose();
@@ -92,6 +139,34 @@ export function FreeDeliveryDialog({ onClose }: { onClose: () => void }) {
           <span className="sr-only">Super! Thank you</span>
         </button>
       </div>
+    </div>
+  );
+}
+
+/** The shower itself — see `CONFETTI` for why the table is hand-written. */
+function Confetti() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-20 overflow-hidden motion-reduce:hidden"
+    >
+      {CONFETTI.map((piece, i) => (
+        <span
+          key={i}
+          className="animate-confetti absolute top-0 block rounded-[1px]"
+          style={{
+            left: `${piece.left}%`,
+            width: piece.w,
+            height: piece.h,
+            backgroundColor: piece.c,
+            animationDelay: `${piece.delay}ms`,
+            animationDuration: `${piece.dur}ms`,
+            // Consumed by the keyframe, so one animation covers 24 paths.
+            ["--drift" as string]: `${piece.drift}px`,
+            ["--spin" as string]: `${piece.spin}deg`,
+          }}
+        />
+      ))}
     </div>
   );
 }

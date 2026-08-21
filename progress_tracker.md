@@ -513,6 +513,18 @@ all have it.
 - `FREE_DELIVERY_MIN = 1000`, a demo constant — no screengrab states it.
 - **Fires on every upward crossing** (chosen): step under and back over and it
   congratulates you again.
+- **Staggered, on request**: the stepper answers instantly, the basket bar and
+  band arrive 450ms later, the dialog 600ms after that. Two round trips is what
+  the real app does — price the line, then evaluate the promotion — and firing
+  both at once reads as one canned animation. The stepper's own number is never
+  delayed. `cartQty` trails `qty`; both timers are per-tap, rescheduled by the
+  next tap and cleared on unmount, and `offerDue` keeps a `++` run from
+  cancelling its own dialog.
+- **Confetti over the dialog** — 24 pieces at `z-20` over the card's `z-10`,
+  falling across the frame rather than the card alone. Hand-written table, not
+  random, so a screenshot of it is reproducible; one keyframe driven per piece
+  by inline `left`/delay/duration and `--drift`/`--spin`; the app's own four
+  colours; plays once; not rendered under `prefers-reduced-motion`.
 - The delivery line stays `+ ₹0 DELIVERY CHARGES` at every total, as both
   screengrabs have it. The first four-digit total wrapped it in two, so it took
   `whitespace-nowrap` and the `GO TO CART` button gave up 6px of padding — our

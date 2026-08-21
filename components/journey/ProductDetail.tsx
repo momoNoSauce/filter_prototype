@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { AppBar } from "@/components/plp/AppBar";
 import { SetPills } from "@/components/plp/SetPills";
@@ -22,6 +22,20 @@ const FREE_DELIVERY_MIN = 1000;
 
 /** Recovered, not measured — see `SubtotalBand`. */
 const SUBTOTAL_GREEN = "#7fb681";
+
+/**
+ * Tap → the basket answers, and → the offer lands. Two waits, not one, because
+ * the real app makes two round trips: the line is priced first and the promotion
+ * is evaluated after it, so the bar arrives, *then* the dialog. Firing both at
+ * once reads as a single canned animation; staggering them reads as a server
+ * thinking.
+ *
+ * 450ms is long enough to be seen and short enough that nobody taps again, and
+ * the stepper's own number is **not** delayed — a control that lags its own
+ * label feels broken, where a total that lags a control feels like a network.
+ */
+const CART_DELAY_MS = 450;
+const OFFER_DELAY_MS = 600;
 
 /**
  * The product detail screen, built 1:1 from the storefront screengrab
@@ -72,8 +86,13 @@ export function ProductDetail({
    * ever move its own number.
    */
   const [qty, setQty] = useState(0);
-  const pieces = qty * variant.setOf;
-  const lineTotal = pieces * variant.pricePerPc;
+  /**
+   * What the **basket** shows, which trails `qty` by `CART_DELAY_MS`. Two counts
+   * rather than one: the stepper answers the tap immediately and the bar, the
+   * band and the badge arrive when the imaginary server has priced the line.
+   */
+  const [cartQty, setCartQty] = useState(0);
+  const lineTotal = cartQty * variant.setOf * variant.pricePerPc;
 
   const [offerOpen, setOfferOpen] = useState(false);
   /**
@@ -83,15 +102,46 @@ export function ProductDetail({
    * demoable reading of the two.
    */
   const lastTotal = useRef(0);
+  /** Survives taps that don't cross, so ++ through the threshold still lands. */
+  const offerDue = useRef(false);
+  const cartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const offerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Both timers are per-tap and rescheduled on the next one, so leaving the
+  // screen mid-flight must not leave a `setState` looking for a mounted tree.
+  useEffect(
+    () => () => {
+      if (cartTimer.current) clearTimeout(cartTimer.current);
+      if (offerTimer.current) clearTimeout(offerTimer.current);
+    },
+    [],
+  );
 
   const changeQty = (next: number) => {
     const clamped = Math.max(0, next);
     const total = clamped * variant.setOf * variant.pricePerPc;
+
+    // The crossing is spotted at tap time and the dialog scheduled; the flag is
+    // what makes ++ from 0 to 3 fire once, rather than the second tap — which
+    // crosses nothing, being already over — cancelling the first.
     if (lastTotal.current < FREE_DELIVERY_MIN && total >= FREE_DELIVERY_MIN) {
-      setOfferOpen(true);
+      offerDue.current = true;
     }
+    if (total < FREE_DELIVERY_MIN) offerDue.current = false;
     lastTotal.current = total;
+
     setQty(clamped);
+
+    if (cartTimer.current) clearTimeout(cartTimer.current);
+    cartTimer.current = setTimeout(() => setCartQty(clamped), CART_DELAY_MS);
+
+    if (offerTimer.current) clearTimeout(offerTimer.current);
+    if (offerDue.current) {
+      offerTimer.current = setTimeout(() => {
+        offerDue.current = false;
+        setOfferOpen(true);
+      }, CART_DELAY_MS + OFFER_DELAY_MS);
+    }
   };
   const cashback = product.cashback;
   const freeDelivery = product.offers.includes("Free Delivery");
@@ -108,7 +158,7 @@ export function ProductDetail({
         <AppBar
           title={product.brand}
           homeHref={homeHref}
-          cartBadge={qty > 0 ? 1 : cartBadge}
+          cartBadge={cartQty > 0 ? 1 : cartBadge}
         />
       </div>
 
@@ -123,7 +173,14 @@ export function ProductDetail({
           <SetPills
             variants={product.variants}
             selected={selected}
-            onSelect={setSelected}
+            onSelect={(index) => {
+              setSelected(index);
+              // Re-base the threshold against the pack now being priced —
+              // otherwise switching to a dearer pack leaves `lastTotal` below
+              // the line and the next tap re-congratulates you for nothing.
+              const v = product.variants[index];
+              lastTotal.current = cartQty * v.setOf * v.pricePerPc;
+            }}
           />
         </div>
 
@@ -177,7 +234,7 @@ export function ProductDetail({
         </div>
 
         {/* The running total, once there is one. */}
-        {qty > 0 && <SubtotalBand total={lineTotal} />}
+        {cartQty > 0 && <SubtotalBand total={lineTotal} />}
 
         {/* The pricing card. */}
         <div className="mt-[12px] bg-white px-[14px] py-[14px]">
@@ -240,7 +297,7 @@ export function ProductDetail({
         both screengrabs have it (decided 2026-08-21). Crossing the threshold is
         announced by the dialog, not by a charge disappearing.
       */}
-      {qty > 0 && <CartBar total={lineTotal} count={1} />}
+      {cartQty > 0 && <CartBar total={lineTotal} count={1} />}
 
       {offerOpen && <FreeDeliveryDialog onClose={() => setOfferOpen(false)} />}
     </div>
