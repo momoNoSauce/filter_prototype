@@ -23,7 +23,7 @@ import { buildQuery, parseSelections, parseSort } from "@/lib/filters/urlState";
 import { AppBar } from "./AppBar";
 import { SIZE_FACET_ID } from "@/lib/filters/activeVariant";
 import { ProductCard } from "./ProductCard";
-import { BottomActionBar } from "./BottomActionBar";
+import { BottomActionBar, PILL_GAP, PILL_H } from "./BottomActionBar";
 import { TopChipBar } from "./TopChipBar";
 import { ChipStrip, ContextChips } from "./ContextChips";
 import { contextChips } from "@/lib/filters/contextChips";
@@ -400,10 +400,30 @@ export function PlpScreen({
               />
             ))
         )}
+
+        {/* The pill floats over the listing, so the last card needs room to
+            clear it — otherwise the foot of the list sits permanently under a
+            control. A and C only; the chip variants have nothing down there. */}
+        {variant === "bottom-bar" && results.length > 0 && (
+          <div
+            aria-hidden
+            style={{ height: PILL_H + PILL_GAP * 2 }}
+            className="w-full shrink-0"
+          />
+        )}
       </div>
 
       {variant === "bottom-bar" && (
-        <div className="shrink-0">
+        // **Floating, not in flow** (Figma `697:2658`, 2026-08-21): the pill
+        // hovers over the listing rather than taking a band off it, which is
+        // what stops it fighting the basket bar for the bottom edge. It rides
+        // 12px above whatever is down there — the bar when the basket has a
+        // line, the frame's edge otherwise — and the offset transitions, so it
+        // travels with the bar as that slides away instead of jumping.
+        <div
+          style={{ bottom: (line && !cartHidden ? CART_BAR_H : 0) + PILL_GAP }}
+          className="absolute left-1/2 z-30 -translate-x-1/2 transition-[bottom] duration-200 ease-out motion-reduce:transition-none"
+        >
           <BottomActionBar
             sortActive={sortActive}
             filterCount={filterCount}

@@ -552,6 +552,34 @@ tiny beside its own photograph. It was 11px, and one of the two sites the
   earned at **19 tiles** rather than 22. The test that pins it moved with it —
   which is the point of pinning it.
 
+#### The bottom bar is a floating pill, and A and C are back (2026-08-21)
+
+Figma `697:2658`, supplied: Sort and Filters in a **240 × 52 dark pill**
+(`#323232`, 1px `#d1d1d1`, 16px radius, `0 0 5.05px rgba(0,0,0,0.3)`) floating
+above the basket bar, with the listing scrolling under both.
+
+That reverses the park. A and C were shelved on 2026-08-20 because a pinned
+full-width bar fought the basket bar for the bottom edge; a floating pill doesn't
+compete for it, so **both are live again** and the 2×2 stands. The journey stays
+on top chips — that call was about which controls its own screengrab shows.
+
+- 12px above the basket bar or the frame's edge, and the offset **transitions**,
+  so the pill rides the bar as it slides away rather than jumping.
+- The list gets a `PILL_H + 2 × PILL_GAP` spacer, or its last card would sit
+  permanently under a control.
+- Labels at **15px**, not the frame's 14: every 14px control label moved in the
+  type pass. The dot and count stay — the frame has no way to tell a filtered
+  list from an unfiltered one.
+- `sort.svg` (the frame's own `SortAscending`) and `funnel.svg` (its `Funnel`)
+  are the exports A/C and B/D already carried, both black, rendered white
+  through `MaskIcon` rather than re-exported.
+- Verified on `/` and `/c`: pill at x=60, 240 × 52, 12px off the bottom, sheets
+  open, the Sort dot lights.
+
+**Still missing on A and C:** a detail route. `productBasePath` is unset there,
+so their cards don't open and the basket can't be filled from them — one prop
+and one route file each.
+
 #### One card, and it is the journey's (2026-08-21)
 
 "Use userjourney as the source of truth." The journey's card moved to
