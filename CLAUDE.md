@@ -488,7 +488,7 @@ Sizes and the vertical-specific attributes each draw from **their own PRNG strea
 
 - **Category tiles** — Unsplash stock in `public/categories/`, credited in `CREDITS.md`. Filenames match the category id (`womens-t-shirts.jpg`), fetched at 336×336 = 6× the 56px tile. All seven are **worn on a model**, because every category names its audience and at 56px a person says who it is for faster than a flat-lay does; they're also picked for seven distinct dominant colours. `boys-casual-t-shirts.jpg` carries an incidental Levi's wordmark — unreadable at tile size, noted in `CREDITS.md`.
 - **Product images are generated, one per wearer × garment × colour** (2026-08-21,
-  in progress). Only two shirt renders exist in Figma, and four of the seven
+  **complete: 120/120**). Only two shirt renders exist in Figma, and four of the seven
   categories are tees, so every card used to show a button-up in one of two
   colours — a Coral tee for girls arrived as a grey shirt. `productImage()` in
   `lib/catalog/productImage.ts` now resolves
@@ -502,7 +502,10 @@ Sizes and the vertical-specific attributes each draw from **their own PRNG strea
   seamless white, waist-up, no print or logo — at 276px wide, 3× the 92px the
   card draws, ~16KB each. `GENERATED_PRODUCT_IMAGES` is the manifest of what
   exists; regenerate it from the directory after each batch rather than editing it
-  by hand. Nothing here touches the seed: the image was always derived from the
+  by hand. **All 1,070 products now resolve to generated art** — verified, zero on
+  the fallback — and 119 of the 120 files are used, one colour/garment pair never
+  being drawn. The two Figma renders stay as the fallback path, which is what
+  makes a missing file harmless rather than a 404. 1.9MB for the set. Nothing here touches the seed: the image was always derived from the
   colour, never drawn.
 - **Brand tiles** — still grey `#d9d9d9` placeholders. Real logos couldn't be sourced (Clearbit's API is retired; Wikipedia/Commons returned unrelated files for 7 of 8 brands). The right input is brand-supplied assets, which also avoids scraping trademarked marks.
 - **Product images** — only two shirt renders exist in the Figma file, assigned by whether the colour is dark or light.

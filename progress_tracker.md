@@ -534,6 +534,30 @@ Measured at 360 / 390 / 430 / 520: panel 240 / 270 / 310 / 240, cells 72.7 /
 nothing clamped — and 520px is the phone-mockup path, so the desktop view the
 report called correct is untouched.
 
+#### Product images now match the garment (2026-08-21)
+
+"If a shirt says it's black make sure it is black." Every card used to show one
+of two Figma button-ups, picked by whether the colour was dark or light, so a
+Coral tee for girls arrived as a grey shirt.
+
+**120 images generated with Magnific** (Nano Banana 2 Lite, 60 credits each,
+~7,200 total): model on seamless white, waist-up, no print or logo, one per
+wearer × garment × colour. The axis is `gender × kind`, six pairs over 20
+colours — collapsing women and men into "adult" would have put a man on a
+Women's T-Shirt card, which is the mismatch this removes.
+
+- `productImage()` resolves `/products/{gender}-{kind}-{colour}.jpg` and falls
+  back to the two Figma renders for anything missing, so the set landed in
+  batches over one session without a flag day and nothing ever pointed at a 404.
+- 276px wide, 3× the 92px the card draws, ~16KB each: **1.9MB** for all 120.
+- **Verified: all 1,070 products resolve to generated art, zero on the fallback**,
+  no broken images, and titles agree with pictures across every category
+  (`… for Girls, Coral` → `girls-tee-coral.jpg`).
+- Nothing moved in the seed: the image was always derived from the colour, never
+  drawn from the PRNG. 112 tests green throughout.
+- Magnific isn't in the repo's toolchain — the server was added to this session's
+  MCP config and needed a restart before its tools appeared.
+
 #### The tile labels were raised (2026-08-21)
 
 The complaint: on the image filters — Category and Brands — the label reads as
