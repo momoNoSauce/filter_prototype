@@ -58,6 +58,19 @@ const FOLDS_BEFORE_HIDE = 2;
  */
 const SCROLL_EPS = 4;
 
+/**
+ * Material 3's **level 2** elevation, its own value for a top app bar with
+ * content scrolled under it: a tight key shadow for the edge and a wider ambient
+ * one for the lift. Two layers rather than one blurred grey, which is what makes
+ * it read as a raised surface instead of a drawn line.
+ *
+ * It sits on the **slot**, not on `ChipStrip`: the slot's `overflow-hidden` —
+ * there to clip the strip as it slides away — would crop a shadow cast by
+ * anything inside it.
+ */
+const STRIP_ELEVATION =
+  "shadow-[0_1px_2px_rgba(0,0,0,0.18),0_2px_6px_2px_rgba(0,0,0,0.10)]";
+
 type Overlay = "sort" | "filters" | null;
 
 /**
@@ -272,12 +285,22 @@ export function PlpScreen({
     0,
   );
 
+  // No shadow with nothing to cast it: the slot collapses to 0 when the strip
+  // hides, and in A it is empty whenever there are no contextual chips. Written
+  // against `chips.length` rather than the measured height so the server and the
+  // first client render agree.
+  const stripElevated = !stripHidden && (variant === "top-chips" || chips.length > 0);
+
   return (
     // `relative` so the sheets and the Filters screen cover this frame rather
     // than the page. It outlived the Price dropdown it was added for, which
     // measured its offsets against this box.
     <div className="relative flex h-full flex-col bg-page">
-      <div className="shrink-0">
+      {/* `relative z-20` so the strip's elevation lands **on** the listing. The
+          scroller is a later sibling, so without this the cards paint over the
+          shadow and it is invisible — which is how it was first shipped and
+          spotted. Below the mic (`z-30`) and the sheets (`z-40`/`z-50`). */}
+      <div className="relative z-20 shrink-0">
         <AppBar
           title={title}
           // `??` would be wrong: C and D pass an explicit `null` to mean "no
@@ -303,7 +326,9 @@ export function PlpScreen({
           two folds of scrolling to lose them.
         */}
         <div
-          className="overflow-hidden transition-[height] duration-200 ease-out motion-reduce:transition-none"
+          className={`overflow-hidden transition-[height] duration-200 ease-out motion-reduce:transition-none ${
+            stripElevated ? STRIP_ELEVATION : ""
+          }`}
           style={stripH !== null ? { height: stripHidden ? 0 : stripH } : undefined}
         >
           <div

@@ -499,6 +499,26 @@ blue background so the logo's arc and the bell's dot survive.
 Dropping Share is also what makes `KARTIK EXPORTERS` fit: it truncated to
 `KARTIK EXPOR…` at 20px with Share in place, and the 36px it frees is enough.
 
+#### The strip is elevated over the listing (2026-08-21)
+
+Asked for: a slight downward shadow with some blur, Material-style, so the
+controls sit above the listing rather than beside it.
+
+- **M3 level 2, softened** — the spec's own value for a top app bar with content
+  scrolled under it, two layers (`0 1px 2px` key, `0 2px 6px 2px` ambient) so it
+  reads as a raised surface. Alphas are M3's 0.30/0.15 taken to 0.18/0.10: at
+  360px the spec value read as a firm edge where a lift was wanted.
+- **On the slot, not on `ChipStrip`.** The slot's `overflow-hidden` exists to
+  clip the strip as it slides away, and it crops a shadow cast from inside.
+- **The header block needed `relative z-20`.** The scroller is a later sibling,
+  so it painted straight over the shadow — the first attempt shipped invisible
+  and that is how this was found. Below the mic (`z-30`) and the sheets.
+- No shadow with nothing to cast it: it drops while the strip is hidden, and in
+  A when there are no contextual chips. The test is `chips.length`, not the
+  measured height, so the server and first client render agree.
+- M3 uses elevation *or* a divider. This carries both, the rule having been asked
+  for the day before — say the word and the rule goes.
+
 #### The chip strip hides on scroll (2026-08-21)
 
 Amazon's behaviour, asked for: the strip leaves once the buyer is **two folds**
