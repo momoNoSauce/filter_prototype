@@ -583,7 +583,7 @@ product to basket. A's base path is the **empty string** — its routes hang off
 or A's cards would silently stop navigating. Verified: a card on `/seller/baheti`
 opens `/product/p-0511`, `+` brings up the bar, Home returns to `/`.
 
-**The pill hides with the chip strip** (asked for): same flag, two folds down,
+**The pill hides with the chip strip** (asked for): same flag, 1.5 folds down,
 sliding clear of the frame by its own height plus its offset and returning on the
 first upward flick. Measured on `/` and `/c`: pill top 736 → 800 with the strip
 69 → 0, and both back on the way up. One gesture, one moment — two thresholds
@@ -632,7 +632,7 @@ scroll up.
   can't read 0 under a bar that says ₹1,440. Switching pack re-prices the line
   that is already in the basket.
 - **`useHideOnScroll`** now serves the chip strip and both bars. Its one
-  argument is the threshold: the strip waits two folds, the bar waits for
+  argument is the threshold: the strip and pill wait 1.5 folds, the bar waits for
   nothing.
 - The bar animates a **collapsing slot**, height and transform together. It
   shipped translating only, which left its 64px of layout behind: the listing
@@ -710,10 +710,11 @@ controls sit above the listing rather than beside it.
 
 #### The chip strip hides on scroll (2026-08-21)
 
-Amazon's behaviour, asked for: the strip leaves once the buyer is **two folds**
+Amazon's behaviour, asked for: the strip leaves once the buyer is **1.5 folds**
 down and still scrolling down, and comes back the moment they scroll up.
 
-- `FOLDS_BEFORE_HIDE = 2`, measured against the **scroller's own height** rather
+- `FOLDS_BEFORE_HIDE = 1.5` (two until 2026-08-21), measured against the
+  **scroller's own height** rather
   than a pixel count, so it means the same thing on any frame. Above that line
   the strip is always up.
 - `SCROLL_EPS = 4` px counts as a direction — without it a trackpad's jitter
@@ -730,7 +731,7 @@ down and still scrolling down, and comes back the moment they scroll up.
 - Applying a filter scrolls the list to the top, which brings the strip back on
   its own. A's bottom bar is untouched.
 - Verified on `/b` and `/userjourney`: visible at rest and one fold down, gone
-  at two folds while scrolling down, back on a 100px scroll up, and the listing
+  at the threshold while scrolling down, back on a 100px scroll up, and the listing
   runs under the app bar with no gap left behind.
 
 #### A rule under the chip strip (2026-08-21)

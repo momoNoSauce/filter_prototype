@@ -48,12 +48,19 @@ const PAGE_SIZE = 8;
 const DISCARDED = "Selection discarded";
 
 /**
- * How far down the listing the chip strip starts hiding — **two folds**, as
- * asked for, measured against the scroller's own height rather than a fixed
- * pixel count so it means the same thing on any frame. Above it the strip is
- * always up: a buyer who has barely started scrolling hasn't asked for the room.
+ * How far down the listing the controls start hiding — the chip strip and, in A
+ * and C, the floating pill. Measured against the scroller's own height rather
+ * than a fixed pixel count, so it means the same thing on any frame. Above it
+ * they stay up: a buyer who has barely started scrolling hasn't asked for the
+ * room.
+ *
+ * **1.5 folds since 2026-08-21**, down a quarter from the two it launched at, on
+ * the report that the pill "isn't disappearing" — it was, at 1,350px on a 675px
+ * fold, which is further than anyone scrolls before deciding a thing is broken.
+ * One constant covers every variant; the basket bar's own threshold is zero and
+ * a quarter off zero is still zero.
  */
-const FOLDS_BEFORE_HIDE = 2;
+const FOLDS_BEFORE_HIDE = 1.5;
 
 /**
  * Material 3's **level 2** elevation, its own value for a top app bar with
@@ -169,7 +176,7 @@ export function PlpScreen({
   // the first client render identical.
   const [stripH, setStripH] = useState<number | null>(null);
 
-  // Same rule, two thresholds: the strip waits two folds, the basket bar goes
+  // Same rule, two thresholds: the strip waits 1.5 folds, the basket bar goes
   // as soon as the buyer scrolls away from it. See `useHideOnScroll`.
   const { hidden: stripHidden, track: trackStrip } = useHideOnScroll({
     foldsBeforeHide: FOLDS_BEFORE_HIDE,
@@ -335,7 +342,7 @@ export function PlpScreen({
           to Sort and Filters — `TopChipBar` says so, and said it should never
           leave the screen. Amazon hides the same controls behind the same
           gesture, and scrolling up is how you get them back: one flick, against
-          two folds of scrolling to lose them.
+          a fold and a half of scrolling to lose them.
         */}
         <div
           className={`overflow-hidden transition-[height] duration-200 ease-out motion-reduce:transition-none ${
@@ -436,7 +443,7 @@ export function PlpScreen({
         // not a second one: the strip's rule is the one the ask named ("like the
         // bar at the top"), and two controls answering one gesture at one moment
         // reads as the screen getting out of the way, where two thresholds would
-        // read as a stutter. So it waits two folds, and comes back on the first
+        // read as a stutter. So it waits 1.5 folds, and comes back on the first
         // upward flick.
         <div
           style={{

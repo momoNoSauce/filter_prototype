@@ -27,11 +27,11 @@ import { CHIP_H, ChipStrip } from "./ContextChips";
  * simply scroll away.
  *
  * **It does now leave, deliberately** (2026-08-21): `PlpScreen` hides the strip
- * once the buyer is two folds down and scrolling away from it, and brings it
+ * once the buyer is 1.5 folds down and scrolling away from it, and brings it
  * back on the first upward flick — Amazon's behaviour, asked for. That is not
- * the same thing as scrolling out of reach: it costs two folds to lose and one
- * gesture to recover, where a strip that merely scrolled would be gone until you
- * had scrolled all the way back.
+ * the same thing as scrolling out of reach: it costs a fold and a half to lose
+ * and one gesture to recover, where a strip that merely scrolled would be gone
+ * until you had scrolled all the way back.
  *
  * The trailing divider is the design's own — the boundary it draws before the
  * contextual chips, which arrive as `children` and share the row and its
