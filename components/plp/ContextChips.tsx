@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { MaskIcon } from "@/components/ui/MaskIcon";
 import type { ContextChip } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
 
@@ -135,7 +134,10 @@ export function ContextChips({
  * `rgba(21,95,255,0.2)`, which over white is exactly `primary/subtle`
  * (#CCDCFE), and the label and glyph come back as `#0a57ff`, which is
  * `primary` (#004FFA). The glyph ships as an exported asset tinted through
- * `MaskIcon`, since an `<img>` would bake in the slipped hex.
+ * `MaskIcon` — that was for the trailing `close_small` ✕, which went on
+ * 2026-08-25 when this chip took the offer chips' selected state. The note
+ * stays because `close-small.svg` still ships with `#0A57FF` baked in, and
+ * anything that draws it again needs to know.
  *
  * The frame keeps the label when selected and adds the ✕ beside it, so that is
  * what this does — it does not drop the label.
@@ -159,16 +161,39 @@ function VerticalChip({
       onClick={onToggle}
       role="checkbox"
       aria-checked={selected}
-      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center justify-center gap-[6px] overflow-hidden rounded-[8px] pr-[8px] ${
-        selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"
+      /*
+       * **Selected is now the offer chips' selected** (2026-08-25): the
+       * checkmark *replaces* the thumbnail rather than joining it, which is
+       * Material 3's filter-chip rule and what every other chip in this strip
+       * already did. This one was the exception — it kept its picture and hung
+       * a ✕ off the end, so selection looked like a different mechanism
+       * depending on which chip you tapped.
+       *
+       * **The ✕ went with it.** It was the documented "way back out", but the
+       * chip has always toggled on tap — the ✕ was decorative, inside the same
+       * button — so it was a second signal for one action, and the trailing
+       * glyph was the other half of what made this chip's states look unlike
+       * its neighbours'. Filled plus a check now says selected here exactly as
+       * it does on Cashback.
+       *
+       * It also buys back a lot of room: a selected chip loses the 44px picture
+       * for a 20px glyph, and since the picked vertical *leads* the strip, that
+       * width goes straight to the chips behind it.
+       */
+      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-[8px] pr-[8px] ${
+        selected ? "gap-[8px] bg-primary-subtle pl-[8px]" : "gap-[6px] border border-[#4d4d4d] bg-white"
       }`}
     >
-      <span className="size-[44px] shrink-0 overflow-hidden bg-[#d9d9d9]">
-        {option.image && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img alt="" loading="lazy" className="size-full object-cover" src={option.image} />
-        )}
-      </span>
+      {selected ? (
+        <CheckGlyph />
+      ) : (
+        <span className="size-[44px] shrink-0 overflow-hidden bg-[#d9d9d9]">
+          {option.image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img alt="" loading="lazy" className="size-full object-cover" src={option.image} />
+          )}
+        </span>
+      )}
 
       {/* Two lines deep, as the frame sets it. The box tracks the type size,
           which is the rule the frame's own 68px box followed at 11px: it has to
@@ -193,13 +218,6 @@ function VerticalChip({
         {option.label}
       </span>
 
-      {selected && (
-        <MaskIcon
-          src="/figma/icons/close-small.svg"
-          color="var(--color-primary)"
-          className="size-[14px] shrink-0"
-        />
-      )}
     </button>
   );
 }
@@ -305,6 +323,26 @@ const PRICE_ICON = "/offers/price.png";
  * while the landscape ones reached 26. The longest edge is what the eye
  * compares, so the box equalises that.
  */
+/**
+ * The selected-state checkmark, shared by the offer chips and the vertical
+ * chips since 2026-08-25 — the same glyph at the same size, because the two now
+ * express selection identically and drawing it twice is how they drift.
+ */
+function CheckGlyph() {
+  return (
+    <svg viewBox="0 0 18 18" className="size-[20px] shrink-0" aria-hidden>
+      <path
+        d="M3.5 9.5l3.5 3.5 7.5-7.5"
+        fill="none"
+        stroke="var(--color-primary)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function ChipIcon({ src }: { src: string }) {
   // eslint-disable-next-line @next/next/no-img-element
   return <img alt="" className="size-[26px] shrink-0 object-contain" src={src} />;
@@ -341,18 +379,7 @@ function FilterChip({
       }`}
     >
       {!selected && icon && <ChipIcon src={icon} />}
-      {selected && (
-        <svg viewBox="0 0 18 18" className="size-[20px] shrink-0" aria-hidden>
-          <path
-            d="M3.5 9.5l3.5 3.5 7.5-7.5"
-            fill="none"
-            stroke="var(--color-primary)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
+      {selected && <CheckGlyph />}
       <span
         className={`text-[15px] leading-[20px] font-medium whitespace-nowrap ${
           selected ? "text-primary" : "text-[#323232]"
