@@ -16,6 +16,13 @@ Transferred from `cheeseKracker` on 2026-08-25; the old path still redirects, so
 an existing clone keeps working, but new links should use the one above.
 `cheeseKracker` was kept on as a collaborator with **push but not admin**, which
 is what lets this machine go on pushing without re-authenticating `gh`.
+
+**Commit attribution needed fixing separately**, and would have gone unnoticed:
+the repo moved but `user.email` was still `m23ldx002@iitj.ac.in`, which is
+verified on `cheeseKracker`. A GitHub email belongs to exactly one account, so
+every commit went on crediting the old one under the new owner's repo. This repo
+now commits as `momoNoSauce` via that account's noreply address; the machine's
+global config is deliberately untouched, so other projects keep their identity.
 Local: `npm run dev` → http://localhost:3000.
 
 > **GitHub and Vercel are not connected.** `vercel --prod` uploads straight from
