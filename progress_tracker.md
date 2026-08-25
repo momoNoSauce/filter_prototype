@@ -1345,6 +1345,12 @@ Ordered by consequence. None of these block a demo.
 5. **Hidden zero-count options** are right for the pruning demo but break the user's mental map; most Indian ecommerce greys out instead. A conscious call, not an inherited default.
 6. **No loading / skeleton / stale-results state anywhere.** Filtering is instant only because the catalog is in memory; against a real API it won't be, and the prototype is quietly setting an expectation engineering can't meet.
 7. **Touch targets** below guideline: sheet close X is 15px, set pills 40px (both from the design).
+12. **The vertical chips read small on a phone** (reported 2026-08-25). Their
+    label is 13px where every other chip in the same strip is 15px. The blocker
+    is the 82px label box, not the type — it has to hold `Men's Casual T-Shirts`
+    on two lines without clamping, and 15px wants ~94px, roughly 12px more per
+    chip. Height is fine either way. Measure all seven names at 360px first;
+    clamping that name is worse than the small type.
 11. **Two type sizes are held below 12px by frame dimensions**, not by choice — see the 2026-08-20 entry. The tile-grid label (11px, boxed by the 68px cell) and the home seller card's stat line (11px, boxed by the 152px card) were the only sites the type pass could not raise. Both need a wider cell or card to move, which is a designer's call.
 8. **Accessibility**, if this becomes the reference build: filter rows use `aria-pressed` where `role="checkbox"` + `aria-checked` is correct; sheets don't trap focus; the scrim is a full-viewport `<button>` announced as a giant "Close".
 9. **Pagination dots under the set pills** imply snapping the free-scrolling row doesn't do.
