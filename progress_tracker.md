@@ -922,7 +922,7 @@ question answered itself and the A/B is over.
 - The three-casing seller name, the two `Set of:` spellings, and the inferred
   title-casing rule all want a designer's confirmation.
 
-### 2026-08-25 — Clear Filters clears, and goes back to the listing
+### 2026-08-25 — Clear Filters clears, says so, and goes back to the listing
 
 Reported as the button not working, which is close to right: it worked on the
 draft and nowhere the buyer was looking. `Clear Filters` unticked everything on
@@ -944,12 +944,32 @@ in it. Most Indian apps do keep you on the filter screen after a clear, and the
 cost here is real: re-picking from scratch means reopening it. One tap, weighed
 against an action that currently appears to do nothing.
 
-**It is silent, for the same reason applying is.** The discard toast fires when
-edits are lost without being seen; here the listing behind the screen visibly
-changes, and draft edits made before the tap go with the clear because that is
-what clearing means. The **✕ is now the only exit that discards**, and so the
-only one that toasts — which is a simpler rule than the three-exit one it
-replaces, and `dismiss` needed no change to get it.
+**It says `All filters cleared`.** This started silent, on the reasoning that
+the listing visibly changing was announcement enough. That was wrong, and saying
+so is the shorter version: landing on a full listing is *ambiguous*. A buyer who
+has just cleared four filters and a buyer dumped there by a bug see the same
+screen, and the one thing that distinguishes them is a line of text. Draft edits
+made before the tap go with the clear, because that is what clearing means.
+
+So three exits with three voices, and the distinction is worth stating because
+it decides what any future one should do:
+
+| Exit | Says | Why |
+|---|---|---|
+| ✕ mid-edit | `Selection discarded` | A **warning** — edits vanished where nobody could see them go |
+| Clear Filters | `All filters cleared` | A **confirmation** — names an unfiltered listing as the answer rather than an accident |
+| `Show N results` | nothing | The buyer built the draft and is already watching its result |
+
+Same component, opposite jobs, which is why the cleared wording is flat rather
+than apologetic. `onCleared` is its own callback on `FilterScreen` rather than a
+flag on `onApply`: the two are different events that happen to share a code
+path, and collapsing them would make the plain apply speak too.
+
+**`CLEARED` covers two controls.** The Filters footer and the zero-results
+state's recovery button are both called *Clear Filters* and both do the same
+thing, so by the rule `DISCARDED` was made a constant for — one event, one
+wording — they say the same thing from one string. The empty-state button was
+already committing immediately; all it gained was the toast.
 
 **The scope rule is unchanged and now lives in one place.** `clearSelections`
 in `engine.ts` filters over `getRailFacetIds()` rather than resetting wholesale,
@@ -975,12 +995,24 @@ nothing on screen to clear — no closing the screen for nothing.
 - D, `/d?colour=navy`: clears to bare `/d`, still titled *Men's Formal Shirts*
   with mixed colours back in the list. Page scope survived the clear.
 - Unfiltered: the button is disabled.
-- 114 tests green (2 new), lint, typecheck and production build clean.
+- The toast: `All filters cleared` in A, B and D, gone when its animation ends.
+  The ✕ still says `Selection discarded` and never says this; `Show N results`
+  still says neither. D's zero-results recovery button toasts and lands on the
+  restored listing.
+- In A the toast's 72px offset clears the floating pill by **8px** (measured:
+  toast bottom 728, pill top 737). Not overlapping, but tight — the 72 was sized
+  for the full-width bar the pill replaced, and a toast in A is no longer rare.
+  Logged against the Toast row in `CLAUDE.md` rather than changed unasked.
+- 114 tests green (2 new), lint, typecheck and production build clean. No test
+  covers the toast wiring: there is no pure function in it, and this suite has
+  no component tests.
 
-**Left alone:** the zero-results state's own `Clear Filters` already committed
+**Left alone:** the zero-results state's `Clear Filters` already committed
 immediately (`commit({}, sort)`), which is where this behaviour was already
-correct and is the precedent the change follows. It resets wholesale rather than
-filtering over the rail; identical today, since nothing is off it on that screen.
+correct and is the precedent the change follows. It still resets wholesale
+rather than filtering over the rail — identical today, since nothing is off it
+on that screen — and it gained the toast, being the same button by name and by
+effect.
 
 ### Verified working
 

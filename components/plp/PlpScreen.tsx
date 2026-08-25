@@ -48,6 +48,20 @@ const PAGE_SIZE = 8;
 const DISCARDED = "Selection discarded";
 
 /**
+ * Clear Filters (2026-08-25). Two controls carry that label — the Filters
+ * screen's footer and the zero-results state's recovery button — and they do
+ * the same thing, so by the rule above they say the same thing, from one
+ * constant.
+ *
+ * It is a **confirmation**, where `DISCARDED` is a warning: that one exists
+ * because edits vanished unseen, this one because a buyer who has just cleared
+ * wants telling that the full list is the *result* and not a reset. Same
+ * component, opposite jobs, which is why the wording is flat rather than
+ * apologetic.
+ */
+const CLEARED = "All filters cleared";
+
+/**
  * How far down the listing the controls start hiding — the chip strip and, in A
  * and C, the floating pill. Measured against the scroller's own height rather
  * than a fixed pixel count, so it means the same thing on any frame. Above it
@@ -401,7 +415,12 @@ export function PlpScreen({
         {aboveList}
 
         {results.length === 0 ? (
-          <EmptyState onClear={() => commit({}, sort)} />
+          <EmptyState
+            onClear={() => {
+              commit({}, sort);
+              showToast(CLEARED);
+            }}
+          />
         ) : (
           results
             .slice(0, visible)
@@ -521,6 +540,7 @@ export function PlpScreen({
           verticalMode={verticalMode}
           onApply={(next) => commit(next, sort)}
           onDiscard={() => showToast(DISCARDED)}
+          onCleared={() => showToast(CLEARED)}
           onClose={() => setOverlay(null)}
         />
       )}

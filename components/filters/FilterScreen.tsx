@@ -28,8 +28,11 @@ import { OptionRow, TileGrid } from "./OptionRows";
  * Figma 638:3659 — the full-screen Filters sheet.
  *
  * Edits a draft copy of the selections. Two of its three exits commit —
- * "Show N results" applies the draft, "Clear Filters" applies an empty one —
- * and the ✕ discards. Every count in here is live: the footer total and each
+ * "Show N results" applies the draft silently, "Clear Filters" applies an empty
+ * one and says so — and the ✕ discards, which also says so. Only the plain
+ * apply is wordless, being the one nobody needs told about.
+ *
+ * Every count in here is live: the footer total and each
  * option's own count both recompute on every tick, and options that become
  * impossible drop out of the list.
  */
@@ -39,6 +42,7 @@ export function FilterScreen({
   onApply,
   onClose,
   onDiscard,
+  onCleared,
   verticalMode = FILTER_VERTICALS,
 }: {
   products: Product[];
@@ -52,6 +56,13 @@ export function FilterScreen({
    * could go unannounced. Fires only when something would actually be lost.
    */
   onDiscard: () => void;
+  /**
+   * Clear Filters was tapped. Separate from `onApply` because the two are
+   * different events that happen to share a code path: applying a draft says
+   * nothing, clearing announces itself. The screen is already closing when
+   * this fires, so the toast belongs to the listing underneath.
+   */
+  onCleared: () => void;
   /** How this screen treats verticals — see `VerticalMode`. */
   verticalMode?: VerticalMode;
 }) {
@@ -142,10 +153,16 @@ export function FilterScreen({
    *
    * It goes out through the same `onApply` the primary CTA uses, so `commit`
    * drops orphaned selections, rewrites the URL and scrolls the listing to the
-   * top exactly as it would otherwise. And it is silent for the same reason
-   * applying is: nothing is lost that the buyer didn't ask to lose, and the
-   * listing behind it visibly changes. Draft edits made before the tap go with
+   * top exactly as it would otherwise. Draft edits made before the tap go with
    * it deliberately — that is what clearing means.
+   *
+   * **It announces itself** (added the same day). Landing on a full listing is
+   * ambiguous on its own: a buyer who has just cleared four filters and one who
+   * has just been dumped somewhere by a bug see the same screen. The toast is
+   * the difference, and it is a *confirmation* rather than the ✕'s warning —
+   * `onCleared` is its own callback for that reason, and not a flag on
+   * `onApply`, which stays silent because a draft the buyer built and then
+   * committed needs no narration.
    *
    * Still a filter over RAIL_FACET_IDS rather than a blanket reset: a facet
    * this screen doesn't display must never be wiped by a button whose effect
@@ -153,6 +170,7 @@ export function FilterScreen({
    */
   const clearAll = () => {
     onApply(clearSelections(draft, RAIL_FACET_IDS));
+    onCleared();
     onClose();
   };
 
