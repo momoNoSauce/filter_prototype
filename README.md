@@ -45,11 +45,37 @@ Three files, and they are the source of truth rather than something to re-derive
 
 ## Deploying
 
+Source: **https://github.com/momoNoSauce/filter_prototype** (private, transferred
+from `cheeseKracker` on 2026-08-25 — the old path still redirects).
+
 GitHub and Vercel are **not connected**, so a push deploys nothing and a deploy commits nothing. Both have to be run:
 
 ```bash
 git push origin main
-npx vercel --prod
+npx vercel --prod --scope bitihotra-karaks-projects
 ```
 
+**The `--scope` is not optional** — the project belongs to the team, so a bare
+`vercel --prod` fails with `Not authorized` even when `vercel whoami` says you
+are logged in, which reads as an expired session and isn't one.
+
 Connecting the repo in the Vercel project's Git settings would collapse this to one step; it's browser-only.
+
+### If a deploy hangs with no output, it is blocked, not slow
+
+Vercel reads the **HEAD commit's author email** and refuses to build when that
+address isn't on the Vercel team. Nothing in the CLI says so: `vercel ls` reports
+`UNKNOWN` with no duration, `inspect` shows `Builds: . [0ms]`, `inspect --logs`
+prints nothing, and the deployment URL answers 302 like a healthy one — that is
+the password gate replying, not the app. Only the dashboard, or the API, carries
+the sentence:
+
+```bash
+TOKEN=$(python3 -c "import json;print(json.load(open('$HOME/Library/Application Support/com.vercel.cli/auth.json'))['token'])")
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.vercel.com/v13/deployments/<dpl_id>?teamId=team_7RaExFdsAbYFb54kXtQVYw3h" \
+  | python3 -m json.tool | grep -iE "readyState|Reason|block"
+```
+
+`git config user.email` must stay `m23ldx002@iitj.ac.in` until an address on the
+`momoNoSauce` account is added to the Vercel team. See `CLAUDE.md`.

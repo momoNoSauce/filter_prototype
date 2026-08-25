@@ -227,7 +227,7 @@ Separate routes rather than a query flag — chosen so each has its own shareabl
 - `HomeScreen` takes `basePath: "" | "/b"`, so its seller cards link into the right variant.
 - `AppBar` takes `homeHref`, because a hardcoded `/` silently drops a Variant B session into Variant A mid-demo.
 
-The journey is Home → tap *Baheti Garments* → PLP → filter and sort. Variant A is the default; Variant B is the same journey with the controls moved.
+The journey is Home → tap the search bar → type `shirt` → tap a suggestion → PLP → filter and sort (changed 2026-08-25; see *A and B are reached by searching*). Variant A is the default; Variant B is the same journey with the controls moved.
 
 ## `/userjourney` — a named flow, not a fifth variant
 
