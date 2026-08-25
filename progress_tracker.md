@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-08-20
+Last updated: 2026-08-25
 
 Live: **https://filterprototype.vercel.app** — **password-protected** since
 2026-08-14. **Leave the username blank** and enter the password; only the password is checked. It lives in the `SITE_PASSWORD` env var on Vercel
@@ -922,6 +922,66 @@ question answered itself and the A/B is over.
 - The three-casing seller name, the two `Set of:` spellings, and the inferred
   title-casing rule all want a designer's confirmation.
 
+### 2026-08-25 — Clear Filters clears, and goes back to the listing
+
+Reported as the button not working, which is close to right: it worked on the
+draft and nowhere the buyer was looking. `Clear Filters` unticked everything on
+the Filters screen and stopped, so the screen sat there looking unchanged apart
+from a counter, still asking to be dismissed through `Show N results` — the one
+control there whose effect you couldn't see. Tap the button that says it clears
+your filters, and nothing you can see clears.
+
+**It now commits and closes**, through the same `onApply` the primary CTA uses.
+So `commit` does what it always does: drops orphaned selections, rewrites the
+URL, and scrolls the listing to the top. The buyer lands back on an unfiltered
+list with every badge cleared, which is what the label promised.
+
+The argument for it, beyond the report: clearing is a *complete* instruction,
+not a partial edit. Ticking three boxes leaves a state worth refining before you
+commit it — that is what the draft is for — but there is no half-cleared state.
+Asking for a second confirmation of an unambiguous action is a step with nothing
+in it. Most Indian apps do keep you on the filter screen after a clear, and the
+cost here is real: re-picking from scratch means reopening it. One tap, weighed
+against an action that currently appears to do nothing.
+
+**It is silent, for the same reason applying is.** The discard toast fires when
+edits are lost without being seen; here the listing behind the screen visibly
+changes, and draft edits made before the tap go with the clear because that is
+what clearing means. The **✕ is now the only exit that discards**, and so the
+only one that toasts — which is a simpler rule than the three-exit one it
+replaces, and `dismiss` needed no change to get it.
+
+**The scope rule is unchanged and now lives in one place.** `clearSelections`
+in `engine.ts` filters over `getRailFacetIds()` rather than resetting wholesale,
+so a facet the screen doesn't display can never be wiped by a button whose
+effect the user can't see. The test used to re-implement that filter inline, and
+now calls the function the screen calls. Two things the set being read *from the
+draft* buys, both verified: inside a settled vertical it carries Size and the
+attribute block, so those clear too; and in C and D the page's own vertical
+survives, never having been a selection.
+
+`clearDisabled` still reads the draft, so the button is dead when there is
+nothing on screen to clear — no closing the screen for nothing.
+
+**Verified** at 360px/3× in Chromium, A/B/D:
+
+- A, `?gender=girls&seller=grasim`, plus a colour ticked in the draft: Clear
+  Filters returns the URL to `/seller/baheti`, closes the screen, restores all
+  1,070 products, empties the Filters pill's count and brings the vertical chips
+  back. No toast.
+- B: the ✕ after an edit still toasts `Selection discarded` and leaves
+  `?seller=grasim` standing — unchanged. Clear Filters on the same screen
+  commits, closes and stays silent.
+- D, `/d?colour=navy`: clears to bare `/d`, still titled *Men's Formal Shirts*
+  with mixed colours back in the list. Page scope survived the clear.
+- Unfiltered: the button is disabled.
+- 114 tests green (2 new), lint, typecheck and production build clean.
+
+**Left alone:** the zero-results state's own `Clear Filters` already committed
+immediately (`commit({}, sort)`), which is where this behaviour was already
+correct and is the precedent the change follows. It resets wholesale rather than
+filtering over the rail; identical today, since nothing is off it on that screen.
+
 ### Verified working
 
 - Footer count recomputes live: `Show 1,070 results` → `Show 530 results` on two sellers.
@@ -935,7 +995,7 @@ question answered itself and the A/B is over.
 - ~~Discard toast on the Category sheet~~ — *superseded 2026-08-19.* The Filters screen is the only draft surface left, and its cases are covered in the line below.
 - Discard toast on the Filters screen, both variants: edit then ✕ toasts; untouched ✕, `Show N results`, and tick-then-Clear-Filters (net zero) each stay silent. In B it sits 24px off the bottom, there being no bar to clear.
 - A's rail is Gender plus the eleven common entries; B's is the same list with Category added on top. Exactly one row apart.
-- Clear Filters wipes Category in **both** variants since 2026-08-19, the rail showing it in both. Verified in A: pick a category, Clear Filters, URL returns to bare and the badge clears.
+- Clear Filters wipes Category in **both** variants since 2026-08-19, the rail showing it in both. Verified in A: pick a category, Clear Filters, URL returns to bare and the badge clears — and since 2026-08-25 that happens on the tap, the screen closing onto the cleared listing rather than waiting for `Show N results`.
 - Sort dot appears on non-default sort and clears on return to Popularity.
 - Sheet motion measured frame by frame: enter decelerates (92→29→12→4px steps), exit accelerates (10→34→73→171px), then unmounts.
 - URL reflects state (`?gender=girls&sort=margin_desc`); back button unwinds it.

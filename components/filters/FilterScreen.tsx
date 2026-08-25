@@ -13,6 +13,7 @@ import {
   type VerticalMode,
 } from "@/lib/filters/facets";
 import {
+  clearSelections,
   countMatching,
   facetOptionsWithCounts,
   sameSelections,
@@ -26,8 +27,9 @@ import { OptionRow, TileGrid } from "./OptionRows";
 /**
  * Figma 638:3659 — the full-screen Filters sheet.
  *
- * Edits a draft copy of the selections; "Show N results" commits it, the close
- * button discards it. Every count in here is live: the footer total and each
+ * Edits a draft copy of the selections. Two of its three exits commit —
+ * "Show N results" applies the draft, "Clear Filters" applies an empty one —
+ * and the ✕ discards. Every count in here is live: the footer total and each
  * option's own count both recompute on every tick, and options that become
  * impossible drop out of the list.
  */
@@ -123,6 +125,36 @@ export function FilterScreen({
    * going on filtering.
    */
   const activeQuery = searchable ? query : "";
+
+  /*
+   * **Clear Filters commits and closes** (2026-08-25), where it used to edit
+   * the draft and stop there. A buyer who taps a button called *Clear Filters*
+   * expects the filters gone and the listing back; what they got was a screen
+   * that looked unchanged apart from a counter, still asking them to press
+   * *Show N results* — the one control here whose effect they couldn't see, and
+   * the reason clearing read as broken.
+   *
+   * Clearing is a complete instruction rather than a partial edit: there is no
+   * half-cleared state left to keep refining, so holding someone here to
+   * confirm it a second time is a step with nothing in it. The cost is that
+   * re-picking from scratch means reopening the screen — one tap, against an
+   * action that currently appears to do nothing.
+   *
+   * It goes out through the same `onApply` the primary CTA uses, so `commit`
+   * drops orphaned selections, rewrites the URL and scrolls the listing to the
+   * top exactly as it would otherwise. And it is silent for the same reason
+   * applying is: nothing is lost that the buyer didn't ask to lose, and the
+   * listing behind it visibly changes. Draft edits made before the tap go with
+   * it deliberately — that is what clearing means.
+   *
+   * Still a filter over RAIL_FACET_IDS rather than a blanket reset: a facet
+   * this screen doesn't display must never be wiped by a button whose effect
+   * the user can't see.
+   */
+  const clearAll = () => {
+    onApply(clearSelections(draft, RAIL_FACET_IDS));
+    onClose();
+  };
 
   const toggle = (facetId: string, optionId: string) =>
     setDraft((current) => {
@@ -277,18 +309,7 @@ export function FilterScreen({
       <ActionFooter
         primaryLabel={`Show ${total.toLocaleString("en-IN")} results`}
         clearDisabled={ownedCount === 0}
-        // Clears only what this screen owns — which is now everything, in
-        // both variants, Category included. The rule stays expressed as a
-        // filter over RAIL_FACET_IDS rather than a blanket reset: a facet the
-        // screen doesn't display must never be wiped by a button whose effect
-        // the user can't see.
-        onClear={() =>
-          setDraft((current) =>
-            Object.fromEntries(
-              Object.entries(current).filter(([facetId]) => !RAIL_FACET_IDS.has(facetId)),
-            ),
-          )
-        }
+        onClear={clearAll}
         onPrimary={() => {
           onApply(draft);
           onClose();

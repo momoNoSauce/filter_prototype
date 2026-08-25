@@ -3,7 +3,9 @@ import { getCatalog } from "@/lib/catalog/products";
 import { CATEGORIES } from "@/lib/catalog/seed";
 import {
   applyFilters,
+  clearSelections,
   countMatching,
+  countSelections,
   discriminatingOptions,
   facetOptionsWithCounts,
   sameSelections,
@@ -13,7 +15,13 @@ import {
 } from "./engine";
 import { buildQuery, parseSelections, parseSort } from "./urlState";
 import { contextChips } from "./contextChips";
-import { FACET_BY_ID, getRail, getRailFacetIds } from "./facets";
+import {
+  FACET_BY_ID,
+  FILTER_VERTICALS,
+  getRail,
+  getRailFacetIds,
+  settledVertical,
+} from "./facets";
 import { defaultVariant } from "@/lib/catalog/types";
 import { activeVariant, activeVariantIndex, sizeOptionId } from "./activeVariant";
 import { PV_FACET_IDS, dropOrphanedSelections } from "./facets";
@@ -392,11 +400,46 @@ describe("the rail, now identical in both variants", () => {
       seller: ["grasim"],
       colour: ["navy"],
     };
-    const owned = getRailFacetIds();
-    const cleared = Object.fromEntries(
-      Object.entries(draft).filter(([id]) => !owned.has(id)),
+    expect(clearSelections(draft, getRailFacetIds())).toEqual({});
+  });
+
+  it("Clear Filters leaves a facet the screen doesn't display standing", () => {
+    // The reason it is a filter over the rail rather than a blanket reset.
+    // Nothing is off the rail today, so the guard is exercised with a facet id
+    // that isn't one — a stand-in for whatever the rails diverging would put
+    // there. The button clears what the buyer can see it clear, and no more.
+    const cleared = clearSelections(
+      { seller: ["grasim"], notOnTheRail: ["x"] },
+      getRailFacetIds(),
     );
-    expect(cleared).toEqual({});
+    expect(cleared).toEqual({ notOnTheRail: ["x"] });
+  });
+
+  it("Clear Filters commits an empty draft, so the listing is unfiltered", () => {
+    // The screen's own handler, minus React: clear what the rail owns, then
+    // hand *that* to `onApply` rather than back to the draft. Clearing used to
+    // stop at the draft, which left the listing untouched behind a screen the
+    // buyer still had to dismiss through "Show N results".
+    //
+    // The draft settles a vertical, so this also pins the case where the rail
+    // is at its widest: Size and the attribute block are on it, and clear with
+    // everything else, because RAIL_FACET_IDS is read from the very draft
+    // about to be cleared rather than from a bare rail.
+    const draft = {
+      category: ["girls-t-shirts"],
+      size: ["6-7y"],
+      fit: ["regular-fit"],
+      colour: ["navy"],
+    };
+    const settled = settledVertical(catalog, draft, FILTER_VERTICALS);
+    const applied = clearSelections(
+      draft,
+      getRailFacetIds(draft.category, FILTER_VERTICALS, settled),
+    );
+
+    expect(settled).toBe("girls-t-shirts");
+    expect(countSelections(applied)).toBe(0);
+    expect(countMatching(catalog, applied)).toBe(catalog.length);
   });
 
   it("counts category in the Filters badge, since nothing else reports it", () => {

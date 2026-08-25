@@ -223,6 +223,24 @@ export function toggleSelection(
 }
 
 /**
+ * Everything a screen is allowed to clear, removed — `owned` being the facets
+ * that screen actually displays (`getRailFacetIds()`).
+ *
+ * Expressed as a filter rather than a blanket reset so a facet with no control
+ * on the screen doing the clearing can never be wiped by a button whose effect
+ * the user can't see. The set excludes nothing today, since Category rejoined
+ * A's rail, but the rule still holds if the rails ever diverge again.
+ */
+export function clearSelections(
+  selections: Selections,
+  owned: Set<string>,
+): Selections {
+  return Object.fromEntries(
+    Object.entries(selections).filter(([facetId]) => !owned.has(facetId)),
+  );
+}
+
+/**
  * Same options, ignoring order — order is only ever the sequence they were
  * tapped in, never anything the user chose.
  */
