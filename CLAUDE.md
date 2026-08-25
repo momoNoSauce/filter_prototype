@@ -36,6 +36,39 @@ Two properties to preserve if you touch it:
 The file is `proxy.ts`, not `middleware.ts` — the middleware convention is
 deprecated in Next 16 and renamed. Same behaviour, different file and export.
 
+## The commit email is load-bearing for deploys
+
+`vercel --prod` reads the **HEAD commit's author email** and refuses to build
+when it can't match it to a GitHub account:
+
+> The deployment was blocked because the commit email … could not be matched to
+> a GitHub account.
+
+It cost about an hour on 2026-08-25. The repo had just moved from
+`cheeseKracker` to `momoNoSauce`, and `user.email` was set to that account's
+noreply address (`320892459+momoNoSauce@users.noreply.github.com`) so GitHub
+would credit the right owner. GitHub does — the API confirms `momoNoSauce` —
+but **Vercel could not resolve it**, and every deploy after that commit was
+blocked while every one before finished in 24s.
+
+**The failure is silent and looks like slowness, which is the trap.** The CLI
+hangs with no output. `vercel ls` reports `UNKNOWN` with no duration and
+`Builds: . [0ms]`. `vercel inspect --logs` prints the same `UNKNOWN` and no log.
+The deployment URL even answers 302 like a healthy one, because that is the
+protection layer replying before the app. Nothing anywhere says "blocked" — that
+text is only in the **dashboard**. Vercel's status page said all systems
+operational, which it was.
+
+So: **when a deploy hangs with no output, check the dashboard before theorising**
+— and check `git config user.email` first if the identity has changed recently.
+
+Reverted to the machine's global `m23ldx002@iitj.ac.in`, which is verified on
+`cheeseKracker` and is what Vercel matches. **The cost is that commits credit
+`cheeseKracker`, not `momoNoSauce`**, which is the thing the noreply address was
+set to fix. The proper fix is an email verified on the `momoNoSauce` GitHub
+account — that satisfies both — and it needs the account owner to supply one.
+A config change alone can't get both today.
+
 ## Two control variants of the same PLP
 
 Both render the identical card, catalog, engine and sheets. **Only the controls differ**, so a preference between them is about control placement and nothing else. Don't let them drift apart in any other respect.
