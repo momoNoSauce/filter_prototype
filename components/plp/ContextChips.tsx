@@ -102,7 +102,13 @@ export function ContextChips({
 /**
  * Figma 674:4904 — the product-vertical chip, both states.
  *
- * Unselected: white, 0.5px #4d4d4d border, label Roboto Medium at `black/90`
+ * Unselected: white, a 1px #4d4d4d border, label Roboto Medium at `black/90`
+ * — the frame says **0.5px**, and that is a departure (2026-08-25). Sort,
+ * Filter, Price and the offer chips all carry 1px of the same colour, so at
+ * half the width this one read visibly lighter than its neighbours. The frame
+ * drew this chip on its own and never in this row. Same argument as *One radius
+ * per row*: one border weight across a strip, or the odd one out reads as a
+ * mistake rather than a distinction.
  * and 74% opacity — the same label treatment `TopChipBar`'s chips use.
  * Selected: no border, filled, label in primary, and the exported `close_small`
  * glyph beside it.
@@ -154,7 +160,7 @@ function VerticalChip({
       role="checkbox"
       aria-checked={selected}
       className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center justify-center gap-[6px] overflow-hidden rounded-[8px] pr-[8px] ${
-        selected ? "bg-primary-subtle" : "border-[0.5px] border-[#4d4d4d] bg-white"
+        selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"
       }`}
     >
       <span className="size-[44px] shrink-0 overflow-hidden bg-[#d9d9d9]">
@@ -167,11 +173,20 @@ function VerticalChip({
       {/* Two lines deep, as the frame sets it. The box tracks the type size,
           which is the rule the frame's own 68px box followed at 11px: it has to
           be wide enough that the longest vertical name breaks rather than
-          clamping. 68 at 11px became 76 at 12px, and **13px wants 82**
-          (2026-08-20) — `Men's Casual T-Shirts` is the one that decides it.
-          Two lines at 13px is ~31px, still inside `CHIP_H`. */}
+          clamping. 68 at 11px, 76 at 12, 82 at 13, and **15px wants 94**
+          (2026-08-25) — `Men's Casual T-Shirts` is the one that decides it,
+          every time. Measured rather than scaled: rendered at Roboto Medium it
+          needs 91px, and the ~3px of slack every earlier figure carried is kept.
+
+          15px is the size the rest of the strip already uses — Sort, Filter,
+          Price and the offers — so this label had been the smallest text in its
+          own row by 2px, which is what prompted the change. Two lines at 15px
+          is 34px, still inside `CHIP_H`, so the chip does not grow: only the
+          label column widens, and the thumbnail stays 44px square because it is
+          the chip's height and that is shared with every other chip in the
+          row. */}
       <span
-        className={`line-clamp-2 max-w-[82px] text-left text-[13px] leading-[normal] font-medium ${
+        className={`line-clamp-2 max-w-[94px] text-left text-[15px] leading-[normal] font-medium ${
           selected ? "text-primary" : "text-black/90 opacity-74"
         }`}
       >
