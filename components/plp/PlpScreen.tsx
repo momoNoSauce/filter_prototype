@@ -77,6 +77,16 @@ const CLEARED = "All filters cleared";
 const FOLDS_BEFORE_HIDE = 1.5;
 
 /**
+ * The gap between the floating pill and the mic above it.
+ *
+ * Not chosen — **recovered**. The mic's measured resting place is 78px up and
+ * the pill occupies 12–64, so the clearance the screengrab shows is 14. Writing
+ * it down is what lets the mic follow the pill when the basket bar pushes it up,
+ * instead of a fixed 78 that lands inside it.
+ */
+const MIC_GAP = 14;
+
+/**
  * Material 3's **level 2** elevation, its own value for a top app bar with
  * content scrolled under it: a tight key shadow for the edge and a wider ambient
  * one for the lift. Two layers rather than one blurred grey, which is what makes
@@ -522,8 +532,17 @@ export function PlpScreen({
 
       {/* Anchored to the frame rather than the list, so it stays put as the
           listing scrolls under it — which is what the screengrabs show, and the
-          reason it can't live inside the scroller. */}
-      <MicFab />
+          reason it can't live inside the scroller.
+
+          **It sits above the pill, not at a fixed 78.** The measured 78 *is*
+          `PILL_GAP + PILL_H + MIC_GAP`, which nobody noticed while the pill had
+          one resting place; once it rides the basket bar the two occupy the
+          same band and overlap by 7px. Reading the pill's own offset keeps 78
+          wherever it was 78 and moves the mic only when the pill moves. The
+          chip variants have no pill, so they keep the measured value. */}
+      <MicFab
+        bottom={variant === "bottom-bar" ? pillBottom + PILL_H + MIC_GAP : undefined}
+      />
 
       {overlay === "sort" && (
         <SortSheet

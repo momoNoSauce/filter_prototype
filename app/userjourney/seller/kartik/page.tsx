@@ -21,13 +21,29 @@ export default function Page() {
       // block below, which is the app's own inconsistency, not ours.
       title={KARTIK.name.toUpperCase()}
       products={getKartikCatalog()}
-      // **Top chips, not the bottom bar** (2026-08-20). The basket bar owns the
-      // foot of this screen in the live app, and since 2026-08-21 in this
-      // prototype too, so a pinned Sort/Filters bar would be a second bar
-      // competing for the same edge. That is what ruled the bottom-bar placement out generally;
-      // the journey is where it was concrete, since it is the one screen here
-      // that has a basket bar at all.
-      variant="top-chips"
+      /*
+       * **The floating pill, on UXR** (2026-08-25). This screen has been on
+       * top chips since 2026-08-20, and the reason has expired twice over.
+       *
+       * It went there because the basket bar owns the foot of this listing and
+       * a *pinned, full-width* Sort/Filters bar was a second bar competing for
+       * the same edge — true of the bar Figma `638:2836` draws, and the journey
+       * was where that was concrete, being the one screen here with a basket
+       * bar at all. Figma `697:2658` answered it on 2026-08-21: a floating
+       * 240px pill that rides 12px above the basket bar rather than taking a
+       * band off the frame, which is what un-parked A and C. `pillBottom` in
+       * `PlpScreen` already reads `CART_BAR_H`, so nothing competes here either.
+       *
+       * That left the journey on top chips for a narrower reason — its
+       * screengrab shows top chips — and **research now says the bottom
+       * placement tests better**, which outranks a still frame of one screen.
+       * So the demonstration flow shows the placement the evidence prefers.
+       *
+       * This is a departure from the screengrab, and the first one on this
+       * route that is about *behaviour* rather than pixels: the card, the
+       * chrome and every measured value here still follow it.
+       */
+      variant="bottom-bar"
       homeHref="/userjourney"
       productBasePath="/userjourney"
       // No Share on this bar in the screengrab, and dropping it is also what

@@ -990,6 +990,57 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-08-25 — the journey moves onto the floating pill, on UXR
+
+Research says the bottom placement tests better, so `/userjourney/seller/kartik`
+takes it. Sort and Filters leave the chip strip for the 240px pill; the strip
+keeps the contextual chips, as it does in A and C.
+
+**Both reasons it was on top chips had expired.** It moved there on 2026-08-20
+because the basket bar owns the foot of this listing and a *pinned, full-width*
+Sort/Filters bar was a second bar fighting for the same edge — true of the bar
+`638:2836` draws, and the journey is where that was concrete, being the one
+screen here with a basket bar at all. Figma `697:2658` answered it on 08-21 with
+a pill that floats 12px *above* the basket bar instead of taking a band off the
+frame, which is what un-parked A and C — and `pillBottom` in `PlpScreen` already
+reads `CART_BAR_H`, so nothing had to be built. That left the narrower reason,
+that its screengrab shows top chips, and research outranks a still frame of one
+screen. **It is the first departure on this route about behaviour rather than
+pixels**; the card, the chrome and every measured value still follow the grabs.
+
+#### It surfaced a collision that was already there
+
+With a basket line the pill rides up to 76–128 from the frame's foot, and the
+floating mic is fixed at **78–125**. They overlap by 7px of x across the pill's
+whole height, and the mic is `pointer-events-none` scenery sitting on a control.
+Caught by screenshotting the result rather than by the numbers — nothing failed.
+
+**Latent in A and C, not new here.** `CartProvider` lives in the root layout, so
+any variant can grow a basket bar; the journey is simply the flow where someone
+actually adds to one.
+
+**The fix was already written down, in the wrong form.** The mic's measured 78 *is*
+`PILL_GAP` 12 + `PILL_H` 52 + 14 — the clearance the screengrab shows, recorded
+as a single number instead of as a relationship. `MicFab` now takes `bottom`,
+`PlpScreen` passes `pillBottom + PILL_H + MIC_GAP`, and it transitions on the
+same 200ms the pill and the bar use so all three move as one thing. It is 78
+wherever it was 78; the home screens have no pill and keep the default.
+
+**Verified** at 360px:
+
+| | mic | pill | overlap |
+|---|---|---|---|
+| A `/results`, no basket | 675–722 | 737–787 | none |
+| journey, no basket | 675–722 | 737–787 | none |
+| journey, with a basket | 611–658 | 673–723 | none |
+
+The resting place is unchanged wherever there is no basket bar, which is what
+keeps the measured value honest. Also checked the journey's own cut still runs
+from the pill: Filters → Gender → Women gives `Show 191 results`, Size joins the
+rail, and applying writes `?gender=women`.
+
+114 tests green, lint, typecheck and production build clean.
+
 ### 2026-08-25 — A and B are reached by searching, not by a seller card
 
 The journey was Home → tap *Baheti Garments* → PLP. Tapping one storefront never
