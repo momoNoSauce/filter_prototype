@@ -922,7 +922,7 @@ question answered itself and the A/B is over.
 - The three-casing seller name, the two `Set of:` spellings, and the inferred
   title-casing rule all want a designer's confirmation.
 
-### 2026-08-25 — the Filters screen rises and leaves, instead of blinking
+### 2026-08-25 — the Filters screen fades in, instead of blinking or travelling
 
 It was the last surface in the app that appeared and vanished between frames.
 Sort and Price have animated since the start, the free-delivery dialog scales in
@@ -931,26 +931,40 @@ arrived with no account of where it came from and left the same way. In A and C
 the control that opens it is the floating pill at the foot of the screen, so
 there was an obvious answer going spare.
 
-**It rises from the bottom on `animate-sheet-in` and leaves on
-`animate-sheet-out` — the sheets' own classes, not a second pair under another
-name.** The travel is `translateY(100%)` either way, and this panel is pinned to
-`inset-0`, so 100% *is* the height of the frame: exactly the distance wanted,
-with no variant keyframe to write. One beat for arriving and one for leaving,
-tuned in one place, and the existing `prefers-reduced-motion` rule covers this
-screen for free where a second pair would have had to remember to join it.
+**It went out on the sheets' own classes first, and that was wrong.** The
+reasoning was clean: the travel is `translateY(100%)` either way, and a panel
+pinned to `inset-0` makes 100% exactly the frame's height, so `animate-sheet-in`
+/ `-out` needed no variant and the app kept one beat in one place. Measured over
+the full 800px it even behaved — enter 142→75→48→19→11→5→1, exit
+12→24→41→113→148, decelerating in and accelerating out.
 
-**The 800px travel was measured, not assumed.** 260ms over a 300px sheet is not
-obviously 260ms over a full screen, and the failure mode is a snap rather than a
-rise. Sampled every ~16ms, as the panel's own offset from the frame top:
+It still felt like too much, and the frame-by-frame numbers are exactly why that
+wasn't obvious: **the curve was right and the distance was wrong.** 260ms over a
+300px sheet reads as a sheet; the same 260ms over 800px reads as an elevator
+ride. What a full-screen surface is doing is *replacing* the screen, not sliding
+onto it, and Material moves one about **30dp** and fades it — the distance is a
+hint at where the thing came from, not a journey. This app already makes that
+trade one property over: `dialog-in` scales 8% and lets opacity do the arriving,
+rather than growing the card from nothing.
 
-| | steps, px |
-|---|---|
-| enter | 142 → 75 → 48 → 60 → 19 → 15 → 11 → 15 → 5 → 3 → 2 → 1 → 0 |
-| exit | 12 → 16 → 24 → 31 → 41 → 113 → 83 → 114 → 148 |
+**So `screen-in`/`-out`: 32px and a full fade.** 30dp rounded onto the 8px grid
+this app spaces everything else by. The durations are the **scrim's** 200/160
+rather than the sheets' 260/200, because what the animation mostly does now is
+change an alpha and the scrim is where the app already declares how long that
+takes; the easing stays the emphasized pair, since something is still moving.
+It still *rises*, so it still answers the pill at the foot of A and C — at a
+twenty-fifth of the movement.
 
-Decelerating in, accelerating out, which is the asymmetry the sheets were given
-in the first place and it survives the longer distance. So the app keeps one
-beat rather than this screen earning a longer one.
+Measured again after the change: opacity 0.58 at ~30ms, 0.83 at ~60ms, 0.95 at
+~95ms, so the window where the panel and the listing are both visible is under a
+tenth of a second. That overlap is the one cost of a fade over an opaque panel —
+M3 avoids it by fading the outgoing surface out *first* — and at this speed it
+reads as a cross-fade rather than a double exposure. Worth revisiting if the
+panel ever gets slower.
+
+Now that the classes are its own, the `prefers-reduced-motion` block had to be
+told about them explicitly, which is the one thing sharing the sheets' pair got
+for free. See the trap below.
 
 **The screen now owns its dismissal**, like `Sheet` does and for the same
 reason: `onClose` unmounts it, so it cannot be called until the exit animation
@@ -976,12 +990,15 @@ written for the sheets; sharing their classes is what put this screen inside it.
 **Verified** at 360px in Chromium, `prefers-reduced-motion` both ways:
 
 - All three exits — `Show N results`, ✕, Clear Filters — animate out and
-  actually unmount. Under `reduce` as well, which is the case that would strand.
+  actually unmount, in A and in B, under `no-preference` and under `reduce`.
+  Twelve cases; `reduce` is the one that would strand.
+- The panel computes `opacity: 1` once settled, under both motion settings —
+  the check that a fade-in has actually finished rather than parking at 0.99.
 - The ✕'s `Selection discarded` and Clear Filters' `All filters cleared` both
   land *after* the panel has gone, not behind it.
 - A double tap during the exit closes once and commits once.
-- B at 45ms into the enter: the panel is 26px down, sliding up over the listing
-  with the app bar and chip strip still visible above it.
+- Mid-flight at 55ms: the panel is a few px low and ~85% opaque, the listing
+  reading faintly through it. Calm, and plainly the Filters screen arriving.
 - 114 tests green, lint, typecheck and production build clean.
 
 **Not changed:** the screen still has no `Sheet`. It is full-bleed and has no

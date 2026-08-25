@@ -224,22 +224,25 @@ export function FilterScreen({
   return (
     <div
       /*
-       * The same pair `Sheet` uses, not a copy of them under another name: the
-       * travel is `translateY(100%)` either way, and on a panel pinned to
-       * `inset-0` that is the full height of the frame, which is exactly the
-       * distance wanted. Sharing the classes means the app has one beat for
-       * arriving and one for leaving, tuned in one place — and the
-       * reduced-motion rule that already collapses them covers this screen for
-       * free, which a second pair would have to remember to join.
+       * **A fade with a 32px rise, not the sheets' full-height travel.**
        *
-       * Rising from the bottom also answers where the panel came from in A and
-       * C, where the control that opened it is the floating pill down there. In
-       * B and D the chip is at the top and the connection is looser, but one
-       * screen with two motions depending on which control opened it is a worse
-       * answer than a slightly arbitrary one.
+       * This shipped on `animate-sheet-in`/`-out` first, on the reasoning that
+       * a panel pinned to `inset-0` makes their `translateY(100%)` exactly the
+       * frame's height. It does, and that was the problem: 800px of literal
+       * travel reads as an elevator ride where the same 260ms over a 300px
+       * sheet reads as a sheet. Alpha should carry the arrival and the distance
+       * should only hint at the direction — which is what `dialog-in` already
+       * does one property over, scaling 8% rather than growing from nothing.
+       * See `screen-in` in `globals.css` for the numbers and why they are the
+       * scrim's rather than the sheets'.
+       *
+       * It still *rises*, so it still answers the pill at the foot of A and C,
+       * for a twenty-fifth of the movement. In B and D the chip is at the top
+       * and the connection is looser, but one screen with two motions depending
+       * on which control opened it is the worse answer.
        */
       className={`absolute inset-0 z-50 flex flex-col bg-white ${
-        closing ? "animate-sheet-out" : "animate-sheet-in"
+        closing ? "animate-screen-out" : "animate-screen-in"
       }`}
       // Children animate too; only react to the panel's own animation. The
       // enter pass reaches here as well, which is what `closing` filters out.

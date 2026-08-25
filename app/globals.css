@@ -224,6 +224,55 @@ input {
     transform: scale(0.96);
   }
 }
+/* ── Full-screen panel motion (the Filters screen) ──────────────────────────
+ * **Alpha does the work; the travel only names the direction.**
+ *
+ * This began as the sheets' own `sheet-in`/`-out`, on the reasoning that the
+ * travel is translateY(100%) either way and a panel pinned to `inset-0` makes
+ * that exactly the frame's height. It is, and that was the problem: 800px of
+ * literal movement reads as an elevator ride, where a 300px sheet reads as a
+ * sheet. Material moves a full-screen surface about 30dp and fades it — the
+ * distance is a hint at where the thing came from, not a journey — which is
+ * the same trade `dialog-in` already makes one property over, scaling 8% and
+ * letting opacity carry the arrival.
+ *
+ * So: **32px**, M3's 30dp rounded onto the 8px grid this app spaces everything
+ * else by, against a full fade. It still rises, so it still answers the pill at
+ * the foot of A and C, and it no longer costs the whole height of the screen to
+ * say so.
+ *
+ * The durations are the **scrim's** 200/160 rather than the sheets' 260/200,
+ * because what this animation mostly does now is change an alpha, and the scrim
+ * is where the app already declares how long that takes. The easing stays the
+ * emphasized pair — something is still moving, however little.
+ */
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes screen-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+}
+.animate-screen-in {
+  animation: screen-in 200ms cubic-bezier(0.05, 0.7, 0.1, 1) both;
+}
+.animate-screen-out {
+  animation: screen-out 160ms cubic-bezier(0.3, 0, 0.8, 0.15) both;
+}
+
 .animate-dialog-in {
   animation: dialog-in 260ms cubic-bezier(0.05, 0.7, 0.1, 1) both;
 }
@@ -296,7 +345,9 @@ input {
   .animate-scrim-in,
   .animate-scrim-out,
   .animate-dialog-in,
-  .animate-dialog-out {
+  .animate-dialog-out,
+  .animate-screen-in,
+  .animate-screen-out {
     animation-duration: 1ms;
   }
   .animate-toast {
