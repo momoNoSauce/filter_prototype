@@ -62,27 +62,47 @@ operational, which it was.
 So: **when a deploy hangs with no output, check the dashboard before theorising**
 — and check `git config user.email` first if the identity has changed recently.
 
-**It is narrower than "a GitHub account", which cost a second round.**
-`bitihotra.karak@jumbotail.com` is verified on `momoNoSauce` — the GitHub API
-credits the commit to `momoNoSauce` — and Vercel **still blocked it**. The match
-is against the GitHub account linked to the **Vercel** account, which is
-`cheesekracker`. So no address on `momoNoSauce` can pass while that link stands.
+**There are two different blocks, and conflating them cost an hour.** Both are
+about the git author's email, and they fail for unrelated reasons:
 
-Three were tried, and only one deploys:
-
-| commit email | GitHub credits | Vercel |
+| commit email | block | cause |
 |---|---|---|
-| `320892459+momoNoSauce@users.noreply.github.com` | momoNoSauce | blocked |
-| `bitihotra.karak@jumbotail.com` | momoNoSauce | blocked |
-| **`m23ldx002@iitj.ac.in`** | cheeseKracker | **builds, 24s** |
+| `320892459+momoNoSauce@users.noreply.github.com` | *"could not be matched to a GitHub account"* | the noreply form; GitHub resolves it, Vercel doesn't |
+| `bitihotra.karak@jumbotail.com` | **`TEAM_ACCESS_REQUIRED`** | matches GitHub fine — it just isn't a member of the Vercel team |
+| `m23ldx002@iitj.ac.in` | none, builds in ~23s | it is the Vercel account's own address |
 
-**Standing on the iitj address**, so deploys work and commits credit
-`cheeseKracker`. That is a known, accepted wrong-attribution — a working deploy
-beats correct authorship — and **git config cannot fix it**. The fix is on
-Vercel: connect `momoNoSauce` to the Vercel account, or move the project to a
-Vercel account linked to it. Until then, do not change `user.email` in this repo
-without redeploying to check, because the failure appears an hour later as a
-deploy that looks slow.
+The second one's exact words, which is the fix in one line:
+
+> Git author `bitihotra.karak@jumbotail.com` must have access to the team
+> *Bitihotra Karak's projects* on Vercel to create deployments.
+
+That is a guard against outside contributors consuming build minutes, and it is
+**not** the "match a GitHub account" rule — reasoning from the first error to the
+second produced the wrong conclusion here, that no `momoNoSauce` address could
+ever deploy. It can. **Add the address to the Vercel account**
+(vercel.com/account → Email → add and verify), and then commit email, GitHub
+credit and Vercel all agree. No seat cost: an extra address on an existing
+account, not a new member.
+
+Standing on `m23ldx002@iitj.ac.in` until that is done, so deploys work and
+commits credit `cheeseKracker` — a known, accepted wrong attribution.
+
+**How to read a blocked deploy, because none of this is visible from the CLI.**
+`vercel ls` says `UNKNOWN` with no duration, `inspect` says `Builds: . [0ms]`,
+`inspect --logs` prints nothing, and the deployment URL answers 302 like a
+healthy one — that is the password gate, not the app. So a blocked deploy is
+indistinguishable from a slow one. Ask the API, which says it outright:
+
+```bash
+TOKEN=$(python3 -c "import json;print(json.load(open('$HOME/Library/Application Support/com.vercel.cli/auth.json'))['token'])")
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.vercel.com/v13/deployments/<dpl_id>?teamId=team_7RaExFdsAbYFb54kXtQVYw3h" \
+  | python3 -m json.tool | grep -iE "readyState|Reason|block"
+```
+
+`readyStateReason` carries the sentence. Reach for that before theorising about
+build queues or checking Vercel's status page — both were tried here and both
+were dead ends.
 
 ## Two control variants of the same PLP
 
