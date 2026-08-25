@@ -11,7 +11,11 @@ site on the next deploy). Redeploy with
 optional** — the project belongs to the team, so a bare `vercel --prod` fails
 with `Not authorized` even when `vercel whoami` reports you logged in, which
 reads as an expired session and isn't one.
-Source: **https://github.com/cheeseKracker/filter_prototype** (private).
+Source: **https://github.com/momoNoSauce/filter_prototype** (private).
+Transferred from `cheeseKracker` on 2026-08-25; the old path still redirects, so
+an existing clone keeps working, but new links should use the one above.
+`cheeseKracker` was kept on as a collaborator with **push but not admin**, which
+is what lets this machine go on pushing without re-authenticating `gh`.
 Local: `npm run dev` → http://localhost:3000.
 
 > **GitHub and Vercel are not connected.** `vercel --prod` uploads straight from
