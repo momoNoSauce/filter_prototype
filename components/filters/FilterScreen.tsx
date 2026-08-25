@@ -32,6 +32,14 @@ import { OptionRow, TileGrid } from "./OptionRows";
  * one and says so — and the ✕ discards, which also says so. Only the plain
  * apply is wordless, being the one nobody needs told about.
  *
+ * **It rises from the bottom and leaves the same way** (2026-08-25), which is
+ * what `Sheet` already does for Sort and Price and what this screen was alone
+ * in not doing: it used to appear and vanish between frames, so a panel that
+ * covers everything arrived with no account of where it came from. It owns its
+ * own dismissal for that reason — every exit flips `closing`, and `onClose`,
+ * which unmounts it, only fires once the exit animation has finished. See
+ * `exit`.
+ *
  * Every count in here is live: the footer total and each
  * option's own count both recompute on every tick, and options that become
  * impossible drop out of the list.
@@ -82,15 +90,41 @@ export function FilterScreen({
   /** What the screen opened with, frozen, so the ✕ can tell edits from none. */
   const opened = useRef(selections);
 
+  const [closing, setClosing] = useState(false);
+
+  /** Held for the animation's end — see `exit`. */
+  const announcement = useRef<(() => void) | null>(null);
+
   /*
-   * Unlike the bottom sheets, this screen's two exits are separate handlers
-   * rather than one animated `onClose`, so only the ✕ needs the check — "Show
-   * N results" can't reach it and needs no `applied` guard.
+   * The one way out, animated. All three exits go through it, which is what
+   * lets the panel slide away before unmounting rather than blinking off.
+   *
+   * The two callbacks are deliberately on different sides of the animation.
+   * **`commit` runs at once**: the listing is hidden behind an opaque panel for
+   * the whole 200ms, so it should already be showing the answer by the time it
+   * is uncovered — apply after, and the buyer watches the old list for a frame
+   * and then a jump. **`announce` waits**: a toast behind that panel is a toast
+   * nobody sees, and its 2,600ms is no better for losing the first 200 of them.
+   *
+   * The `closing` guard matters because the footer stays live while the panel
+   * travels — a second tap on Clear Filters, or a ✕ chased by a CTA, would
+   * otherwise queue a second commit against a screen already leaving.
    */
-  const dismiss = () => {
-    if (!sameSelections(draft, opened.current)) onDiscard();
-    onClose();
+  const exit = (opts: { commit?: () => void; announce?: () => void } = {}) => {
+    if (closing) return;
+    opts.commit?.();
+    announcement.current = opts.announce ?? null;
+    setClosing(true);
   };
+
+  /*
+   * The ✕. Only this exit can lose anything, so only this one checks — the
+   * other two commit what they hold, and neither needs an `applied` guard.
+   */
+  const dismiss = () =>
+    exit({
+      announce: sameSelections(draft, opened.current) ? undefined : onDiscard,
+    });
 
   // The block can vanish under the cursor — tick a second vertical while
   // standing on Neck Type and that row is gone. Falling back to the first row
@@ -168,11 +202,11 @@ export function FilterScreen({
    * this screen doesn't display must never be wiped by a button whose effect
    * the user can't see.
    */
-  const clearAll = () => {
-    onApply(clearSelections(draft, RAIL_FACET_IDS));
-    onCleared();
-    onClose();
-  };
+  const clearAll = () =>
+    exit({
+      commit: () => onApply(clearSelections(draft, RAIL_FACET_IDS)),
+      announce: onCleared,
+    });
 
   const toggle = (facetId: string, optionId: string) =>
     setDraft((current) => {
@@ -188,7 +222,33 @@ export function FilterScreen({
     });
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col bg-white">
+    <div
+      /*
+       * The same pair `Sheet` uses, not a copy of them under another name: the
+       * travel is `translateY(100%)` either way, and on a panel pinned to
+       * `inset-0` that is the full height of the frame, which is exactly the
+       * distance wanted. Sharing the classes means the app has one beat for
+       * arriving and one for leaving, tuned in one place — and the
+       * reduced-motion rule that already collapses them covers this screen for
+       * free, which a second pair would have to remember to join.
+       *
+       * Rising from the bottom also answers where the panel came from in A and
+       * C, where the control that opened it is the floating pill down there. In
+       * B and D the chip is at the top and the connection is looser, but one
+       * screen with two motions depending on which control opened it is a worse
+       * answer than a slightly arbitrary one.
+       */
+      className={`absolute inset-0 z-50 flex flex-col bg-white ${
+        closing ? "animate-sheet-out" : "animate-sheet-in"
+      }`}
+      // Children animate too; only react to the panel's own animation. The
+      // enter pass reaches here as well, which is what `closing` filters out.
+      onAnimationEnd={(e) => {
+        if (!closing || e.target !== e.currentTarget) return;
+        announcement.current?.();
+        onClose();
+      }}
+    >
       <div className="flex w-full shrink-0 items-center justify-between border-b border-[#dedede] bg-white px-[14px] py-[12px]">
         <div className="flex min-w-0 items-center gap-[8px]">
           {/* The same glyph the Filters control carries, so the screen is
@@ -328,10 +388,7 @@ export function FilterScreen({
         primaryLabel={`Show ${total.toLocaleString("en-IN")} results`}
         clearDisabled={ownedCount === 0}
         onClear={clearAll}
-        onPrimary={() => {
-          onApply(draft);
-          onClose();
-        }}
+        onPrimary={() => exit({ commit: () => onApply(draft) })}
       />
     </div>
   );

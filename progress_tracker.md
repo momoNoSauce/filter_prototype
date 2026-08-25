@@ -922,6 +922,73 @@ question answered itself and the A/B is over.
 - The three-casing seller name, the two `Set of:` spellings, and the inferred
   title-casing rule all want a designer's confirmation.
 
+### 2026-08-25 — the Filters screen rises and leaves, instead of blinking
+
+It was the last surface in the app that appeared and vanished between frames.
+Sort and Price have animated since the start, the free-delivery dialog scales in
+and out, the toast rises and fades — and the one panel that covers *everything*
+arrived with no account of where it came from and left the same way. In A and C
+the control that opens it is the floating pill at the foot of the screen, so
+there was an obvious answer going spare.
+
+**It rises from the bottom on `animate-sheet-in` and leaves on
+`animate-sheet-out` — the sheets' own classes, not a second pair under another
+name.** The travel is `translateY(100%)` either way, and this panel is pinned to
+`inset-0`, so 100% *is* the height of the frame: exactly the distance wanted,
+with no variant keyframe to write. One beat for arriving and one for leaving,
+tuned in one place, and the existing `prefers-reduced-motion` rule covers this
+screen for free where a second pair would have had to remember to join it.
+
+**The 800px travel was measured, not assumed.** 260ms over a 300px sheet is not
+obviously 260ms over a full screen, and the failure mode is a snap rather than a
+rise. Sampled every ~16ms, as the panel's own offset from the frame top:
+
+| | steps, px |
+|---|---|
+| enter | 142 → 75 → 48 → 60 → 19 → 15 → 11 → 15 → 5 → 3 → 2 → 1 → 0 |
+| exit | 12 → 16 → 24 → 31 → 41 → 113 → 83 → 114 → 148 |
+
+Decelerating in, accelerating out, which is the asymmetry the sheets were given
+in the first place and it survives the longer distance. So the app keeps one
+beat rather than this screen earning a longer one.
+
+**The screen now owns its dismissal**, like `Sheet` does and for the same
+reason: `onClose` unmounts it, so it cannot be called until the exit animation
+has finished. All three exits go through one `exit(...)`, and its two callbacks
+sit deliberately on opposite sides of the animation:
+
+- **`commit` runs at once.** The listing is hidden behind an opaque panel for
+  the whole 200ms and should already be showing the answer when it is
+  uncovered. Apply after and the buyer gets a frame of the old list, then a jump.
+- **`announce` waits.** A toast behind that panel is a toast nobody sees, and
+  its 2,600ms is no better for losing the first 200 of them.
+
+A `closing` guard sits at the top of `exit`, because the footer stays live while
+the panel travels — a second tap on Clear Filters, or a ✕ chased by the CTA,
+would otherwise queue a second commit against a screen already leaving.
+
+**The reduced-motion trap, which is why every exit was tested under it:** the
+unmount hangs off `onAnimationEnd`, so the media query has to collapse the
+animation to 1ms rather than remove it. With no animation there is no end event,
+and the panel would strand on screen with no way out. That rule was already
+written for the sheets; sharing their classes is what put this screen inside it.
+
+**Verified** at 360px in Chromium, `prefers-reduced-motion` both ways:
+
+- All three exits — `Show N results`, ✕, Clear Filters — animate out and
+  actually unmount. Under `reduce` as well, which is the case that would strand.
+- The ✕'s `Selection discarded` and Clear Filters' `All filters cleared` both
+  land *after* the panel has gone, not behind it.
+- A double tap during the exit closes once and commits once.
+- B at 45ms into the enter: the panel is 26px down, sliding up over the listing
+  with the app bar and chip strip still visible above it.
+- 114 tests green, lint, typecheck and production build clean.
+
+**Not changed:** the screen still has no `Sheet`. It is full-bleed and has no
+scrim to own, so wrapping it would mean a shell whose scrim, radius, header and
+render-prop children it all opts out of; what it needed was the two classes and
+an `animationend`, which is what it took.
+
 ### 2026-08-25 — Clear Filters clears, says so, and goes back to the listing
 
 Reported as the button not working, which is close to right: it worked on the
