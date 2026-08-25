@@ -514,6 +514,53 @@ Sizes and the vertical-specific attributes each draw from **their own PRNG strea
 - **Brand tiles** — still grey `#d9d9d9` placeholders. Real logos couldn't be sourced (Clearbit's API is retired; Wikipedia/Commons returned unrelated files for 7 of 8 brands). The right input is brand-supplied assets, which also avoids scraping trademarked marks.
 - **Product images** — only two shirt renders exist in the Figma file, assigned by whether the colour is dark or light.
 
+## Demoing on a phone — the first tap goes fullscreen
+
+`components/ui/FullscreenOnTap.tsx`, mounted in the root layout (2026-08-25).
+Renders nothing and shows nothing: on a phone the first tap anywhere requests
+fullscreen, so the address bar and the status bar both go and the prototype
+reads as an app rather than as a page in a browser.
+
+**It has to be a tap, and that is not a limitation of this code.** The
+Fullscreen API requires a user gesture; browsers removed the ability to hide the
+address bar on load deliberately, a page that can hide the URL being a page that
+can pretend to be another one. The old `window.scrollTo(0, 1)` trick is both
+long dead and inapplicable here, the document never scrolling — `.device-screen`
+is `100dvh` with its own scrollers inside.
+
+Four things it does on purpose:
+
+- **No UI.** The alternative was a floating expand button, which is chrome in no
+  Figma frame sitting on screens stakeholders are meant to be judging. The tap
+  they were going to make anyway does it, and still does what it was for: the
+  listener never calls `preventDefault`, so the card still opens and the chip
+  still filters.
+- **`pointerdown`, not `click`** — the earliest event that still carries user
+  activation, so the bar is leaving as the finger lands rather than after it
+  lifts. Passive; nothing here cancels.
+- **Phones only**, by `(pointer: coarse)`. On a desktop the app already sits in
+  `DeviceFrame`'s mockup with room to spare, so there is no chrome worth taking,
+  and a browser that went fullscreen on the first click of every dev session
+  would be its own bug report.
+- **The listener stays.** Exiting fullscreen mid-demo is usually accidental — a
+  back gesture, a swipe from the edge — so the next tap puts it back. A one-shot
+  listener would leave the bar up for the rest of the session. While fullscreen
+  it does nothing.
+
+**iPhone Safari is not covered**, and can't be: it implements
+`requestFullscreen` on video elements only, never on a document element. The
+feature test is what keeps it quiet there rather than throwing. The answer on
+iOS is *Add to Home Screen*, which needs a web app manifest this repo doesn't
+have — say the word and it's twenty minutes, and it would also remove the tap on
+Android.
+
+**What was verified, and what wasn't.** A stubbed `requestFullscreen` confirms
+the call is made once on the first tap with `navigationUI: "hide"`, never before
+one, never while already fullscreen, again after exiting, and never at all on a
+fine pointer — and that the tap still navigates in both cases. Whether Android
+Chrome and Firefox then actually hide the bar is the browser's half, and there
+is no Android browser in this environment to watch it happen.
+
 ## Working style
 
 - Verify visually before claiming something works. Playwright is not a dependency — install it ad hoc (`npm install --no-save playwright`), screenshot at 360px with `deviceScaleFactor: 2–3`, then uninstall. Hide the dev overlay first: it intercepts clicks.

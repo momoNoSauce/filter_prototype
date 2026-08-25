@@ -922,6 +922,47 @@ question answered itself and the A/B is over.
 - The three-casing seller name, the two `Set of:` spellings, and the inferred
   title-casing rule all want a designer's confirmation.
 
+### 2026-08-25 — the first tap goes fullscreen, for demoing on a phone
+
+The address bar was showing in Chrome and Firefox on Android and making the
+prototype read as a web page. **A page cannot hide it on load** — browsers took
+that away on purpose, since a site that can hide the URL is a site that can
+impersonate another one — and `window.scrollTo(0, 1)` is both long dead and
+inapplicable here, the document never scrolling.
+
+So `components/ui/FullscreenOnTap.tsx` in the root layout: on a phone, the first
+`pointerdown` anywhere requests fullscreen. It renders nothing and shows
+nothing, which is the point — a floating expand button was the alternative, and
+that is chrome in no Figma frame sitting on screens stakeholders are meant to be
+judging. The tap they were going to make anyway does it, and still does whatever
+it was for; the listener never calls `preventDefault`.
+
+`(pointer: coarse)` keeps it off desktops, where the app already sits in the
+phone mockup with room to spare and going fullscreen on the first click of every
+dev session would be its own bug report. The listener stays rather than firing
+once: exiting fullscreen mid-demo is usually accidental, so the next tap puts it
+back.
+
+**iPhone Safari is not covered and cannot be** — it implements
+`requestFullscreen` on video only, never on a document element. The feature test
+keeps it quiet there instead of throwing. The iOS answer is Add to Home Screen,
+which wants a web app manifest this repo doesn't have; it would also remove the
+tap on Android. Not built, and open.
+
+**Verified** with a stubbed `requestFullscreen`, phone and desktop contexts:
+
+| | phone (coarse) | desktop (fine) |
+|---|---|---|
+| before any tap | 0 calls | 0 calls |
+| first tap | 1, `{navigationUI: "hide"}` | 0 |
+| the tap still navigated | yes | yes |
+| further taps while fullscreen | still 1 | 0 |
+| after exiting fullscreen | asks again | 0 |
+
+What that does **not** cover is the browser's half — whether Android Chrome and
+Firefox actually hide the bar in response. There is no Android browser in this
+environment to watch it happen, so that one is for the next real demo.
+
 ### 2026-08-25 — the Sort sheet names its default
 
 `Popularity` now reads **`Popularity (Default)`**. It is where every listing

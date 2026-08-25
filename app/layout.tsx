@@ -3,6 +3,7 @@ import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import { DeviceFrame } from "@/components/DeviceFrame";
 import { CartProvider } from "@/components/cart/CartProvider";
+import { FullscreenOnTap } from "@/components/ui/FullscreenOnTap";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -40,6 +41,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         {/* The basket lives above the routes, so it survives every
             client-side move between them — see `CartProvider`. */}
+        {/* Renders nothing. On a phone, the first tap takes the app
+            fullscreen so the address bar goes — see `FullscreenOnTap`. */}
+        <FullscreenOnTap />
         <CartProvider>
           <DeviceFrame>{children}</DeviceFrame>
         </CartProvider>
