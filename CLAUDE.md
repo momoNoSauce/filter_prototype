@@ -62,17 +62,27 @@ operational, which it was.
 So: **when a deploy hangs with no output, check the dashboard before theorising**
 — and check `git config user.email` first if the identity has changed recently.
 
-**Settled the same day** with `bitihotra.karak@jumbotail.com`, set globally
-alongside `user.name = momoNoSauce`. A real verified address satisfies both
-sides where neither of the other two could: the noreply form credited the right
-owner but Vercel couldn't resolve it, and `m23ldx002@iitj.ac.in` deployed fine
-but credited `cheeseKracker`, the account that no longer owns this.
+**It is narrower than "a GitHub account", which cost a second round.**
+`bitihotra.karak@jumbotail.com` is verified on `momoNoSauce` — the GitHub API
+credits the commit to `momoNoSauce` — and Vercel **still blocked it**. The match
+is against the GitHub account linked to the **Vercel** account, which is
+`cheesekracker`. So no address on `momoNoSauce` can pass while that link stands.
 
-**The rule, if the identity ever changes again:** the commit email must be a real
-address verified on the GitHub account that should get the credit. A
-`ID+user@users.noreply.github.com` form is not enough — GitHub resolves it and
-Vercel does not — and the failure surfaces an hour later as a deploy that looks
-slow rather than as anything about email.
+Three were tried, and only one deploys:
+
+| commit email | GitHub credits | Vercel |
+|---|---|---|
+| `320892459+momoNoSauce@users.noreply.github.com` | momoNoSauce | blocked |
+| `bitihotra.karak@jumbotail.com` | momoNoSauce | blocked |
+| **`m23ldx002@iitj.ac.in`** | cheeseKracker | **builds, 24s** |
+
+**Standing on the iitj address**, so deploys work and commits credit
+`cheeseKracker`. That is a known, accepted wrong-attribution — a working deploy
+beats correct authorship — and **git config cannot fix it**. The fix is on
+Vercel: connect `momoNoSauce` to the Vercel account, or move the project to a
+Vercel account linked to it. Until then, do not change `user.email` in this repo
+without redeploying to check, because the failure appears an hour later as a
+deploy that looks slow.
 
 ## Two control variants of the same PLP
 
