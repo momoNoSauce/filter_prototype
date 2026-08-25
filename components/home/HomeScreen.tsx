@@ -46,7 +46,14 @@ export function HomeScreen({ basePath = "" }: { basePath?: "" | "/b" }) {
         </div>
 
         <div className="px-[16px] pb-[12px]">
-          <div className="flex h-[40px] items-center gap-[10px] rounded-[100px] bg-[#3d78ff] px-[14px]">
+          {/* **The way into the listing since 2026-08-25.** It was decorative
+              and the journey went through a seller card instead; tapping a
+              storefront was never how a buyer reaches a mixed catalog, and
+              typing `shirt` is. Opens the search screen, which is built from
+              the live app's own screengrabs. */}
+          <Link
+            href={`${basePath}/search`}
+            className="flex h-[40px] items-center gap-[10px] rounded-[100px] bg-[#3d78ff] px-[14px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img alt="" className="size-[16px] shrink-0" src="/figma/home/search.svg" />
             <span className="flex-1 text-[15px] text-white/90">
@@ -58,7 +65,7 @@ export function HomeScreen({ basePath = "" }: { basePath?: "" | "/b" }) {
               className="size-[16px] shrink-0 object-contain"
               src="/figma/icons/microphone.png"
             />
-          </div>
+          </Link>
         </div>
 
         {/* Hero banner */}

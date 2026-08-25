@@ -104,6 +104,76 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 build queues or checking Vercel's status page — both were tried here and both
 were dead ends.
 
+## A and B are reached by searching, not by a seller card
+
+Changed 2026-08-25. The journey was Home → tap *Baheti Garments* → PLP. It is
+now **Home → tap the search bar → type `shirt` → tap a suggestion → PLP**,
+which is how a buyer actually reaches a mixed catalog: tapping one storefront
+never explained why the listing spans seven categories and eight sellers.
+
+```
+/search            /b/search            the search screen
+/results?q=shirt   /b/results?q=shirt   the listing
+```
+
+**The swap moved nothing.** `shirt` matches **all 1,070** products, every
+category being a Shirt or a T-Shirt, so the scope is byte-identical to what
+`/seller/baheti` gave — every facet count, every test, the whole demo script
+still holds. That is what made this a framing change rather than a rebuild, and
+it is worth checking again before anyone changes the default query.
+
+**Source is two screengrabs at 1080×2400** — exactly 3× the design, like the
+journey's — so everything was measured off raw pixels:
+
+| | measured | built |
+|---|---|---|
+| blue bar | 46.7 | **47**, `#004FFA` |
+| search field | 221 × 31.3 at x 58.3 | **flex-1** × 31, x 58 |
+| rows | 149 + 3 divider | **50** + 1px `#ebebeb` |
+| leading glyph | 19.3 at x 13.7 | **20** at 14 |
+| label | starts 54.7, `#333333` | 21 after the glyph |
+| trailing ↖ | 11.7, `#b3b3b3` | **12**, 14 from the right |
+
+**The field flexes rather than sitting at its measured 221.** Below 480px
+`DeviceFrame` renders edge to edge, so a fixed width strands 30–70px of blue on
+a 390 or 430px phone — the trap the Filters panel fell into on 2026-08-21. The
+margins are the measured ones, so it is exactly 221 at 360.
+
+**Two states, one row component.** Empty: history rows under `Type to search`.
+Typed: the history dial becomes a magnifier, a ✕ appears in the field, and the
+rows become autocomplete. `shirt` reproduces the screengrab's eight verbatim and
+in order, including the green `Category Store` under `shirt fabric` — but they
+come from a substring filter over a vocabulary, not a lookup, so any other query
+still gets a plausible answer instead of an empty panel.
+
+**Three deliberate departures:**
+
+- **Labels at 15px where the grab measures 13** (reconciled across three rows
+  via Roboto's ascender/descender metrics, so the 13 is solid). The 2026-08-20
+  pass raised this app's small end on purpose, and the vertical chips were
+  raised to 15 hours earlier on exactly the "too small on a phone" complaint.
+  A new screen at 13 invites it straight back.
+- **`Category Store` is `#2f7a78`, measured `#6a9b9b`** — 2.9:1 on white against
+  4.9:1. Same call the sheet's ✕ green got, and for the same reason.
+- **The glyphs are drawn here, not exported.** `back.svg`, `search.svg` and the
+  mic and camera PNGs all exist and are all the wrong colour, weight or shape
+  for this bar; the history dial and the fill-in arrow have no export anywhere,
+  being Android's rather than SOLV's, and no Figma frame draws this screen.
+  Replace them the moment a frame supplies any. The ↖ points **up and left**, at
+  the field it fills — up and right would read as "go there", the opposite
+  instruction.
+
+**Both icons in the bar are inert**, like the floating mic: there is no camera
+search and no voice search behind them.
+
+**The results app bar carries the query as its title** and is otherwise the
+standard `AppBar`. No screengrab of the results screen was supplied — if the
+live app keeps the search field up there instead, that is the one thing to
+change.
+
+**`/seller/[sellerId]` still exists and still works.** Removing it is the stated
+next step and was deliberately not done here.
+
 ## Two control variants of the same PLP
 
 Both render the identical card, catalog, engine and sheets. **Only the controls differ**, so a preference between them is about control placement and nothing else. Don't let them drift apart in any other respect.

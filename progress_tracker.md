@@ -990,6 +990,77 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-08-25 — A and B are reached by searching, not by a seller card
+
+The journey was Home → tap *Baheti Garments* → PLP. Tapping one storefront never
+explained why the listing that follows spans seven categories, eight sellers and
+ten brands — the app bar said Baheti while the Seller facet listed other
+companies, which is a question the demo had to talk its way past every time. A
+buyer reaching a mixed catalog searches for one. So: **Home → search bar → type
+`shirt` → tap a suggestion → the listing.**
+
+```
+/search            /b/search            the search screen
+/results?q=shirt   /b/results?q=shirt   the listing
+```
+
+**Nothing behind it moved, and that is why this was worth doing.** `shirt`
+matches **all 1,070** products — every category is a Shirt or a T-Shirt — so the
+scope is identical to what the Baheti storefront gave. `Show 1,070 results` in
+the Filters footer, every facet count, every test, the whole demo script: all
+unchanged. A framing change, not a rebuild.
+
+**Built from two screengrabs at 1080×2400**, exactly 3× the design, so it was
+measured off raw pixels rather than eyeballed — bar 46.7 → 47, field 221 × 31.3
+at x 58.3, rows 149 + a 3px divider → 50 + 1px `#ebebeb`, leading glyph 19.3 at
+13.7 → 20 at 14, label at 54.7 in `#333333`, trailing arrow 11.7 in `#b3b3b3`.
+The render measures 47 / 58 / 221 / 31 / 50 back.
+
+**The field flexes**, against the measured 221. Below 480px `DeviceFrame` renders
+edge to edge, so a fixed width would strand 30–70px of blue on a 390 or 430px
+phone — the trap the Filters panel fell into on 2026-08-21. The margins are the
+measured ones, so it is exactly 221 at 360 and takes the surplus above it.
+
+**Three departures, each with a reason:**
+
+- **Labels at 15px where the grab measures 13.** The 13 is solid — reconciled
+  across three rows through Roboto's ascender and descender metrics, since
+  "tshirt" has no descender and "gym vest" has no full ascender, and both give
+  13.1. But the 2026-08-20 pass raised this app's small end deliberately, and
+  the vertical chips went to 15 hours earlier on exactly the "looks too small in
+  phone" complaint. Shipping a new screen at 13 invites it straight back.
+- **`Category Store` darkened** from the measured `#6a9b9b` to `#2f7a78`: 2.9:1
+  on white against 4.9:1, the same call the sheet's ✕ green got.
+- **The glyphs are drawn, not exported.** `back.svg`, `search.svg` and the mic
+  and camera PNGs all exist and are each the wrong colour, weight or shape for
+  this bar, and the history dial and fill-in arrow have no export anywhere —
+  they are Android's, not SOLV's, and no Figma frame draws this screen.
+
+**Verified** at 360px, A and B:
+
+- Home's search bar opens `/search` (and `/b/search` from `/b`) — it had been
+  decorative since the start.
+- Geometry measures back exactly: bar 47, field x 58 w 221 h 31, rows 50, eight
+  of them.
+- Typing `shirt` reproduces the screengrab's eight suggestions verbatim and in
+  order, `Category Store` included. They come from a substring filter over a
+  vocabulary rather than a lookup, so another query still answers.
+- A suggestion goes to `/results?q=shirt`; from `/b` it goes to
+  `/b/results?q=shirt` and lands on top chips with no pill. Each variant stays a
+  closed loop.
+- The results app bar reads `shirt`, and Filters reports `Show 1,070 results`.
+- 114 tests green, lint, typecheck and production build clean. `/search` is
+  static, `/results` dynamic — a query has no finite set of params to enumerate.
+
+**Open:**
+
+- **`/seller/[sellerId]` still exists and still works.** Removing it is the
+  stated next step and was deliberately left out of this change.
+- **No screengrab of the results screen.** Its app bar carries the query as a
+  plain title through the standard `AppBar`. If the live app keeps the search
+  field up there instead, that is the one thing to change.
+- The camera and mic in the bar are **inert**, like the floating mic.
+
 ### 2026-08-25 — the Filters screen fades in, instead of blinking or travelling
 
 It was the last surface in the app that appeared and vanished between frames.

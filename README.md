@@ -16,12 +16,12 @@ npx eslint .     # lint (from the repo root)
 
 ## The two variants
 
-Four variants over one catalog. A and B walk Home → tap *Baheti Garments* → PLP → filter and sort; C and D drop you straight inside a product vertical.
+Four variants over one catalog. A and B walk Home → **search for `shirt`** → PLP → filter and sort; C and D drop you straight inside a product vertical.
 
 | | Home | PLP | Controls |
 |---|---|---|---|
-| **Variant A** | `/` | `/seller/baheti` | Sort · Filters pinned to the bottom |
-| **Variant B** | `/b` | `/b/seller/baheti` | The same two as chips at the top, no bottom bar |
+| **Variant A** | `/` | `/results?q=shirt` | Sort · Filters in a floating pill at the bottom |
+| **Variant B** | `/b` | `/b/results?q=shirt` | The same two as chips at the top, no bottom bar |
 | **Variant C** | — | `/c` | Bottom bar, already inside one vertical |
 | **Variant D** | — | `/d` | Top chips, already inside one vertical |
 
