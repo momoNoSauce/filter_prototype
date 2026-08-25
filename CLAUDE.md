@@ -62,12 +62,17 @@ operational, which it was.
 So: **when a deploy hangs with no output, check the dashboard before theorising**
 — and check `git config user.email` first if the identity has changed recently.
 
-Reverted to the machine's global `m23ldx002@iitj.ac.in`, which is verified on
-`cheeseKracker` and is what Vercel matches. **The cost is that commits credit
-`cheeseKracker`, not `momoNoSauce`**, which is the thing the noreply address was
-set to fix. The proper fix is an email verified on the `momoNoSauce` GitHub
-account — that satisfies both — and it needs the account owner to supply one.
-A config change alone can't get both today.
+**Settled the same day** with `bitihotra.karak@jumbotail.com`, set globally
+alongside `user.name = momoNoSauce`. A real verified address satisfies both
+sides where neither of the other two could: the noreply form credited the right
+owner but Vercel couldn't resolve it, and `m23ldx002@iitj.ac.in` deployed fine
+but credited `cheeseKracker`, the account that no longer owns this.
+
+**The rule, if the identity ever changes again:** the commit email must be a real
+address verified on the GitHub account that should get the credit. A
+`ID+user@users.noreply.github.com` form is not enough — GitHub resolves it and
+Vercel does not — and the failure surfaces an hour later as a deploy that looks
+slow rather than as anything about email.
 
 ## Two control variants of the same PLP
 
