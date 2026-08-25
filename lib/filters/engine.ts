@@ -8,7 +8,16 @@ export type Selections = Record<string, string[]>;
 export type SortId = "popularity" | "recent" | "price_asc" | "price_desc" | "margin_desc";
 
 export const SORT_OPTIONS: { id: SortId; label: string }[] = [
-  { id: "popularity", label: "Popularity" },
+  /*
+   * `(Default)` is in the label rather than a flag on the row (2026-08-25).
+   * Popularity is where every listing starts and what a bare URL means, and the
+   * sheet gave no sign of it: a buyer who had tried three sorts had no way to
+   * tell which one was the untouched state, and Sort's dot says *not default*
+   * without ever naming what default was. It rides in the string because that
+   * is the only place `SortSheet` reads — a `default: true` flag would need the
+   * row to render it, for one word on one option that never moves.
+   */
+  { id: "popularity", label: "Popularity (Default)" },
   { id: "recent", label: "Recently Added" },
   { id: "price_asc", label: "Price/pc (low → high)" },
   { id: "price_desc", label: "Price/pc (high → low)" },

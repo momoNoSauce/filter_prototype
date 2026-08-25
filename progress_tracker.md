@@ -922,6 +922,22 @@ question answered itself and the A/B is over.
 - The three-casing seller name, the two `Set of:` spellings, and the inferred
   title-casing rule all want a designer's confirmation.
 
+### 2026-08-25 — the Sort sheet names its default
+
+`Popularity` now reads **`Popularity (Default)`**. It is where every listing
+starts and what a bare URL means, and the sheet gave no sign of that: Sort's dot
+reports *not default* without ever naming what default was, so a buyer three
+sorts deep had no marked way back to the untouched state.
+
+In the `SORT_OPTIONS` label rather than a flag on the row — that string is the
+only thing `SortSheet` reads, and a `default: true` would need markup to render
+it, for one word on one option that never moves.
+
+Verified at 360px: the row sets on one line, as does the longest label beside it
+(`Price/pc (low → high)`); the active treatment is untouched — bold, primary,
+glyph tinted, check — and tapping it still applies, closes, and leaves the URL
+bare, Popularity being omitted from the query by design.
+
 ### 2026-08-25 — the Filters screen fades in, instead of blinking or travelling
 
 It was the last surface in the app that appeared and vanished between frames.
