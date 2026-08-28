@@ -1,6 +1,13 @@
 # Progress Tracker
 
-Last updated: 2026-08-25
+Last updated: 2026-08-28
+
+> **Four docs, one job each.** `CLAUDE.md` — the rules, and the only one loaded
+> into every session, so keep it short. `plan.md` — the architecture.
+> `docs/decisions.md` — the long-form record of every call and why.
+> `progress_tracker.md` — the chronology, the backlog and the open questions.
+> The deepest reasoning is in the code comments; a rule changed there must be
+> changed in `CLAUDE.md` too.
 
 Live: **https://filterprototype.vercel.app** — **password-protected** since
 2026-08-14. **Leave the username blank** and enter the password; only the password is checked. It lives in the `SITE_PASSWORD` env var on Vercel
@@ -990,6 +997,411 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-08-28 — the journey's chips come down to 40px
+
+**Seventh item**, and a consequence of the second: the strip lost its vertical
+chips, and 44px existed because **that chip's thumbnail was its height**. With
+no image in the row there is nothing to size around, so `/userjourney`'s chips
+are 40 and the strip is 65px rather than 69.
+
+**40, not the frame's 32.** The thumbnail was only half the argument for 44 —
+the other half is the touch floor, a kirana retailer tapping a chip on a
+mid-range Android, and that survives the picture going. 32 is M3's value and the
+frame's, and it would put every chip in the row under the floor to save 8px
+once. Flagged before building rather than after.
+
+**Still one height for the whole row.** `CHIP_H` split into `CHIP_H_TALL` and
+`CHIP_H_SHORT`, and is now threaded from `PlpScreen` rather than imported
+directly by `TopChipBar` — but the screen picks it once and both the Sort/Filter
+chips and the contextual chips take the same value. Two heights in one
+scrolling row is still the thing that looks broken.
+
+**Chosen from `controls.verticalChips`, not from the chips on screen.** Read off
+the current contents it would be right today and fragile tomorrow: a strip that
+gained or lost a vertical chip mid-filter would change height under the buyer.
+The flag is a property of the route.
+
+C and D carry no vertical chips either, the vertical being page scope there.
+They keep 44 deliberately — the flag is what selects the short chips and they
+don't set it, so the 2×2 is untouched. Setting it is a one-word change if the
+same is wanted there.
+
+**Measured:** journey chips 40, one height across all four, strip 65px; A, C and
+D unchanged at 44 and 69. 124 tests green, lint and build clean.
+
+### 2026-08-28 — Price Range gets a typed min and max, above its bands
+
+> **Amended within the hour.** This shipped first as *inputs instead of* bands,
+> which is what was asked for; the ask was then reversed to *inputs as well as*
+> — "add the price range checkboxes as well" — and an inverted range went from
+> filtering honestly to being refused outright. The entry below describes where
+> it landed. The intermediate state never left this machine.
+
+**Sixth item off the stakeholder review**, `/userjourney` only, and the reason
+given was the whole argument: *we can't predict the exact range the customer
+might be looking for.* The panel now carries **two boxes above the five bands**.
+The bands are the fast path and keep their live counts; the boxes cover what the
+bands don't.
+
+**The two are exclusive, and visibly so.** Ticking a band clears what was typed
+**and disables the boxes** while it stands; unticking hands them back. Both are
+values on the `price` facet, where values OR — so leaving both standing would
+*widen* the result, and a buyer who typed 150–450 and then ticked *Under ₹200*
+would be shown ₹80 shirts. Disabling was asked for after the fact: exclusivity
+was already enforced but silently, so the rule only became visible once it had
+cost someone their typing. Greyed rather than hidden — a control that vanishes
+reads as a bug, and the panel keeps a steady height as bands are ticked.
+
+**`min > max` is refused, not filtered** (asked for the same day). It used to
+match nothing and hand back `Show 0 results`, which is accurate and says nothing
+about why. Now the draft never takes it, both boxes take a red border, and a
+toast says `Min price can't be higher than max` — **on blur, not per
+keystroke**, or typing `9` into min against a max of 450 would scold you
+mid-number. It names the rule rather than a field, because the app can't know
+which of the two the buyer meant to change; either one fixes it.
+
+That forced the boxes to hold **local text state** rather than being controlled
+straight from the draft. The obvious build is wrong the moment a rule refuses a
+value: editing min to 900 against a max of 450 would be rejected, the draft
+would keep 150–450, and the box would snap back under the cursor. The text is
+local, only a valid pair reaches the draft, and a render-time
+`derive-from-props` re-seed empties the boxes when something else clears the
+range — Clear Filters, or ticking the band it is exclusive with. Not an effect:
+React 19 flags `setState` in one as a cascading render, and it would paint the
+stale value for a frame first.
+
+**The toast moves while the sheet is up.** At the listing's own offset it landed
+over the sheet's `Clear Filters` / `Show N results` footer. It blocks nothing —
+the wrapper is `pointer-events-none` — but covering the control you are being
+told about is the wrong place to say it, so it sits 8px above that footer
+instead, where it reads as belonging to the sheet. Measured: toast bottom 69
+from the frame, CTA top at 49, no overlap.
+
+A–D keep the bands alone. Their Price chip opens a sheet built from exactly
+those, and nothing there can produce a range.
+
+**It needed an engine change, not just a UI one.** The price facet matches
+discrete band ids (`p-200`, `p-400`…), and a typed range has nothing to match
+against. Two optional hooks on `FacetDef`, both used by Price alone, both kept
+as registry fields rather than engine special cases so adding a facet is still
+one array entry:
+
+- **`matches`** overrides the default set-membership test over `valuesOf`. The
+  alternative was letting `valuesOf` see the price selection, and the registry's
+  standing rule is that **Size is the only selection any facet may see** —
+  widening that to "its own" would make the dependency invisible again.
+- **`accepts`** widens the id validation in `parseSelections`, which drops
+  anything not in the facet's `options`.
+
+**The second one was found in the browser, not by reading.** The range filtered
+correctly in-session and came back empty on reload, because a shared
+`?price=150-450` was being thrown away by the guard that stops
+`?seller=nonsense` emptying a listing. The guard is right and stays: `?price=junk`
+is still dropped, `?price=-` is not a range either. **A facet that overrides
+`matches` almost certainly needs `accepts` too** — that is the rule this leaves.
+
+**Bands and ranges share one facet.** Both answer "which prices", and two
+facets would AND, so a buyer who typed 150–450 would have to clear a band to
+see anything. Within one facet they OR like any two values, and nothing offers
+both at once today.
+
+**Counts are untouched**, which is what still lets A–D show live band counts on
+a facet the journey drives with an input: `facetOptionsWithCounts` already
+excludes a facet's own selections, so a typed range cannot move them. A test
+asserts the bands count identically with and without one.
+
+Two smaller calls: **`min > max` matches nothing** rather than being swapped or
+suppressed — a transient typing state the footer reports honestly as `Show 0
+results`, where swapping would filter on something never typed; and the boxes
+are **controlled straight from the draft** with no local text state, so Clear
+Filters empties them by the same path it empties everything else.
+
+**Verified** in the running app at 360px:
+
+| | |
+|---|---|
+| empty | `Show 540 results` |
+| min 150 | `Show 502` |
+| 150–450 | `Show 501`, URL `?price=150-450`, every price in range |
+| min → 900 against max 450 | count **stays 501** — the draft refused it |
+| blur while inverted | toast `Min price can't be higher than max`, both boxes red |
+| tick *Under ₹200* after typing | boxes empty, `Show 145` — exclusive |
+| reload `?price=150-450` | boxes prefill `150` / `450`, Clear enabled |
+| Clear Filters | URL emptied, boxes empty |
+| `?price=junk` | ignored, full listing |
+| A `/results?q=shirt` | five bands with live counts, no inputs |
+
+124 tests green, lint, typecheck and build clean.
+
+### 2026-08-28 — Filters becomes a bottom sheet, so the listing stays behind it
+
+**Fifth item off the stakeholder review**, `/userjourney` only. The Filters
+screen was full-bleed; it is now a sheet at **80% of the frame**, with the
+listing dimmed behind it.
+
+The reason given, and it is the right one: a full-bleed panel is the only
+surface in this app that takes the buyer off the page they were on. They tick
+four things against a listing they can no longer see, and the sole report of
+what changed is a number in the footer. At 640 of 800 the app bar, the chip
+strip and the top of the first card stay visible, so filtering reads as
+happening *to* something.
+
+**80% was chosen from both ends.** Much taller and the context it exists to
+preserve is a grey sliver; much shorter and the rail — 60px a row, sixteen rows
+inside a settled vertical — shows too few of them to navigate. It is a
+percentage, not a pixel height: `DeviceFrame` renders edge to edge below 480px,
+so the frame is `100dvh` on a phone and 800 only in the mockup.
+
+**The motion goes back to `sheet-in`/`-out`, and that is not a reversal.** The
+2026-08-25 note that replaced them with `screen-in` is an argument about
+*distance*: `translateY(100%)` on a panel pinned to `inset-0` is the whole 800px
+frame, and 800px of literal travel reads as an elevator ride. At 640px the
+distance is a sheet's own height again, which is exactly what that keyframe was
+written for. A–D keep `screen-in`, being full-bleed still.
+
+**The scrim is a real exit**, so it runs through `dismiss` — the same
+discard-checking path as the ✕, not a bare `onClose`. Dismissing mid-edit still
+says `Selection discarded`; dismissing untouched still says nothing. Verified
+both.
+
+**The shorter panel moves the search-field threshold**, which is the one
+knock-on worth knowing. `SHEET_PANEL_VIEWPORT` is 530 — 640 less the same 49px
+header and 61px footer — against the full-bleed 690:
+
+| | full-bleed | sheet |
+|---|---|---|
+| checkbox rows before a field | 14 | **11** |
+| tiles before a field | 19 | **13** |
+
+So Size (13 options) now earns a field on this route where it didn't. `needsSearch`
+takes the viewport as an argument defaulting to the full-bleed value, so A–D
+are untouched, and a test pins both pairs. Still computed rather than measured,
+for the documented reason: the server has no viewport, and a measured rule
+would render no field on the server and add one after hydration.
+
+**Verified** at 360px: sheet 640 of an 800 frame, 160px of listing visible,
+scrim present and dismissing correctly; A and D still full-bleed at 800. 121
+tests green, lint, typecheck and build clean.
+
+### 2026-08-28 — the journey gets its own rail order
+
+**Fourth item off the stakeholder review**, from a whiteboard photo, and
+`/userjourney` only. The rail is now:
+
+```
+Sort By · Price Range · Margin · MOQ · Category · Brands · Seller · Seller City
+  └─ attributes ─┐ Colour · Fabric · Size · Fit · Neck · Sleeve · Pattern · Closure
+```
+
+Ten rows across verticals, sixteen inside one. **Dropped: Gender, Delivery
+Time, Offers, More Filters.**
+
+**A second array, not a re-order.** A–D keep `RAIL_ORDER`, which follows a
+reference apparel PLP and is pinned by its own test. `JOURNEY_RAIL_ORDER` is
+this route's, and the two are allowed to disagree — the journey has never been
+part of the 2×2. `getRail`/`getRailFacetIds` take a `RailPreset` *name* rather
+than an array, so both orders and the tests that pin them stay in `facets.ts`
+and nothing has to cross the Server/Client boundary.
+
+**"Attributes" is eight rows, not one**, settled on the call. The whiteboard has
+it as a single line, but the instruction was that Size, Colour and Fabric "show
+at the bottom, those are attributes" — a grouping by position. One merged row
+would have stacked ~60 options behind a single rail entry and earned a search
+field. Colour and Fabric sit in that block and stay visible whether or not a
+vertical is settled: grouping them is about where they are, not when they show,
+and Cotton means the same on a shirt as on a tee — the standing reason Fabric
+never joined the vertical block.
+
+**Two of the four removals cost something, and both were paid for.**
+
+**Gender was this journey's documented cut.** *Gender → Women* is what settled
+the vertical and unlocked Size. The replacement is **Category → Women's
+T-Shirts**, which settles it identically — Kartik carries exactly three
+verticals, one of them women's — so Size still appears and the rest of the flow
+is unchanged. The demo script was updated; nothing else was.
+
+**Offers owned `hasOffer` and `offers`, which the three strip chips select.**
+Dropping the row would have left `All filters cleared` closing onto a lit
+Cashback chip. `FilterScreen` now takes **`clearsAlso`** — facets the *listing*
+shows that the rail doesn't — and `PlpScreen` derives it from the chips
+actually on the strip, so it stays right as the strip changes. Still a named
+set, never a blanket reset: wiping a filter from a screen that never showed it
+is the trap the rail filter exists to avoid, and a chip the buyer can see and
+toggle is not that.
+
+They are deliberately **not** added to `filterCount`. A lit chip already reports
+itself, and counting it on the Filters badge as well is exactly the
+double-reporting that badge rule exists to prevent.
+
+**Verified** in the running app at 360px:
+
+| | |
+|---|---|
+| journey rail | `Sort By · Price Range · Margin · MOQ · Category · Brands · Seller · Seller City · Colour · Fabric` |
+| journey, `?category=womens-t-shirts` | the same, then `Size · Fit · Neck Type · Sleeve Type · Pattern · Closure Type` |
+| A `/results?q=shirt` | unchanged — 13 rows, Gender and Offers and More Filters included |
+| `?offers=cashback&price=under-200` → Clear Filters | both extinguished, URL emptied, Seller Offer correctly reappears |
+
+118 tests green, lint, typecheck and build clean. Two new tests pin the journey
+rail in full and the clear-scope fix.
+
+### 2026-08-28 — Sort moves inside Filters, and the Price chip leaves the strip
+
+**Third item off the stakeholder review**, `/userjourney` only. The strip is now
+**`Filter` · Seller Offer · Cashback · Free Delivery** — no Sort chip, no Price
+chip, no verticals.
+
+**Sort By is the first row of the Filters rail**, above Category. Its panel is
+the five `SORT_OPTIONS` as single-select rows: no checkbox, because every other
+row on that screen is a set and a checkbox would promise a second tick the list
+can't hold. They take the Sort sheet's own active treatment instead — glyph
+leads, active row bold, primary, icon tinted — at `OptionRow`'s 52px, so the
+panel keeps one row pitch whichever rail entry is open.
+
+**It joins the draft**, which was the follow-up worth asking:
+
+| | |
+|---|---|
+| tap a sort | draft only — the listing behind the panel does not move |
+| `Show 540 results` | commits sort *and* filters, writes `?sort=`, closes |
+| `Clear Filters` | filters go **and** sort returns to Popularity |
+| `✕` after a sort tap | `Selection discarded` — the sort goes with it |
+
+Clear resetting the sort is a deliberate stretch of that button's label, taken
+on the call: one control returns the screen to its untouched state rather than
+leaving one row of it standing.
+
+**Three implementation notes that are easy to undo by accident:**
+
+- The rail id is the synthetic **`__sort`** with `facetIds: []`, deliberately
+  not a facet id. Sort is one value where every facet is a set and it is not in
+  `FACETS`, so nothing may look it up in `FACET_BY_ID` — the empty `facetIds`
+  is what lets every count, clear and orphan path that walks the rail by facet
+  run unchanged.
+- **Supplying `sort` to `FilterScreen` is what turns the row on.** A derived
+  flag rather than a second prop, so there is no way to show the row without
+  its value.
+- **`SORT_ICONS` moved to `lib/filters/sortIcons.ts`.** The sheet was the only
+  surface drawing that set; now there are two, and a map owned by one would
+  make the other import from a sibling it has nothing else to do with. The set
+  is drawn at one weight and is the unit that gets reweighted — that is the
+  rule the move preserves.
+
+**The three departures share one prop.** `controls` on `PlpScreen` —
+`verticalChips`, `priceChip`, `sortInFilters` — replacing the standalone
+`verticalChips` added hours earlier. One object because they are one idea, and
+a prop per stakeholder remark is how a shared screen grows a dozen of them.
+Every field defaults to the documented behaviour, so a route opts out, never in.
+
+**`sortInFilters` is honoured on `top-chips` only**, and says so rather than
+half-working: the `bottom-bar` pill is a designed 240px surface with two halves
+either side of a 32px rule (Figma `697:2658`), and a one-control pill is a
+shape no frame draws. A and C would need a pill design first.
+
+**Dropping the Price chip strands nothing** — Price Range is a rail facet too,
+so the bands stay reachable in the Filters panel, where the very same
+`OptionRow`s already render them. That is why this is allowed where switching
+off a chip-only facet would not be; a test asserts the facet is still on the
+rail with the chip gone.
+
+**Verified** in the running app at 360px:
+
+| | |
+|---|---|
+| journey strip | `Filter · Seller Offer · Cashback · Free Delivery` |
+| journey rail | `Sort By · Category · Gender · Brands · …` — 14 rows |
+| Sort By panel | 5 rows, `role="radio"`, dot on the rail once off default |
+| `?sort=price_asc` | prices ascend 95, 100, 100, 100, 105 … |
+| `?sort=price_desc` | prices descend 455, 450, 450, 450, 445 … |
+| A, C, D | strips and rails unchanged; no variant opens on Sort By |
+
+116 tests green, lint, typecheck and build clean.
+
+### 2026-08-28 — the journey strip drops the vertical chips and leads with price and offers
+
+**Second item off the stakeholder review.** `/userjourney/seller/kartik` no
+longer surfaces product-vertical chips at all. The strip is **Price · Seller
+Offer · Cashback · Free Delivery** from the first paint — the chips that used
+to appear only *after* a vertical was settled.
+
+The reasoning given: a buyer already inside a storefront has not come to choose
+between tee types, so the strip should lead with the filters that actually
+narrow a listing they are already looking at.
+
+**The picked chip goes too**, which was the follow-up worth asking. Today a
+vertical, once picked, keeps leading the strip as the way back out; the call
+was that the strip carries no vertical in **any** state. The accepted cost:
+after *Gender → Women* nothing on the listing names the cut, and the Filters
+count badge is the only report of it — a knowing regression of UX backlog item
+1, logged rather than argued.
+
+**Journey only.** A and B keep their seven vertical chips; C and D never had
+any, the vertical being page scope there. So the 2×2 is untouched, and this is
+the second behavioural departure on this route after the control placement.
+
+**A prop, not a mode.** `verticalChips` on `PlpScreen` (default `true`) feeds
+`contextChips(..., { verticals })`. Deliberately not `VerticalMode.locked`,
+which answers a different question — it makes the vertical page scope and takes
+**Category and Gender off the rail** with it. The journey needs both: *Gender →
+Women* is its central cut, and it is what settles the vertical that puts Size
+on the rail. This changes the strip and nothing else.
+
+**Verified** at 360px against the running app:
+
+| | strip |
+|---|---|
+| journey, nothing picked | `Sort · Filter │ Price · Seller Offer · Cashback · Free Delivery` |
+| journey, `?gender=women` | the same, with `1` on the Filter chip |
+| A, `/results?q=shirt` | unchanged — all seven vertical chips |
+
+No empty-strip risk anywhere: probed across the journey, A/B and C/D, every
+scope carries a populated Price menu, Seller Offer, Cashback and Free Delivery.
+115 tests green, lint and typecheck clean.
+
+### 2026-08-28 — the journey goes back to top chips, and the toast learns where the floor is
+
+**The stakeholder review asked for Sort and Filters at the top**, so
+`/userjourney/seller/kartik` is `variant="top-chips"` again — one prop, the
+third placement this screen has held, and a reversal of the UXR-driven move
+three days earlier.
+
+That research is not withdrawn and the pill is not at fault. The call is that
+the demonstration flow should show what the live app shows, which puts the
+route back to 1:1 with its screengrabs in behaviour as well as pixels — the
+08-25 move was the only departure on it that was ever about behaviour. **A and
+C keep the pill**, so the comparison is still placement and nothing else.
+
+**The switch surfaced a real bug, and it was not new.** The toast asked the
+*variant* where to sit — `clearsBottomBar`, 72px in A to clear a full-width
+bar, 24px in B, which had nothing down there. Both premises expired on
+2026-08-21, when A's bar became a floating pill that rides the basket bar and
+every listing started carrying a basket:
+
+| | pill / bar occupies | toast sat at | |
+|---|---|---|---|
+| A, C — empty basket | 12–64 | 72–104 | fine, 8px clear |
+| A, C — line in basket | **76–128** | 72–104 | **behind the pill** |
+| B, D, journey — empty | — | 24–56 | fine |
+| B, D, journey — line | **0–64** | 24–56 | **covered outright** |
+
+The last row is the one the move would have shipped, and on the worst possible
+route: the journey's whole flow is filling a basket, so *every* `All filters
+cleared` would have landed under the basket bar unseen. Since 2026-08-25 that
+is a toast a buyer sees on every clear, not a rare discard.
+
+**The fix reads the foot instead of the variant.** `toastBottom` in `PlpScreen`
+is `foot + TOAST_GAP` where `foot` is the pill's top in A and C and the basket
+bar's height in B, D and the journey, or `TOAST_INSET` (24) when there is no
+foot at all. `Toast` takes a number now rather than a boolean, because only the
+caller knows what is on screen. Both cases that were already right land on
+their existing numbers — 72 in A with an empty basket, 24 in B — so nothing
+moved except the two that were broken.
+
+**Verified** at 360px, `deviceScaleFactor: 3`, with a line in the basket:
+toast bottom 72 from the frame, top 104, basket bar top at 64 — measured in the
+DOM, no overlap, and the mic still at its measured 78. Lint, typecheck and 114
+tests green.
+
 ### 2026-08-25 — the journey moves onto the floating pill, on UXR
 
 Research says the bottom placement tests better, so `/userjourney/seller/kartik`
@@ -1489,7 +1901,7 @@ Ordered by consequence. None of these block a demo.
 0. **Three things fell out of the new category list** (2026-08-12), none blocking:
    - **Apostrophes are inconsistent** — "Men's" and "Women's" are plural possessives, but "Girl's" and "Boy's" are singular. Set verbatim as supplied rather than silently corrected; say the word and they become "Girls'" / "Boys'".
    - ~~**Gender is now redundant as a filter.**~~ Settled 2026-08-13: kept as a rail facet in **both** variants, since it is still a faster cut than ticking three category tiles. A's bottom-bar slot went to Category instead.
-   - **Product card renders are button-up shirts** while four of seven categories are tees. Only two shirt renders exist in Figma; tee renders would need exporting.
+   - ~~**Product card renders are button-up shirts** while four of seven categories are tees.~~ **Closed 2026-08-21** — 120 generated images on a `gender × kind × colour` axis, and all 1,070 products resolve to one. The two Figma renders stay only as the fallback path. It survives in one place: `/userjourney`'s men's tees, whose art is cropped from the live app rather than generated, and for which no men's tee render exists.
 1. ~~**What are the contextual chips?**~~ **Answered and built 2026-08-13.** Product-vertical chips until a single vertical is settled, then price bands, Seller Offer, Cashback and Free Delivery. ~~The M3 corner beside the frame's pills~~ settled 2026-08-14: one 8px radius across the whole strip, pills included. Still worth seeing before it is final: *Seller Offer* meaning "any offer" makes it disappear once Cashback is ticked, because every remaining product then has an offer. Correct per the rule, but worth seeing.
 2. **A Category glyph for the bottom bar.** The frame's first slot was Gender (`wc.svg`); it now holds Category and is borrowing `tag.svg`, which is also the Sort sheet's *Recently Added* icon. An exported Category icon would settle it.
 3. `Offers` vs `Seller Offers` — the two filter frames disagree; currently **Offers**.

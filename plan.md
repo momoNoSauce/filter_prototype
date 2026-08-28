@@ -10,9 +10,16 @@ npm test         # filter engine unit tests
 
 Deploys to Vercel. The deployment is password-gated by `proxy.ts`, which fails closed — set `SITE_PASSWORD` **before** deploying, and pass `--scope bitihotra-karaks-projects`. See `progress_tracker.md`.
 
+> **Four docs, one job each.** `CLAUDE.md` — the rules, and the only one loaded
+> into every session, so keep it short. `plan.md` — the architecture.
+> `docs/decisions.md` — the long-form record of every call and why.
+> `progress_tracker.md` — the chronology, the backlog and the open questions.
+> The deepest reasoning is in the code comments; a rule changed there must be
+> changed in `CLAUDE.md` too.
+
 ---
 
-## The two variants
+## The four variants
 
 Four variants over one catalog, crossing **control placement** against **starting scope**. A and B walk Home → **search `shirt`** → PLP → filter and sort; C and D drop straight inside a product vertical.
 
@@ -34,9 +41,10 @@ or a T-Shirt — so every count, test and demo step below still holds.
 
 There is also **`/userjourney`** (2026-08-20), which is not part of the 2×2: a
 single named flow through one storefront, built 1:1 from screengrabs of the live
-app. See decision 28. It moved onto the floating pill on **2026-08-25**, on UXR
-preferring that placement — the first departure on that route about behaviour
-rather than pixels.
+app. See decision 28. Its controls have moved twice: onto the floating pill on
+**2026-08-25** on UXR, and **back onto top chips on 2026-08-28** on the
+stakeholder review, which returns the route to what its screengrabs show. A and
+C keep the pill, so the A/B is still a comparison of placement alone.
 
 Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop, one `HomeScreen` with a `basePath` prop. Only the controls differ, so any preference between them is about control placement and nothing else.
 
