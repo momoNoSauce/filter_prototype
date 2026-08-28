@@ -425,7 +425,7 @@ function FilterChip({
       // 4px beside the icon, 8px beside the checkmark. The icon is wider than
       // the check and carries its own visual padding, so M3's 8dp read loose
       // on it while being right for the glyph.
-      className={`flex ${chipH} shrink-0 cursor-pointer items-center rounded-[8px] pr-[16px] ${
+      className={`flex ${chipH} shrink-0 cursor-pointer items-center rounded-[999px] pr-[16px] ${
         !selected && icon ? "gap-[4px]" : "gap-[8px]"
       } ${selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"} ${
         leading ? "pl-[8px]" : "pl-[16px]"

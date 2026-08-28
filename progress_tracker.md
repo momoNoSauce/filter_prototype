@@ -997,6 +997,34 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-08-28 — the offer chips go fully rounded
+
+The four offer chips — Cashback, Seller Offer, Target Scheme, Free Delivery —
+take a `999px` corner. Sort, Filter, Price and the vertical chip keep 8px.
+
+**This reverses *One radius per row* (2026-08-14) on purpose, and the reversal
+is narrower than it looks.** What made three radii read as a mistake then was
+that they meant nothing: the same kind of chip drawn three ways because three
+Figma frames disagreed with each other. This is two radii carrying a rule you
+can state and then read straight off the strip — **a pill toggles a filter
+value in place, a corner opens a surface.**
+
+**Price keeps its corner on exactly that test.** It was the one genuinely open
+question here: it lives among the offer chips and reports filter state like
+them, but it *opens a sheet*, which is the side of the line Filter is on. It
+also sits beside Filter on the far side of the frame's own divider, which
+already draws the same boundary — so the shape now agrees with a separator that
+was there all along.
+
+**The vertical chip keeps 8px** for a second, independent reason: it is the
+strip's only chip with a full-bleed square thumbnail flush to its leading edge,
+and a full radius clips that photo to a half-moon. Tried and rejected by
+looking at it.
+
+Applied to every screen, like the chip order it follows. Verified by DOM audit —
+journey `Filter=8px` then four at `999px`; D `Sort=8px · Filter=8px · Price=8px`
+then four at `999px`.
+
 ### 2026-08-28 — Target Scheme comes back, and the offer chips take a new order
 
 **Eighth item.** The strip's binary chips are now **Cashback · Seller Offer ·
