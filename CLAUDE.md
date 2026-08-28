@@ -60,11 +60,12 @@ banner → storefront → filter → detail. Its catalog (`lib/catalog/kartik.ts
 Its listing departs from the documented control layout, via **one prop** —
 `controls` on `PlpScreen` (`verticalChips`, `priceChip`, `sortInFilters`,
 `rail`, `filterSheet`, `priceInputs`), each field defaulting to the documented behaviour so a route opts
-*out*, never in. Today that leaves the strip as `Filter` plus the three offer
-chips, Sort By as the first row of the Filters rail, and that rail in this
-route's own order (`JOURNEY_RAIL_ORDER`) with Gender, Delivery Time, Offers and
-More Filters dropped — so its cut is **Category → Women's T-Shirts**, not
-Gender → Women. A–D pass nothing. Put new per-route departures in that object
+*out*, never in. Today that leaves the strip as `Filter` plus the four offer
+chips, Sort By as the first row of the Filters rail, that rail in this route's
+own order (`JOURNEY_RAIL_ORDER`) with Gender, Delivery Time, Offers and More
+Filters dropped — so its cut is **Category → Women's T-Shirts**, not Gender →
+Women — Filters as a bottom sheet, and Price Range with a typed min/max above
+its bands. A–D pass nothing. Put new per-route departures in that object
 rather than adding a prop each; the reasoning is in `docs/decisions.md`.
 
 Its Filters screen is a **bottom sheet at 80%** rather than full-bleed, so the
