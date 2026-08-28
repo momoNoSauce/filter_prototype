@@ -997,6 +997,71 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-08-28 — Target Scheme comes back, and the offer chips take a new order
+
+**Eighth item.** The strip's binary chips are now **Cashback · Seller Offer ·
+Target Scheme · Free Delivery**, in that order, and Target Scheme is a chip
+this prototype has not had before.
+
+**It is not a new offer — it is the retired one.** `GOLD Target Scheme` went
+out on 2026-08-19 with the rest of the GOLD branding, and the note then was
+that retiring **never meant deleting**: `OFFERS.filter` runs its predicate once
+per entry, so removing a row would take a `rand()` out of the middle of the
+sequence and re-roll the whole catalog. It stayed, was drawn at 0.55, and the
+result was thrown away.
+
+That is exactly what makes bringing it back free. The draw already happened, so
+**no rand call moves**. Measured before and after:
+
+| | before | after |
+|---|---|---|
+| Bulk Offer | 450 | 450 |
+| Cashback | 245 | 245 |
+| Free Delivery | 165 | 165 |
+| **Target Scheme** | — | **573** |
+| Seller Offer (`hasOffer`) | 674 | **875** |
+| products with no offer | 396 | 195 |
+
+Kartik's catalog moves the same way and for the same reason: `239 / 104 / 75`
+unchanged, Target Scheme 296, Seller Offer 331 → 440. Every category, gender
+and price count is untouched, and `seed.test.ts` — which pins the seven
+category counts — passes unchanged. `Seller Offer` growing is the intended
+consequence, not a side effect: products whose only offer was this one had none
+before.
+
+The **GOLD name went with the branding**; the scheme kept its own. A test
+asserts `offers:target-scheme` is on the strip and `offers:gold-target-scheme`
+never comes back with it.
+
+**`OFFERS` is now explicitly typed.** With nothing carrying `retired`, TypeScript
+inferred the property away and the three files reading it stopped compiling —
+so the annotation is what keeps the retire-without-re-rolling mechanism
+available for the next one.
+
+**The order forced a reshape.** `OFFER_CHIPS` was one entry per facet
+(`hasOffer`, then `offers` filtered to a pair) and took whatever order the
+`OFFERS` table happened to be in. The requested order **interleaves the two
+facets** — Seller Offer sits between two `offers` options — which that shape
+could not express. It is now one chip per line, facet and option together, and
+still the whitelist it always was: Bulk Offer is a real offer on the cards and
+in the Filters panel, and stays off the strip by not being listed. Each facet's
+discriminating options are computed once and looked up, rather than once per
+chip.
+
+**No icon for Target Scheme yet** — it is being supplied. The chip renders
+correctly without one (`icon` is optional, so the label leads and the 16px
+inset applies), and the commented line in `OFFER_ICONS` makes dropping the file
+in a one-line change. Nothing was drawn in to fill the gap, and the retired
+`gold-*.svg` exports were deliberately not used as a stand-in.
+
+**Applied to every screen**, not just `/userjourney`: the catalog is shared so
+the revival is global regardless, and the offer chips are identical in all four
+variants, so a per-route order would be config for no stated reason. Verified —
+journey `Filter · Cashback · Seller Offer · Target Scheme · Free Delivery`, C
+and D the same after Price, A unchanged (its strip is verticals until one is
+picked). Tapping the chip writes `?offers=target-scheme` and the cards carry
+the pill. 124 tests green, lint and build clean.
+
 ### 2026-08-28 — the journey's chips come down to 40px
 
 **Seventh item**, and a consequence of the second: the strip lost its vertical

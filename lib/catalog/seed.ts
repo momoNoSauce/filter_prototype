@@ -258,16 +258,34 @@ export const FABRICS = [
   { name: "Silk Blend", weight: 8 },
 ];
 
-export const OFFERS = [
+/**
+ * `retired` is the mechanism for taking an offer out of circulation **without
+ * re-rolling the catalog**: the entry stays, its `rand()` is still spent, and
+ * the result is discarded. Nothing carries it since Target Scheme came back on
+ * 2026-08-28, so the type is declared rather than inferred — otherwise the
+ * property disappears from the array's type and the next retirement doesn't
+ * compile.
+ */
+export const OFFERS: { name: string; chance: number; retired?: true }[] = [
   { name: "Bulk Offer", chance: 0.42 },
   /*
-   * Retired 2026-08-19 with the rest of the GOLD branding, but **still drawn**.
-   * `OFFERS.filter` runs its predicate once per entry, so deleting this one
-   * would take a `rand()` call out of the middle of the sequence and re-roll
-   * the entire catalog — every count in the docs with it. Drawn and discarded
-   * costs nothing and keeps the seed where it is.
+   * **Revived 2026-08-28**, on request, as plain *Target Scheme*.
+   *
+   * It was `GOLD Target Scheme` and went retired on 2026-08-19 with the rest
+   * of the GOLD branding — but **retired here has always meant drawn and then
+   * discarded**, never deleted, because `OFFERS.filter` runs its predicate
+   * once per entry and removing one would take a `rand()` out of the middle of
+   * the sequence and re-roll the whole catalog.
+   *
+   * That is exactly what makes bringing it back free: the draw already
+   * happened, so **no rand call moves and no count that doesn't involve offers
+   * changes**. What does change is that ~55% of products now carry the offer
+   * again, so `hasOffer` and the Offers facet both grow — which is the point.
+   *
+   * The GOLD name went with the branding; the scheme is the thing being
+   * offered and keeps its own name.
    */
-  { name: "GOLD Target Scheme", chance: 0.55, retired: true },
+  { name: "Target Scheme", chance: 0.55 },
   { name: "Cashback", chance: 0.22 },
   { name: "Free Delivery", chance: 0.16 },
 ];

@@ -346,6 +346,22 @@ const OFFER_ICONS: Record<string, string> = {
   "hasOffer:any": "/offers/seller-offer.png",
   "offers:cashback": "/offers/cashback.png",
   "offers:free-delivery": "/offers/free-delivery.png",
+  /*
+   * **Target Scheme has no art yet** (2026-08-28) — it is being supplied, and
+   * the line is left here rather than in a note so dropping the file in is a
+   * one-line change:
+   *
+   *   "offers:target-scheme": "/offers/target-scheme.png",
+   *
+   * The chip renders correctly without it in the meantime: `icon` is optional
+   * on `FilterChip`, so the label simply leads, and the 16px inset applies
+   * instead of the 8px one reserved for a chip with something ahead of the
+   * label. Nothing is broken and nothing is drawn in — the standing rule is
+   * that assets are supplied, never invented here.
+   *
+   * The old `gold-*.svg` exports are **not** the fallback: they went with the
+   * GOLD branding on 2026-08-19, and the scheme kept its name without it.
+   */
 };
 
 const PRICE_ICON = "/offers/price.png";

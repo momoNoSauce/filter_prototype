@@ -102,30 +102,72 @@ export function contextChips(
           },
         ]
       : []),
-    ...OFFER_CHIPS.flatMap(({ facetId, only }) =>
-      discriminatingOptions(products, selections, facetId)
-        .filter((option) => !only || only.includes(option.id))
-        .map((option) => ({ kind: "filter" as const, facetId, option })),
-    ),
+    ...offerChips(products, selections),
   ];
 }
 
 /**
- * The three offer chips, in order.
+ * The offer chips, in the order the strip shows them.
  *
- * They use `discriminatingOptions`, which carries the "only if the products
- * don't all share it" rule — an offer every product in the vertical already
- * has is a chip that filters nothing.
+ * **Explicitly ordered across facets** since 2026-08-28, where it used to be
+ * two entries — `hasOffer`, then `offers` filtered to a pair — and so took
+ * whatever order the `OFFERS` table happened to be in. The requested order
+ * interleaves the two facets (Cashback · Seller Offer · Target Scheme · Free
+ * Delivery), which that shape simply could not express.
  *
- * Price deliberately doesn't get that treatment: its bands are behind a
- * dropdown that always shows, and hiding a band holding the whole vertical
- * would strand a narrow catalog with an empty menu. Zero-count bands still
- * drop out, as they do everywhere.
- *
- * `only` keeps the list to the two specific offers asked for. Bulk Offer and
- * Bulk Offer stays in the Filters panel rather than the strip.
+ * Each facet's discriminating options are computed **once** and looked up,
+ * rather than per entry: `discriminatingOptions` walks the catalog, and the
+ * old shape called it once per facet by construction while this one would call
+ * it once per chip.
  */
-const OFFER_CHIPS: { facetId: string; only?: string[] }[] = [
-  { facetId: "hasOffer" },
-  { facetId: "offers", only: ["cashback", "free-delivery"] },
+function offerChips(products: Product[], selections: Selections): ContextChip[] {
+  const byFacet = new Map<string, Map<string, CountedOption>>();
+  for (const { facetId } of OFFER_CHIPS) {
+    if (byFacet.has(facetId)) continue;
+    byFacet.set(
+      facetId,
+      new Map(
+        discriminatingOptions(products, selections, facetId).map((o) => [o.id, o]),
+      ),
+    );
+  }
+
+  return OFFER_CHIPS.flatMap(({ facetId, optionId }) => {
+    // Absent when the option doesn't discriminate — an offer every product in
+    // scope carries, or none does — which is the rule that keeps a dead chip
+    // off the strip.
+    const option = byFacet.get(facetId)?.get(optionId);
+    return option ? [{ kind: "filter" as const, facetId, option }] : [];
+  });
+}
+
+/**
+ * The offer chips the strip carries, **in the order it shows them**
+ * (2026-08-28, on request): Cashback · Seller Offer · Target Scheme · Free
+ * Delivery.
+ *
+ * Listed one chip per line, facet and option together, because the order
+ * interleaves two facets — `hasOffer` sits second, between two `offers`
+ * options. The previous shape was one entry per facet with an `only` filter,
+ * which could order the facets but never interleave them.
+ *
+ * It is also the whitelist it always was: `Bulk Offer` is a real offer on the
+ * cards and in the Filters panel, and stays off the strip by not being here.
+ *
+ * Each still goes through `discriminatingOptions`, which carries the "only if
+ * the products don't all share it" rule — an offer every product in scope
+ * already has is a chip that filters nothing. Price deliberately doesn't get
+ * that treatment: its bands sit behind a sheet that always shows, and hiding a
+ * band holding the whole vertical would strand a narrow catalog with an empty
+ * menu.
+ */
+const OFFER_CHIPS: { facetId: string; optionId: string }[] = [
+  { facetId: "offers", optionId: "cashback" },
+  // Seller Offer means *any offer at all* — its own facet, and its option id is
+  // the bare `any`.
+  { facetId: "hasOffer", optionId: "any" },
+  // Back on 2026-08-28 after being retired with the GOLD branding on 08-19 —
+  // see `OFFERS`, where retiring never meant deleting.
+  { facetId: "offers", optionId: "target-scheme" },
+  { facetId: "offers", optionId: "free-delivery" },
 ];

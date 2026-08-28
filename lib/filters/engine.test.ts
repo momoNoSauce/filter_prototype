@@ -239,8 +239,12 @@ describe("contextual chips", () => {
       // Stays on the strip so its ✕ is the way back out.
       "category:girls-t-shirts",
       "price:*",
-      "hasOffer:any",
+      // The 2026-08-28 order, which interleaves the two offer facets — Seller
+      // Offer (`hasOffer`) sits between two `offers` options, which is why
+      // OFFER_CHIPS lists one chip per line rather than one per facet.
       "offers:cashback",
+      "hasOffer:any",
+      "offers:target-scheme",
       "offers:free-delivery",
     ]);
   });
@@ -256,9 +260,14 @@ describe("contextual chips", () => {
     expect(chips.every((c) => c.startsWith("category:"))).toBe(true);
   });
 
-  it("keeps the offer strip to the three asked for", () => {
+  it("keeps the offer strip to the four asked for", () => {
     const chips = ids({ category: ["mens-formal-shirts"] });
+    // OFFER_CHIPS is a whitelist: Bulk Offer is a real offer on the cards and
+    // in the Filters panel, and stays off the strip by not being listed.
     expect(chips).not.toContain("offers:bulk-offer");
+    // Target Scheme came back on 2026-08-28 and is on the strip; the GOLD name
+    // went with the branding on 08-19 and must not return with it.
+    expect(chips).toContain("offers:target-scheme");
     expect(chips).not.toContain("offers:gold-target-scheme");
   });
 
@@ -869,7 +878,13 @@ describe("variants C and D — the page is the vertical", () => {
 
     // The chips it does carry are the real ones, counted against the pick.
     const chips = contextChips(catalog, picked, FILTER_VERTICALS, off);
-    expect(chips.map((c) => c.facetId)).toEqual(["price", "hasOffer", "offers", "offers"]);
+    expect(chips.map((c) => c.facetId)).toEqual([
+      "price",
+      "offers",
+      "hasOffer",
+      "offers",
+      "offers",
+    ]);
     const price = chips.find((c) => c.kind === "price");
     expect(price && price.options.length).toBeGreaterThan(0);
   });
@@ -1014,7 +1029,7 @@ describe("variants C and D — the page is the vertical", () => {
     const off = { verticals: false, price: false };
     const chips = contextChips(catalog, {}, FILTER_VERTICALS, off);
 
-    expect(chips.map((c) => c.facetId)).toEqual(["hasOffer", "offers", "offers"]);
+    expect(chips.map((c) => c.facetId)).toEqual(["offers", "hasOffer", "offers", "offers"]);
     expect(chips.some((c) => c.kind === "price")).toBe(false);
     expect(getRailFacetIds().has("price")).toBe(true);
 

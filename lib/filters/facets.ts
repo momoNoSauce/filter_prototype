@@ -306,6 +306,9 @@ export const FACETS: FacetDef[] = [
     valuesOf: (p) => p.offers.map(slug),
     // Retired offers are still drawn, to hold the seed — see OFFERS — but no
     // product carries one, so listing it would be a permanently empty option.
+    // Nothing is retired since Target Scheme came back on 2026-08-28; the
+    // filter stays because it is the mechanism for retiring the next one
+    // without re-rolling the catalog, not because it currently drops anything.
     options: OFFERS.filter((o) => !o.retired).map((o) => ({ id: slug(o.name), label: o.name })),
   },
   {
