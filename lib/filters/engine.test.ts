@@ -244,7 +244,7 @@ describe("contextual chips", () => {
       // OFFER_CHIPS lists one chip per line rather than one per facet.
       "offers:cashback",
       "hasOffer:any",
-      "offers:target-scheme",
+      "offers:solv-target-scheme",
       "offers:free-delivery",
     ]);
   });
@@ -265,10 +265,13 @@ describe("contextual chips", () => {
     // OFFER_CHIPS is a whitelist: Bulk Offer is a real offer on the cards and
     // in the Filters panel, and stays off the strip by not being listed.
     expect(chips).not.toContain("offers:bulk-offer");
-    // Target Scheme came back on 2026-08-28 and is on the strip; the GOLD name
-    // went with the branding on 08-19 and must not return with it.
-    expect(chips).toContain("offers:target-scheme");
+    // SOLV Target Scheme came back on 2026-08-28 and is on the strip. The GOLD
+    // prefix went with that branding on 08-19 and SOLV took its place, so
+    // neither the old name nor the unprefixed one it shipped with for an hour
+    // should reappear.
+    expect(chips).toContain("offers:solv-target-scheme");
     expect(chips).not.toContain("offers:gold-target-scheme");
+    expect(chips).not.toContain("offers:target-scheme");
   });
 
   it("drops an offer every product in the vertical already carries", () => {

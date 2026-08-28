@@ -269,7 +269,8 @@ export const FABRICS = [
 export const OFFERS: { name: string; chance: number; retired?: true }[] = [
   { name: "Bulk Offer", chance: 0.42 },
   /*
-   * **Revived 2026-08-28**, on request, as plain *Target Scheme*.
+   * **Revived 2026-08-28**, on request, and named *SOLV Target Scheme* — it
+   * shipped as plain *Target Scheme* for an hour before the brand went back on.
    *
    * It was `GOLD Target Scheme` and went retired on 2026-08-19 with the rest
    * of the GOLD branding — but **retired here has always meant drawn and then
@@ -282,10 +283,16 @@ export const OFFERS: { name: string; chance: number; retired?: true }[] = [
    * changes**. What does change is that ~55% of products now carry the offer
    * again, so `hasOffer` and the Offers facet both grow — which is the point.
    *
-   * The GOLD name went with the branding; the scheme is the thing being
-   * offered and keeps its own name.
+   * The GOLD prefix went with that branding and SOLV takes its place: the
+   * scheme is the app's own, not a membership tier's. Caps to match the brand
+   * everywhere else here — the page title, the logo's alt text — and the
+   * `GOLD Target Scheme` it replaces.
+   *
+   * The name is the only thing that changed, so the slug moves with it
+   * (`solv-target-scheme`) and **no count does**: `p.offers` stores the name,
+   * and the draw is upstream of it.
    */
-  { name: "Target Scheme", chance: 0.55 },
+  { name: "SOLV Target Scheme", chance: 0.55 },
   { name: "Cashback", chance: 0.22 },
   { name: "Free Delivery", chance: 0.16 },
 ];

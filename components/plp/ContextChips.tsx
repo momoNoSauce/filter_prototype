@@ -358,7 +358,7 @@ const OFFER_ICONS: Record<string, string> = {
    * outstanding: they went with the GOLD branding on 2026-08-19, and the scheme
    * kept its name without it.
    */
-  "offers:target-scheme": "/offers/target-scheme.png",
+  "offers:solv-target-scheme": "/offers/solv-target-scheme.png",
 };
 
 const PRICE_ICON = "/offers/price.png";

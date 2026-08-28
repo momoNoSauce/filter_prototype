@@ -112,8 +112,8 @@ export function contextChips(
  * **Explicitly ordered across facets** since 2026-08-28, where it used to be
  * two entries — `hasOffer`, then `offers` filtered to a pair — and so took
  * whatever order the `OFFERS` table happened to be in. The requested order
- * interleaves the two facets (Cashback · Seller Offer · Target Scheme · Free
- * Delivery), which that shape simply could not express.
+ * interleaves the two facets (Cashback · Seller Offer · SOLV Target Scheme ·
+ * Free Delivery), which that shape simply could not express.
  *
  * Each facet's discriminating options are computed **once** and looked up,
  * rather than per entry: `discriminatingOptions` walks the catalog, and the
@@ -143,8 +143,8 @@ function offerChips(products: Product[], selections: Selections): ContextChip[] 
 
 /**
  * The offer chips the strip carries, **in the order it shows them**
- * (2026-08-28, on request): Cashback · Seller Offer · Target Scheme · Free
- * Delivery.
+ * (2026-08-28, on request): Cashback · Seller Offer · SOLV Target Scheme ·
+ * Free Delivery.
  *
  * Listed one chip per line, facet and option together, because the order
  * interleaves two facets — `hasOffer` sits second, between two `offers`
@@ -168,6 +168,6 @@ const OFFER_CHIPS: { facetId: string; optionId: string }[] = [
   { facetId: "hasOffer", optionId: "any" },
   // Back on 2026-08-28 after being retired with the GOLD branding on 08-19 —
   // see `OFFERS`, where retiring never meant deleting.
-  { facetId: "offers", optionId: "target-scheme" },
+  { facetId: "offers", optionId: "solv-target-scheme" },
   { facetId: "offers", optionId: "free-delivery" },
 ];

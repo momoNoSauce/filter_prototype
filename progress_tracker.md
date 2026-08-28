@@ -1023,7 +1023,8 @@ surface rather than a drawn line, and still on the slot rather than
 
 ### 2026-08-28 — the offer chips go fully rounded
 
-The four offer chips — Cashback, Seller Offer, Target Scheme, Free Delivery —
+The four offer chips — Cashback, Seller Offer, SOLV Target Scheme, Free
+Delivery —
 take a `999px` corner. Sort, Filter, Price and the vertical chip keep 8px.
 
 **This reverses *One radius per row* (2026-08-14) on purpose, and the reversal
@@ -1049,11 +1050,19 @@ Applied to every screen, like the chip order it follows. Verified by DOM audit �
 journey `Filter=8px` then four at `999px`; D `Sort=8px · Filter=8px · Price=8px`
 then four at `999px`.
 
-### 2026-08-28 — Target Scheme comes back, and the offer chips take a new order
+### 2026-08-28 — SOLV Target Scheme comes back, and the offer chips take a new order
 
 **Eighth item.** The strip's binary chips are now **Cashback · Seller Offer ·
-Target Scheme · Free Delivery**, in that order, and Target Scheme is a chip
-this prototype has not had before.
+SOLV Target Scheme · Free Delivery**, in that order, and it is a chip this
+prototype has not had before.
+
+**Named `SOLV Target Scheme` from an hour after it landed** — it shipped as
+plain *Target Scheme* first. The GOLD prefix went with that branding on 08-19
+and SOLV takes its place: the scheme is the app's own, not a membership tier's.
+Caps to match the brand everywhere else here — the page title, the logo's alt
+text — and the `GOLD Target Scheme` it replaces. Renaming moved the slug to
+`solv-target-scheme` and **no count with it**: `p.offers` stores the name and
+the draw is upstream of it.
 
 **It is not a new offer — it is the retired one.** `GOLD Target Scheme` went
 out on 2026-08-19 with the rest of the GOLD branding, and the note then was
@@ -1070,20 +1079,21 @@ That is exactly what makes bringing it back free. The draw already happened, so
 | Bulk Offer | 450 | 450 |
 | Cashback | 245 | 245 |
 | Free Delivery | 165 | 165 |
-| **Target Scheme** | — | **573** |
+| **SOLV Target Scheme** | — | **573** |
 | Seller Offer (`hasOffer`) | 674 | **875** |
 | products with no offer | 396 | 195 |
 
 Kartik's catalog moves the same way and for the same reason: `239 / 104 / 75`
-unchanged, Target Scheme 296, Seller Offer 331 → 440. Every category, gender
+unchanged, SOLV Target Scheme 296, Seller Offer 331 → 440. Every category, gender
 and price count is untouched, and `seed.test.ts` — which pins the seven
 category counts — passes unchanged. `Seller Offer` growing is the intended
 consequence, not a side effect: products whose only offer was this one had none
 before.
 
-The **GOLD name went with the branding**; the scheme kept its own. A test
-asserts `offers:target-scheme` is on the strip and `offers:gold-target-scheme`
-never comes back with it.
+The **GOLD name went with the branding**; the scheme kept its own. A test asserts
+`offers:solv-target-scheme` is on the strip, and that neither
+`offers:gold-target-scheme` nor the unprefixed `offers:target-scheme` it shipped
+with for an hour comes back.
 
 **`OFFERS` is now explicitly typed.** With nothing carrying `retired`, TypeScript
 inferred the property away and the three files reading it stopped compiling —
@@ -1100,7 +1110,7 @@ in the Filters panel, and stays off the strip by not being listed. Each facet's
 discriminating options are computed once and looked up, rather than once per
 chip.
 
-**The icon arrived hours later** and is in — `public/offers/target-scheme.png`,
+**The icon arrived hours later** and is in — `public/offers/solv-target-scheme.png`,
 a blue ring under an orange arc, 240×240 with alpha. It is the one offer icon
 with real headroom: it draws at 20px in the 26px box, where `cashback.png`
 (48×37) and `seller-offer.png` (48×48) have almost none and are logged as
@@ -1113,7 +1123,7 @@ selection per M3.
 **Applied to every screen**, not just `/userjourney`: the catalog is shared so
 the revival is global regardless, and the offer chips are identical in all four
 variants, so a per-route order would be config for no stated reason. Verified —
-journey `Filter · Cashback · Seller Offer · Target Scheme · Free Delivery`, C
+journey `Filter · Cashback · Seller Offer · SOLV Target Scheme · Free Delivery`, C
 and D the same after Price, A unchanged (its strip is verticals until one is
 picked). Tapping the chip writes `?offers=target-scheme` and the cards carry
 the pill. 124 tests green, lint and build clean.
