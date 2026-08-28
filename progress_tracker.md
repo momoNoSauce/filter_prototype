@@ -997,6 +997,30 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-08-28 — the strip's shadow comes down again
+
+Reported as too much, and it was. `STRIP_ELEVATION` goes from
+`0 1px 2px rgba(0,0,0,0.18), 0 2px 6px 2px rgba(0,0,0,0.10)` to
+`0 1px 2px rgba(0,0,0,0.09), 0 2px 5px rgba(0,0,0,0.05)`.
+
+Two changes, and the second is the one that mattered: the alphas halve, and the
+ambient layer's **2px spread is dropped**. The spread is what pushed the shadow
+sideways into a visible grey band under the strip rather than a lift beneath it
+— halving the alpha alone would have made a fainter band, not a subtler
+elevation.
+
+**It can go this light because the elevation was never the only thing marking
+the edge.** `ChipStrip` carries a 1px `hairline` rule along its foot, added the
+same day as the elevation on 2026-08-21. M3 would use one *or* the other; this
+app was asked for both. With the rule doing the work of saying *where the band
+stops*, the shadow only has to say *that it is above the listing*, and that
+takes far less than M3's own figure.
+
+The alphas have now been taken down twice from the spec: 0.30/0.15 → 0.18/0.10
+→ 0.09/0.05. Still two layers, which is what keeps it reading as a raised
+surface rather than a drawn line, and still on the slot rather than
+`ChipStrip`, whose `overflow-hidden` would crop it.
+
 ### 2026-08-28 — the offer chips go fully rounded
 
 The four offer chips — Cashback, Seller Offer, Target Scheme, Free Delivery —

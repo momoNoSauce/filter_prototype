@@ -125,12 +125,24 @@ const ACTION_FOOTER_H = 61;
  * one for the lift. Two layers rather than one blurred grey, which is what makes
  * it read as a raised surface instead of a drawn line.
  *
+ * **Taken down a second time on 2026-08-28**, on the report that it read as too
+ * much. The alphas have now been halved twice from the spec — M3's 0.30/0.15
+ * went to 0.18/0.10 on 08-21 and to **0.09/0.05** here — and the ambient
+ * layer's 2px spread is gone, which is what was casting the visible grey band
+ * under the strip rather than a lift.
+ *
+ * It can go this light because **it is not the only thing marking the edge**:
+ * `ChipStrip` carries a 1px `hairline` border along its foot, added the same
+ * day as the elevation. M3 would use one or the other; this app was asked for
+ * both, and with the rule doing the work of saying *where the band stops*, the
+ * shadow only has to say *that it is above the listing*.
+ *
  * It sits on the **slot**, not on `ChipStrip`: the slot's `overflow-hidden` —
  * there to clip the strip as it slides away — would crop a shadow cast by
  * anything inside it.
  */
 const STRIP_ELEVATION =
-  "shadow-[0_1px_2px_rgba(0,0,0,0.18),0_2px_6px_2px_rgba(0,0,0,0.10)]";
+  "shadow-[0_1px_2px_rgba(0,0,0,0.09),0_2px_5px_rgba(0,0,0,0.05)]";
 
 type Overlay = "sort" | "filters" | null;
 
