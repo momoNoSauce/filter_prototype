@@ -1076,11 +1076,15 @@ in the Filters panel, and stays off the strip by not being listed. Each facet's
 discriminating options are computed once and looked up, rather than once per
 chip.
 
-**No icon for Target Scheme yet** — it is being supplied. The chip renders
-correctly without one (`icon` is optional, so the label leads and the 16px
-inset applies), and the commented line in `OFFER_ICONS` makes dropping the file
-in a one-line change. Nothing was drawn in to fill the gap, and the retired
-`gold-*.svg` exports were deliberately not used as a stand-in.
+**The icon arrived hours later** and is in — `public/offers/target-scheme.png`,
+a blue ring under an orange arc, 240×240 with alpha. It is the one offer icon
+with real headroom: it draws at 20px in the 26px box, where `cashback.png`
+(48×37) and `seller-offer.png` (48×48) have almost none and are logged as
+wanting vectors. In the gap the chip rendered label-only, which is what `icon`
+being optional buys; nothing was drawn in to fill it, and the retired
+`gold-*.svg` exports were deliberately not used as a stand-in. Verified: no
+404s, natural 240×240 drawing at 26×26, and the checkmark still replaces it on
+selection per M3.
 
 **Applied to every screen**, not just `/userjourney`: the catalog is shared so
 the revival is global regardless, and the offer chips are identical in all four
