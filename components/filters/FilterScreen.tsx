@@ -291,6 +291,17 @@ export function FilterScreen({
   const priceBandTicked = (draft.price ?? []).some((id) => !parsePriceRange(id));
 
   /**
+   * The mirror: a typed range disables the bands.
+   *
+   * Both directions, because the exclusivity is one rule and a rule that only
+   * shows itself one way round reads as a quirk of whichever control you
+   * happened to touch first. It also retires the last silent half of it —
+   * typing used to clear a ticked band without saying so, and now it can't be
+   * reached at all.
+   */
+  const priceRangeTyped = (draft.price ?? []).some((id) => parsePriceRange(id));
+
+  /**
    * The two boxes' values, read back out of the draft rather than held beside
    * it. One source of truth, so Clear Filters empties the fields through the
    * same path it empties everything else.
@@ -599,6 +610,9 @@ export function FilterScreen({
                       option={option}
                       selected={chosen.includes(option.id)}
                       onToggle={() => toggle(facetId, option.id)}
+                      // Only the price bands, and only while the boxes above
+                      // them hold the answer.
+                      disabled={isPricePanel && facetId === "price" && priceRangeTyped}
                     />
                   ))
                 )}

@@ -1043,8 +1043,13 @@ might be looking for.* The panel now carries **two boxes above the five bands**.
 The bands are the fast path and keep their live counts; the boxes cover what the
 bands don't.
 
-**The two are exclusive, and visibly so.** Ticking a band clears what was typed
-**and disables the boxes** while it stands; unticking hands them back. Both are
+**The two are exclusive, and visibly so in both directions.** Ticking a band
+clears what was typed **and disables the boxes**; typing a range **disables the
+bands**. Clearing either hands the other back. The second direction was added
+after the first shipped — one rule that only shows itself one way round reads
+as a quirk of whichever control you touched first, and doing both retires the
+last silent half of the rule, since typing can no longer clear a ticked band
+without saying so. Both are
 values on the `price` facet, where values OR — so leaving both standing would
 *widen* the result, and a buyer who typed 150–450 and then ticked *Under ₹200*
 would be shown ₹80 shirts. Disabling was asked for after the fact: exclusivity

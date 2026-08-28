@@ -18,16 +18,24 @@ export function OptionRow({
   option,
   selected,
   onToggle,
+  disabled = false,
 }: {
   option: CountedOption;
   selected: boolean;
   onToggle: () => void;
+  /**
+   * Another control on the same facet is holding the answer, so this one is
+   * out of play. Today only the price bands, while a min/max range is typed —
+   * the mirror of that range being disabled while a band is ticked.
+   */
+  disabled?: boolean;
 }) {
   return (
     <button
       onClick={onToggle}
       aria-pressed={selected}
-      className="flex h-[52px] w-full shrink-0 cursor-pointer items-center pr-[16px] pl-[14px] text-left"
+      disabled={disabled}
+      className="flex h-[52px] w-full shrink-0 cursor-pointer items-center pr-[16px] pl-[14px] text-left disabled:cursor-not-allowed disabled:opacity-40"
     >
       <Checkbox checked={selected} />
       {option.hex && (
