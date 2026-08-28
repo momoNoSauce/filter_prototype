@@ -33,7 +33,11 @@ export function parseSelections(
     const raw = params.get(facet.id);
     if (!raw) continue;
     const valid = new Set(facet.options.map((o) => o.id));
-    const chosen = raw.split(",").filter((id) => valid.has(id));
+    // `accepts` widens this for a facet whose selections aren't all in its
+    // option list — Price, for typed ranges. The guard itself stays: an id
+    // that is neither an option nor accepted is still dropped, so a
+    // hand-written query can't filter a listing on nonsense.
+    const chosen = raw.split(",").filter((id) => valid.has(id) || facet.accepts?.(id));
     if (chosen.length) selections[facet.id] = chosen;
   }
   // `?fit=slim-fit` with no single vertical would filter the list with no row

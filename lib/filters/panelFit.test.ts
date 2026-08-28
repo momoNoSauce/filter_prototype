@@ -3,7 +3,12 @@ import { getCatalog } from "@/lib/catalog/products";
 import { COLOURS } from "@/lib/catalog/seed";
 import { facetOptionsWithCounts } from "./engine";
 import { FACET_BY_ID, getRail } from "./facets";
-import { PANEL_VIEWPORT, needsSearch, panelContentHeight } from "./panelFit";
+import {
+  PANEL_VIEWPORT,
+  SHEET_PANEL_VIEWPORT,
+  needsSearch,
+  panelContentHeight,
+} from "./panelFit";
 
 const catalog = getCatalog();
 
@@ -123,5 +128,34 @@ describe("the panel geometry is the rendered geometry", () => {
     // 800px frame − 49px header − 61px ActionFooter. Spelled out so a change
     // to any of the three has to be made here as well.
     expect(PANEL_VIEWPORT).toBe(800 - 49 - 61);
+  });
+});
+
+describe("the sheet presentation's shorter fold", () => {
+  // `/userjourney` renders Filters as an 80% bottom sheet (2026-08-28), so the
+  // panel is 530px rather than 690 and lists earn a field sooner. Pinned like
+  // the full-bleed pair, so changing a row height in the markup without
+  // changing panelFit fails here rather than moving a field by one row.
+  const rows = (n: number) => [{ panel: "checkbox" as const, optionCount: n }];
+  const tiles = (n: number) => [{ panel: "tile" as const, optionCount: n }];
+
+  it("takes 11 checkbox rows, where the full-bleed panel takes 14", () => {
+    expect(needsSearch(rows(10), SHEET_PANEL_VIEWPORT)).toBe(false);
+    expect(needsSearch(rows(11), SHEET_PANEL_VIEWPORT)).toBe(true);
+    // The same counts still fit the full-bleed panel, which is unchanged.
+    expect(needsSearch(rows(13))).toBe(false);
+    expect(needsSearch(rows(14))).toBe(true);
+  });
+
+  it("takes 13 tiles, where the full-bleed panel takes 19", () => {
+    expect(needsSearch(tiles(12), SHEET_PANEL_VIEWPORT)).toBe(false);
+    expect(needsSearch(tiles(13), SHEET_PANEL_VIEWPORT)).toBe(true);
+    expect(needsSearch(tiles(18))).toBe(false);
+    expect(needsSearch(tiles(19))).toBe(true);
+  });
+
+  it("defaults to the full-bleed panel when no viewport is given", () => {
+    // A–D pass nothing and must be untouched by the sheet's existence.
+    expect(needsSearch(rows(13))).toBe(needsSearch(rows(13), PANEL_VIEWPORT));
   });
 });

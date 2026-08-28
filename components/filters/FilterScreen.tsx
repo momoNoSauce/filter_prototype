@@ -9,20 +9,51 @@ import {
   dropOrphanedSelections,
   getRail,
   getRailFacetIds,
+  parsePriceRange,
+  priceRangeId,
   settledVertical,
+  type RailPreset,
   type VerticalMode,
 } from "@/lib/filters/facets";
 import {
+  DEFAULT_SORT,
+  SORT_OPTIONS,
   clearSelections,
   countMatching,
   facetOptionsWithCounts,
   sameSelections,
   toggleSelection,
   type Selections,
+  type SortId,
 } from "@/lib/filters/engine";
-import { needsSearch } from "@/lib/filters/panelFit";
+import { SORT_ICONS } from "@/lib/filters/sortIcons";
+import { PRICE_INPUTS_H, SHEET_PANEL_VIEWPORT, needsSearch } from "@/lib/filters/panelFit";
 import { SearchField } from "./SearchField";
-import { OptionRow, TileGrid } from "./OptionRows";
+import { OptionRow, PriceRangeInputs, SortRow, TileGrid } from "./OptionRows";
+
+/**
+ * The rail id of the Sort By row — `/userjourney` only, and deliberately not a
+ * facet id: Sort is one value where every facet is a set, it is not in
+ * `FACETS`, and nothing may look it up in `FACET_BY_ID`. The `__` marks it as
+ * synthetic so it can never collide with a real facet.
+ */
+const SORT_RAIL_ID = "__sort";
+
+/**
+ * How much of the frame the sheet presentation takes.
+ *
+ * **80%**, chosen so that what stays visible is a recognisable piece of the
+ * listing rather than a strip of grey: at 800px that leaves 160px, which is the
+ * app bar, the chip strip and the top of the first card. Much taller and the
+ * context it exists to preserve is a sliver; much shorter and the rail — 60px a
+ * row — shows too few of its own rows to navigate.
+ *
+ * It is a percentage because `DeviceFrame` renders edge to edge below 480px, so
+ * the frame is `100dvh` on a phone and 800 only in the mockup. `panelFit`
+ * computes against the design height for the same reason it computes against
+ * the design width: the server has no viewport. See `SHEET_PANEL_VIEWPORT`.
+ */
+const SHEET_HEIGHT_PCT = 80;
 
 /**
  * Figma 638:3659 — the full-screen Filters sheet.
@@ -51,11 +82,22 @@ export function FilterScreen({
   onClose,
   onDiscard,
   onCleared,
+  onInvalidRange,
   verticalMode = FILTER_VERTICALS,
+  sort,
+  railPreset = "default",
+  clearsAlso,
+  asSheet = false,
+  priceInputs = false,
 }: {
   products: Product[];
   selections: Selections;
-  onApply: (next: Selections) => void;
+  /**
+   * Commit the draft. The second argument is the drafted sort, present only
+   * where Sort lives inside this screen — callers that don't pass `sort` can
+   * ignore it, and their handler's narrower signature still satisfies this one.
+   */
+  onApply: (next: Selections, sort?: SortId) => void;
   onClose: () => void;
   /**
    * Closed on the ✕ while holding edits that were never applied. This screen
@@ -71,18 +113,110 @@ export function FilterScreen({
    * this fires, so the toast belongs to the listing underneath.
    */
   onCleared: () => void;
+  /**
+   * A price range was left with min above max. The draft never took it — this
+   * is only so the listing's toast can say why nothing happened.
+   *
+   * Its own callback rather than a flag on `onApply`, for the reason
+   * `onCleared` is: these are different events that happen to share a screen,
+   * and one component owning every string is what stops two of them wording
+   * the same event differently. See *Which events speak*.
+   */
+  onInvalidRange: () => void;
   /** How this screen treats verticals — see `VerticalMode`. */
   verticalMode?: VerticalMode;
+  /**
+   * The current sort, which **moves Sort inside this screen when supplied**
+   * (2026-08-28, on the stakeholder review, `/userjourney` only).
+   *
+   * Passing it adds a *Sort By* row at the head of the rail, whose panel is the
+   * five options as single-select rows. Leaving it `undefined` is A–D, where
+   * Sort is its own control — the chip in B and D, the pill's left half in A
+   * and C — and this screen never mentions it.
+   *
+   * It joins the **draft** like everything else here, so a tap re-sorts nothing
+   * until `Show N results`, the ✕ discards it, and *Clear Filters* returns it
+   * to Popularity along with the filters. That last part is a deliberate
+   * stretch of the button's label, taken on the call: one control resets the
+   * screen completely, rather than leaving one row of it standing.
+   */
+  sort?: SortId;
+  /** Which rail this screen shows — see `RailPreset`. */
+  railPreset?: RailPreset;
+  /**
+   * Facets **Clear Filters must also reach**, though no rail row shows them.
+   *
+   * Normally empty, and deliberately so: wiping a filter from a screen that
+   * never displayed it is a silent surprise, which is why clearing is a filter
+   * over the rail rather than a blanket reset. The exception is a facet the
+   * buyer *can* see and toggle — just on the listing rather than here. On
+   * `/userjourney` the Offers row left the rail while the three offer chips
+   * stayed on the strip (2026-08-28), and without this `All filters cleared`
+   * would close onto two lit chips, which is the toast telling a lie.
+   *
+   * `PlpScreen` derives it from the chips actually on the strip, so a facet
+   * that gains or loses a chip needs nothing changed here.
+   */
+  clearsAlso?: readonly string[];
+  /**
+   * Render as a **bottom sheet over the listing** rather than a full-bleed
+   * screen. `/userjourney` only (2026-08-28); A–D are full-bleed still.
+   *
+   * The point is context: a full-bleed panel takes the buyer off the page they
+   * were filtering, so four ticks later the only report of what changed is a
+   * number in the footer. It also shortens the panel, which is why
+   * `panelFit` has to be told — see `SHEET_PANEL_VIEWPORT`.
+   */
+  asSheet?: boolean;
+  /**
+   * Add a typed **min and max** above the Price Range bands. `/userjourney`
+   * only (2026-08-28) — the bands are the fast path, with counts, and the
+   * boxes are the escape hatch for a range nobody predicted.
+   *
+   * The two are **exclusive**: typing replaces any ticked band and ticking a
+   * band clears a typed range. Both live on the `price` facet, where values
+   * OR, so leaving both standing would *widen* the result — a buyer who typed
+   * 150–450 and then ticked *Under ₹200* would be shown ₹80 shirts.
+   *
+   * A–D show the bands alone. Nothing there can produce a range, so their
+   * Price chip sheet is unaffected.
+   */
+  priceInputs?: boolean;
 }) {
   const [draft, setDraft] = useState<Selections>(selections);
+
+  /**
+   * Sort lives inside this screen exactly when a sort was handed to it. A
+   * derived flag rather than a second prop, so the two can't disagree — there
+   * is no "show the row but don't tell me the value".
+   */
+  const sortInside = sort !== undefined;
+  const [draftSort, setDraftSort] = useState<SortId>(sort ?? DEFAULT_SORT);
+  const openedSort = useRef(sort ?? DEFAULT_SORT);
 
   // The rail follows the *draft*, not the applied selections: ticking a single
   // vertical grows the attribute block immediately, and ticking a second one
   // takes it away again, without waiting for "Show N results". A Gender cut
   // that leaves one vertical standing does the same — see `settledVertical`.
   const settled = settledVertical(products, draft, verticalMode);
-  const RAIL = getRail(draft.category, verticalMode, settled);
-  const RAIL_FACET_IDS = getRailFacetIds(draft.category, verticalMode, settled);
+  const FACET_RAIL = getRail(draft.category, verticalMode, settled, railPreset);
+  const RAIL_FACET_IDS = getRailFacetIds(draft.category, verticalMode, settled, railPreset);
+
+  /**
+   * What Clear Filters empties: the rail, plus anything the listing shows that
+   * the rail doesn't. See `clearsAlso` — still a filter over a named set, never
+   * a blanket reset.
+   */
+  const CLEARABLE = new Set([...RAIL_FACET_IDS, ...(clearsAlso ?? [])]);
+
+  // Sort leads the rail when it lives here — it is the first question a buyer
+  // answers about a list they can already see, where every row below it
+  // narrows the list itself. `facetIds: []` keeps it out of every count and
+  // clear path that walks the rail by facet, which is what makes the rest of
+  // this screen need no special case for it.
+  const RAIL = sortInside
+    ? [{ id: SORT_RAIL_ID, label: "Sort By", facetIds: [] }, ...FACET_RAIL]
+    : FACET_RAIL;
 
   const [activeRail, setActiveRail] = useState(RAIL[0].id);
   const [query, setQuery] = useState("");
@@ -123,18 +257,58 @@ export function FilterScreen({
    */
   const dismiss = () =>
     exit({
-      announce: sameSelections(draft, opened.current) ? undefined : onDiscard,
+      announce:
+        sameSelections(draft, opened.current) && draftSort === openedSort.current
+          ? undefined
+          : onDiscard,
     });
 
   // The block can vanish under the cursor — tick a second vertical while
   // standing on Neck Type and that row is gone. Falling back to the first row
   // beats rendering an empty panel.
   const rail = RAIL.find((r) => r.id === activeRail) ?? RAIL[0];
+  /**
+   * Whether the open panel is Sort's rather than a facet's. `facetIds: []`
+   * means the facet path below produces an empty list on its own, so this
+   * decides only what gets rendered *instead* — no branch anywhere else needs
+   * to know.
+   */
+  const isSortPanel = rail.id === SORT_RAIL_ID;
+
+  /** Price rendered with typed inputs above its bands — see `priceInputs`. */
+  const isPricePanel = priceInputs && rail.facetIds.includes("price");
+
+  /**
+   * Any price *band* ticked, which disables the boxes (2026-08-28). The two
+   * were already exclusive; disabling states the rule before it costs the
+   * buyer their typing rather than after.
+   *
+   * Read off the draft rather than tracked separately, so a hand-written
+   * `?price=150-450,p-200` — both at once, which no control can produce —
+   * still shows a coherent screen: the band applies, the boxes are disabled,
+   * and unticking the band hands them back.
+   */
+  const priceBandTicked = (draft.price ?? []).some((id) => !parsePriceRange(id));
+
+  /**
+   * The two boxes' values, read back out of the draft rather than held beside
+   * it. One source of truth, so Clear Filters empties the fields through the
+   * same path it empties everything else.
+   */
+  const priceRange = (() => {
+    const chosen = draft.price?.[0];
+    const range = chosen ? parsePriceRange(chosen) : null;
+    if (!range) return { min: "", max: "" };
+    return {
+      min: range.min ? String(range.min) : "",
+      max: Number.isFinite(range.max) ? String(range.max) : "",
+    };
+  })();
   const total = useMemo(() => countMatching(products, draft), [products, draft]);
 
   // Only selections this screen can actually show enable "Clear Filters".
   const ownedCount = Object.entries(draft).reduce(
-    (sum, [facetId, chosen]) => sum + (RAIL_FACET_IDS.has(facetId) ? chosen.length : 0),
+    (sum, [facetId, chosen]) => sum + (CLEARABLE.has(facetId) ? chosen.length : 0),
     0,
   );
 
@@ -161,6 +335,10 @@ export function FilterScreen({
       panel: facet.panel,
       optionCount: options.length,
     })),
+    // The sheet's panel is 160px shorter, so lists earn a field sooner there.
+    asSheet ? SHEET_PANEL_VIEWPORT : undefined,
+    // The price panel carries its min/max boxes above the bands.
+    isPricePanel ? PRICE_INPUTS_H : 0,
   );
 
   /*
@@ -204,13 +382,32 @@ export function FilterScreen({
    */
   const clearAll = () =>
     exit({
-      commit: () => onApply(clearSelections(draft, RAIL_FACET_IDS)),
+      // Sort goes back to Popularity with the filters (2026-08-28). It is a
+      // stretch of the label, chosen on the call: the button resets this
+      // screen completely rather than leaving one row of it standing. Harmless
+      // in A–D, where `sortInside` is false and `DEFAULT_SORT` is what the
+      // caller already holds.
+      commit: () => onApply(clearSelections(draft, CLEARABLE), DEFAULT_SORT),
       announce: onCleared,
     });
 
   const toggle = (facetId: string, optionId: string) =>
     setDraft((current) => {
-      const next = toggleSelection(current, facetId, optionId);
+      /*
+       * **A band and a typed range are exclusive** (2026-08-28). Both live on
+       * the `price` facet, where values OR — so leaving a range standing while
+       * a band is ticked would *widen* the result, and a buyer who typed
+       * 150–450 and then ticked *Under ₹200* would be shown ₹80 shirts. They
+       * are two ways of saying one thing, so the last one used wins.
+       *
+       * Written here rather than in the input's handler because only this
+       * direction needs saying: the boxes already replace the whole selection.
+       */
+      const base =
+        facetId === "price"
+          ? { ...current, price: (current.price ?? []).filter((id) => !parsePriceRange(id)) }
+          : current;
+      const next = toggleSelection(base, facetId, optionId);
       // Recomputed from `next`, not from the render's `settled`: unticking the
       // Gender that settled the vertical has to orphan the attribute rows in
       // the same update that removes them from the rail.
@@ -221,37 +418,8 @@ export function FilterScreen({
       );
     });
 
-  return (
-    <div
-      /*
-       * **A fade with a 32px rise, not the sheets' full-height travel.**
-       *
-       * This shipped on `animate-sheet-in`/`-out` first, on the reasoning that
-       * a panel pinned to `inset-0` makes their `translateY(100%)` exactly the
-       * frame's height. It does, and that was the problem: 800px of literal
-       * travel reads as an elevator ride where the same 260ms over a 300px
-       * sheet reads as a sheet. Alpha should carry the arrival and the distance
-       * should only hint at the direction — which is what `dialog-in` already
-       * does one property over, scaling 8% rather than growing from nothing.
-       * See `screen-in` in `globals.css` for the numbers and why they are the
-       * scrim's rather than the sheets'.
-       *
-       * It still *rises*, so it still answers the pill at the foot of A and C,
-       * for a twenty-fifth of the movement. In B and D the chip is at the top
-       * and the connection is looser, but one screen with two motions depending
-       * on which control opened it is the worse answer.
-       */
-      className={`absolute inset-0 z-50 flex flex-col bg-white ${
-        closing ? "animate-screen-out" : "animate-screen-in"
-      }`}
-      // Children animate too; only react to the panel's own animation. The
-      // enter pass reaches here as well, which is what `closing` filters out.
-      onAnimationEnd={(e) => {
-        if (!closing || e.target !== e.currentTarget) return;
-        announcement.current?.();
-        onClose();
-      }}
-    >
+  const body = (
+    <>
       <div className="flex w-full shrink-0 items-center justify-between border-b border-[#dedede] bg-white px-[14px] py-[12px]">
         <div className="flex min-w-0 items-center gap-[8px]">
           {/* The same glyph the Filters control carries, so the screen is
@@ -280,10 +448,18 @@ export function FilterScreen({
         <div className="no-scrollbar w-[120px] shrink-0 overflow-y-auto pb-[16px]">
           {RAIL.map((entry, index) => {
             const active = entry.id === activeRail;
-            const applied = entry.facetIds.reduce(
-              (sum, id) => sum + (draft[id]?.length ?? 0),
-              0,
-            );
+            /*
+             * The rail's applied cue. For a facet row it is the number of
+             * ticked options; for Sort it is whether the value has left the
+             * default — which is the app's standing rule, a dot for one value
+             * and a count for many, and why `facetIds: []` needs no special
+             * case beyond this line. The rail draws a dot either way; the
+             * count is only ever a truthiness test here.
+             */
+            const applied =
+              entry.id === SORT_RAIL_ID
+                ? Number(draftSort !== DEFAULT_SORT)
+                : entry.facetIds.reduce((sum, id) => sum + (draft[id]?.length ?? 0), 0);
             return (
               <button
                 key={entry.id}
@@ -340,6 +516,53 @@ export function FilterScreen({
             <div className="h-[10px] shrink-0" />
           )}
 
+          {/*
+            The Sort By panel — five single-select rows, no counts and no
+            search field, a sort neither narrowing the list nor being long
+            enough to hunt through. `role="radiogroup"` because these are one
+            value where the rest of this screen is sets, which is also why they
+            are `SortRow` and not `OptionRow`.
+          */}
+          {isSortPanel && (
+            <div role="radiogroup" aria-label="Sort By" className="flex w-full flex-col">
+              {SORT_OPTIONS.map((option) => (
+                <SortRow
+                  key={option.id}
+                  label={option.label}
+                  icon={SORT_ICONS[option.id]}
+                  selected={option.id === draftSort}
+                  onSelect={() => setDraftSort(option.id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/*
+            The typed range, above the bands it is an alternative to. The
+            bands stay the fast path and keep their counts; these cover what
+            the bands don't. Ticking a band clears whatever is typed here —
+            see `toggle`.
+          */}
+          {isPricePanel && (
+            <PriceRangeInputs
+              min={priceRange.min}
+              max={priceRange.max}
+              onChange={(min, max) =>
+                setDraft((current) => {
+                  const id = priceRangeId(min, max);
+                  const next = { ...current };
+                  // Both boxes empty is no price filter at all, not a range of
+                  // nothing — so the key goes, and the badge stops counting it.
+                  if (id) next.price = [id];
+                  else delete next.price;
+                  return next;
+                })
+              }
+              onInvalid={onInvalidRange}
+              disabled={priceBandTicked}
+            />
+          )}
+
           {panelFacets.map(({ facet, options: counted }) => {
             const facetId = facet.id;
             const options = activeQuery
@@ -389,10 +612,91 @@ export function FilterScreen({
 
       <ActionFooter
         primaryLabel={`Show ${total.toLocaleString("en-IN")} results`}
-        clearDisabled={ownedCount === 0}
+        // Live when there is anything on this screen to clear, which since
+        // 2026-08-28 includes a non-default sort where Sort lives here.
+        clearDisabled={ownedCount === 0 && draftSort === DEFAULT_SORT}
         onClear={clearAll}
-        onPrimary={() => exit({ commit: () => onApply(draft) })}
+        onPrimary={() => exit({ commit: () => onApply(draft, draftSort) })}
       />
+    </>
+  );
+
+  /*
+   * **A bottom sheet, so the listing stays visible behind it** (2026-08-28, on
+   * the stakeholder review, `/userjourney` only).
+   *
+   * A full-bleed panel is the one surface in this app that takes the buyer off
+   * the page they were on: they tick four things against a listing they can no
+   * longer see, and the only report of what changed is a count in the footer.
+   * At `SHEET_HEIGHT` the app bar, the chip strip and the top of the first card
+   * stay on screen, so the filtering reads as happening *to* something.
+   *
+   * **The motion goes back to the sheets'.** `screen-in` exists because
+   * `translateY(100%)` on a panel pinned to `inset-0` is the whole 800px frame,
+   * and 800px of literal travel reads as an elevator ride — so that version
+   * rises 32px and lets alpha carry the arrival. That argument is about the
+   * distance, and the distance is now the sheet's own height, which is what
+   * `sheet-in` was written for. A–D keep `screen-in`, being still full-bleed.
+   *
+   * The scrim is a real exit, so it goes through `dismiss` — the same
+   * discard-checking path as the ✕, not a bare `onClose`. Escape does too.
+   */
+  if (!asSheet) {
+    return (
+      <div
+        /*
+         * **A fade with a 32px rise, not the sheets' full-height travel.**
+         *
+         * This shipped on `animate-sheet-in`/`-out` first, on the reasoning
+         * that a panel pinned to `inset-0` makes their `translateY(100%)`
+         * exactly the frame's height. It does, and that was the problem: 800px
+         * of literal travel reads as an elevator ride where the same 260ms over
+         * a 300px sheet reads as a sheet. Alpha should carry the arrival and
+         * the distance should only hint at the direction — which is what
+         * `dialog-in` already does one property over, scaling 8% rather than
+         * growing from nothing. See `screen-in` in `globals.css`.
+         *
+         * It still *rises*, so it still answers the pill at the foot of A and
+         * C, for a twenty-fifth of the movement.
+         */
+        className={`absolute inset-0 z-50 flex flex-col bg-white ${
+          closing ? "animate-screen-out" : "animate-screen-in"
+        }`}
+        // Children animate too; only react to the panel's own animation. The
+        // enter pass reaches here as well, which is what `closing` filters out.
+        onAnimationEnd={(e) => {
+          if (!closing || e.target !== e.currentTarget) return;
+          announcement.current?.();
+          onClose();
+        }}
+      >
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 z-50 flex flex-col justify-end">
+      <button
+        aria-label="Close filters"
+        className={`absolute inset-0 bg-black/40 ${
+          closing ? "animate-scrim-out" : "animate-scrim-in"
+        }`}
+        onClick={dismiss}
+      />
+      <div
+        style={{ height: `${SHEET_HEIGHT_PCT}%` }}
+        className={`relative flex min-h-0 flex-col overflow-hidden rounded-t-[8px] bg-white drop-shadow-[0px_-4px_8px_rgba(0,0,0,0.25)] ${
+          closing ? "animate-sheet-out" : "animate-sheet-in"
+        }`}
+        onAnimationEnd={(e) => {
+          if (!closing || e.target !== e.currentTarget) return;
+          announcement.current?.();
+          onClose();
+        }}
+      >
+        {body}
+      </div>
     </div>
   );
 }

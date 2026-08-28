@@ -41,6 +41,64 @@ export interface FacetDef {
    */
   valuesOf: (product: Product, sizes?: string[]) => string[];
   options: FacetOption[];
+  /**
+   * Override the default match, which is set membership over `valuesOf`.
+   *
+   * Exactly one facet needs this — Price, since 2026-08-28, because a typed
+   * `min–max` is not one of a fixed set of ids and so has nothing for
+   * `valuesOf` to return. The alternative was letting `valuesOf` see the price
+   * selection, and the registry's standing rule is that **Size is the only
+   * selection any facet may see**; widening that to "any facet may see its own"
+   * would make the dependency invisible again.
+   *
+   * It stays a registry field rather than an engine special case, so adding a
+   * facet is still one array entry and every facet still runs through one code
+   * path. `valuesOf` must keep working regardless — the counts are tallied from
+   * it, and a facet that only knew how to `match` could not be counted.
+   */
+  matches?: (product: Product, chosen: string[], sizes?: string[]) => boolean;
+  /**
+   * Accept a selection id that isn't one of `options` — the companion to
+   * `matches`, and needed by the same one facet.
+   *
+   * `parseSelections` validates every id in the query string against the
+   * facet's options, which is what stops a hand-typed `?seller=nonsense`
+   * filtering a listing to nothing. A typed price range is legitimate and in no
+   * option list, so Price widens the test rather than the guard being dropped:
+   * `?price=150-450` survives a reload, `?price=junk` still doesn't.
+   *
+   * A facet that overrides `matches` almost certainly needs this too — without
+   * it the selection works in-session and vanishes on refresh, which is exactly
+   * how this was found.
+   */
+  accepts?: (id: string) => boolean;
+}
+
+/**
+ * A typed price range, as it appears in a selection and in the URL: `150-450`,
+ * `150-` for a floor alone, `-450` for a ceiling alone.
+ *
+ * Plain digits and a hyphen rather than a prefixed id, so the URL reads
+ * `?price=150-450`. It cannot collide with a band: every bucket id starts with
+ * a letter and a hyphen (`p-200`, `p-max`), and this must start with a digit or
+ * the hyphen itself.
+ */
+const PRICE_RANGE_RE = /^(\d*)-(\d*)$/;
+
+export function parsePriceRange(id: string): { min: number; max: number } | null {
+  const hit = PRICE_RANGE_RE.exec(id);
+  if (!hit) return null;
+  const [, lo, hi] = hit;
+  // `-` alone is not a range; at least one end has to be given.
+  if (!lo && !hi) return null;
+  return { min: lo ? Number(lo) : 0, max: hi ? Number(hi) : Infinity };
+}
+
+/** The selection id for a typed range, or `null` when neither end is set. */
+export function priceRangeId(min: string, max: string): string | null {
+  const lo = min.replace(/\D/g, "");
+  const hi = max.replace(/\D/g, "");
+  return lo || hi ? `${lo}-${hi}` : null;
 }
 
 const slug = (value: string) =>
@@ -154,6 +212,32 @@ export const FACETS: FacetDef[] = [
     panel: "range",
     valuesOf: (p, sizes) => bucketId(PRICE_BUCKETS, activeVariant(p, sizes).pricePerPc),
     options: PRICE_BUCKETS.map(({ id, label }) => ({ id, label })),
+    /*
+     * Bands and typed ranges in one facet (2026-08-28). A–D tick bands; the
+     * journey types a range. Both are "which prices", so one facet holds them
+     * — two would AND against each other, and a buyer who typed 150–450 would
+     * then have to clear a band to see anything.
+     *
+     * A range and a band still OR, like any two values within a facet. Nothing
+     * offers both at once today: the journey's panel has no bands and A–D have
+     * no inputs.
+     *
+     * `min > max` is left to match nothing rather than being swapped or
+     * suppressed. It is a transient typing state, the footer says `Show 0
+     * results` the moment it happens, and correcting it is one keystroke —
+     * where silently swapping the ends filters on something the buyer did not
+     * type.
+     */
+    accepts: (id) => parsePriceRange(id) !== null,
+    matches: (p, chosen, sizes) => {
+      const price = activeVariant(p, sizes).pricePerPc;
+      return chosen.some((id) => {
+        const range = parsePriceRange(id);
+        return range
+          ? price >= range.min && price <= range.max
+          : bucketId(PRICE_BUCKETS, price).includes(id);
+      });
+    },
   },
   {
     id: "margin",
@@ -478,10 +562,83 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  * exactly one vertical is settled, and `mode` because C and D fix the vertical
  * as page scope instead.
  */
+/**
+ * `/userjourney`'s rail, from the 2026-08-28 stakeholder whiteboard.
+ *
+ * **A second order, not a re-order of the first.** A–D keep `RAIL_ORDER`, which
+ * follows a reference apparel PLP and is pinned by its own test; this is one
+ * route's request and the two are allowed to disagree. The 2×2 is a comparison
+ * of control *placement*, and the journey has never been part of it.
+ *
+ * The sequence asked for was Sort · Price · Margin · MOQ · Category · Brand ·
+ * Seller · Seller Location · Attributes. Two readings of it:
+ *
+ * - **Sort isn't here.** It is the rail's first row on this route, but it is
+ *   not a facet — `FilterScreen` prepends it, so this array stays a list of
+ *   facets and nothing may look up a sort in `FACET_BY_ID`.
+ * - **"Attributes" is eight rows, not one** (settled on the call): Colour,
+ *   Fabric and Size join the five vertical-specific rows at the foot, because
+ *   the note grouped them by position rather than asking for one panel. One
+ *   merged row would have stacked ~60 options behind a single entry and earned
+ *   a search field.
+ *
+ * **Four rows were dropped outright**: Gender, Delivery Time, Offers and More
+ * Filters. Two of those have consequences worth keeping in view —
+ *
+ * - **Gender** was this journey's documented cut. *Category → Women's T-Shirts*
+ *   replaces it and settles the vertical identically, Kartik carrying exactly
+ *   three verticals of which one is women's. The demo script changed with it.
+ * - **Offers** owned `hasOffer` and `offers`, which the three strip chips
+ *   select. With no rail row they no longer count toward the Filters badge —
+ *   correct, since a lit chip already reports itself and double-reporting is
+ *   what that badge rule exists to prevent — but Clear Filters must still reach
+ *   them, or `All filters cleared` closes onto two lit chips. `PlpScreen` passes
+ *   them to `FilterScreen` as `clearsAlso` for exactly that reason.
+ *
+ * Colour and Fabric stay visible whether or not a vertical is settled. Grouping
+ * them under "attributes" is about where they sit, not when they show: Cotton
+ * means the same on a shirt as on a tee, which is the standing argument for
+ * Fabric never having joined the vertical block.
+ */
+const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
+  { id: "price", label: "Price Range", facetIds: ["price"] },
+  { id: "margin", label: "Margin", facetIds: ["margin"] },
+  { id: "moq", label: "MOQ", facetIds: ["moq"] },
+  { id: "category", label: "Category", facetIds: ["category"], only: "filter" },
+  { id: "brand", label: "Brands", facetIds: ["brand"] },
+  { id: "seller", label: "Seller", facetIds: ["seller"] },
+  { id: "sellerCity", label: "Seller City", facetIds: ["sellerCity"] },
+  // The attribute block. Colour and Fabric always; the rest only inside one
+  // settled vertical, exactly as in the default rail.
+  { id: "colour", label: "Colour", facetIds: ["colour"] },
+  { id: "fabric", label: "Fabric", facetIds: ["fabric"] },
+  { id: "size", label: "Size", facetIds: ["size"], vertical: true },
+  { id: "fit", label: "Fit", facetIds: ["fit"], vertical: true },
+  { id: "neck", label: "Neck Type", facetIds: ["neck"], vertical: true },
+  { id: "sleeve", label: "Sleeve Type", facetIds: ["sleeve"], vertical: true },
+  { id: "pattern", label: "Pattern", facetIds: ["pattern"], vertical: true },
+  { id: "closure", label: "Closure Type", facetIds: ["closure"], vertical: true },
+];
+
+/**
+ * Which rail a screen shows. `"default"` is A–D and every route that says
+ * nothing; `"journey"` is the 2026-08-28 order above. A named preset rather
+ * than an array prop because these pages are Server Components handing props to
+ * a Client one, and a name keeps the arrays — and the tests that pin them —
+ * in this file.
+ */
+export type RailPreset = "default" | "journey";
+
+const RAILS: Record<RailPreset, typeof RAIL_ORDER> = {
+  default: RAIL_ORDER,
+  journey: JOURNEY_RAIL_ORDER,
+};
+
 export function getRail(
   category?: string[],
   mode: VerticalMode = FILTER_VERTICALS,
   settled: string | null = null,
+  preset: RailPreset = "default",
 ): RailEntry[] {
   const locked = mode.kind === "locked";
   /*
@@ -499,7 +656,7 @@ export function getRail(
   const genderRedundant = locked || inSingleVertical(category);
   const showVertical = genderRedundant || settled !== null;
 
-  return RAIL_ORDER.filter(
+  return RAILS[preset].filter(
     (row) =>
       !(locked && row.only === "filter") &&
       !(row.vertical && !showVertical) &&
@@ -516,8 +673,9 @@ export function getRailFacetIds(
   category?: string[],
   mode: VerticalMode = FILTER_VERTICALS,
   settled: string | null = null,
+  preset: RailPreset = "default",
 ): Set<string> {
-  return new Set(getRail(category, mode, settled).flatMap((entry) => entry.facetIds));
+  return new Set(getRail(category, mode, settled, preset).flatMap((entry) => entry.facetIds));
 }
 
 /**

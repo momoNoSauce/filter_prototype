@@ -20,21 +20,25 @@
 export function Toast({
   text,
   onDone,
-  clearsBottomBar,
+  bottom,
 }: {
   text: string;
   onDone: () => void;
   /**
-   * Variant A has to sit above the bottom bar; Variant B has no bar, and
-   * holding the same offset there would leave it floating over nothing.
+   * How far off the frame's foot to sit, in px.
+   *
+   * A number rather than the `clearsBottomBar` boolean it replaced: what has
+   * to be cleared is the pill in A and C, the basket bar in B, D and the
+   * journey, both, or neither, and only the caller knows which of those is on
+   * screen right now. Asking the variant got it wrong in two of the four
+   * combinations — see `toastBottom` in `PlpScreen`.
    */
-  clearsBottomBar: boolean;
+  bottom: number;
 }) {
   return (
     <div
-      className={`pointer-events-none absolute inset-x-0 z-50 flex justify-center px-[16px] ${
-        clearsBottomBar ? "bottom-[72px]" : "bottom-[24px]"
-      }`}
+      style={{ bottom }}
+      className="pointer-events-none absolute inset-x-0 z-50 flex justify-center px-[16px]"
     >
       <div
         // Announced without stealing focus — the toast is never interactive,

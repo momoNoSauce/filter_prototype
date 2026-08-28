@@ -19,6 +19,7 @@ import {
   FACET_BY_ID,
   FILTER_VERTICALS,
   getRail,
+  parsePriceRange,
   getRailFacetIds,
   settledVertical,
 } from "./facets";
@@ -843,6 +844,186 @@ describe("variants C and D — the page is the vertical", () => {
 
     // The unscoped strip does the opposite with the same products.
     expect(contextChips(scope.products, {}).every((c) => c.kind === "vertical")).toBe(true);
+  });
+
+  it("carries no vertical chip in any state when the screen opts out", () => {
+    // `/userjourney` (2026-08-28): a buyer already in a storefront gets the
+    // price and offer chips from the first paint instead of a choice of
+    // garment type. Unlike LOCKED, this is a strip change only — the rail
+    // keeps Category and Gender.
+    const off = { verticals: false };
+
+    // Nothing picked: the default strip offers verticals, this one leads with
+    // the chips that would otherwise wait for one to be settled.
+    expect(contextChips(catalog, {}).every((c) => c.kind === "vertical")).toBe(true);
+    expect(contextChips(catalog, {}, FILTER_VERTICALS, off).some((c) => c.kind === "vertical"))
+      .toBe(false);
+    expect(contextChips(catalog, {}, FILTER_VERTICALS, off)[0].kind).toBe("price");
+
+    // One picked: the default keeps it leading the strip as the way back out;
+    // opted out, it is gone too — the accepted cost of the call.
+    const picked = { category: ["girls-t-shirts"] };
+    expect(contextChips(catalog, picked)[0].kind).toBe("vertical");
+    expect(contextChips(catalog, picked, FILTER_VERTICALS, off).some((c) => c.kind === "vertical"))
+      .toBe(false);
+
+    // The chips it does carry are the real ones, counted against the pick.
+    const chips = contextChips(catalog, picked, FILTER_VERTICALS, off);
+    expect(chips.map((c) => c.facetId)).toEqual(["price", "hasOffer", "offers", "offers"]);
+    const price = chips.find((c) => c.kind === "price");
+    expect(price && price.options.length).toBeGreaterThan(0);
+  });
+
+  it("filters price by a typed range, not just a band", () => {
+    // `/userjourney` carries a min/max above the bands (2026-08-28); A–D show
+    // the bands alone. Both live on the `price` facet — one facet, because two
+    // would AND and a typed range would then need a band cleared to show
+    // anything. Within the facet they OR, which is why the UI keeps them
+    // exclusive; the engine itself has no opinion and is tested for both.
+    const priced = (sel: Record<string, string[]>) =>
+      applyFilters(catalog, sel).map((p) => activeVariant(p).pricePerPc);
+
+    const between = priced({ price: ["150-450"] });
+    expect(between.length).toBeGreaterThan(0);
+    expect(between.every((v) => v >= 150 && v <= 450)).toBe(true);
+
+    // Open-ended at either end.
+    expect(priced({ price: ["800-"] }).every((v) => v >= 800)).toBe(true);
+    expect(priced({ price: ["-150"] }).every((v) => v <= 150)).toBe(true);
+
+    // Inverted stays empty rather than being silently swapped: it is a
+    // transient typing state and the footer reports it honestly.
+    expect(priced({ price: ["450-150"] })).toHaveLength(0);
+
+    // A bare hyphen is not a range, so it falls through to band matching and
+    // matches nothing — a hand-typed `?price=-` can't empty the listing.
+    expect(parsePriceRange("-")).toBeNull();
+
+    // Band ids still work and can never be read as a range.
+    expect(parsePriceRange("p-200")).toBeNull();
+    expect(priced({ price: ["p-200"] }).every((v) => v < 200)).toBe(true);
+  });
+
+  it("carries a typed price range through the URL and back", () => {
+    // Found in the browser, not by reading: the range filtered correctly
+    // in-session and vanished on reload, because `parseSelections` validates
+    // every id against the facet's options and a range is in no option list.
+    const round = (q: string) => parseSelections(new URLSearchParams(q));
+
+    expect(round("price=150-450")).toEqual({ price: ["150-450"] });
+    expect(round("price=800-")).toEqual({ price: ["800-"] });
+    expect(round("price=-450")).toEqual({ price: ["-450"] });
+    expect(round("price=p-200")).toEqual({ price: ["p-200"] });
+
+    // The guard still guards: neither an option nor a range.
+    expect(round("price=junk")).toEqual({});
+    expect(round("price=-")).toEqual({});
+
+    // And it survives a build → parse round trip.
+    const q = buildQuery({ price: ["150-450"] }, "popularity");
+    expect(q).toBe("?price=150-450");
+    expect(round(q.slice(1))).toEqual({ price: ["150-450"] });
+  });
+
+  it("counts the price bands the same whether or not a range is typed", () => {
+    // The one rule that matters: a facet is counted against every *other*
+    // facet's selections and never its own. A typed range is one of its own,
+    // so it must not move the band counts — which is what still lets A–D show
+    // live counts on a facet the journey drives with an input.
+    const plain = facetOptionsWithCounts(catalog, {}, "price");
+    const withRange = facetOptionsWithCounts(catalog, { price: ["150-450"] }, "price");
+    expect(withRange).toEqual(plain);
+  });
+
+  it("gives /userjourney its own rail order, in full", () => {
+    // Pinned in full, like the default rail, because the interesting failure
+    // is a row quietly moving rather than one going missing.
+    expect(getRail(undefined, FILTER_VERTICALS, null, "journey").map((r) => r.label)).toEqual([
+      "Price Range",
+      "Margin",
+      "MOQ",
+      "Category",
+      "Brands",
+      "Seller",
+      "Seller City",
+      "Colour",
+      "Fabric",
+    ]);
+
+    // Inside one settled vertical the attribute block joins at the foot, and
+    // Colour and Fabric stay above it — they are grouped there by position,
+    // not by when they show.
+    expect(
+      getRail(["womens-t-shirts"], FILTER_VERTICALS, "womens-t-shirts", "journey").map(
+        (r) => r.label,
+      ),
+    ).toEqual([
+      "Price Range",
+      "Margin",
+      "MOQ",
+      "Category",
+      "Brands",
+      "Seller",
+      "Seller City",
+      "Colour",
+      "Fabric",
+      "Size",
+      "Fit",
+      "Neck Type",
+      "Sleeve Type",
+      "Pattern",
+      "Closure Type",
+    ]);
+
+    // The four that were dropped, and the default rail keeping every one of
+    // them — the two orders are allowed to disagree.
+    const journey = getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey");
+    const dflt = getRailFacetIds();
+    for (const gone of ["gender", "delivery", "hasOffer", "offers", "tags"]) {
+      expect(journey.has(gone)).toBe(false);
+      expect(dflt.has(gone)).toBe(true);
+    }
+
+    // Gender leaving does not strand it: Category is still there, and it is a
+    // ticked category that settles the vertical which puts Size on the rail.
+    expect(journey.has("category")).toBe(true);
+  });
+
+  it("still clears a facet whose chip outlived its rail row", () => {
+    // The journey rail has no Offers row, but the strip keeps the three offer
+    // chips. Clearing has to reach them or `All filters cleared` closes onto a
+    // lit chip — so the clear scope is the rail *plus* what the listing shows.
+    const rail = getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey");
+    const selections = { price: ["under-200"], offers: ["cashback"], hasOffer: ["any"] };
+
+    // The rail alone would leave both offer selections standing.
+    expect(clearSelections(selections, rail)).toEqual({
+      offers: ["cashback"],
+      hasOffer: ["any"],
+    });
+
+    // The rail plus the strip's own facets clears everything the buyer can see.
+    const clearable = new Set([...rail, "hasOffer", "offers"]);
+    expect(clearSelections(selections, clearable)).toEqual({});
+  });
+
+  it("drops the Price chip on request, leaving the offers", () => {
+    // `/userjourney` again (2026-08-28). Price Range stays a rail facet, so
+    // turning the chip off strands nothing — which is the reason this is
+    // allowed where a chip-only facet would not be.
+    const off = { verticals: false, price: false };
+    const chips = contextChips(catalog, {}, FILTER_VERTICALS, off);
+
+    expect(chips.map((c) => c.facetId)).toEqual(["hasOffer", "offers", "offers"]);
+    expect(chips.some((c) => c.kind === "price")).toBe(false);
+    expect(getRailFacetIds().has("price")).toBe(true);
+
+    // Each flag is independent: price off alone keeps the verticals.
+    expect(
+      contextChips(catalog, {}, FILTER_VERTICALS, { price: false }).every(
+        (c) => c.kind === "vertical",
+      ),
+    ).toBe(true);
   });
 
   it("filters and counts inside the vertical like any other page", () => {

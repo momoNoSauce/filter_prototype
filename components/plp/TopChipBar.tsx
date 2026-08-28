@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CHIP_H, ChipStrip } from "./ContextChips";
+import { CHIP_H_TALL, ChipStrip } from "./ContextChips";
 
 /**
  * Figma 644:4011 — the Sort / Filter chip bar, used by Variant B.
@@ -60,12 +60,29 @@ export function TopChipBar({
   filterCount,
   onSort,
   onFilters,
+  showSort = true,
+  chipH = CHIP_H_TALL,
   children,
 }: {
   sortActive: boolean;
   filterCount: number;
   onSort: () => void;
   onFilters: () => void;
+  /**
+   * Whether the Sort chip is here at all. `false` on `/userjourney` since
+   * 2026-08-28, where Sort moved inside the Filters screen as the first row of
+   * its rail — the frame draws two chips, and one control in two places is the
+   * thing this repo keeps removing. The divider stays: it separates the
+   * screen's own controls from the contextual chips, and that boundary holds
+   * whether there are two chips before it or one.
+   */
+  showSort?: boolean;
+  /**
+   * One height for the whole row, chosen by the screen — see `CHIP_H_TALL`.
+   * Imported rather than declared here for the reason it always was: two
+   * heights in one scrolling row is what looks broken.
+   */
+  chipH?: string;
   /** Contextual chips, placed after the frame's divider. */
   children?: ReactNode;
 }) {
@@ -76,12 +93,21 @@ export function TopChipBar({
           beside `Filter` names its control; this is also the same
           `SortAscending` the bottom bar has always carried, so the two
           placements now differ in placement alone. */}
-      <Chip icon="/figma/icons/sort.svg" label="Sort" dot={sortActive} onClick={onSort} />
+      {showSort && (
+        <Chip
+          icon="/figma/icons/sort.svg"
+          label="Sort"
+          dot={sortActive}
+          onClick={onSort}
+          chipH={chipH}
+        />
+      )}
       <Chip
         icon="/figma/icons/funnel.svg"
         label="Filter"
         badge={filterCount}
         onClick={onFilters}
+        chipH={chipH}
       />
       {/* The frame's divider, grown with the chips it separates — it read as
           22 of 32, so it keeps that proportion against the taller row. */}
@@ -97,12 +123,14 @@ function Chip({
   dot,
   badge,
   onClick,
+  chipH,
 }: {
   icon: string;
   label: string;
   dot?: boolean;
   badge?: number;
   onClick: () => void;
+  chipH: string;
 }) {
   // Active state carries over from the bottom bar so both variants report
   // themselves the same way: a dot for one value, a count for many.
@@ -115,7 +143,7 @@ function Chip({
       // now sometimes a filled counter rather than a line glyph, and 4px left it
       // crowding the label. Constant in both states, so the chip's width doesn't
       // move as filters are applied.
-      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center justify-center gap-[8px] rounded-[8px] border px-[12px] ${
+      className={`flex ${chipH} shrink-0 cursor-pointer items-center justify-center gap-[8px] rounded-[8px] border px-[12px] ${
         active ? "border-primary bg-primary-subtle" : "border-[#4d4d4d] bg-white"
       }`}
     >

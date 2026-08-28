@@ -34,6 +34,9 @@ function matchesFacet(
 ): boolean {
   const facet = FACET_BY_ID.get(facetId);
   if (!facet) return true;
+  // A facet may override the match — only Price does, for typed ranges, which
+  // are not one of a fixed set of ids. Everything else is set membership.
+  if (facet.matches) return facet.matches(product, chosen, sizes);
   const values = facet.valuesOf(product, sizes);
   // OR within a facet.
   return values.some((value) => chosen.includes(value));

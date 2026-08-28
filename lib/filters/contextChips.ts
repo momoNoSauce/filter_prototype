@@ -36,6 +36,24 @@ export type ContextChip =
  *   it with an unremovable chip would be a ✕ that isn't there, and a removable
  *   one would have to unmake the page.
  *
+ * **`price: false` drops the Price chip too** (2026-08-28, same review and the
+ * same route). Price Range is a rail facet as well, so the bands stay
+ * reachable in the Filters panel and nothing is orphaned by the chip going.
+ *
+ * **`verticals: false` says the strip never carries one at all** (2026-08-28,
+ * on the stakeholder review, and `/userjourney` only). The reading there is
+ * that a buyer already in a storefront has not come to choose a garment type,
+ * so the chips worth surfacing immediately are the ones that would otherwise
+ * wait behind a vertical being settled — Price, Seller Offer, Cashback, Free
+ * Delivery. Those are what the strip leads with from the first paint.
+ *
+ * It is **not** the same switch as `locked`, which is why it is its own flag:
+ * `locked` says the vertical is page scope and takes Category and Gender off
+ * the rail with it, and the journey needs both — *Gender → Women* is its
+ * central cut. This changes the strip and nothing else. The **cost, accepted
+ * on the call**: with the picked chip gone too, nothing on the listing names
+ * the cut, and the Filters count badge is the only report of it.
+ *
  * Pure, and separate from the rendering, because the interesting part is this
  * selection rule rather than the markup.
  */
@@ -43,16 +61,27 @@ export function contextChips(
   products: Product[],
   selections: Selections,
   mode: VerticalMode = FILTER_VERTICALS,
+  {
+    verticals: carriesVerticals = true,
+    price: carriesPrice = true,
+  }: { verticals?: boolean; price?: boolean } = {},
 ): ContextChip[] {
-  const locked = mode.kind === "locked";
+  // Two independent reasons the strip carries no vertical chip: the page *is*
+  // one (C and D), or the screen has asked not to offer them (`/userjourney`).
+  // Both land here, so the rest of the function reads one flag.
+  const showVerticals = mode.kind !== "locked" && carriesVerticals;
   const picked = selections.category ?? [];
-  const verticals = locked ? [] : facetOptionsWithCounts(products, selections, "category");
+  const verticalOptions = showVerticals
+    ? facetOptionsWithCounts(products, selections, "category")
+    : [];
 
-  if (!locked && picked.length !== 1) {
-    return verticals.map((option) => ({ kind: "vertical", facetId: "category", option }));
+  if (showVerticals && picked.length !== 1) {
+    return verticalOptions.map((option) => ({ kind: "vertical", facetId: "category", option }));
   }
 
-  const current = locked ? undefined : verticals.find((option) => option.id === picked[0]);
+  const current = showVerticals
+    ? verticalOptions.find((option) => option.id === picked[0])
+    : undefined;
 
   return [
     // Leads the strip. `facetOptionsWithCounts` keeps a selected option even at
@@ -60,11 +89,19 @@ export function contextChips(
     ...(current
       ? [{ kind: "vertical" as const, facetId: "category" as const, option: current }]
       : []),
-    {
-      kind: "price",
-      facetId: "price",
-      options: facetOptionsWithCounts(products, selections, "price"),
-    },
+    // Price is a chip *and* a rail facet, so switching the chip off strands
+    // nothing — the bands stay reachable in the Filters panel, which is where
+    // the same `OptionRow`s already render. `/userjourney` turns it off
+    // (2026-08-28) so the strip is the three offers alone.
+    ...(carriesPrice
+      ? [
+          {
+            kind: "price" as const,
+            facetId: "price" as const,
+            options: facetOptionsWithCounts(products, selections, "price"),
+          },
+        ]
+      : []),
     ...OFFER_CHIPS.flatMap(({ facetId, only }) =>
       discriminatingOptions(products, selections, facetId)
         .filter((option) => !only || only.includes(option.id))

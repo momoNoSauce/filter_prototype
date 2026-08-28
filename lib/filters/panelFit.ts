@@ -30,6 +30,21 @@ import type { PanelType } from "./facets";
  */
 export const PANEL_VIEWPORT = 690;
 
+/**
+ * The same arithmetic for the **sheet** presentation (`/userjourney`,
+ * 2026-08-28): 80% of the 800px frame is 640, less the same 49px header and
+ * 61px footer.
+ *
+ * Computed against the *design* height for the reason `PANEL_VIEWPORT` is —
+ * the server has no viewport, and a measured rule would render no field on the
+ * server and add one after hydration, which is the 56px shift this module
+ * exists to avoid. Exact at 800 and slightly optimistic on a taller phone,
+ * where the sheet's 80% is more than 640 and a panel could earn a field it
+ * doesn't need. That way round is the cheap one: a search field over a list
+ * that happens to fit costs 56px, where the reverse costs a layout shift.
+ */
+export const SHEET_PANEL_VIEWPORT = 530;
+
 /** `OptionRow` — `h-[52px]`. */
 export const OPTION_ROW_H = 52;
 
@@ -46,6 +61,17 @@ export const SEARCH_FIELD_H = 56;
 
 /** The spacer that stands in for the field when it isn't shown. */
 export const PANEL_TOP_SPACER = 10;
+
+/**
+ * `PriceRangeInputs` — `pt-[6px]` + a 44px field + `pb-[12px]`.
+ *
+ * Counted rather than waved through: the price panel is five bands and 62px
+ * of boxes, which cannot overflow either fold, but the rule this module keeps
+ * is that a height in the markup has a figure here. A block that only some
+ * panels carry is passed in as `lead` rather than living in `PanelBlock`,
+ * since it is a property of the panel and not of any facet in it.
+ */
+export const PRICE_INPUTS_H = 62;
 
 /**
  * A facet heading — `pt-[12px]` + a 12px line + `pb-[4px]`. Only "More
@@ -86,14 +112,23 @@ export function panelContentHeight(blocks: PanelBlock[]): number {
 }
 
 /**
- * Whether the panel earns a search field. Works out to **14 checkbox rows** or
- * **22 tiles** at the sizes above — 13 rows come to 686px against the 690px
- * the panel has, and the fourteenth is what pushes it over.
+ * Whether the panel earns a search field.
+ *
+ * At the full-bleed 690 that is **14 checkbox rows** or **19 tiles** — 13 rows
+ * come to 686px against the 690 the panel has, and the fourteenth pushes it
+ * over. In the 530px sheet it is **11 rows** or **13 tiles**. A test pins both
+ * pairs, so changing a row height in the markup without changing it here fails
+ * loudly rather than moving a field by one row.
  *
  * Adding the field only ever costs more room than the spacer it replaces, so
  * a list that overflows without it still overflows with it. The answer can't
  * oscillate, which is why one pass over the counts is enough.
  */
-export function needsSearch(blocks: PanelBlock[]): boolean {
-  return PANEL_TOP_SPACER + panelContentHeight(blocks) > PANEL_VIEWPORT;
+export function needsSearch(
+  blocks: PanelBlock[],
+  viewport: number = PANEL_VIEWPORT,
+  /** Fixed height above the options — today only `PRICE_INPUTS_H`. */
+  lead: number = 0,
+): boolean {
+  return PANEL_TOP_SPACER + lead + panelContentHeight(blocks) > viewport;
 }

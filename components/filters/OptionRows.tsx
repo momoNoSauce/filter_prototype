@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
 import type { CountedOption } from "@/lib/filters/engine";
+import { MaskIcon } from "@/components/ui/MaskIcon";
 
 /**
  * Figma 644:4163 — a facet option row. 52px tall, a 20px box at x=14, label at
@@ -220,5 +223,213 @@ export function TileGrid({
         );
       })}
     </div>
+  );
+}
+
+/**
+ * A Sort By row in the Filters panel — `/userjourney` only (2026-08-28).
+ *
+ * Single-select, so it carries **no checkbox**: every other row in this panel
+ * is a checkbox because every other facet is multi-select, and a checkbox on a
+ * radio control would promise a second tick the list can't hold. It takes the
+ * Sort sheet's own treatment instead — the glyph leads, and the active row is
+ * bold, primary, and tints its icon, which is the three-part active state
+ * already documented for Sort.
+ *
+ * The height is `OptionRow`'s 52px rather than the sheet's, so the panel keeps
+ * one row pitch whichever rail entry is open.
+ */
+export function SortRow({
+  label,
+  icon,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  icon: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      onClick={onSelect}
+      role="radio"
+      aria-checked={selected}
+      className="flex h-[52px] w-full shrink-0 cursor-pointer items-center gap-[10px] pr-[16px] pl-[14px] text-left"
+    >
+      <MaskIcon
+        src={icon}
+        className="size-[20px] shrink-0"
+        color={selected ? "var(--color-primary)" : "#323232"}
+      />
+      <span
+        className={`min-w-0 flex-1 truncate text-[15px] ${
+          selected ? "font-bold text-primary" : "text-[#323232]"
+        }`}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
+
+/**
+ * The typed min and max above the Price Range bands on `/userjourney`
+ * (2026-08-28, on the stakeholder review: *"we can't predict the exact range
+ * the customer might be looking for"*).
+ *
+ * **Local text state, committed only when valid.** The obvious build controls
+ * both boxes straight from the draft, which is wrong the moment a rule refuses
+ * a value: editing `min` to 900 against a max of 450 would be rejected, the
+ * draft would keep 150–450, and the box would snap back to `150` under the
+ * cursor. So the text is local, `onChange` fires only for a pair the draft can
+ * hold, and the effect below re-seeds from the draft when something *else*
+ * changes it — ticking a band clears the range, and the boxes have to empty
+ * with it.
+ *
+ * **A ticked band disables the boxes** (asked for the same day). The two were
+ * already exclusive — ticking a band cleared whatever was typed — but silently,
+ * so the rule was only visible after you had lost your typing to it. Disabled,
+ * the exclusivity is stated before it costs anything, and the way back is the
+ * band you just ticked, sitting directly below.
+ *
+ * `disabled` on the inputs rather than a hidden block: a control that vanishes
+ * reads as a bug, where a greyed one reads as unavailable. It also keeps the
+ * panel's height steady as bands are ticked.
+ *
+ * **`min > max` is refused rather than applied** (asked for the same day). It
+ * used to filter honestly and hand back `Show 0 results`, which is accurate
+ * and unhelpful: nothing said *why* zero. Now the draft never takes it, and
+ * `onInvalid` fires **on blur** — not on every keystroke, or typing `9` into
+ * min against a max of 450 would scold you mid-number.
+ *
+ * `inputMode="numeric"` rather than `type="number"`: this is a kirana retailer
+ * on a mid-range Android, so the numeric keypad matters, while `type="number"`'s
+ * spinners, scroll-to-change and locale-dependent parsing do not. Non-digits
+ * are stripped on the way in, so a pasted `₹1,200` becomes `1200`.
+ */
+export function PriceRangeInputs({
+  min,
+  max,
+  onChange,
+  onInvalid,
+  disabled = false,
+}: {
+  min: string;
+  max: string;
+  onChange: (min: string, max: string) => void;
+  /** Blurred with min > max. The draft was never given the value. */
+  onInvalid: () => void;
+  /** A price band is ticked, and the two are exclusive. */
+  disabled?: boolean;
+}) {
+  const [text, setText] = useState({ min, max });
+
+  /*
+   * Re-seed when the draft's range changes underneath — Clear Filters, or a
+   * band being ticked, which clears the range it is exclusive with.
+   *
+   * Adjusted **during render** rather than in an effect. React 19 flags
+   * `setState` inside an effect as a cascading render, and it would also paint
+   * the stale value for a frame first; this is the documented
+   * derive-from-props pattern and React re-runs the component before touching
+   * the DOM. `seen` is what makes it fire on a genuine prop change only — the
+   * invalid case never reaches the draft, so the props don't move and the text
+   * the buyer typed survives.
+   */
+  const [seen, setSeen] = useState({ min, max });
+  if (seen.min !== min || seen.max !== max) {
+    setSeen({ min, max });
+    setText({ min, max });
+  }
+
+  const inverted = (a: string, b: string) => a !== "" && b !== "" && Number(a) > Number(b);
+
+  const edit = (next: { min: string; max: string }) => {
+    setText(next);
+    // Only a pair the draft can hold reaches it, so the listing behind never
+    // shows the result of a range the buyer is being told is invalid.
+    if (!inverted(next.min, next.max)) onChange(next.min, next.max);
+  };
+
+  return (
+    <div className="flex w-full items-center gap-[8px] px-[14px] pt-[6px] pb-[12px]">
+      <Field
+        label="Min"
+        value={text.min}
+        placeholder="0"
+        disabled={disabled}
+        // Never invalid while disabled: the boxes aren't being edited, and a
+        // red border on a control nobody can fix is an error with no exit.
+        invalid={!disabled && inverted(text.min, text.max)}
+        onChange={(next) => edit({ min: next, max: text.max })}
+        onBlur={() => !disabled && inverted(text.min, text.max) && onInvalid()}
+      />
+      <span className={`shrink-0 text-[15px] ${disabled ? "text-[#c4c4c4]" : "text-muted"}`}>
+        –
+      </span>
+      <Field
+        label="Max"
+        value={text.max}
+        placeholder="Any"
+        disabled={disabled}
+        invalid={!disabled && inverted(text.min, text.max)}
+        onChange={(next) => edit({ min: text.min, max: next })}
+        onBlur={() => !disabled && inverted(text.min, text.max) && onInvalid()}
+      />
+    </div>
+  );
+}
+
+/** One of the two boxes: a ₹ prefix inside a 44px bordered field. */
+function Field({
+  label,
+  value,
+  placeholder,
+  invalid,
+  disabled,
+  onChange,
+  onBlur,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  invalid: boolean;
+  disabled: boolean;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+}) {
+  return (
+    <label
+      className={`flex h-[44px] min-w-0 flex-1 items-center gap-[4px] rounded-[8px] border px-[10px] ${
+        disabled
+          ? "border-[#dedede] bg-[#f7f7f7]"
+          : // Both boxes carry the invalid state: which one is "wrong" depends
+            // on which the buyer meant to change, and the app doesn't know.
+            invalid
+            ? "border-[#d93025]"
+            : "border-[#4d4d4d]"
+      }`}
+    >
+      <span className="sr-only">{`${label} price per piece`}</span>
+      <span
+        aria-hidden
+        className={`shrink-0 text-[15px] ${disabled ? "text-[#c4c4c4]" : "text-[#323232]"}`}
+      >
+        ₹
+      </span>
+      <input
+        value={value}
+        inputMode="numeric"
+        placeholder={placeholder}
+        // Digits only, so a pasted "₹1,200" lands as 1200 rather than being
+        // rejected — and the draft never holds something the URL can't carry.
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
+        onBlur={onBlur}
+        aria-invalid={invalid}
+        className="min-w-0 flex-1 bg-transparent text-[15px] text-[#323232] outline-none placeholder:text-muted disabled:cursor-not-allowed disabled:text-[#a1a1a1] disabled:placeholder:text-[#c4c4c4]"
+      />
+    </label>
   );
 }

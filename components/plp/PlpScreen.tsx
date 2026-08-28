@@ -17,6 +17,7 @@ import {
   getRailFacetIds,
   settledVertical,
   type PlpVariant,
+  type RailPreset,
   type VerticalMode,
 } from "@/lib/filters/facets";
 import { buildQuery, parseSelections, parseSort } from "@/lib/filters/urlState";
@@ -25,7 +26,7 @@ import { SIZE_FACET_ID } from "@/lib/filters/activeVariant";
 import { ProductCard } from "./ProductCard";
 import { BottomActionBar, PILL_GAP, PILL_H } from "./BottomActionBar";
 import { TopChipBar } from "./TopChipBar";
-import { ChipStrip, ContextChips } from "./ContextChips";
+import { CHIP_H_SHORT, CHIP_H_TALL, ChipStrip, ContextChips } from "./ContextChips";
 import { contextChips } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
 import { SortSheet } from "@/components/sheets/SortSheet";
@@ -62,6 +63,21 @@ const DISCARDED = "Selection discarded";
 const CLEARED = "All filters cleared";
 
 /**
+ * A price range typed with its ends the wrong way round (2026-08-28).
+ *
+ * A *warning*, like `DISCARDED` and unlike `CLEARED`: something the buyer
+ * asked for was refused, and the listing behind gives no sign of it — the
+ * draft never took the value, so nothing moved. Before this, an inverted range
+ * filtered honestly and returned `Show 0 results`, which is accurate and says
+ * nothing about why.
+ *
+ * Names the rule rather than the field, because the app can't know which of
+ * the two boxes the buyer meant to change: both carry the invalid border, and
+ * either one fixes it.
+ */
+const INVALID_RANGE = "Min price can't be higher than max";
+
+/**
  * How far down the listing the controls start hiding — the chip strip and, in A
  * and C, the floating pill. Measured against the scroller's own height rather
  * than a fixed pixel count, so it means the same thing on any frame. Above it
@@ -85,6 +101,23 @@ const FOLDS_BEFORE_HIDE = 1.5;
  * instead of a fixed 78 that lands inside it.
  */
 const MIC_GAP = 14;
+
+/**
+ * The toast's clearance over whatever sits at the foot, and its inset from the
+ * frame when nothing does.
+ *
+ * 8px is the gap the pill and the toast already stood at once A's full-width
+ * bar became a 52px pill — measured, not overlapping, but tight, and it earns
+ * more scrutiny since 2026-08-25 made a toast something a buyer sees on every
+ * clear rather than only on a discard. Two dark pills 8px apart; open it up if
+ * it reads as one stack. 24 is the frame inset the chip variants already used
+ * with nothing below them.
+ */
+const TOAST_GAP = 8;
+const TOAST_INSET = 24;
+
+/** `ActionFooter` — `h-[60px]` plus its 1px top border. Also in `panelFit`. */
+const ACTION_FOOTER_H = 61;
 
 /**
  * Material 3's **level 2** elevation, its own value for a top app bar with
@@ -115,11 +148,72 @@ type Overlay = "sort" | "filters" | null;
  */
 export type { PlpVariant };
 
+/**
+ * Per-route departures from the documented control layout — see `controls` on
+ * `PlpScreen`. Every field is optional and every default is the documented
+ * behaviour, so a route opts out and never in.
+ */
+export type PlpControls = {
+  /**
+   * Whether the strip may carry product-vertical chips at all. `false` on
+   * `/userjourney`: a buyer already inside a storefront hasn't come to choose a
+   * garment type, so the strip leads with the chips that would otherwise wait
+   * behind a vertical being settled. The *picked* chip goes with the offered
+   * ones, so the strip carries none in any state — the cost being that nothing
+   * on the listing then names the cut.
+   */
+  verticalChips?: boolean;
+  /**
+   * Whether the strip carries the Price chip and its sheet. `false` on
+   * `/userjourney`; Price Range is a rail facet either way, so the filter stays
+   * reachable and nothing is orphaned by turning the chip off.
+   */
+  priceChip?: boolean;
+  /**
+   * Whether Sort lives inside the Filters screen instead of beside it. `true`
+   * on `/userjourney`: the Sort chip leaves the strip and *Sort By* becomes the
+   * first row of the Filters rail, joining the draft — so a sort applies on
+   * `Show N results`, the ✕ discards it, and Clear Filters returns it to
+   * Popularity.
+   *
+   * **Honoured on `top-chips` only.** In `bottom-bar` the pill is a designed
+   * 240px surface with two halves either side of a 32px rule (Figma
+   * `697:2658`), and a one-control pill is a shape no frame draws. A and C are
+   * unaffected because neither passes this; a route that wants both wants a
+   * pill design first.
+   */
+  sortInFilters?: boolean;
+  /**
+   * Which Filters rail this listing shows. `"journey"` is the 2026-08-28
+   * stakeholder order — Sort · Price · Margin · MOQ · Category · Brands ·
+   * Seller · Seller City, then the attribute block — with Gender, Delivery
+   * Time, Offers and More Filters dropped. A–D say nothing and keep
+   * `"default"`, which follows the reference apparel PLP. See `RailPreset`.
+   */
+  rail?: RailPreset;
+  /**
+   * Render the Filters screen as a **bottom sheet over the listing** rather
+   * than a full-bleed panel. `true` on `/userjourney` (2026-08-28): a
+   * full-bleed panel takes the buyer off the page they were filtering, so what
+   * changed is reported only by a count in the footer. At 80% of the frame the
+   * app bar, the chip strip and the top of the first card stay visible.
+   */
+  filterSheet?: boolean;
+  /**
+   * Add a typed **min and max** above the Price Range bands. `true` on
+   * `/userjourney` (2026-08-28): the bands are the fast path and the boxes
+   * cover a range nobody predicted. The two are exclusive — see
+   * `FilterScreen`. A–D show the bands alone.
+   */
+  priceInputs?: boolean;
+};
+
 export function PlpScreen({
   title,
   products,
   variant = "bottom-bar",
   verticalMode = FILTER_VERTICALS,
+  controls,
   homeHref,
   card: Card = ProductCard,
   productBasePath,
@@ -142,6 +236,22 @@ export function PlpScreen({
    * land the session in a different variant. See `AppBar`.
    */
   homeHref?: string | null;
+  /**
+   * Where this screen's controls live, for routes that depart from the
+   * documented layout. **`/userjourney` only** so far, from the 2026-08-28
+   * stakeholder review; A–D pass nothing and get every default.
+   *
+   * One object rather than a boolean per note, because these are one idea —
+   * which controls this listing surfaces and where — and a prop per stakeholder
+   * remark is how a shared screen grows a dozen of them. Every field defaults
+   * to the documented behaviour, so a new route opts *out*, never in.
+   *
+   * None of these is `VerticalMode.locked`, which answers a different question:
+   * it makes the vertical page scope and takes Category and Gender off the
+   * rail with it. The journey needs both — *Gender → Women* is its central cut
+   * and what settles the vertical that puts Size on the rail.
+   */
+  controls?: PlpControls;
   /**
    * The card to render, and `ProductCard` is now the only one — the journey's
    * card became the app's on 2026-08-21 and the Figma-derived one is deleted.
@@ -278,10 +388,16 @@ export function PlpScreen({
   );
 
   // Product-vertical chips until a single vertical is settled, then price and
-  // offer chips. Same strip and same rule in both variants.
+  // offer chips — less whatever this route has opted out of. On
+  // `/userjourney` that is both verticals and price, leaving the strip to the
+  // three offer chips.
   const chips = useMemo(
-    () => contextChips(products, selections, verticalMode),
-    [products, selections, verticalMode],
+    () =>
+      contextChips(products, selections, verticalMode, {
+        verticals: controls?.verticalChips ?? true,
+        price: controls?.priceChip ?? true,
+      }),
+    [products, selections, verticalMode, controls?.verticalChips, controls?.priceChip],
   );
 
   const toggleChip = (facetId: string, optionId: string) =>
@@ -313,9 +429,54 @@ export function PlpScreen({
   // once a single vertical is settled, whether a Category tick or a Gender cut
   // settled it.
   const settled = settledVertical(products, selections, verticalMode);
-  const railFacetIds = getRailFacetIds(selections.category, verticalMode, settled);
+  const railPreset = controls?.rail ?? "default";
+
+  /*
+   * One chip height for the whole strip (2026-08-28). 44 exists because the
+   * vertical chip's thumbnail *is* its height; a strip that can't carry one
+   * has no image to size around, so it takes 40.
+   *
+   * **40, not the frame's 32.** The thumbnail was only half the argument for
+   * 44 — the other half is a kirana retailer tapping a chip on a mid-range
+   * Android, and that survives the picture going. 32 would put every chip in
+   * the row under the touch floor to save 8px once.
+   *
+   * Read off `verticalChips` rather than off the current chips, so the row
+   * can't change height as the buyer filters. C and D carry no verticals
+   * either, the vertical being page scope there; they keep 44 until someone
+   * sets the same flag, which is a one-word change.
+   */
+  const chipH = (controls?.verticalChips ?? true) ? CHIP_H_TALL : CHIP_H_SHORT;
+  const railFacetIds = getRailFacetIds(selections.category, verticalMode, settled, railPreset);
 
   const sortActive = sort !== DEFAULT_SORT;
+
+  /*
+   * Sort inside the Filters screen — `/userjourney` (2026-08-28). Honoured on
+   * `top-chips` only: the `bottom-bar` pill is a designed 240px surface with
+   * two halves either side of a rule, and a one-control pill is a shape no
+   * frame draws. Nothing passes it on a pill route today, and this is what
+   * keeps that from silently half-working if something does.
+   */
+  const sortInFilters = (controls?.sortInFilters ?? false) && variant === "top-chips";
+
+  /**
+   * Facets the strip can select but the rail no longer shows, handed to the
+   * Filters screen so *Clear Filters* still reaches them.
+   *
+   * Derived from the chips actually on screen rather than hard-coded, so it
+   * stays right as the strip changes: on `/userjourney` the Offers row left the
+   * rail on 2026-08-28 while the three offer chips stayed, and without this
+   * `All filters cleared` would close onto two lit chips.
+   *
+   * They are deliberately *not* added to `filterCount`. A lit chip already
+   * reports itself, and counting it on the Filters badge as well is the
+   * double-reporting that badge rule exists to prevent.
+   */
+  const clearsAlso = useMemo(
+    () => [...new Set(chips.map((chip) => chip.facetId).filter((id) => !railFacetIds.has(id)))],
+    [chips, railFacetIds],
+  );
   // Counts exactly what the Filters screen owns — which, since Category
   // rejoined the rail, is every facet in both variants. Nothing is reported
   // twice, because nothing else carries a badge any more.
@@ -332,7 +493,51 @@ export function PlpScreen({
 
   // Where the floating pill sits: 12px above the basket bar when there is one,
   // above the frame's edge otherwise.
-  const pillBottom = (line && !cartHidden ? CART_BAR_H : 0) + PILL_GAP;
+  const cartBottom = line && !cartHidden ? CART_BAR_H : 0;
+  const pillBottom = cartBottom + PILL_GAP;
+
+  /**
+   * What the toast has to clear — **whatever is actually at the foot**, which
+   * is the pill in A and C, the basket bar in B, D and the journey, or both,
+   * or neither.
+   *
+   * It used to answer this with the variant alone: 72px in A to clear a
+   * full-width bar, 24px in B, which had nothing down there. Both premises
+   * expired on 2026-08-21, when A's bar became a floating pill that rides the
+   * basket bar and *every* listing started carrying a basket. That left two
+   * ways to hide a toast, and moving the journey onto top chips on 2026-08-28
+   * would have shipped the second one:
+   *
+   * - **A and C with a line in the basket** — the pill climbs to 76–128 and
+   *   the toast stayed at 72–104, so it came up *behind* the control.
+   * - **B, D and the journey with a line** — the 64px basket bar covered a
+   *   toast sitting at 24–56 outright, which is every clear on the one route
+   *   whose whole flow is adding to a basket.
+   *
+   * Reading the foot rather than the variant lands on the same numbers in both
+   * cases that were already right — 72 in A with an empty basket, 24 in B —
+   * and moves only the two that were broken.
+   */
+  const toastFoot = variant === "bottom-bar" ? pillBottom + PILL_H : cartBottom;
+
+  /*
+   * **The Filters sheet is a foot of its own while it is up** (2026-08-28).
+   * It covers the bottom 80% of the frame, so a toast at the listing's offset
+   * lands over the sheet's own `Clear Filters` / `Show N results` footer. It
+   * doesn't block anything — the toast wrapper is `pointer-events-none` — but
+   * covering the control you are being told about is the wrong place to say
+   * it. Above that footer it reads as belonging to the sheet, which it does.
+   *
+   * Only for the sheet presentation: the full-bleed screen in A–D has no
+   * listing visible behind it, and nothing there fires a toast while it is
+   * open anyway — both of its announcing exits close first.
+   */
+  const filterSheetUp = overlay === "filters" && (controls?.filterSheet ?? false);
+  const toastBottom = filterSheetUp
+    ? ACTION_FOOTER_H + TOAST_GAP
+    : toastFoot
+      ? toastFoot + TOAST_GAP
+      : TOAST_INSET;
 
   return (
     // `relative` so the sheets and the Filters screen cover this frame rather
@@ -386,12 +591,15 @@ export function PlpScreen({
               filterCount={filterCount}
               onSort={() => setOverlay("sort")}
               onFilters={() => setOverlay("filters")}
+              showSort={!sortInFilters}
+              chipH={chipH}
             >
               <ContextChips
                 chips={chips}
                 selections={selections}
                 onToggle={toggleChip}
                 onOpenPrice={setPriceSheet}
+                chipH={chipH}
               />
             </TopChipBar>
           ) : (
@@ -401,11 +609,12 @@ export function PlpScreen({
             chips.length > 0 && (
               <ChipStrip>
                 <ContextChips
-                chips={chips}
-                selections={selections}
-                onToggle={toggleChip}
-                onOpenPrice={setPriceSheet}
-              />
+                  chips={chips}
+                  selections={selections}
+                  onToggle={toggleChip}
+                  onOpenPrice={setPriceSheet}
+                  chipH={chipH}
+                />
               </ChipStrip>
             )
           )}
@@ -557,9 +766,19 @@ export function PlpScreen({
           products={products}
           selections={selections}
           verticalMode={verticalMode}
-          onApply={(next) => commit(next, sort)}
+          // Supplying `sort` is what puts Sort By at the head of that screen's
+          // rail; leaving it undefined is A–D, where Sort is its own control.
+          // The commit takes the drafted sort back when there is one, and the
+          // screen's own value otherwise.
+          sort={sortInFilters ? sort : undefined}
+          railPreset={railPreset}
+          clearsAlso={clearsAlso}
+          asSheet={controls?.filterSheet ?? false}
+          priceInputs={controls?.priceInputs ?? false}
+          onApply={(next, nextSort) => commit(next, nextSort ?? sort)}
           onDiscard={() => showToast(DISCARDED)}
           onCleared={() => showToast(CLEARED)}
+          onInvalidRange={() => showToast(INVALID_RANGE)}
           onClose={() => setOverlay(null)}
         />
       )}
@@ -579,7 +798,7 @@ export function PlpScreen({
         <Toast
           key={toast.id}
           text={toast.text}
-          clearsBottomBar={variant === "bottom-bar"}
+          bottom={toastBottom}
           // Guarded by id so a stale instance can't clear a toast that
           // replaced it.
           onDone={() => setToast((current) => (current?.id === toast.id ? null : current))}

@@ -22,28 +22,77 @@ export default function Page() {
       title={KARTIK.name.toUpperCase()}
       products={getKartikCatalog()}
       /*
-       * **The floating pill, on UXR** (2026-08-25). This screen has been on
-       * top chips since 2026-08-20, and the reason has expired twice over.
+       * **Top chips** (2026-08-28, on the stakeholder review).
        *
-       * It went there because the basket bar owns the foot of this listing and
-       * a *pinned, full-width* Sort/Filters bar was a second bar competing for
-       * the same edge — true of the bar Figma `638:2836` draws, and the journey
-       * was where that was concrete, being the one screen here with a basket
-       * bar at all. Figma `697:2658` answered it on 2026-08-21: a floating
-       * 240px pill that rides 12px above the basket bar rather than taking a
-       * band off the frame, which is what un-parked A and C. `pillBottom` in
-       * `PlpScreen` already reads `CART_BAR_H`, so nothing competes here either.
+       * This is the third placement this screen has held and a reversal of the
+       * 2026-08-25 move onto the floating pill, which was made on UXR reading
+       * the bottom placement as testing better. That research is not
+       * withdrawn — the call here is a stakeholder's, and it returns the
+       * journey to the placement its own screengrab shows, so the route is
+       * once again 1:1 with the live app in behaviour as well as pixels.
        *
-       * That left the journey on top chips for a narrower reason — its
-       * screengrab shows top chips — and **research now says the bottom
-       * placement tests better**, which outranks a still frame of one screen.
-       * So the demonstration flow shows the placement the evidence prefers.
+       * Nothing about the pill was wrong: Figma `697:2658` floats it 12px
+       * above the basket bar rather than taking a band off the frame, and
+       * `pillBottom` reads `CART_BAR_H`, so the bottom-edge collision that
+       * parked A and C in the first place does not apply here. A and C keep
+       * it, which is what still makes this a *placement* A/B rather than two
+       * different screens.
        *
-       * This is a departure from the screengrab, and the first one on this
-       * route that is about *behaviour* rather than pixels: the card, the
-       * chrome and every measured value here still follow it.
+       * If the pill comes back, the one thing to re-check is the toast: it
+       * clears whatever is actually at the foot now, and it reads the pill's
+       * own offset to do it. See `toastBottom` in `PlpScreen`.
        */
-      variant="bottom-bar"
+      variant="top-chips"
+      /*
+       * **Where this listing's controls live** — four departures from the
+       * documented layout, all from the 2026-08-28 stakeholder review, and all
+       * on this route only. A–D pass nothing and are untouched.
+       *
+       * - **No vertical chips.** A buyer already inside Kartik's storefront
+       *   hasn't come to choose between tee types, so the strip leads with the
+       *   filters that would otherwise wait behind a vertical being settled.
+       *   The *picked* chip goes too, so the strip carries none in any state —
+       *   the cost, accepted on the call, being that nothing on the listing
+       *   then names the cut and the Filters badge is the only report of it.
+       * - **No Price chip.** Price Range stays a rail facet, so the bands are
+       *   still reachable in the Filters panel and nothing is orphaned.
+       * - **Sort inside Filters**, as the first row of its rail rather than a
+       *   chip beside it. It joins the draft there: a tap re-sorts nothing
+       *   until `Show N results`, the ✕ discards it, and Clear Filters returns
+       *   it to Popularity along with the filters.
+       * - **This route's own rail order**, with Gender, Delivery Time, Offers
+       *   and More Filters dropped — see `JOURNEY_RAIL_ORDER`. Two of those
+       *   cost something and both are paid for there: Gender was this
+       *   journey's documented cut, and *Category → Women's T-Shirts* now
+       *   makes it and settles the vertical identically; Offers owned the
+       *   facets the three strip chips select, so `PlpScreen` hands them to
+       *   the Filters screen as `clearsAlso` and Clear Filters still reaches
+       *   them.
+       * - **Price Range carries a typed min and max above its bands.** The
+       *   bands are the fast path and keep their counts; the boxes cover a
+       *   range nobody predicted. The two are exclusive — typing clears a
+       *   ticked band and ticking a band clears what was typed, since both
+       *   are values on one facet and would otherwise OR into a wider result.
+       *   A–D show the bands alone.
+       * - **Filters is a bottom sheet**, not a full-bleed panel, so the
+       *   listing stays visible behind it and the buyer keeps the context they
+       *   are filtering. It also shortens the panel, so lists earn a search
+       *   field sooner there — see `SHEET_PANEL_VIEWPORT`.
+       *
+       * What is left in the strip is `Filter` and the three offer chips.
+       *
+       * None of this is `locked` mode, which C and D use — that would take
+       * Category off the rail as well, and Category is now this journey's
+       * central cut, the thing that settles the vertical and puts Size there.
+       */
+      controls={{
+        verticalChips: false,
+        priceChip: false,
+        sortInFilters: true,
+        rail: "journey",
+        filterSheet: true,
+        priceInputs: true,
+      }}
       homeHref="/userjourney"
       productBasePath="/userjourney"
       // No Share on this bar in the screengrab, and dropping it is also what

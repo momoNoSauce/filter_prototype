@@ -13,7 +13,29 @@ import type { CountedOption } from "@/lib/filters/engine";
  * full-bleed, so the chip's height *is* the image size, and 32 was too small to
  * identify a garment. It also puts these controls on the 44px touch floor.
  */
-export const CHIP_H = "h-[44px]";
+/**
+ * The strip's chip height — **one number for the whole row**, because two
+ * heights in one scrolling row is the thing that looks broken. `TopChipBar`
+ * imports whichever of these applies rather than declaring its own.
+ *
+ * **44 where the strip can carry a vertical chip.** That chip's thumbnail *is*
+ * its height (2026-08-14, up from the frames' 32 so a garment is identifiable),
+ * and 44 is also the touch-target floor this app adopted.
+ *
+ * **40 where it can't** (2026-08-28, on request). `/userjourney` dropped the
+ * vertical chips, so nothing in that row carries an image and the reason for 44
+ * went with them. It is **40 and not the frame's 32**: the thumbnail was only
+ * half the argument, and the other half — a kirana retailer tapping a chip on a
+ * mid-range Android — survives the picture going. 32 would put every chip in
+ * the row under the floor to save 8px once.
+ *
+ * Chosen from `controls.verticalChips`, so it is a property of what the strip
+ * can hold rather than a free dial. C and D have no vertical chips either, the
+ * vertical being page scope there — they could take `SHORT` by setting the same
+ * flag, and deliberately have not been changed here.
+ */
+export const CHIP_H_TALL = "h-[44px]";
+export const CHIP_H_SHORT = "h-[40px]";
 
 /**
  * The strip below the app bar. In Variant A it holds only these; in B it
@@ -49,12 +71,18 @@ export function ContextChips({
   selections,
   onToggle,
   onOpenPrice,
+  chipH = CHIP_H_TALL,
 }: {
   chips: ContextChip[];
   selections: Record<string, string[]>;
   onToggle: (facetId: string, optionId: string) => void;
   /** Opens the Price sheet over the bands this strip was built with. */
   onOpenPrice: (options: CountedOption[]) => void;
+  /**
+   * One height for the whole row — see `CHIP_H_TALL`. Defaults to the tall
+   * one, so a strip that says nothing keeps the documented 44.
+   */
+  chipH?: string;
 }) {
   return (
     <>
@@ -67,6 +95,7 @@ export function ContextChips({
               options={chip.options}
               chosen={chosen}
               onOpen={() => onOpenPrice(chip.options)}
+              chipH={chipH}
             />
           );
         }
@@ -80,6 +109,7 @@ export function ContextChips({
               option={chip.option}
               selected={selected}
               onToggle={() => onToggle("category", chip.option.id)}
+              chipH={chipH}
             />
           );
         }
@@ -91,6 +121,7 @@ export function ContextChips({
             icon={OFFER_ICONS[`${chip.facetId}:${chip.option.id}`]}
             selected={selected}
             onClick={() => onToggle(chip.facetId, chip.option.id)}
+            chipH={chipH}
           />
         );
       })}
@@ -151,10 +182,12 @@ function VerticalChip({
   option,
   selected,
   onToggle,
+  chipH,
 }: {
   option: CountedOption;
   selected: boolean;
   onToggle: () => void;
+  chipH: string;
 }) {
   return (
     <button
@@ -180,7 +213,7 @@ function VerticalChip({
        * for a 20px glyph, and since the picked vertical *leads* the strip, that
        * width goes straight to the chips behind it.
        */
-      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-[8px] pr-[8px] ${
+      className={`flex ${chipH} shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-[8px] pr-[8px] ${
         selected ? "gap-[8px] bg-primary-subtle pl-[8px]" : "gap-[6px] border border-[#4d4d4d] bg-white"
       }`}
     >
@@ -235,10 +268,12 @@ function PriceChip({
   options,
   chosen,
   onOpen,
+  chipH,
 }: {
   options: CountedOption[];
   chosen: string[];
   onOpen: () => void;
+  chipH: string;
 }) {
   const selected = chosen.length > 0;
   const label =
@@ -252,7 +287,7 @@ function PriceChip({
     <button
       onClick={onOpen}
       aria-haspopup="dialog"
-      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center gap-[4px] rounded-[8px] pr-[10px] pl-[8px] ${
+      className={`flex ${chipH} shrink-0 cursor-pointer items-center gap-[4px] rounded-[8px] pr-[10px] pl-[8px] ${
         selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"
       }`}
     >
@@ -353,11 +388,13 @@ function FilterChip({
   icon,
   selected,
   onClick,
+  chipH,
 }: {
   label: string;
   icon?: string;
   selected: boolean;
   onClick: () => void;
+  chipH: string;
 }) {
   // Material 3: the checkmark *replaces* the leading icon rather than joining
   // it, so a selected chip has one leading element either way and the label
@@ -372,7 +409,7 @@ function FilterChip({
       // 4px beside the icon, 8px beside the checkmark. The icon is wider than
       // the check and carries its own visual padding, so M3's 8dp read loose
       // on it while being right for the glyph.
-      className={`flex ${CHIP_H} shrink-0 cursor-pointer items-center rounded-[8px] pr-[16px] ${
+      className={`flex ${chipH} shrink-0 cursor-pointer items-center rounded-[8px] pr-[16px] ${
         !selected && icon ? "gap-[4px]" : "gap-[8px]"
       } ${selected ? "bg-primary-subtle" : "border border-[#4d4d4d] bg-white"} ${
         leading ? "pl-[8px]" : "pl-[16px]"
