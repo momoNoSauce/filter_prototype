@@ -70,7 +70,7 @@ Local: `npm run dev` → http://localhost:3000.
 - Active Sort/Gender row tints its **icon** to primary, not just the label. Sheet row dividers fixed (they were collapsing to zero width under `items-start`).
 - Sort/Filter chips and applied-filter chips **removed** from the strip below the GOLD bar — reserved for contextual chips.
 - Gender CTA renamed **"Clear all"**; the Filters screen keeps "Clear Filters".
-- Brands moved to the **tile grid**, matching Category.
+- Brands moved to the **tile grid**, matching Category. (Both became a column of rows on 2026-09-03.)
 - Gender in Variant B moved **into the Filters rail** (second) as an ordinary multi-select facet, since B has no bottom bar to host it. Variant A keeps it as a single-select bottom-bar sheet. The `single` flag left the facet registry — exclusivity is a property of the control, not the facet.
 - Tile grid **enlarged** to the updated Figma frame: 68×96 cells, 56px tile, fixed 36px two-line label.
 - **Category tile photos** added (Unsplash).
@@ -996,6 +996,67 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 (`Price/pc (low → high)`); the active treatment is untouched — bold, primary,
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
+
+### 2026-09-03 — Category and Brands become a column of rows
+
+**On request** — *"it should be in column view, box, image, name"*. Both facets
+were the Figma tile grid (`638:3696`); both are now a row per option:
+
+```
+[✓] [ 44px picture ]  Men's Casual T-Shirts (222)
+```
+
+`panel: "thumb"` in the registry and `ThumbRow` in the panel. 60px rows — the
+44px picture sets the height, plus 8px above and below — at the tile's own
+proportional corner (16.667%, so 7.33px on a 44px box), with the checkbox
+leading as it does on every other multi-select row on that screen.
+
+**The grid was costing the name.** Three cells across a 240px panel left ~72px
+for a label, so it set as up to three clamped lines under the picture — and on
+one line it truncated: `Women's T-…`, and *Men's Casual Shirts* and *Men's
+Casual T-Shirts* **both** reading `Men's Casu…`. Two rows that a buyer cannot
+tell apart is a worse failure than a cramped one. A row hands the name the
+panel's full width and brings back two things the grid had dropped: the
+**count**, which every other row on the screen carries and the tile could only
+put in a `title` attribute, and a single scanning direction — reading down a
+rail of rows no longer switches to reading across a grid at these two facets.
+
+**The name wraps to two lines rather than truncating**, and the count rides in
+the same text run so it wraps with it instead of taking 46px off every row. Two
+20px lines is 40px, inside the 44px the picture already sets, so the row height
+is a constant and `panelFit` still has a figure for it: `THUMB_ROW_H = 60`, **12
+rows** full-bleed and **9** in the journey's sheet, both pinned by tests.
+Neither facet is near those — seven categories, ten brands — so the field is
+theoretical, exactly as the tile thresholds were.
+
+**Selection is the checkbox**, not the tile's ring, 50% primary veil and white
+check. The row is the same shape as its siblings now, so it states itself the
+same way: box filled, label primary. Colour's dot is the precedent — a leading
+ornament that doesn't restate what the box says.
+
+**`TileGrid` stays, with no caller.** The frame is the design of record, this is
+the third layout decision of the week, and the cost of leaving it is one
+unimported component. Its geometry — proportional square, reserved three-line
+label box, `auto-fill` columns — is the answer for any tile surface that comes
+back. Delete it if a month passes without one. `TILE_ROW_H` and `TILES_PER_ROW`
+stay with it for the same reason.
+
+Brands still show the flat `#d9d9d9` box: no logos have been sourced (Clearbit
+retired, Wikimedia returned unrelated files for seven of eight), which is
+unchanged from the grid and still logged under *Facet imagery*.
+
+**Verified** at 360px and 430px, no console errors:
+
+| | |
+|---|---|
+| A, Category | seven rows, every name whole — `Men's Casual T-Shirts (222)` and `Men's Casual Shirts (194)` now distinct |
+| A, Brands | ten rows, grey boxes, all names and counts whole, no search field |
+| journey sheet, Category | its three tee verticals with photographs, in the 80% sheet |
+| two ticked | `Show 416 results`, boxes filled, labels primary, `?category=mens-casual-shirts,mens-casual-t-shirts` |
+| 430px | rows are 310px wide and every name sets on **one** line — the extra width goes to the label |
+
+130 tests green (two new, pinning the 60px row and both search thresholds),
+lint, typecheck and build clean.
 
 ### 2026-09-03 — Filter leads Sort, and every range facet takes a typed min/max
 
@@ -2197,7 +2258,11 @@ Ordered by consequence. None of these block a demo.
 14. **Clear Filters resets Sort, in every variant.** `FilterScreen` commits `onApply(cleared, DEFAULT_SORT)` whether or not Sort is a row on that screen, so a sort set from A's pill or B's chip is cleared by a button labelled *Clear Filters* under a toast reading `All filters cleared` — and Sort is not a filter. Written deliberately for `/userjourney` on 2026-08-28, when Sort *was* on that screen; measured on 2026-09-03 and it was never scoped to that route. Two defensible answers — the button means "return this listing to its untouched state", or it means what it says and Sort keeps its value — and it is a designer's call, not a code one. Left as behaviour, and the decisions row now describes it accurately.
 13. **A typed range commits per keystroke, so its refusal state can't be reached.** All three range facets since 2026-09-03; written when Price was the only one. `edit()` in `RangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
 
-## Facet tile imagery
+## Facet imagery
+
+Still called tile imagery in places: the pictures outlived the tile grid, which
+became a column of rows on 2026-09-03. Same files, same box, 44px instead of
+56.
 
 - **Category** — Unsplash photos in `public/categories/`, credited in `CREDITS.md`. Re-shot 2026-08-12 for the seven new categories: all worn on a model, since each category names its audience and at 56px a person reads faster than a flat-lay, and picked for seven distinct dominant colours. `boys-casual-t-shirts.jpg` carries an incidental Levi's wordmark, unreadable at tile size — swap it if it bothers anyone.
 - **Brands** — still grey `#d9d9d9` placeholders. Real logos couldn't be sourced: Clearbit's logo API is retired, and Wikipedia/Wikimedia returned unrelated files for 7 of 8 brands. Brand-supplied assets are the right input, and avoid the trademark question of scraping logos.

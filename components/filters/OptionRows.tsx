@@ -56,6 +56,91 @@ export function OptionRow({
   );
 }
 
+/**
+ * A facet option as a **row with its picture**, for Category and Brands
+ * (2026-09-03, on request: *"it should be in column view — box, image, name"*).
+ *
+ * It replaces the tile grid on both facets. `TileGrid` is Figma `638:3696` and
+ * is left standing below with no caller, this being the third layout call this
+ * week; what it cost to leave is one component nothing imports.
+ *
+ * **Why a row reads better here than a tile.** The grid gave three cells across
+ * a 240px panel, so a name had to fit ~72px and set as up to three clamped
+ * lines under a 56px square — `Men's Casual T-Shirts` in three stacked
+ * fragments. A row gives the name the panel's full width on one line, and it
+ * restores two things the grid had to drop: the **count**, which every other
+ * row in this screen carries and the tile could only put in a `title`
+ * attribute, and one scanning direction — a buyer reading down a rail of rows
+ * no longer switches to reading across a grid when they reach these two.
+ *
+ * **60px, not `OptionRow`'s 52.** The picture sets the height: 44px of
+ * thumbnail plus 8px above and below. 44 is the same figure the contextual
+ * chips settled on for a legible thumbnail, and the row clears the touch floor
+ * with room to spare. `panelFit` carries it as `THUMB_ROW_H` — a height in the
+ * markup with no figure there is what that module exists to prevent.
+ *
+ * **The checkbox carries the selection, not a ring or a veil.** The tile needed
+ * both because it had no box; here the row is the same shape as every other
+ * multi-select row on the screen, so it states itself the same way — box
+ * filled, label primary. Colour's dot is the precedent: a leading ornament that
+ * doesn't restate what the box already says.
+ *
+ * Brands have no logos — Clearbit is retired and Wikimedia returned unrelated
+ * files for seven of eight — so their box stays the frame's flat `#d9d9d9`, as
+ * it did in the grid. The grey is the backdrop in both cases, so a row still
+ * looks right while an image loads or if one is missing.
+ */
+export function ThumbRow({
+  option,
+  selected,
+  onToggle,
+}: {
+  option: CountedOption;
+  selected: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-pressed={selected}
+      className="flex h-[60px] w-full shrink-0 cursor-pointer items-center pr-[16px] pl-[14px] text-left"
+    >
+      <Checkbox checked={selected} />
+      <span
+        // The tile's own corner, kept proportional: 9.333 of 56 is 16.667%,
+        // which on a 44px box is 7.33 — so the two layouts round their pictures
+        // by the same rule rather than by two hand-picked radii.
+        className="ml-[8px] size-[44px] shrink-0 overflow-hidden rounded-[16.667%] bg-[#d9d9d9]"
+      >
+        {option.image && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" loading="lazy" className="size-full object-cover" src={option.image} />
+        )}
+      </span>
+      {/*
+        **Two lines, wrapped — not truncated.** The panel is 240px at the design
+        width and this row spends 110 of it on the box, the picture and the
+        insets, so the name has ~130px. On one truncated line that gave
+        `Women's T-…` and, worse, `Men's Casu…` for *both* Men's Casual Shirts
+        and Men's Casual T-Shirts — two rows reading identically, which is a
+        worse failure than the three-line clamp the tile grid had.
+
+        The count rides in the same text run rather than pinned to the right, so
+        it wraps with the name instead of taking 46px off every row. Two lines
+        at 20px is 40px, inside the 44px the thumbnail already sets, so the row
+        height doesn't move and `panelFit`'s figure holds.
+      */}
+      <span
+        className={`ml-[8px] line-clamp-2 min-w-0 flex-1 text-[15px] leading-[20px] ${
+          selected ? "font-medium text-primary" : "text-[#323232]"
+        }`}
+      >
+        {option.label} ({option.count})
+      </span>
+    </button>
+  );
+}
+
 function Checkbox({ checked }: { checked: boolean }) {
   return (
     <span
@@ -80,7 +165,14 @@ function Checkbox({ checked }: { checked: boolean }) {
 }
 
 /**
- * Figma 638:3696 (frame "Category") — the tile grid used by Category and Brands.
+ * Figma 638:3696 (frame "Category") — the tile grid Category and Brands used
+ * until 2026-09-03, when both moved to `ThumbRow` above on request.
+ *
+ * **No caller today.** Kept for the reason the frame is the design of record and
+ * this is the third layout decision of the week: it is one unimported
+ * component, and the geometry below — a proportional square, a reserved
+ * three-line label box, `auto-fill` columns — is the answer for any tile
+ * surface that comes back. Delete it if a month passes without one.
  *
  * 68 x 96 cells, a 56px rounded square (radius 9.333), 4px gaps, 14px left
  * inset. Three fit across the 240px panel.

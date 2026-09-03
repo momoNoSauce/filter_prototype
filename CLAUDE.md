@@ -130,8 +130,14 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 | `components/journey/ProductDetail.tsx` | **The** detail screen — journey, B and D |
 
 Adding a facet is one entry in `FACETS`. Each declares
-`valuesOf(product, sizes?) → string[]`, so tile grids, checkbox lists, range
-buckets and multi-valued delivery windows share one code path.
+`valuesOf(product, sizes?) → string[]`, so thumbnail rows, checkbox lists,
+range buckets and multi-valued delivery windows share one code path.
+
+**Category and Brands are a column of rows**, not the frame's tile grid, since
+2026-09-03 — `panel: "thumb"` and `ThumbRow`: checkbox, 44px picture, then the
+name and count wrapped to two lines. Three tiles across a 240px panel gave the
+name ~72px, and one truncated line made *Men's Casual Shirts* and *Men's Casual
+T-Shirts* both read `Men's Casu…`. `TileGrid` is still there with no caller.
 
 ## Rules that must not be broken
 
@@ -195,7 +201,7 @@ guidance first). **Always pull; never eyeball.**
 | `628:1620` | Home |
 | `638:2718` | PLP base |
 | `638:3659` | Filters screen (rail + panel) |
-| `638:3696` | Tile grid |
+| `638:3696` | Tile grid — superseded 2026-09-03 by a row per option (`ThumbRow`) |
 | `644:4435` / `644:4470` | Sort By / Gender sheets |
 | `644:4011` | Sort/Filter chip bar — B and D's controls |
 | `644:4000` | Filters → Seller |

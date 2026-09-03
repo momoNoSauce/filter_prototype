@@ -12,7 +12,7 @@ import {
 import type { Product } from "@/lib/catalog/types";
 import { activeVariant, sizeOptionId } from "./activeVariant";
 
-export type PanelType = "tile" | "checkbox" | "swatch" | "range";
+export type PanelType = "tile" | "thumb" | "checkbox" | "swatch" | "range";
 
 export interface FacetOption {
   id: string;
@@ -272,7 +272,9 @@ export const FACETS: FacetDef[] = [
   {
     id: "category",
     label: "Category",
-    panel: "tile",
+    // A row per option with its photograph, since 2026-09-03 — `"tile"` was
+    // the Figma grid, and no facet claims it now. See `ThumbRow`.
+    panel: "thumb",
     valuesOf: (p) => {
       const id = CATEGORY_ID_BY_LABEL.get(p.category);
       return id ? [id] : [];
@@ -297,8 +299,9 @@ export const FACETS: FacetDef[] = [
   {
     id: "brand",
     label: "Brands",
-    // Same tile grid as Category.
-    panel: "tile",
+    // Same rows as Category — with a grey box rather than a logo, no brand
+    // assets having been sourced. See `ThumbRow`.
+    panel: "thumb",
     valuesOf: (p) => [slug(p.brand)],
     options: [...BRANDS]
       .sort((a, b) => a.name.localeCompare(b.name))

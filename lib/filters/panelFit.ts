@@ -49,9 +49,19 @@ export const SHEET_PANEL_VIEWPORT = 530;
 export const OPTION_ROW_H = 52;
 
 /**
+ * `ThumbRow` — `h-[60px]`: a 44px thumbnail with 8px above and below. Category
+ * and Brands, since 2026-09-03.
+ */
+export const THUMB_ROW_H = 60;
+
+/**
  * `TileGrid` — **105px** cells, three across: a 56px tile, a 4px gap and a
  * three-line 45px label box. It was 96 while the label was 11px on two lines;
  * both grew on 2026-08-21 so the label could be read beside its own photo.
+ *
+ * **Nothing renders a tile grid today**, Category and Brands having moved to
+ * `ThumbRow`. Kept alongside the component itself: the moment a facet declares
+ * `panel: "tile"` again, this is the figure it needs.
  */
 export const TILE_ROW_H = 105;
 export const TILES_PER_ROW = 3;
@@ -83,8 +93,8 @@ export const FACET_HEADING_H = 32;
 export type PanelBlock = {
   /**
    * Taken straight off the facet, so this branches on exactly what the screen
-   * branches on — `panel === "tile"` renders a `TileGrid` and everything else
-   * renders `OptionRow`s. One condition, so the two can't drift apart.
+   * branches on — `"tile"` a `TileGrid`, `"thumb"` a column of `ThumbRow`s,
+   * everything else `OptionRow`s. One condition, so the two can't drift apart.
    */
   panel: PanelType;
   /**
@@ -104,10 +114,11 @@ export type PanelBlock = {
 export function panelContentHeight(blocks: PanelBlock[]): number {
   const headed = blocks.length > 1;
   return blocks.reduce((total, block) => {
-    const body =
-      block.panel === "tile"
-        ? Math.ceil(block.optionCount / TILES_PER_ROW) * TILE_ROW_H
-        : block.optionCount * OPTION_ROW_H;
+    const rowH =
+      block.panel === "thumb" ? THUMB_ROW_H : block.panel === "tile" ? 0 : OPTION_ROW_H;
+    const body = rowH
+      ? block.optionCount * rowH
+      : Math.ceil(block.optionCount / TILES_PER_ROW) * TILE_ROW_H;
     return total + body + (headed ? FACET_HEADING_H : 0);
   }, 0);
 }
@@ -115,11 +126,17 @@ export function panelContentHeight(blocks: PanelBlock[]): number {
 /**
  * Whether the panel earns a search field.
  *
- * At the full-bleed 690 that is **14 checkbox rows** or **19 tiles** — 13 rows
- * come to 686px against the 690 the panel has, and the fourteenth pushes it
- * over. In the 530px sheet it is **11 rows** or **13 tiles**. A test pins both
- * pairs, so changing a row height in the markup without changing it here fails
- * loudly rather than moving a field by one row.
+ * At the full-bleed 690 that is **14 checkbox rows**, **12 thumbnail rows** or
+ * **19 tiles** — 13 checkbox rows come to 686px against the 690 the panel has,
+ * and the fourteenth pushes it over. In the 530px sheet it is **11 rows**, **9
+ * thumbnail rows** or **13 tiles**. A test pins all of them, so changing a row
+ * height in the markup without changing it here fails loudly rather than moving
+ * a field by one row.
+ *
+ * Neither facet that renders thumbnail rows reaches those numbers today —
+ * Category is seven and Brands ten — so the field they earn is theoretical, in
+ * the same way the tile thresholds were. It is here because the arithmetic is
+ * what this module promises, not because a panel is waiting on it.
  *
  * Adding the field only ever costs more room than the spacer it replaces, so
  * a list that overflows without it still overflows with it. The answer can't

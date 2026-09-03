@@ -30,7 +30,7 @@ import {
 import { SORT_ICONS } from "@/lib/filters/sortIcons";
 import { RANGE_INPUTS_H, SHEET_PANEL_VIEWPORT, needsSearch } from "@/lib/filters/panelFit";
 import { SearchField } from "./SearchField";
-import { OptionRow, RangeInputs, SortRow, TileGrid } from "./OptionRows";
+import { OptionRow, RangeInputs, SortRow, ThumbRow } from "./OptionRows";
 
 /**
  * The rail id of the Sort By row — `/userjourney` only, and deliberately not a
@@ -649,12 +649,18 @@ export function FilterScreen({
                   <p className="px-[14px] py-[16px] text-[14px] text-muted">
                     No options match.
                   </p>
-                ) : facet.panel === "tile" ? (
-                  <TileGrid
-                    options={options}
-                    selected={chosen}
-                    onToggle={(id) => toggle(facetId, id)}
-                  />
+                ) : facet.panel === "thumb" ? (
+                  // Category and Brands since 2026-09-03 — a row per option
+                  // with its picture, where both were a tile grid. See
+                  // `ThumbRow`; `TileGrid` has no caller now.
+                  options.map((option) => (
+                    <ThumbRow
+                      key={option.id}
+                      option={option}
+                      selected={chosen.includes(option.id)}
+                      onToggle={() => toggle(facetId, option.id)}
+                    />
+                  ))
                 ) : (
                   options.map((option) => (
                     <OptionRow

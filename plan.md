@@ -67,7 +67,7 @@ Figma `Filter-and-Sort` — `hdArN93DmnLu5JDB46SOwd`, section `651:4873`. Everyt
 | `638:3659` | Filters sheet (rail + panel) |
 | `644:4011` | Sort/Filter chip bar |
 | `644:4000` | Filters → Seller |
-| `638:3696` | Tile grid (frame renamed `Category`) — 68×96 cells, 56px tile, two-line label |
+| `638:3696` | Tile grid (frame renamed `Category`) — 68×96 cells, 56px tile, two-line label. **Superseded 2026-09-03**: Category and Brands are a column of rows |
 | `674:4904` | Chip detail — the product-vertical chip, unselected and selected |
 | `674:4904` | Chip detail — the product-vertical chip |
 
@@ -116,7 +116,7 @@ Twenty facets behind thirteen rail entries, rising to eighteen inside a single p
 
 Pack Type was removed as a filter on 2026-08-19 — a deliberate departure from Figma's rail. It left `FACETS` too, not just the rail, since a facet with no control would survive Clear Filters uncounted; the product field stays, because the seed draws it mid-sequence and it still decides whether a pack is one size or a spread.
 
-Panels: Category and Brands use the tile grid (72×105 cells since 2026-08-21, a proportional square tile and a fixed 45px three-line label box reserved whether or not it's used, so a row's tiles bottom out level); Colour is a checkbox row with a 16px colour dot; Price Range, Margin on MRP and MOQ are checkbox rows over preset buckets, and on `/userjourney` all three also carry a typed **min/max** above those bands — Price from 2026-08-28, the other two from 2026-09-03, built from one table and differing only in the number they compare and the unit beside the box (₹ leading, `%` and `pc` trailing). Per facet the two controls are mutually exclusive and each disables the other. No slider anywhere: it would add a control the design system doesn't have. Everything else is the designed checkbox row.
+Panels: Category and Brands are a **column of 60px rows** since 2026-09-03 — checkbox, 44px picture, then the name and its count wrapped to two lines (`ThumbRow`). They were the Figma tile grid until then, three across a 240px panel, which left the name ~72px and made *Men's Casual Shirts* and *Men's Casual T-Shirts* both truncate to `Men's Casu…`; `TileGrid` is retained with no caller; Colour is a checkbox row with a 16px colour dot; Price Range, Margin on MRP and MOQ are checkbox rows over preset buckets, and on `/userjourney` all three also carry a typed **min/max** above those bands — Price from 2026-08-28, the other two from 2026-09-03, built from one table and differing only in the number they compare and the unit beside the box (₹ leading, `%` and `pc` trailing). Per facet the two controls are mutually exclusive and each disables the other. No slider anywhere: it would add a control the design system doesn't have. Everything else is the designed checkbox row.
 
 ### State — `lib/filters/urlState.ts`
 
@@ -183,7 +183,7 @@ chronology.
 
 ## Verification
 
-- `npm test` — 128 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, the size facet's match-and-active-pack rules, the rail order pinned in both states and for both presets, the panel-fit thresholds for the full-bleed panel and the sheet, and the typed ranges' matching, counting and URL round-trip on all three range facets.
+- `npm test` — 130 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, the size facet's match-and-active-pack rules, the rail order pinned in both states and for both presets, the panel-fit thresholds for the full-bleed panel and the sheet, and the typed ranges' matching, counting and URL round-trip on all three range facets.
 - `npm run dev`, then Chrome DevTools at exactly 360px, and compare each screen against its Figma frame.
 - Widen past 480px to confirm the phone mockup appears and the app still renders at 360.
 
