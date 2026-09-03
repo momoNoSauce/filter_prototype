@@ -585,8 +585,9 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  *   merged row would have stacked ~60 options behind a single entry and earned
  *   a search field.
  *
- * **Four rows were dropped outright**: Gender, Delivery Time, Offers and More
- * Filters. Two of those have consequences worth keeping in view —
+ * **Six rows were dropped outright**: Gender, Delivery Time, Offers, More
+ * Filters, Seller and Seller City. Three of those have consequences worth
+ * keeping in view —
  *
  * - **Gender** was this journey's documented cut. *Category → Women's T-Shirts*
  *   replaces it and settles the vertical identically, Kartik carrying exactly
@@ -597,6 +598,25 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  *   what that badge rule exists to prevent — but Clear Filters must still reach
  *   them, or `All filters cleared` closes onto two lit chips. `PlpScreen` passes
  *   them to `FilterScreen` as `clearsAlso` for exactly that reason.
+ * - **Seller and Seller City** went on 2026-09-03, and they are the one pair
+ *   the whiteboard *did* ask for. **You are already inside one seller** — this
+ *   route is Kartik's storefront and nothing else is in scope — so both rows
+ *   are dead controls by the same test that took Gender off C and D's rail: a
+ *   filter that can only offer the single value every product in scope already
+ *   has. Measured rather than reasoned, against `getKartikCatalog()`: Seller
+ *   counts **no options at all** (Kartik is his own `Seller`, not one of
+ *   `SELLERS`' eight, so every option in that panel is a zero and zeroes are
+ *   hidden) and Seller City counts exactly **one**, Tiruppur 540, which is all
+ *   of them. An empty panel and a one-option panel, where A–D show eight and
+ *   six real choices — the rows only ever looked like controls here.
+ *
+ *   They take no `clearsAlso` entry, unlike Offers: nothing on this listing
+ *   selects them, so there is no lit chip for `All filters cleared` to close
+ *   onto. The one case left is a hand-written `?seller=grasim`, which no click
+ *   can reach and which empties the listing — and the empty state's own Clear
+ *   Filters commits `{}`, every selection rather than the rail's, so it clears
+ *   that too and the URL goes bare. Verified, not assumed. That is what makes
+ *   these safe to drop where a chip-backed facet would not be.
  *
  * Colour and Fabric stay visible whether or not a vertical is settled. Grouping
  * them under "attributes" is about where they sit, not when they show: Cotton
@@ -609,8 +629,8 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
   { id: "moq", label: "MOQ", facetIds: ["moq"] },
   { id: "category", label: "Category", facetIds: ["category"], only: "filter" },
   { id: "brand", label: "Brands", facetIds: ["brand"] },
-  { id: "seller", label: "Seller", facetIds: ["seller"] },
-  { id: "sellerCity", label: "Seller City", facetIds: ["sellerCity"] },
+  // Seller and Seller City sat here until 2026-09-03 — an empty panel and a
+  // one-option panel on a single-seller storefront. See the header.
   // The attribute block. Colour and Fabric always; the rest only inside one
   // settled vertical, exactly as in the default rail.
   { id: "colour", label: "Colour", facetIds: ["colour"] },

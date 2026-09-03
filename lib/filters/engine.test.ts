@@ -962,8 +962,6 @@ describe("variants C and D — the page is the vertical", () => {
       "MOQ",
       "Category",
       "Brands",
-      "Seller",
-      "Seller City",
       "Colour",
       "Fabric",
     ]);
@@ -981,8 +979,6 @@ describe("variants C and D — the page is the vertical", () => {
       "MOQ",
       "Category",
       "Brands",
-      "Seller",
-      "Seller City",
       "Colour",
       "Fabric",
       "Size",
@@ -993,11 +989,11 @@ describe("variants C and D — the page is the vertical", () => {
       "Closure Type",
     ]);
 
-    // The four that were dropped, and the default rail keeping every one of
+    // The six that were dropped, and the default rail keeping every one of
     // them — the two orders are allowed to disagree.
     const journey = getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey");
     const dflt = getRailFacetIds();
-    for (const gone of ["gender", "delivery", "hasOffer", "offers", "tags"]) {
+    for (const gone of ["gender", "delivery", "hasOffer", "offers", "tags", "seller", "sellerCity"]) {
       expect(journey.has(gone)).toBe(false);
       expect(dflt.has(gone)).toBe(true);
     }

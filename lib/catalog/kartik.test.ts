@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { KARTIK, KARTIK_CATEGORY_IDS, ZENIFIT, getKartikCatalog } from "./kartik";
 import { getCatalog } from "./products";
 import { CATEGORIES } from "./seed";
-import { applyFilters } from "@/lib/filters/engine";
+import { applyFilters, facetOptionsWithCounts } from "@/lib/filters/engine";
 import {
   dropOrphanedSelections,
   getRail,
@@ -120,6 +120,22 @@ describe("a vertical settled by scope, not by a Category tick", () => {
     }
     // Gender keeps its row: it is the control holding this cut.
     expect(rail).toContain("gender");
+  });
+
+  it("has nothing for a Seller or Seller City row to offer", () => {
+    // Why both rows left this route's rail on 2026-09-03. You are already
+    // inside one seller here, so neither can do anything but name him — the
+    // same dead-control test that took Gender off C and D. Measured, so that a
+    // catalog change which makes them live again fails here rather than
+    // silently leaving the journey a control short.
+    expect(facetOptionsWithCounts(kartik, {}, "seller")).toEqual([]);
+    expect(facetOptionsWithCounts(kartik, {}, "sellerCity")).toEqual([
+      { id: "tiruppur", label: "Tiruppur", count: kartik.length },
+    ]);
+
+    const rail = getRail(undefined, undefined, settledVertical(kartik, women), "journey");
+    expect(rail.map((r) => r.id)).not.toContain("seller");
+    expect(rail.map((r) => r.id)).not.toContain("sellerCity");
   });
 });
 

@@ -60,14 +60,17 @@ export default function Page() {
        *   chip beside it. It joins the draft there: a tap re-sorts nothing
        *   until `Show N results`, the ✕ discards it, and Clear Filters returns
        *   it to Popularity along with the filters.
-       * - **This route's own rail order**, with Gender, Delivery Time, Offers
-       *   and More Filters dropped — see `JOURNEY_RAIL_ORDER`. Two of those
-       *   cost something and both are paid for there: Gender was this
-       *   journey's documented cut, and *Category → Women's T-Shirts* now
-       *   makes it and settles the vertical identically; Offers owned the
-       *   facets the three strip chips select, so `PlpScreen` hands them to
-       *   the Filters screen as `clearsAlso` and Clear Filters still reaches
-       *   them.
+       * - **This route's own rail order**, with Gender, Delivery Time, Offers,
+       *   More Filters, Seller and Seller City dropped — see
+       *   `JOURNEY_RAIL_ORDER`. Three of those cost something and all three
+       *   are paid for there: Gender was this journey's documented cut, and
+       *   *Category → Women's T-Shirts* now makes it and settles the vertical
+       *   identically; Offers owned the facets the three strip chips select,
+       *   so `PlpScreen` hands them to the Filters screen as `clearsAlso` and
+       *   Clear Filters still reaches them; Seller and Seller City went on
+       *   2026-09-03 because a buyer standing in Kartik's storefront is
+       *   already inside the only seller in scope, which left one panel empty
+       *   and the other holding a single option every product has.
        * - **Price Range carries a typed min and max above its bands.** The
        *   bands are the fast path and keep their counts; the boxes cover a
        *   range nobody predicted. The two are exclusive — typing clears a

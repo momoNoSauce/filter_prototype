@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-08-28
+Last updated: 2026-09-03
 
 > **Four docs, one job each.** `CLAUDE.md` — the rules, and the only one loaded
 > into every session, so keep it short. `plan.md` — the architecture.
@@ -996,6 +996,65 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 (`Price/pc (low → high)`); the active treatment is untouched — bold, primary,
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
+
+### 2026-09-03 — Seller and Seller City leave the journey's rail
+
+You are **already inside one seller** on `/userjourney/seller/kartik`, so
+neither row could do anything but name him. Both are gone from
+`JOURNEY_RAIL_ORDER`; A–D keep theirs, where eight sellers and six cities are
+real choices.
+
+The dead-control test C and D applied to Gender, and this pair fails it harder
+than expected. Measured against `getKartikCatalog()` rather than reasoned:
+
+| row | options in Kartik's scope | what the panel showed |
+|---|---|---|
+| Seller | **none** | `No options match.` |
+| Seller City | **one** — Tiruppur 540 | one tick every product already has |
+
+Seller counted nothing because Kartik is his own `Seller` and not one of
+`SELLERS`' eight, so every option in that panel was a zero and zeroes are
+hidden. Seller City counted one because `SELLERS` happens to carry *Tiruppur
+Knit House*, whose city Kartik shares — so the row offered a filter that
+selects all 540.
+
+**Neither takes a `clearsAlso` entry**, unlike Offers when it left the same rail
+on 2026-08-28. Nothing on this listing selects them, so there is no lit chip for
+`All filters cleared` to close onto. The one case left is a hand-written
+`?seller=grasim`, which no click can reach and which empties the listing — and
+the empty state's own Clear Filters commits `{}`, every selection rather than
+the rail's scope, so it clears that too and the URL goes bare. Checked in the
+browser rather than assumed; that is what makes these two safe to drop where a
+chip-backed facet would not be.
+
+The journey rail is now **eight rows** across verticals and fourteen inside one:
+
+```
+Sort By · Price Range · Margin · MOQ · Category · Brands
+  └─ attributes ─┐ Colour · Fabric · Size · Fit · Neck · Sleeve · Pattern · Closure
+```
+
+**Verified** in the running app at 360px:
+
+| | |
+|---|---|
+| journey rail | `Sort By · Price Range · Margin · MOQ · Category · Brands · Colour · Fabric`, `Show 540 results` |
+| journey, `?category=womens-t-shirts` | the same, then the attribute block; `Show 191 results`, a dot on Category |
+| journey, `?seller=grasim` | empty state, and its Clear Filters returns the URL to `/userjourney/seller/kartik` |
+| A `/results?q=shirt` | unchanged — Seller and Seller City still on the rail |
+
+125 tests green (one new, pinning both panels' contents in Kartik's scope so a
+catalog change that makes either row live again fails there), lint, typecheck
+and build clean. No console errors.
+
+**One more empty panel found while measuring, and left alone: Brands.** It reads
+`No options match.` on this route for the same reason Seller did — every Kartik
+product is a *Zenifit*, which is not one of `BRANDS`' ten, so the tile grid has
+nothing to draw. `kartik.ts` says the panel "shows exactly one tile", which was
+the intent and is not what the build does. Whether Brands should go the way of
+Seller or `BRANDS` should learn Zenifit is a question for the designer, since
+one tile is a dead control either way and the empty panel is the worse of the
+two.
 
 ### 2026-08-28 — the strip's shadow comes down again
 
@@ -2043,7 +2102,8 @@ Ordered by consequence. None of these block a demo.
 2. **A Category glyph for the bottom bar.** The frame's first slot was Gender (`wc.svg`); it now holds Category and is borrowing `tag.svg`, which is also the Sort sheet's *Recently Added* icon. An exported Category icon would settle it.
 3. `Offers` vs `Seller Offers` — the two filter frames disagree; currently **Offers**.
 3a. ~~**An icon for the Target Scheme chip.**~~ **Supplied and in, 2026-08-28** — a blue ring under an orange arc, `public/offers/solv-target-scheme.png`. The chip shipped label-only for a few hours in between, which is what `icon` being optional on `FilterChip` buys. The offer is named **SOLV Target Scheme**: the GOLD prefix went with that branding on 08-19 and SOLV took its place.
-4. Baheti Garments is treated as a storefront aggregating multiple sellers, since the app bar says Baheti while the Seller facet lists other companies. Confirm, or scope it to one seller and drop the Seller facet there.
+4. Baheti Garments is treated as a storefront aggregating multiple sellers, since the app bar says Baheti while the Seller facet lists other companies. Confirm, or scope it to one seller and drop the Seller facet there. **`/userjourney` took the second reading on 2026-09-03** — Kartik's storefront is one seller, so Seller and Seller City left that rail; A–D still take the first.
+4a. **Brands is an empty panel on `/userjourney`.** Found 2026-09-03 while measuring the two rows above. Every Kartik product is a *Zenifit*, which is not one of `BRANDS`' ten, so the tile grid draws nothing and the panel reads `No options match.` — `kartik.ts` intends "exactly one tile" and left it visible on purpose, so a buyer would learn something from it. Either it goes the way of Seller, or `BRANDS` learns Zenifit and it shows the one tile as intended. One tile is a dead control either way; an empty panel is the worse of the two.
 5. A stray `$299.99` row sits at the bottom of the filter rail in Figma (`638:3712`) and was skipped as an artefact; `Margin` is SemiBold while its eleven rail siblings are Medium.
 6. **Four things the live-app screengrab raises** (2026-08-14), now that the card follows it rather than the frame:
    - ~~**The screengrab has no shipping-fee line.**~~ **Closed 2026-08-20** — the word was said. `+₹50 shipping fee` is not a real charge and is gone from the card in all four variants; the field is still drawn and simply unread, its `rand()` sitting mid-sequence. The card and the screengrab now agree here.

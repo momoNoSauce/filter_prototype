@@ -62,9 +62,10 @@ Its listing departs from the documented control layout, via **one prop** —
 `rail`, `filterSheet`, `priceInputs`), each field defaulting to the documented behaviour so a route opts
 *out*, never in. Today that leaves the strip as `Filter` plus the four offer
 chips, Sort By as the first row of the Filters rail, that rail in this route's
-own order (`JOURNEY_RAIL_ORDER`) with Gender, Delivery Time, Offers and More
-Filters dropped — so its cut is **Category → Women's T-Shirts**, not Gender →
-Women — Filters as a bottom sheet, and Price Range with a typed min/max above
+own order (`JOURNEY_RAIL_ORDER`) with six rows dropped (Gender, Delivery Time,
+Offers, More Filters, and — since the storefront *is* one seller — Seller and
+Seller City), so its cut is **Category → Women's T-Shirts**, not Gender →
+Women; Filters as a bottom sheet; and Price Range with a typed min/max above
 its bands. A–D pass nothing. Put new per-route departures in that object
 rather than adding a prop each; the reasoning is in `docs/decisions.md`.
 
