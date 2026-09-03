@@ -56,10 +56,18 @@ export default function Page() {
        *   then names the cut and the Filters badge is the only report of it.
        * - **No Price chip.** Price Range stays a rail facet, so the bands are
        *   still reachable in the Filters panel and nothing is orphaned.
-       * - **Sort inside Filters**, as the first row of its rail rather than a
-       *   chip beside it. It joins the draft there: a tap re-sorts nothing
-       *   until `Show N results`, the ✕ discards it, and Clear Filters returns
-       *   it to Popularity along with the filters.
+       * - ~~**Sort inside Filters**~~ — **reversed on 2026-09-03**, on the
+       *   request. Sort is a chip on the strip again, beside Filter, as the
+       *   live app's own bar has it and as B and D carry it. It was the first
+       *   row of the Filters rail between 08-28 and 09-03, joining the draft
+       *   there; `sortInFilters` still does that and nothing passes it today.
+       *   The cost of having it back is the cost B and D pay: a sort applies
+       *   on tap rather than on `Show N results`, so the ✕ has nothing to
+       *   discard and the only way back is another tap — the sheet marking
+       *   `Popularity (Default)` is what makes that findable. Clear Filters
+       *   still resets it, as it does in every variant: it commits
+       *   `DEFAULT_SORT` whether or not Sort is on that screen, which is why
+       *   the documented demo has the URL going bare.
        * - **This route's own rail order**, with Gender, Delivery Time, Offers,
        *   More Filters, Seller and Seller City dropped — see
        *   `JOURNEY_RAIL_ORDER`. Three of those cost something and all three
@@ -82,7 +90,8 @@ export default function Page() {
        *   are filtering. It also shortens the panel, so lists earn a search
        *   field sooner there — see `SHEET_PANEL_VIEWPORT`.
        *
-       * What is left in the strip is `Filter` and the three offer chips.
+       * What is left in the strip is `Sort` and `Filter`, then the four offer
+       * chips.
        *
        * None of this is `locked` mode, which C and D use — that would take
        * Category off the rail as well, and Category is now this journey's
@@ -91,7 +100,6 @@ export default function Page() {
       controls={{
         verticalChips: false,
         priceChip: false,
-        sortInFilters: true,
         rail: "journey",
         filterSheet: true,
         priceInputs: true,

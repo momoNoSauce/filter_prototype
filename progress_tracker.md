@@ -997,6 +997,44 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-03 — Sort comes back out, onto the chip strip
+
+**On the request, and the fourth placement this control has held on
+`/userjourney`.** Sort is a chip beside Filter again, where the live app's own
+bar has it and where B and D carry it. It spent six days inside the Filters
+screen as the first row of that rail (2026-08-28).
+
+One field left the `controls` object — `sortInFilters: true` — and that is the
+whole change. The flag and its plumbing stay in `PlpScreen` and `FilterScreen`;
+nothing passes them today. Kept rather than deleted because this route has now
+moved Sort three times, and the in-Filters version is the only one whose sort
+can be *drafted* — applied on `Show N results` and discarded with the ✕.
+
+**What having it back costs**, and it is exactly what B and D pay: a tap in the
+Sort sheet applies at once, so there is nothing for the ✕ to discard and the
+only way back is another tap. `Popularity (Default)` in that sheet — named on
+2026-08-25 for this reason — is what keeps the way back findable.
+
+**A doc correction fell out of checking that.** `docs/decisions.md` claimed
+Clear Filters resets Sort only "where Sort lives on that screen", and that A–D
+were untouched. They never were: `FilterScreen` commits
+`onApply(cleared, DEFAULT_SORT)` unconditionally. Measured — `/b/results?q=shirt&gender=men&sort=margin_desc`
+→ Clear Filters → a bare URL, the sort gone with the filter. The row now says
+so. Whether Clear **Filters** should reach a control that isn't a filter is
+left as **backlog item 14** rather than changed under a placement request.
+
+**Verified** at 360px, no console errors:
+
+| | |
+|---|---|
+| journey strip | `Sort · Filter │ Cashback · Seller Offer · SOLV Target Scheme · Free Delivery` |
+| Sort → Highest Margin | applies and closes, `?sort=margin_desc`, dot on the Sort chip, 65% margins at the head of the list |
+| journey Filters | opens on **Price Range** — seven rows, no `Sort By` |
+| B, D, journey | one Sort chip each, no `Sort By` row inside Filters — the three agree again |
+| A `/results?q=shirt` | the pill keeps both halves |
+
+125 tests green, lint, typecheck and build clean.
+
 ### 2026-09-03 — Seller and Seller City leave the journey's rail
 
 You are **already inside one seller** on `/userjourney/seller/kartik`, so
@@ -2085,6 +2123,7 @@ Ordered by consequence. None of these block a demo.
 11. **Two type sizes are held below 12px by frame dimensions**, not by choice — see the 2026-08-20 entry. The tile-grid label (11px, boxed by the 68px cell) and the home seller card's stat line (11px, boxed by the 152px card) were the only sites the type pass could not raise. Both need a wider cell or card to move, which is a designer's call.
 8. **Accessibility**, if this becomes the reference build: filter rows use `aria-pressed` where `role="checkbox"` + `aria-checked` is correct; sheets don't trap focus; the scrim is a full-viewport `<button>` announced as a giant "Close".
 9. **Pagination dots under the set pills** imply snapping the free-scrolling row doesn't do.
+14. **Clear Filters resets Sort, in every variant.** `FilterScreen` commits `onApply(cleared, DEFAULT_SORT)` whether or not Sort is a row on that screen, so a sort set from A's pill or B's chip is cleared by a button labelled *Clear Filters* under a toast reading `All filters cleared` — and Sort is not a filter. Written deliberately for `/userjourney` on 2026-08-28, when Sort *was* on that screen; measured on 2026-09-03 and it was never scoped to that route. Two defensible answers — the button means "return this listing to its untouched state", or it means what it says and Sort keeps its value — and it is a designer's call, not a code one. Left as behaviour, and the decisions row now describes it accurately.
 13. **The typed price range commits per keystroke, so its refusal state can't be reached.** `edit()` in `PriceRangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
 
 ## Facet tile imagery

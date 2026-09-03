@@ -59,15 +59,17 @@ banner → storefront → filter → detail. Its catalog (`lib/catalog/kartik.ts
 
 Its listing departs from the documented control layout, via **one prop** —
 `controls` on `PlpScreen` (`verticalChips`, `priceChip`, `sortInFilters`,
-`rail`, `filterSheet`, `priceInputs`), each field defaulting to the documented behaviour so a route opts
-*out*, never in. Today that leaves the strip as `Filter` plus the four offer
-chips, Sort By as the first row of the Filters rail, that rail in this route's
-own order (`JOURNEY_RAIL_ORDER`) with six rows dropped (Gender, Delivery Time,
-Offers, More Filters, and — since the storefront *is* one seller — Seller and
-Seller City), so its cut is **Category → Women's T-Shirts**, not Gender →
-Women; Filters as a bottom sheet; and Price Range with a typed min/max above
-its bands. A–D pass nothing. Put new per-route departures in that object
-rather than adding a prop each; the reasoning is in `docs/decisions.md`.
+`rail`, `filterSheet`, `priceInputs`), each field defaulting to the documented
+behaviour so a route opts *out*, never in. Today that leaves the strip as
+`Sort` and `Filter` plus the four offer chips; that rail in this route's own
+order (`JOURNEY_RAIL_ORDER`), six rows dropped (Gender, Delivery Time, Offers,
+More Filters, and — since the storefront *is* one seller — Seller and Seller
+City), so its cut is **Category → Women's T-Shirts**, not Gender → Women;
+Filters as a bottom sheet; and Price Range with a typed min/max above its
+bands. A–D pass nothing, and so does the journey for `sortInFilters` — Sort
+went back to the strip on 2026-09-03 after six days inside Filters. Put new
+per-route departures in that object rather than adding a prop each; the
+reasoning is in `docs/decisions.md`.
 
 Its Filters screen is a **bottom sheet at 80%** rather than full-bleed, so the
 listing stays visible behind it. That shortens the panel, so `needsSearch` takes

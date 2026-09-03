@@ -576,9 +576,11 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  * The sequence asked for was Sort · Price · Margin · MOQ · Category · Brand ·
  * Seller · Seller Location · Attributes. Two readings of it:
  *
- * - **Sort isn't here.** It is the rail's first row on this route, but it is
- *   not a facet — `FilterScreen` prepends it, so this array stays a list of
- *   facets and nothing may look up a sort in `FACET_BY_ID`.
+ * - **Sort isn't here**, and since 2026-09-03 it isn't on this rail at all —
+ *   it went back to a chip on the strip, beside Filter. It was the rail's first
+ *   row for those six days, and even then it was never in this array: it is not
+ *   a facet, `FilterScreen` prepends it, and nothing may look up a sort in
+ *   `FACET_BY_ID`.
  * - **"Attributes" is eight rows, not one** (settled on the call): Colour,
  *   Fabric and Size join the five vertical-specific rows at the foot, because
  *   the note grouped them by position rather than asking for one panel. One

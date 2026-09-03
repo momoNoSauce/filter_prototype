@@ -182,11 +182,16 @@ export type PlpControls = {
    */
   priceChip?: boolean;
   /**
-   * Whether Sort lives inside the Filters screen instead of beside it. `true`
-   * on `/userjourney`: the Sort chip leaves the strip and *Sort By* becomes the
-   * first row of the Filters rail, joining the draft — so a sort applies on
-   * `Show N results`, the ✕ discards it, and Clear Filters returns it to
-   * Popularity.
+   * Whether Sort lives inside the Filters screen instead of beside it: the Sort
+   * chip leaves the strip and *Sort By* becomes the first row of the Filters
+   * rail, joining the draft — so a sort applies on `Show N results`, the ✕
+   * discards it, and Clear Filters returns it to Popularity.
+   *
+   * **Nothing passes it today.** `/userjourney` did between 2026-08-28 and
+   * 2026-09-03, when Sort was asked back onto the chip strip beside Filter,
+   * where the live app's own bar has it. Kept rather than deleted because this
+   * route has now moved Sort three times and the draft behaviour above is the
+   * only version of it that can be discarded — see the page's own comment.
    *
    * **Honoured on `top-chips` only.** In `bottom-bar` the pill is a designed
    * 240px surface with two halves either side of a 32px rule (Figma
@@ -197,9 +202,9 @@ export type PlpControls = {
   sortInFilters?: boolean;
   /**
    * Which Filters rail this listing shows. `"journey"` is the 2026-08-28
-   * stakeholder order — Sort · Price · Margin · MOQ · Category · Brands ·
-   * Seller · Seller City, then the attribute block — with Gender, Delivery
-   * Time, Offers and More Filters dropped. A–D say nothing and keep
+   * stakeholder order — Price · Margin · MOQ · Category · Brands, then the
+   * attribute block — with Gender, Delivery Time, Offers, More Filters and
+   * (2026-09-03) Seller and Seller City dropped. A–D say nothing and keep
    * `"default"`, which follows the reference apparel PLP. See `RailPreset`.
    */
   rail?: RailPreset;
