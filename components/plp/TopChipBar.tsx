@@ -4,7 +4,16 @@ import type { ReactNode } from "react";
 import { CHIP_H_TALL, ChipStrip } from "./ContextChips";
 
 /**
- * Figma 644:4011 — the Sort / Filter chip bar, used by Variant B.
+ * Figma 644:4011 — the Filter / Sort chip bar, used by B, D and `/userjourney`.
+ *
+ * **Filter leads, Sort follows** (2026-09-03, on request). The frame draws Sort
+ * first; this is a deliberate departure, and it is applied to the pill in
+ * `BottomActionBar` too rather than to this bar alone — the 2×2 compares where
+ * the controls *sit*, so a different order on the chips than on the pill would
+ * put a second difference into a comparison built to hold one. Filter first is
+ * also the order the two are used in: a buyer narrows a 540-product listing
+ * before deciding how to rank what is left, and Filter is the control that
+ * carries a count.
  *
  * Chip: 1px #4d4d4d border, 20px icon, 14px Roboto Bold at 74% opacity.
  * Container: pl-8 pr-16 py-12, gap-8.
@@ -88,11 +97,19 @@ export function TopChipBar({
 }) {
   return (
     <ChipStrip>
-      {/* `sort.svg`, not the frame's caret (2026-08-20, on request). A caret
+      {/* Filter first since 2026-09-03 — see the header. `sort.svg` on the
+          chip below it, not the frame's caret (2026-08-20, on request): a caret
           says "this opens" and nothing about what it opens, where the glyph
-          beside `Filter` names its control; this is also the same
-          `SortAscending` the bottom bar has always carried, so the two
-          placements now differ in placement alone. */}
+          beside `Filter` names its control. It is also the same `SortAscending`
+          the bottom bar has always carried, so the two placements differ in
+          placement alone. */}
+      <Chip
+        icon="/figma/icons/funnel.svg"
+        label="Filter"
+        badge={filterCount}
+        onClick={onFilters}
+        chipH={chipH}
+      />
       {showSort && (
         <Chip
           icon="/figma/icons/sort.svg"
@@ -102,13 +119,6 @@ export function TopChipBar({
           chipH={chipH}
         />
       )}
-      <Chip
-        icon="/figma/icons/funnel.svg"
-        label="Filter"
-        badge={filterCount}
-        onClick={onFilters}
-        chipH={chipH}
-      />
       {/* The frame's divider, grown with the chips it separates — it read as
           22 of 32, so it keeps that proportion against the taller row. */}
       <span className="h-[30px] w-px shrink-0 bg-[#4d4d4d]" />

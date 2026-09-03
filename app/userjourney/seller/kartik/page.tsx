@@ -79,11 +79,14 @@ export default function Page() {
        *   2026-09-03 because a buyer standing in Kartik's storefront is
        *   already inside the only seller in scope, which left one panel empty
        *   and the other holding a single option every product has.
-       * - **Price Range carries a typed min and max above its bands.** The
-       *   bands are the fast path and keep their counts; the boxes cover a
-       *   range nobody predicted. The two are exclusive — typing clears a
-       *   ticked band and ticking a band clears what was typed, since both
-       *   are values on one facet and would otherwise OR into a wider result.
+       * - **Every range facet carries a typed min and max above its bands** —
+       *   Price Range from 2026-08-28, and **Margin on MRP and MOQ from
+       *   2026-09-03**, on the request and on the same argument. The bands are
+       *   the fast path and keep their counts; the boxes cover a range nobody
+       *   predicted. Per facet the two are exclusive — typing clears a ticked
+       *   band and ticking a band clears what was typed, since both are values
+       *   on one facet and would otherwise OR into a wider result. Each box
+       *   carries its own unit: ₹ before the number, % and `pc` after theirs.
        *   A–D show the bands alone.
        * - **Filters is a bottom sheet**, not a full-bleed panel, so the
        *   listing stays visible behind it and the buyer keeps the context they
@@ -102,7 +105,7 @@ export default function Page() {
         priceChip: false,
         rail: "journey",
         filterSheet: true,
-        priceInputs: true,
+        rangeInputs: true,
       }}
       homeHref="/userjourney"
       productBasePath="/userjourney"

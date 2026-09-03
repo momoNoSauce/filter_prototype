@@ -21,7 +21,15 @@ export const PILL_GAP = 12;
  * each `pt-[4px] pb-[8px]` with a 24px glyph over its label. It sits 12px above
  * the basket bar, exactly as the frame stacks them.
  *
- * Two departures, both this repo's standing rules rather than new decisions:
+ * Three departures. The first is new; the other two are this repo's standing
+ * rules rather than fresh decisions:
+ *
+ * - **Filters is the left half and Sort the right** (2026-09-03, on request),
+ *   where the frame has them the other way round. Taken here as well as on
+ *   `TopChipBar` on purpose: the 2×2 compares where these two controls *sit*,
+ *   and a pill ordered against the chips would add a second difference to a
+ *   comparison built to hold one. It is also the order they are used in —
+ *   narrow the listing, then rank what is left.
  *
  * - **The labels are 15px, not the frame's 14.** Every 14px control label went
  *   to 15 in the type pass of 2026-08-20; this is one, and the pill has the room.
@@ -50,16 +58,16 @@ export function BottomActionBar({
       style={{ width: PILL_W, height: PILL_H }}
       className="flex items-center justify-center rounded-[16px] border border-[#d1d1d1] bg-[#323232] drop-shadow-[0px_0px_5.05px_rgba(0,0,0,0.3)]"
     >
-      <PillItem label="Sort" icon="/figma/icons/sort.svg" dot={sortActive} onClick={onSort} />
-      {/* The frame's 32px rule. White at 40% rather than a flat grey: it has to
-          read on `#323232` without becoming a third element. */}
-      <span className="h-[32px] w-px shrink-0 bg-white/40" />
       <PillItem
         label="Filters"
         icon="/figma/icons/funnel.svg"
         badge={filterCount}
         onClick={onFilters}
       />
+      {/* The frame's 32px rule. White at 40% rather than a flat grey: it has to
+          read on `#323232` without becoming a third element. */}
+      <span className="h-[32px] w-px shrink-0 bg-white/40" />
+      <PillItem label="Sort" icon="/figma/icons/sort.svg" dot={sortActive} onClick={onSort} />
     </div>
   );
 }

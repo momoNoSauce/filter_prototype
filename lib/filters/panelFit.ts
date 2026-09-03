@@ -63,15 +63,16 @@ export const SEARCH_FIELD_H = 56;
 export const PANEL_TOP_SPACER = 10;
 
 /**
- * `PriceRangeInputs` — `pt-[6px]` + a 44px field + `pb-[12px]`.
+ * `RangeInputs` — `pt-[6px]` + a 44px field + `pb-[12px]`.
  *
- * Counted rather than waved through: the price panel is five bands and 62px
- * of boxes, which cannot overflow either fold, but the rule this module keeps
- * is that a height in the markup has a figure here. A block that only some
- * panels carry is passed in as `lead` rather than living in `PanelBlock`,
- * since it is a property of the panel and not of any facet in it.
+ * Counted rather than waved through: the widest of the three panels that carry
+ * it is five bands and 62px of boxes, which cannot overflow either fold, but
+ * the rule this module keeps is that a height in the markup has a figure here.
+ * A block that only some panels carry is passed in as `lead` rather than living
+ * in `PanelBlock`, since it is a property of the panel and not of any facet in
+ * it.
  */
-export const PRICE_INPUTS_H = 62;
+export const RANGE_INPUTS_H = 62;
 
 /**
  * A facet heading — `pt-[12px]` + a 12px line + `pb-[4px]`. Only "More
@@ -127,7 +128,7 @@ export function panelContentHeight(blocks: PanelBlock[]): number {
 export function needsSearch(
   blocks: PanelBlock[],
   viewport: number = PANEL_VIEWPORT,
-  /** Fixed height above the options — today only `PRICE_INPUTS_H`. */
+  /** Fixed height above the options — today only `RANGE_INPUTS_H`. */
   lead: number = 0,
 ): boolean {
   return PANEL_TOP_SPACER + lead + panelContentHeight(blocks) > viewport;

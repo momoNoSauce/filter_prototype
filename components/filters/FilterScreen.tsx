@@ -9,8 +9,9 @@ import {
   dropOrphanedSelections,
   getRail,
   getRailFacetIds,
-  parsePriceRange,
-  priceRangeId,
+  parseTypedRange,
+  typedRangeId,
+  TYPED_RANGE_FACET_IDS,
   settledVertical,
   type RailPreset,
   type VerticalMode,
@@ -27,9 +28,9 @@ import {
   type SortId,
 } from "@/lib/filters/engine";
 import { SORT_ICONS } from "@/lib/filters/sortIcons";
-import { PRICE_INPUTS_H, SHEET_PANEL_VIEWPORT, needsSearch } from "@/lib/filters/panelFit";
+import { RANGE_INPUTS_H, SHEET_PANEL_VIEWPORT, needsSearch } from "@/lib/filters/panelFit";
 import { SearchField } from "./SearchField";
-import { OptionRow, PriceRangeInputs, SortRow, TileGrid } from "./OptionRows";
+import { OptionRow, RangeInputs, SortRow, TileGrid } from "./OptionRows";
 
 /**
  * The rail id of the Sort By row — `/userjourney` only, and deliberately not a
@@ -38,6 +39,31 @@ import { OptionRow, PriceRangeInputs, SortRow, TileGrid } from "./OptionRows";
  * synthetic so it can never collide with a real facet.
  */
 const SORT_RAIL_ID = "__sort";
+
+/**
+ * What each range facet's boxes are measured in — see `RangeInputs`.
+ *
+ * A map here rather than a field on the facet registry, on the line this repo
+ * already draws: `FACETS` says a facet's panel is a `range`, and how a rupee or
+ * a percent is drawn beside a number is this screen's business. `ContextChips`
+ * keeps its own icon map for the same reason.
+ *
+ * **The symbol's side is not a style choice.** ₹ leads its number and % and
+ * `pc` follow theirs, which is how all three are written outside software; a
+ * trailing ₹ or a leading % reads as a typo. `name` is what the screen reader
+ * says — "Min price per piece", "Max margin on MRP" — so each box announces
+ * which end of *what* it sets, the label alone being just "Min". `noun` is the
+ * short form the refusal toast uses: `Min quantity can't be higher than max`,
+ * where the full `name` would run to a sentence.
+ */
+const RANGE_UNITS: Record<
+  string,
+  { symbol: string; name: string; noun: string; after?: boolean }
+> = {
+  price: { symbol: "₹", name: "price per piece", noun: "price" },
+  margin: { symbol: "%", name: "margin on MRP", noun: "margin", after: true },
+  moq: { symbol: "pc", name: "order quantity in pieces", noun: "quantity", after: true },
+};
 
 /**
  * How much of the frame the sheet presentation takes.
@@ -88,7 +114,7 @@ export function FilterScreen({
   railPreset = "default",
   clearsAlso,
   asSheet = false,
-  priceInputs = false,
+  rangeInputs = false,
 }: {
   products: Product[];
   selections: Selections;
@@ -114,15 +140,17 @@ export function FilterScreen({
    */
   onCleared: () => void;
   /**
-   * A price range was left with min above max. The draft never took it — this
-   * is only so the listing's toast can say why nothing happened.
+   * A typed range was left with min above max. The draft never took it — this
+   * is only so the listing's toast can say why nothing happened. The argument
+   * is the facet's own noun (`price`, `margin`, `quantity`), so the message
+   * names the control the buyer is actually looking at.
    *
    * Its own callback rather than a flag on `onApply`, for the reason
    * `onCleared` is: these are different events that happen to share a screen,
    * and one component owning every string is what stops two of them wording
    * the same event differently. See *Which events speak*.
    */
-  onInvalidRange: () => void;
+  onInvalidRange: (noun: string) => void;
   /** How this screen treats verticals — see `VerticalMode`. */
   verticalMode?: VerticalMode;
   /**
@@ -169,19 +197,26 @@ export function FilterScreen({
    */
   asSheet?: boolean;
   /**
-   * Add a typed **min and max** above the Price Range bands. `/userjourney`
-   * only (2026-08-28) — the bands are the fast path, with counts, and the
+   * Add a typed **min and max** above the bands of every range facet —
+   * `TYPED_RANGE_FACET_IDS`, which is Price Range, Margin on MRP and MOQ.
+   * `/userjourney` only: Price from 2026-08-28, the other two from 2026-09-03,
+   * on the same argument. The bands are the fast path and carry the counts; the
    * boxes are the escape hatch for a range nobody predicted.
    *
-   * The two are **exclusive**: typing replaces any ticked band and ticking a
-   * band clears a typed range. Both live on the `price` facet, where values
-   * OR, so leaving both standing would *widen* the result — a buyer who typed
-   * 150–450 and then ticked *Under ₹200* would be shown ₹80 shirts.
+   * **One flag for the three**, not one per facet. They are the same control
+   * answering the same objection, and a route that wants a typed price but
+   * banded margins is a screen nobody has asked for — when someone does, this
+   * becomes a set of facet ids and the panel already reads it that way.
    *
-   * A–D show the bands alone. Nothing there can produce a range, so their
-   * Price chip sheet is unaffected.
+   * The two controls are **exclusive**, per facet: typing replaces any ticked
+   * band and ticking a band clears a typed range. Both are values on one facet,
+   * where they OR, so leaving both standing would *widen* the result — a buyer
+   * who typed 150–450 and then ticked *Under ₹200* would be shown ₹80 shirts.
+   *
+   * A–D show the bands alone. Nothing there can produce a range, so their Price
+   * chip sheet is unaffected.
    */
-  priceInputs?: boolean;
+  rangeInputs?: boolean;
 }) {
   const [draft, setDraft] = useState<Selections>(selections);
 
@@ -275,20 +310,32 @@ export function FilterScreen({
    */
   const isSortPanel = rail.id === SORT_RAIL_ID;
 
-  /** Price rendered with typed inputs above its bands — see `priceInputs`. */
-  const isPricePanel = priceInputs && rail.facetIds.includes("price");
+  /**
+   * Which facet on the open panel takes typed inputs, if any — see
+   * `rangeInputs`. A facet id rather than a boolean, since the same panel logic
+   * now serves Price Range, Margin on MRP and MOQ, and each needs to know
+   * *whose* draft values the boxes are showing.
+   *
+   * `find` over the panel's facets rather than a lookup by rail id: More
+   * Filters is the one row that stacks several facets, and a range facet
+   * joining it later should light the boxes without a second branch here.
+   */
+  const rangeFacetId = rangeInputs
+    ? rail.facetIds.find((id) => TYPED_RANGE_FACET_IDS.has(id))
+    : undefined;
+  const rangeChosen = rangeFacetId ? (draft[rangeFacetId] ?? []) : [];
 
   /**
-   * Any price *band* ticked, which disables the boxes (2026-08-28). The two
-   * were already exclusive; disabling states the rule before it costs the
+   * Any *band* ticked on that facet, which disables the boxes (2026-08-28). The
+   * two were already exclusive; disabling states the rule before it costs the
    * buyer their typing rather than after.
    *
    * Read off the draft rather than tracked separately, so a hand-written
-   * `?price=150-450,p-200` — both at once, which no control can produce —
-   * still shows a coherent screen: the band applies, the boxes are disabled,
-   * and unticking the band hands them back.
+   * `?moq=5-40,moq-4` — both at once, which no control can produce — still
+   * shows a coherent screen: the band applies, the boxes are disabled, and
+   * unticking the band hands them back.
    */
-  const priceBandTicked = (draft.price ?? []).some((id) => !parsePriceRange(id));
+  const bandTicked = rangeChosen.some((id) => !parseTypedRange(id));
 
   /**
    * The mirror: a typed range disables the bands.
@@ -299,16 +346,16 @@ export function FilterScreen({
    * typing used to clear a ticked band without saying so, and now it can't be
    * reached at all.
    */
-  const priceRangeTyped = (draft.price ?? []).some((id) => parsePriceRange(id));
+  const rangeTyped = rangeChosen.some((id) => parseTypedRange(id));
 
   /**
    * The two boxes' values, read back out of the draft rather than held beside
    * it. One source of truth, so Clear Filters empties the fields through the
    * same path it empties everything else.
    */
-  const priceRange = (() => {
-    const chosen = draft.price?.[0];
-    const range = chosen ? parsePriceRange(chosen) : null;
+  const typedRange = (() => {
+    const chosen = rangeChosen[0];
+    const range = chosen ? parseTypedRange(chosen) : null;
     if (!range) return { min: "", max: "" };
     return {
       min: range.min ? String(range.min) : "",
@@ -348,8 +395,8 @@ export function FilterScreen({
     })),
     // The sheet's panel is 160px shorter, so lists earn a field sooner there.
     asSheet ? SHEET_PANEL_VIEWPORT : undefined,
-    // The price panel carries its min/max boxes above the bands.
-    isPricePanel ? PRICE_INPUTS_H : 0,
+    // A range panel carries its min/max boxes above the bands.
+    rangeFacetId ? RANGE_INPUTS_H : 0,
   );
 
   /*
@@ -405,19 +452,22 @@ export function FilterScreen({
   const toggle = (facetId: string, optionId: string) =>
     setDraft((current) => {
       /*
-       * **A band and a typed range are exclusive** (2026-08-28). Both live on
-       * the `price` facet, where values OR — so leaving a range standing while
-       * a band is ticked would *widen* the result, and a buyer who typed
-       * 150–450 and then ticked *Under ₹200* would be shown ₹80 shirts. They
-       * are two ways of saying one thing, so the last one used wins.
+       * **A band and a typed range are exclusive** (2026-08-28; all three range
+       * facets since 2026-09-03). Both are values on one facet, where they OR
+       * — so leaving a range standing while a band is ticked would *widen* the
+       * result, and a buyer who typed 150–450 and then ticked *Under ₹200*
+       * would be shown ₹80 shirts. They are two ways of saying one thing, so
+       * the last one used wins.
        *
        * Written here rather than in the input's handler because only this
        * direction needs saying: the boxes already replace the whole selection.
        */
-      const base =
-        facetId === "price"
-          ? { ...current, price: (current.price ?? []).filter((id) => !parsePriceRange(id)) }
-          : current;
+      const base = TYPED_RANGE_FACET_IDS.has(facetId)
+        ? {
+            ...current,
+            [facetId]: (current[facetId] ?? []).filter((id) => !parseTypedRange(id)),
+          }
+        : current;
       const next = toggleSelection(base, facetId, optionId);
       // Recomputed from `next`, not from the render's `settled`: unticking the
       // Gender that settled the vertical has to orphan the attribute rows in
@@ -554,23 +604,25 @@ export function FilterScreen({
             the bands don't. Ticking a band clears whatever is typed here —
             see `toggle`.
           */}
-          {isPricePanel && (
-            <PriceRangeInputs
-              min={priceRange.min}
-              max={priceRange.max}
+          {rangeFacetId && (
+            <RangeInputs
+              min={typedRange.min}
+              max={typedRange.max}
+              unit={RANGE_UNITS[rangeFacetId]}
               onChange={(min, max) =>
                 setDraft((current) => {
-                  const id = priceRangeId(min, max);
+                  const id = typedRangeId(min, max);
                   const next = { ...current };
-                  // Both boxes empty is no price filter at all, not a range of
-                  // nothing — so the key goes, and the badge stops counting it.
-                  if (id) next.price = [id];
-                  else delete next.price;
+                  // Both boxes empty is no filter at all on this facet, not a
+                  // range of nothing — so the key goes, and the badge stops
+                  // counting it.
+                  if (id) next[rangeFacetId] = [id];
+                  else delete next[rangeFacetId];
                   return next;
                 })
               }
-              onInvalid={onInvalidRange}
-              disabled={priceBandTicked}
+              onInvalid={() => onInvalidRange(RANGE_UNITS[rangeFacetId].noun)}
+              disabled={bandTicked}
             />
           )}
 
@@ -610,9 +662,11 @@ export function FilterScreen({
                       option={option}
                       selected={chosen.includes(option.id)}
                       onToggle={() => toggle(facetId, option.id)}
-                      // Only the price bands, and only while the boxes above
-                      // them hold the answer.
-                      disabled={isPricePanel && facetId === "price" && priceRangeTyped}
+                      // Only this facet's own bands, and only while the boxes
+                      // above them hold the answer. A range typed into Margin
+                      // must not grey out the MOQ bands beside it in a stacked
+                      // panel.
+                      disabled={facetId === rangeFacetId && rangeTyped}
                     />
                   ))
                 )}

@@ -19,7 +19,7 @@ import {
   FACET_BY_ID,
   FILTER_VERTICALS,
   getRail,
-  parsePriceRange,
+  parseTypedRange,
   getRailFacetIds,
   settledVertical,
 } from "./facets";
@@ -915,10 +915,10 @@ describe("variants C and D — the page is the vertical", () => {
 
     // A bare hyphen is not a range, so it falls through to band matching and
     // matches nothing — a hand-typed `?price=-` can't empty the listing.
-    expect(parsePriceRange("-")).toBeNull();
+    expect(parseTypedRange("-")).toBeNull();
 
     // Band ids still work and can never be read as a range.
-    expect(parsePriceRange("p-200")).toBeNull();
+    expect(parseTypedRange("p-200")).toBeNull();
     expect(priced({ price: ["p-200"] }).every((v) => v < 200)).toBe(true);
   });
 
@@ -943,6 +943,74 @@ describe("variants C and D — the page is the vertical", () => {
     expect(round(q.slice(1))).toEqual({ price: ["150-450"] });
   });
 
+  it("filters Margin on MRP and MOQ by a typed range too", () => {
+    // The same control on all three range facets (2026-09-03, on request).
+    // What differs is only the number each compares against — the pack's margin
+    // for one, the product's `moq` for the other — so this is the price test
+    // run again over the two that joined it.
+    const margins = (sel: Record<string, string[]>) =>
+      applyFilters(catalog, sel).map((p) => activeVariant(p).marginPct);
+    const moqs = (sel: Record<string, string[]>) => applyFilters(catalog, sel).map((p) => p.moq);
+
+    const band = margins({ margin: ["35-50"] });
+    expect(band.length).toBeGreaterThan(0);
+    expect(band.every((v) => v >= 35 && v <= 50)).toBe(true);
+    expect(margins({ margin: ["60-"] }).every((v) => v >= 60)).toBe(true);
+    expect(margins({ margin: ["-30"] }).every((v) => v <= 30)).toBe(true);
+    // Inverted matches nothing rather than being swapped, as with price.
+    expect(margins({ margin: ["50-35"] })).toHaveLength(0);
+
+    const some = moqs({ moq: ["5-12"] });
+    expect(some.length).toBeGreaterThan(0);
+    expect(some.every((v) => v >= 5 && v <= 12)).toBe(true);
+    expect(moqs({ moq: ["20-"] }).every((v) => v >= 20)).toBe(true);
+
+    // Their own band ids are still bands and can never be read as a range —
+    // every bucket id starts with a letter, every range with a digit or `-`.
+    expect(parseTypedRange("m-30")).toBeNull();
+    expect(parseTypedRange("moq-4")).toBeNull();
+    expect(margins({ margin: ["m-30"] }).every((v) => v < 30)).toBe(true);
+    expect(moqs({ moq: ["moq-4"] }).every((v) => v <= 4)).toBe(true);
+  });
+
+  it("carries every typed range through the URL, and only the three", () => {
+    // `matches` without `accepts` is the trap: the selection works in-session
+    // and vanishes on reload, because `parseSelections` validates each id
+    // against the facet's options and a range is in no option list. All three
+    // range facets are built from one table for exactly this reason.
+    const round = (q: string) => parseSelections(new URLSearchParams(q));
+
+    expect(round("margin=35-50")).toEqual({ margin: ["35-50"] });
+    expect(round("moq=5-12")).toEqual({ moq: ["5-12"] });
+    expect(round("moq=20-")).toEqual({ moq: ["20-"] });
+    // The guard still guards on the new two.
+    expect(round("margin=junk")).toEqual({});
+    expect(round("moq=-")).toEqual({});
+
+    // And a facet that takes no range still refuses one, so `accepts` did not
+    // quietly widen for everybody.
+    expect(round("colour=100-200")).toEqual({});
+    expect(round("delivery=1-3")).toEqual({});
+
+    const q = buildQuery({ moq: ["5-12"], margin: ["35-50"] }, "popularity");
+    expect(round(q.slice(1))).toEqual({ moq: ["5-12"], margin: ["35-50"] });
+  });
+
+  it("counts the bands the same whether or not a range is typed, on all three", () => {
+    // Own-facet-excluded counting, asserted for the two facets that just
+    // gained an input: a typed range is one of the facet's own selections, so
+    // it must not move that facet's band counts.
+    for (const [facetId, typed] of [
+      ["price", "150-450"],
+      ["margin", "35-50"],
+      ["moq", "5-12"],
+    ] as const) {
+      expect(facetOptionsWithCounts(catalog, { [facetId]: [typed] }, facetId)).toEqual(
+        facetOptionsWithCounts(catalog, {}, facetId),
+      );
+    }
+  });
+
   it("counts the price bands the same whether or not a range is typed", () => {
     // The one rule that matters: a facet is counted against every *other*
     // facet's selections and never its own. A typed range is one of its own,
@@ -958,7 +1026,7 @@ describe("variants C and D — the page is the vertical", () => {
     // is a row quietly moving rather than one going missing.
     expect(getRail(undefined, FILTER_VERTICALS, null, "journey").map((r) => r.label)).toEqual([
       "Price Range",
-      "Margin",
+      "Margin on MRP",
       "MOQ",
       "Category",
       "Brands",
@@ -975,7 +1043,7 @@ describe("variants C and D — the page is the vertical", () => {
       ),
     ).toEqual([
       "Price Range",
-      "Margin",
+      "Margin on MRP",
       "MOQ",
       "Category",
       "Brands",

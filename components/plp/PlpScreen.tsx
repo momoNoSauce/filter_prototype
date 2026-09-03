@@ -74,8 +74,13 @@ const CLEARED = "All filters cleared";
  * Names the rule rather than the field, because the app can't know which of
  * the two boxes the buyer meant to change: both carry the invalid border, and
  * either one fixes it.
+ *
+ * **It names the facet too, since 2026-09-03**: three panels carry these boxes
+ * now, and a Margin panel saying `Min price...` is a message about a control
+ * that isn't on screen. `FilterScreen` passes the noun — the same map that
+ * decides the box's unit owns it, so a fourth range facet brings its own word.
  */
-const INVALID_RANGE = "Min price can't be higher than max";
+const invalidRange = (noun: string) => `Min ${noun} can't be higher than max`;
 
 /**
  * How far down the listing the controls start hiding — the chip strip and, in A
@@ -217,12 +222,14 @@ export type PlpControls = {
    */
   filterSheet?: boolean;
   /**
-   * Add a typed **min and max** above the Price Range bands. `true` on
-   * `/userjourney` (2026-08-28): the bands are the fast path and the boxes
-   * cover a range nobody predicted. The two are exclusive — see
-   * `FilterScreen`. A–D show the bands alone.
+   * Add a typed **min and max** above the bands of all three range facets —
+   * Price Range, Margin on MRP and MOQ. `true` on `/userjourney`: Price from
+   * 2026-08-28, Margin and MOQ from 2026-09-03 on the same argument — the bands
+   * are the fast path and carry the counts, and the boxes cover a range nobody
+   * predicted. Per facet the two are exclusive; see `FilterScreen`. A–D show
+   * the bands alone.
    */
-  priceInputs?: boolean;
+  rangeInputs?: boolean;
 };
 
 export function PlpScreen({
@@ -791,11 +798,11 @@ export function PlpScreen({
           railPreset={railPreset}
           clearsAlso={clearsAlso}
           asSheet={controls?.filterSheet ?? false}
-          priceInputs={controls?.priceInputs ?? false}
+          rangeInputs={controls?.rangeInputs ?? false}
           onApply={(next, nextSort) => commit(next, nextSort ?? sort)}
           onDiscard={() => showToast(DISCARDED)}
           onCleared={() => showToast(CLEARED)}
-          onInvalidRange={() => showToast(INVALID_RANGE)}
+          onInvalidRange={(noun) => showToast(invalidRange(noun))}
           onClose={() => setOverlay(null)}
         />
       )}

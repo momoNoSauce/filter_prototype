@@ -42,10 +42,15 @@ apart in any other respect.
 
 | | Home | PLP | Controls |
 |---|---|---|---|
-| **A** | `/` | `/results?q=shirt` | Sort · Filters in a floating pill (Figma `697:2658`) |
+| **A** | `/` | `/results?q=shirt` | Filters · Sort in a floating pill (Figma `697:2658`) |
 | **B** | `/b` | `/b/results?q=shirt` | The same two as chips under the app bar (`644:4011`) |
 | **C** | — | `/c` | The pill, already inside one vertical |
 | **D** | — | `/d` | Top chips, already inside one vertical |
+
+**`Filter` leads and `Sort` follows** (2026-09-03), in the chip bar and in the
+pill alike, where both frames draw the reverse. One order across the 2×2 on
+purpose: these variants exist to compare *placement*, so a second difference
+has no business in them.
 
 A and B are reached by **searching**: Home → search bar → type `shirt` → tap a
 suggestion. `shirt` matches all 1,070 products, so the scope is identical to the
@@ -59,31 +64,37 @@ banner → storefront → filter → detail. Its catalog (`lib/catalog/kartik.ts
 
 Its listing departs from the documented control layout, via **one prop** —
 `controls` on `PlpScreen` (`verticalChips`, `priceChip`, `sortInFilters`,
-`rail`, `filterSheet`, `priceInputs`), each field defaulting to the documented
+`rail`, `filterSheet`, `rangeInputs`), each field defaulting to the documented
 behaviour so a route opts *out*, never in. Today that leaves the strip as
 `Sort` and `Filter` plus the four offer chips; that rail in this route's own
 order (`JOURNEY_RAIL_ORDER`), six rows dropped (Gender, Delivery Time, Offers,
 More Filters, and — since the storefront *is* one seller — Seller and Seller
 City), so its cut is **Category → Women's T-Shirts**, not Gender → Women;
-Filters as a bottom sheet; and Price Range with a typed min/max above its
-bands. A–D pass nothing, and so does the journey for `sortInFilters` — Sort
-went back to the strip on 2026-09-03 after six days inside Filters. Put new
-per-route departures in that object rather than adding a prop each; the
-reasoning is in `docs/decisions.md`.
+Filters as a bottom sheet; and all three range facets with a typed min/max
+above their bands. A–D pass nothing, and neither does the journey for
+`sortInFilters` — Sort went back to the strip on 2026-09-03 after six days
+inside Filters. Put new per-route departures in that object rather than adding
+a prop each; the reasoning is in `docs/decisions.md`.
 
 Its Filters screen is a **bottom sheet at 80%** rather than full-bleed, so the
 listing stays visible behind it. That shortens the panel, so `needsSearch` takes
 a viewport argument — 530 there against the full-bleed 690, giving 11 rows / 13
 tiles instead of 14 / 19. A–D are untouched.
 
-Its Price Range carries a **typed min/max** (`?price=150-450`) above the five
-bands, the two being exclusive — both are values on one facet, where they would
-otherwise OR into a wider result. An inverted range is refused rather than
-filtered, with a toast on blur. That cost the facet registry two optional hooks,
-both used by Price alone: **`matches`** overrides the default set-membership
+Its three **range facets** — Price Range, Margin on MRP and MOQ — each carry a
+**typed min/max** (`?price=150-450`, `?margin=60-`, `?moq=5-12`) above their
+bands. Per facet the two controls are exclusive, and each disables the other:
+both are values on one facet, where they would otherwise OR into a wider
+result. An inverted range is refused rather than filtered, with a toast on blur
+naming that facet. All three are built from **one table** (`TYPED_RANGES` in
+`facets.ts`) differing only in the number they compare and, in the UI, the unit
+beside the box — ₹ before the number, `%` and `pc` after. They cost the facet
+registry two optional hooks: **`matches`** overrides the default set-membership
 test, and **`accepts`** widens `parseSelections`'s id validation. **A facet that
 overrides `matches` needs `accepts` too** — without it the selection works
-in-session and vanishes on reload.
+in-session and vanishes on reload. `parseTypedRange` gates on the first
+character before its regex, because `matches` runs per product per value and
+three facets now call it — the 720-walk engine test is the thing that notices.
 
 **A facet dropped from one rail may still have a chip.** `clearsAlso` on
 `FilterScreen` is how Clear Filters still reaches it — otherwise the toast says

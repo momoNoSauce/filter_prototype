@@ -75,18 +75,33 @@ export interface FacetDef {
 }
 
 /**
- * A typed price range, as it appears in a selection and in the URL: `150-450`,
+ * A typed range, as it appears in a selection and in the URL: `150-450`,
  * `150-` for a floor alone, `-450` for a ceiling alone.
  *
  * Plain digits and a hyphen rather than a prefixed id, so the URL reads
- * `?price=150-450`. It cannot collide with a band: every bucket id starts with
- * a letter and a hyphen (`p-200`, `p-max`), and this must start with a digit or
- * the hyphen itself.
+ * `?price=150-450`. It cannot collide with a band on any of the three facets
+ * that take one: every bucket id starts with a letter and a hyphen (`p-200`,
+ * `m-30`, `moq-4`), and this must start with a digit or the hyphen itself.
+ *
+ * **Named for the shape rather than for Price** since 2026-09-03, when Margin
+ * and MOQ were asked for the same control. The three differ only in the number
+ * they compare against, which is what `TYPED_RANGES` below carries.
  */
-const PRICE_RANGE_RE = /^(\d*)-(\d*)$/;
+const TYPED_RANGE_RE = /^(\d*)-(\d*)$/;
 
-export function parsePriceRange(id: string): { min: number; max: number } | null {
-  const hit = PRICE_RANGE_RE.exec(id);
+export function parseTypedRange(id: string): { min: number; max: number } | null {
+  /*
+   * A one-character gate before the regex, and it is not a micro-optimisation
+   * for its own sake. `matches` runs this **per product per selected value**,
+   * and three facets have carried a `matches` since 2026-09-03 rather than one:
+   * the 720-walk guard below (`never lets a visible option lead to an empty
+   * page`) went from ~5s to over its 30s budget on the regex alone. Every band
+   * id begins with a letter, so this returns on the first charCode for all of
+   * them, and a range must begin with a digit or the hyphen itself.
+   */
+  const first = id.charCodeAt(0);
+  if (first !== 45 /* - */ && !(first >= 48 && first <= 57)) return null;
+  const hit = TYPED_RANGE_RE.exec(id);
   if (!hit) return null;
   const [, lo, hi] = hit;
   // `-` alone is not a range; at least one end has to be given.
@@ -95,7 +110,7 @@ export function parsePriceRange(id: string): { min: number; max: number } | null
 }
 
 /** The selection id for a typed range, or `null` when neither end is set. */
-export function priceRangeId(min: string, max: string): string | null {
+export function typedRangeId(min: string, max: string): string | null {
   const lo = min.replace(/\D/g, "");
   const hi = max.replace(/\D/g, "");
   return lo || hi ? `${lo}-${hi}` : null;
@@ -155,6 +170,92 @@ function bucketId<T extends { id: string; min: number; max: number }>(
 }
 
 /**
+ * The three facets that carry a **typed min/max above their bands** — Price
+ * since 2026-08-28, Margin and MOQ since 2026-09-03, all three on
+ * `/userjourney` and all three bands-only in A–D (`controls.rangeInputs`).
+ *
+ * One table rather than three near-identical literals, the way
+ * `PV_ATTRIBUTE_FACETS` is built: they differ only in the number they compare
+ * against, and three copies of `accepts`/`matches` is three chances for one to
+ * drift. The reasoning is the same for all three —
+ *
+ * **Bands and typed ranges live on one facet.** Both answer "which prices" (or
+ * margins, or order quantities), so one facet holds them: two would AND
+ * against each other, and a buyer who typed 150–450 would have to clear a band
+ * to see anything. Inside the facet they OR like any two values, which is why
+ * the panel keeps the two controls mutually exclusive rather than letting a
+ * band widen a typed range — see `FilterScreen`.
+ *
+ * **`matches` needs `accepts`.** The default match is set membership over
+ * `valuesOf`, and a typed range is in no option list; `accepts` is what lets
+ * `parseSelections` keep `?price=150-450` through a reload while still dropping
+ * `?price=junk`. A facet given one and not the other works in-session and
+ * empties on refresh, which is exactly how this was found in August.
+ *
+ * **`min > max` is refused by the control, not here.** `RangeInputs` withholds
+ * an inverted pair from the draft and says so on blur, so nothing in the engine
+ * has to swap or suppress the ends. A hand-written `?margin=60-30` still
+ * reaches this and still matches nothing, which is honest rather than silently
+ * filtering on a range nobody typed.
+ *
+ * `valueOf` takes `sizes` because Price and Margin read the pack the card is
+ * showing and a Size filter moves it — the one selection any facet may see. MOQ
+ * ignores it, `moq` being a property of the product rather than of the pack.
+ */
+const TYPED_RANGES: {
+  id: string;
+  label: string;
+  buckets: { id: string; label: string; min: number; max: number }[];
+  valueOf: (p: Product, sizes?: string[]) => number;
+}[] = [
+  {
+    id: "price",
+    label: "Price Range",
+    buckets: PRICE_BUCKETS,
+    valueOf: (p, sizes) => activeVariant(p, sizes).pricePerPc,
+  },
+  {
+    /*
+     * **"Margin on MRP", not "Margin"** (2026-09-03, on request). The number is
+     * `(mrp − pricePerPc) / mrp`, which the seed builds from the other end —
+     * `mrp = pricePerPc / (1 − marginPct / 100)` — so the label now names the
+     * base it is a percentage *of*. A retailer reading a bare "45%" beside a
+     * price has two candidate denominators and no way to tell which.
+     */
+    id: "margin",
+    label: "Margin on MRP",
+    buckets: MARGIN_BUCKETS,
+    valueOf: (p, sizes) => activeVariant(p, sizes).marginPct,
+  },
+  { id: "moq", label: "MOQ", buckets: MOQ_BUCKETS, valueOf: (p) => p.moq },
+];
+
+/** Which facets take a typed range — the panel and the exclusivity rule ask. */
+export const TYPED_RANGE_FACET_IDS: Set<string> = new Set(TYPED_RANGES.map((r) => r.id));
+
+/** One range facet, by id, for placing in `FACETS` without moving its order. */
+function rangeFacet(id: string): FacetDef {
+  const { label, buckets, valueOf } = TYPED_RANGES.find((r) => r.id === id)!;
+  return {
+    id,
+    label,
+    panel: "range",
+    valuesOf: (p, sizes) => bucketId(buckets, valueOf(p, sizes)),
+    options: buckets.map((b) => ({ id: b.id, label: b.label })),
+    accepts: (optionId) => parseTypedRange(optionId) !== null,
+    matches: (p, chosen, sizes) => {
+      const value = valueOf(p, sizes);
+      return chosen.some((optionId) => {
+        const range = parseTypedRange(optionId);
+        return range
+          ? value >= range.min && value <= range.max
+          : bucketId(buckets, value).includes(optionId);
+      });
+    },
+  };
+}
+
+/**
  * The vertical-specific attributes, built from one table rather than five
  * near-identical literals — they differ only in id and label, and five copies
  * of the same shape is five chances for one to drift.
@@ -189,13 +290,10 @@ export const FACETS: FacetDef[] = [
     valuesOf: (p) => DELIVERY_BUCKETS.filter((b) => p.deliveryDays <= b.maxDays).map((b) => b.id),
     options: DELIVERY_BUCKETS.map(({ id, label }) => ({ id, label })),
   },
-  {
-    id: "moq",
-    label: "MOQ",
-    panel: "range",
-    valuesOf: (p) => bucketId(MOQ_BUCKETS, p.moq),
-    options: MOQ_BUCKETS.map(({ id, label }) => ({ id, label })),
-  },
+  // The three range facets — bands plus a typed min/max — are built from
+  // `TYPED_RANGES` and placed by hand, so `FACETS`' order, which is the query
+  // string's order, does not move.
+  rangeFacet("moq"),
   {
     id: "brand",
     label: "Brands",
@@ -206,46 +304,8 @@ export const FACETS: FacetDef[] = [
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((b) => ({ id: slug(b.name), label: b.name })),
   },
-  {
-    id: "price",
-    label: "Price Range",
-    panel: "range",
-    valuesOf: (p, sizes) => bucketId(PRICE_BUCKETS, activeVariant(p, sizes).pricePerPc),
-    options: PRICE_BUCKETS.map(({ id, label }) => ({ id, label })),
-    /*
-     * Bands and typed ranges in one facet (2026-08-28). A–D tick bands; the
-     * journey types a range. Both are "which prices", so one facet holds them
-     * — two would AND against each other, and a buyer who typed 150–450 would
-     * then have to clear a band to see anything.
-     *
-     * A range and a band still OR, like any two values within a facet. Nothing
-     * offers both at once today: the journey's panel has no bands and A–D have
-     * no inputs.
-     *
-     * `min > max` is left to match nothing rather than being swapped or
-     * suppressed. It is a transient typing state, the footer says `Show 0
-     * results` the moment it happens, and correcting it is one keystroke —
-     * where silently swapping the ends filters on something the buyer did not
-     * type.
-     */
-    accepts: (id) => parsePriceRange(id) !== null,
-    matches: (p, chosen, sizes) => {
-      const price = activeVariant(p, sizes).pricePerPc;
-      return chosen.some((id) => {
-        const range = parsePriceRange(id);
-        return range
-          ? price >= range.min && price <= range.max
-          : bucketId(PRICE_BUCKETS, price).includes(id);
-      });
-    },
-  },
-  {
-    id: "margin",
-    label: "Margin",
-    panel: "range",
-    valuesOf: (p, sizes) => bucketId(MARGIN_BUCKETS, activeVariant(p, sizes).marginPct),
-    options: MARGIN_BUCKETS.map(({ id, label }) => ({ id, label })),
-  },
+  rangeFacet("price"),
+  rangeFacet("margin"),
   {
     id: "size",
     label: "Size",
@@ -451,7 +511,7 @@ const RAIL_ORDER: (RailEntry & {
   { id: "fabric", label: "Fabric", facetIds: ["fabric"] },
 
   { id: "price", label: "Price Range", facetIds: ["price"] },
-  { id: "margin", label: "Margin", facetIds: ["margin"] },
+  { id: "margin", label: "Margin on MRP", facetIds: ["margin"] },
   { id: "moq", label: "MOQ", facetIds: ["moq"] },
   { id: "delivery", label: "Delivery Time", facetIds: ["delivery"] },
   // `hasOffer` is reached from a chip, but it has to be listed here too, or a
@@ -627,7 +687,7 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  */
 const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
   { id: "price", label: "Price Range", facetIds: ["price"] },
-  { id: "margin", label: "Margin", facetIds: ["margin"] },
+  { id: "margin", label: "Margin on MRP", facetIds: ["margin"] },
   { id: "moq", label: "MOQ", facetIds: ["moq"] },
   { id: "category", label: "Category", facetIds: ["category"], only: "filter" },
   { id: "brand", label: "Brands", facetIds: ["brand"] },

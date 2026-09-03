@@ -997,6 +997,77 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-03 — Filter leads Sort, and every range facet takes a typed min/max
+
+Four asks in one pass, all on request.
+
+**1. `Filter` first, then `Sort`.** In `TopChipBar` — B, D and the journey —
+and in `BottomActionBar`'s pill, where A and C put Filters in the left half.
+Both frames draw Sort first, so this is a departure in two places rather than
+one, and deliberately so: the 2×2 exists to compare where these two controls
+*sit*, and a pill ordered against the chips would put a second difference into
+a comparison built to hold one. It is also the order the pair is used in —
+narrow a 540-product listing, then decide how to rank what is left — and Filter
+is the one carrying a count.
+
+**2. `Margin` → `Margin on MRP`**, in both rails and on the facet itself. The
+number is `(mrp − pricePerPc) / mrp`, which the seed builds from the other end
+(`mrp = pricePerPc / (1 − marginPct / 100)`), so the row now names the base it
+is a percentage *of*: a retailer reading a bare "45%" beside a price has two
+candidate denominators and no way to tell which. It wraps to two lines in the
+120px rail and sits inside the 60px row, so nothing else moved.
+
+**3 & 4. Margin on MRP and MOQ carry a typed min/max above their bands**, the
+control Price Range has had since 2026-08-28, with the same exclusivity: typing
+greys the bands, a ticked band greys the boxes, and per facet the last one used
+wins. Every argument from 08-28 carries over unchanged — one facet holds both
+so they can't AND, they OR inside it so the panel must keep them apart, an
+inverted pair is refused rather than filtered, and the boxes hold local text so
+a refusal can't snap a value back under the cursor.
+
+**Three facets became one table.** `TYPED_RANGES` in `facets.ts`, the way
+`PV_ATTRIBUTE_FACETS` is built: they differ only in the number they compare
+against — `activeVariant().pricePerPc`, `activeVariant().marginPct`, `p.moq` —
+and three hand-copied pairs of `accepts`/`matches` is three chances for one to
+drift. `controls.priceInputs` became **`controls.rangeInputs`**, one flag for
+the three: they are the same control answering the same objection.
+
+Three things fell out of doing it:
+
+- **The unit differs per facet, and which side it sits on is not a style
+  choice.** ₹ leads its number; `%` and `pc` follow theirs. That is how all
+  three are written outside software, and a trailing ₹ or a leading % reads as
+  a typo. The map lives in `FilterScreen` beside the panel rather than in the
+  registry — the line this repo already draws for `ContextChips`' icon map.
+- **The refusal toast names the facet.** One shared string said `Min price
+  can't be higher than max` over a Margin panel, describing a control that
+  wasn't on screen. The callback now takes the facet's short noun, so it reads
+  `Min margin can't be higher than max` and `Min quantity…`.
+- **`parseTypedRange` needed a one-character gate before its regex.** `matches`
+  runs per product per selected value, and three facets carry one now: the
+  720-walk `never lets a visible option lead to an empty page` guard went from
+  ~5s to past its 30s budget on the regex alone. Every band id starts with a
+  letter, so the check exits on the first charCode. That slow test earning its
+  keep is the whole reason it is slow.
+
+**Verified** at 360px, no console errors:
+
+| | |
+|---|---|
+| journey strip | `Filter · Sort │ Cashback · Seller Offer · SOLV Target Scheme · Free Delivery` |
+| A's pill | `Filters │ Sort` |
+| journey rail | `Price Range · Margin on MRP · MOQ · Category · Brands · Colour · Fabric` |
+| MOQ typed `5`–`12 pc` | `Show 299 results`, all four bands greyed, dot on MOQ |
+| a band ticked instead | both boxes greyed, and unticking hands them back |
+| Margin `60`–`30` on blur | both boxes red, `Min margin can't be higher than max`, count unmoved |
+| MOQ `20`–`5` on blur | `Min quantity can't be higher than max` |
+| Margin `60`– applied | `?margin=60-`, `Show 77 results` — the `60% & above` band's own count |
+| A `/results?q=shirt` | rail reads `Margin on MRP`, bands only, no boxes |
+
+128 tests green (three new: the two new typed ranges' matching, all three
+facets' URL round-trip with the guard still refusing `colour=100-200`, and
+own-facet-excluded counting on all three), lint, typecheck and build clean.
+
 ### 2026-09-03 — Sort comes back out, onto the chip strip
 
 **On the request, and the fourth placement this control has held on
@@ -2124,7 +2195,7 @@ Ordered by consequence. None of these block a demo.
 8. **Accessibility**, if this becomes the reference build: filter rows use `aria-pressed` where `role="checkbox"` + `aria-checked` is correct; sheets don't trap focus; the scrim is a full-viewport `<button>` announced as a giant "Close".
 9. **Pagination dots under the set pills** imply snapping the free-scrolling row doesn't do.
 14. **Clear Filters resets Sort, in every variant.** `FilterScreen` commits `onApply(cleared, DEFAULT_SORT)` whether or not Sort is a row on that screen, so a sort set from A's pill or B's chip is cleared by a button labelled *Clear Filters* under a toast reading `All filters cleared` — and Sort is not a filter. Written deliberately for `/userjourney` on 2026-08-28, when Sort *was* on that screen; measured on 2026-09-03 and it was never scoped to that route. Two defensible answers — the button means "return this listing to its untouched state", or it means what it says and Sort keeps its value — and it is a designer's call, not a code one. Left as behaviour, and the decisions row now describes it accurately.
-13. **The typed price range commits per keystroke, so its refusal state can't be reached.** `edit()` in `PriceRangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
+13. **A typed range commits per keystroke, so its refusal state can't be reached.** All three range facets since 2026-09-03; written when Price was the only one. `edit()` in `RangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
 
 ## Facet tile imagery
 

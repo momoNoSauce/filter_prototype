@@ -282,9 +282,16 @@ export function SortRow({
 }
 
 /**
- * The typed min and max above the Price Range bands on `/userjourney`
+ * The typed min and max above a range facet's bands on `/userjourney`
  * (2026-08-28, on the stakeholder review: *"we can't predict the exact range
  * the customer might be looking for"*).
+ *
+ * **Three facets since 2026-09-03**, on the same argument: Price Range, Margin
+ * on MRP and MOQ. What differs between them is only the unit beside the number,
+ * so this took a `unit` rather than a copy — a `₹` leading the box for money,
+ * a `%` or `pc` trailing it for the other two, since a percent or a quantity is
+ * written after its number and a rupee before it. `FilterScreen` holds the map
+ * from facet to unit; everything below is shared.
  *
  * **Local text state, committed only when valid.** The obvious build controls
  * both boxes straight from the draft, which is wrong the moment a rule refuses
@@ -316,19 +323,26 @@ export function SortRow({
  * spinners, scroll-to-change and locale-dependent parsing do not. Non-digits
  * are stripped on the way in, so a pasted `₹1,200` becomes `1200`.
  */
-export function PriceRangeInputs({
+export function RangeInputs({
   min,
   max,
+  unit,
   onChange,
   onInvalid,
   disabled = false,
 }: {
   min: string;
   max: string;
+  /**
+   * What the number is in. `symbol` leads the box when `after` is false and
+   * trails it when true; `name` completes the screen-reader label — "Min price
+   * per piece", "Max margin on MRP".
+   */
+  unit: { symbol: string; name: string; after?: boolean };
   onChange: (min: string, max: string) => void;
   /** Blurred with min > max. The draft was never given the value. */
   onInvalid: () => void;
-  /** A price band is ticked, and the two are exclusive. */
+  /** A band is ticked on this facet, and the two are exclusive. */
   disabled?: boolean;
 }) {
   const [text, setText] = useState({ min, max });
@@ -364,6 +378,7 @@ export function PriceRangeInputs({
     <div className="flex w-full items-center gap-[8px] px-[14px] pt-[6px] pb-[12px]">
       <Field
         label="Min"
+        unit={unit}
         value={text.min}
         placeholder="0"
         disabled={disabled}
@@ -378,6 +393,7 @@ export function PriceRangeInputs({
       </span>
       <Field
         label="Max"
+        unit={unit}
         value={text.max}
         placeholder="Any"
         disabled={disabled}
@@ -389,9 +405,10 @@ export function PriceRangeInputs({
   );
 }
 
-/** One of the two boxes: a ₹ prefix inside a 44px bordered field. */
+/** One of the two boxes: the unit and the number inside a 44px bordered field. */
 function Field({
   label,
+  unit,
   value,
   placeholder,
   invalid,
@@ -400,6 +417,7 @@ function Field({
   onBlur,
 }: {
   label: string;
+  unit: { symbol: string; name: string; after?: boolean };
   value: string;
   placeholder: string;
   invalid: boolean;
@@ -407,6 +425,14 @@ function Field({
   onChange: (value: string) => void;
   onBlur: () => void;
 }) {
+  const symbol = (
+    <span
+      aria-hidden
+      className={`shrink-0 text-[15px] ${disabled ? "text-[#c4c4c4]" : "text-[#323232]"}`}
+    >
+      {unit.symbol}
+    </span>
+  );
   return (
     <label
       className={`flex h-[44px] min-w-0 flex-1 items-center gap-[4px] rounded-[8px] border px-[10px] ${
@@ -419,13 +445,8 @@ function Field({
             : "border-[#4d4d4d]"
       }`}
     >
-      <span className="sr-only">{`${label} price per piece`}</span>
-      <span
-        aria-hidden
-        className={`shrink-0 text-[15px] ${disabled ? "text-[#c4c4c4]" : "text-[#323232]"}`}
-      >
-        ₹
-      </span>
+      <span className="sr-only">{`${label} ${unit.name}`}</span>
+      {!unit.after && symbol}
       <input
         value={value}
         inputMode="numeric"
@@ -438,6 +459,7 @@ function Field({
         aria-invalid={invalid}
         className="min-w-0 flex-1 bg-transparent text-[15px] text-[#323232] outline-none placeholder:text-muted disabled:cursor-not-allowed disabled:text-[#a1a1a1] disabled:placeholder:text-[#c4c4c4]"
       />
+      {unit.after && symbol}
     </label>
   );
 }
