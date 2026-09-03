@@ -506,16 +506,40 @@ export function FilterScreen({
 
       <div className="flex min-h-0 flex-1">
         {/* Rail */}
-        <div className="no-scrollbar w-[120px] shrink-0 overflow-y-auto pb-[16px]">
+        {/*
+          **140px, up from the frame's 120** (2026-09-03), because the rows now
+          carry a count rather than a 6px dot and the number needs somewhere to
+          be. Measured, not chosen: at 15px the widest label is `Margin on MRP`
+          at 105 and the next is `Delivery Time` at 93, and 140 less the 14px
+          inset, the 6px gap, an 18px badge and the 8px right pad leaves **94** —
+          so every row but `Margin on MRP` sets on one line, that one wraps as it
+          already did, and the label box is *wider* than the 86 a dotted row used
+          to leave.
+
+          The 20px comes off the panel, which is `flex-1` rather than the frame's
+          fixed 240 (2026-08-21) and so absorbs it: 220 at the design width, and
+          more on any phone wider than 360. That is enough for the longest
+          thumbnail row — `Men's Casual T-Shirts (222)` is 181px and breaks over
+          two lines at 111, where a rail past ~145 would push it to a third and
+          bring back the truncation those rows were built to fix.
+        */}
+        <div className="no-scrollbar w-[140px] shrink-0 overflow-y-auto pb-[16px]">
           {RAIL.map((entry, index) => {
             const active = entry.id === activeRail;
             /*
              * The rail's applied cue. For a facet row it is the number of
              * ticked options; for Sort it is whether the value has left the
-             * default — which is the app's standing rule, a dot for one value
-             * and a count for many, and why `facetIds: []` needs no special
-             * case beyond this line. The rail draws a dot either way; the
-             * count is only ever a truthiness test here.
+             * default — which is the app's standing rule, **a dot for one value
+             * and a count for many**, and why `facetIds: []` needs no special
+             * case beyond this line.
+             *
+             * **The rail used to draw a dot either way** and that was the rule's
+             * one exception: six colours ticked looked exactly like one, and a
+             * 6px mark was the whole report on a screen whose point is what you
+             * have applied. Since 2026-09-03 a facet row carries the number in a
+             * filled circle — the counter the Filters chip already uses, so
+             * "how many are applied" is drawn one way across the app — and Sort
+             * keeps the dot, holding exactly one value.
              */
             const applied =
               entry.id === SORT_RAIL_ID
@@ -541,9 +565,22 @@ export function FilterScreen({
                 >
                   {entry.label}
                 </span>
-                {applied > 0 && (
-                  <span className="size-[6px] shrink-0 rounded-full bg-primary" />
-                )}
+                {applied > 0 &&
+                  (entry.id === SORT_RAIL_ID ? (
+                    <span className="size-[6px] shrink-0 rounded-full bg-primary" />
+                  ) : (
+                    /*
+                     * 18px, so it reads at arm's length where the 6px dot did
+                     * not — this app's buyer is a kirana retailer on a
+                     * mid-range Android. `min-w` with 4px of padding rather
+                     * than a fixed square: Colour can reach twenty ticks, and a
+                     * two-digit number turns the circle into a pill of the same
+                     * height instead of overflowing it.
+                     */
+                    <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary px-[4px] text-[11px] font-medium text-white">
+                      {applied}
+                    </span>
+                  ))}
               </button>
             );
           })}

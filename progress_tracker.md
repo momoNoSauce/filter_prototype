@@ -997,6 +997,61 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-03 — a rail row says how many, not just "some"
+
+**Reported**: *"once a filter is added the dot is not enough signifier."* Right,
+and it was also the one place this app broke its own rule. The standing cue is
+**one value → a dot, many → a count** — Sort takes the dot, the Filters chip
+takes the number — and the rail ignored it, drawing a 6px dot whether one colour
+was ticked or six. On the screen whose entire job is reporting what you have
+applied. 6px is also under the threshold for the buyer this app is for: a kirana
+retailer holding a mid-range Android at arm's length, which is the audience
+already logged against the contrast backlog.
+
+A facet row now carries **the number in an 18px filled circle**, white on
+primary — the same counter the Filter chip uses, so *how many are applied* is
+drawn one way in both places. Two digits (Colour reaches twenty) turn it into a
+21×18 pill rather than overflowing the circle. The **Sort row keeps its dot**,
+holding exactly one value, which is the rule rather than an exception to it.
+
+**The rail went 120 → 140px** to make room, and the width was measured rather
+than picked:
+
+| | |
+|---|---|
+| widest label at 15px | `Margin on MRP` 105, then `Delivery Time` 93 |
+| label box at 140 | 14 inset + **94** + 6 gap + 18 badge + 8 pad |
+| label box before | 100 undotted, **86** dotted |
+| ceiling | ~145 — past it the longest thumbnail row goes to three lines |
+
+So the change *buys* label width: a badged row gets 94 where a dotted one had
+86, and an unbadged row gets the full 118. Every rail label but `Margin on MRP`
+sets on one line beside its badge, and that one wraps exactly as it already did.
+
+The 20px comes off the panel, which is why it was available to spend — the
+panel has been `flex-1` rather than the frame's fixed 240 since 2026-08-21. At
+360px it is 220, where the longest thumbnail row (`Men's Casual T-Shirts (222)`,
+181px) still breaks over two lines; a wider rail is what would push it to three
+and undo the truncation fix from earlier today.
+
+**What this deliberately is not.** Of the five options on the table it is the
+cheapest — it says *how many*, not *which*. Applied-filter chips on the strip
+(`Black ✕` `Under ₹200 ✕`) are still the answer to "which", and still unbuilt;
+this doesn't compete with them.
+
+**Verified** at 360px and 430px, measured rather than eyeballed, no console
+errors:
+
+| | |
+|---|---|
+| `?colour=black,blue,white&category=…,…&seller=grasim` | Category ②, Colour ③, Seller ① — three rows reporting three different amounts |
+| rail label lines | **none** wrap at either width; `Margin on MRP` wraps only when it carries a badge |
+| twelve colours ticked | badge reads `12` at 21×18, still one row |
+| thumbnail rows | two lines at 360, one at 430 — unchanged by the narrower panel |
+| journey sheet | `MOQ ①`, `Colour ②` in a 530px sheet, `3 Filter` on the strip — one counter shape in both places |
+
+132 tests green, lint, typecheck and build clean.
+
 ### 2026-09-03 — the Filters sheet takes its height from its rail
 
 **Reported** — *"when no PV is selected we have this weird gap at the bottom of
