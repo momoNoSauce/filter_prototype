@@ -4,10 +4,17 @@ import { COLOURS } from "@/lib/catalog/seed";
 import { facetOptionsWithCounts } from "./engine";
 import { FACET_BY_ID, getRail } from "./facets";
 import {
+  FRAME_H,
   PANEL_VIEWPORT,
+  RAIL_ROW_H,
+  SHEET_CHROME_H,
+  SHEET_MAX_PCT,
+  SHEET_MIN_H,
   SHEET_PANEL_VIEWPORT,
   needsSearch,
   panelContentHeight,
+  sheetHeightPct,
+  sheetPanelViewport,
 } from "./panelFit";
 
 const catalog = getCatalog();
@@ -172,6 +179,40 @@ describe("the sheet presentation's shorter fold", () => {
     expect(needsSearch(thumbs(9), SHEET_PANEL_VIEWPORT)).toBe(true);
     expect(needsSearch(thumbs(11))).toBe(false);
     expect(needsSearch(thumbs(12))).toBe(true);
+  });
+
+  it("sizes the sheet to its rail, and stops at 80%", () => {
+    /*
+     * 2026-09-03, on the report of dead space below a short rail. The journey's
+     * rail is seven rows outside a vertical and thirteen inside one, and a
+     * fixed 80% meant the short one carried ~110px of white under it.
+     */
+    const px = (n: number) => Math.round((sheetHeightPct(n) / 100) * FRAME_H);
+
+    // Seven rows: 110 of chrome plus 420 of rail, so 530 of the 800 frame.
+    expect(px(7)).toBe(SHEET_CHROME_H + 7 * RAIL_ROW_H);
+    expect(sheetHeightPct(7)).toBeCloseTo(66.25);
+
+    // Thirteen rows want 890 and get the ceiling — the sheet a settled
+    // vertical has had since 2026-08-28, unchanged.
+    expect(sheetHeightPct(13)).toBe(SHEET_MAX_PCT);
+    expect(px(13)).toBe(640);
+
+    // Under the floor the panel would have less room than its own first facet.
+    expect(px(2)).toBe(SHEET_MIN_H);
+
+    // The panel's fold follows the height, and at the ceiling it is the figure
+    // every threshold above is pinned at.
+    expect(sheetPanelViewport(SHEET_MAX_PCT)).toBe(SHEET_PANEL_VIEWPORT);
+    expect(sheetPanelViewport(sheetHeightPct(7))).toBe(420);
+  });
+
+  it("earns a field sooner in a sheet that shrank with its rail", () => {
+    // The cost of a shorter sheet, and the reason the viewport is computed
+    // rather than assumed: a panel in a seven-row sheet has 420px, not 530.
+    const seven = sheetPanelViewport(sheetHeightPct(7));
+    expect(needsSearch(rows(8), seven)).toBe(true);
+    expect(needsSearch(rows(8), SHEET_PANEL_VIEWPORT)).toBe(false);
   });
 
   it("defaults to the full-bleed panel when no viewport is given", () => {

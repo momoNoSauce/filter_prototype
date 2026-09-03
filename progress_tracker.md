@@ -997,6 +997,67 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-03 — the Filters sheet takes its height from its rail
+
+**Reported** — *"when no PV is selected we have this weird gap at the bottom of
+the list, why not reduce the height of the bottom sheet, and when they select
+PV we keep the height like we have right now"*. Exactly right, and that is what
+it does now.
+
+The sheet had been a flat **80%** since 2026-08-28, a figure chosen against the
+rail *inside* a vertical: thirteen rows at 60px is 780, more than the 640 that
+80% gives, so it scrolls. Outside a vertical the journey's rail is seven rows —
+420px — and the same 640 sheet carried ~110px of white beneath it.
+
+`sheetHeightPct(railRows)` is now `110 of chrome + rows × 60`, clamped:
+
+| rail | asks for | gets | panel fold |
+|---|---|---|---|
+| 7 rows (no vertical) | 530 | **530** — 66.25% | 420 |
+| 13 rows (vertical settled) | 890 | **640** — the 80% ceiling | 530 |
+| 2 rows (hypothetical) | 230 | **440** — the floor | 330 |
+
+**The rail decides, not the open panel.** Sizing to whichever of the two is
+taller would resize the sheet on every rail tap — Colour's twenty rows growing
+it, Category's three shrinking it back — which reads as a stutter rather than a
+fit. The rail is the one measurement that holds still while a buyer moves
+around the screen, and panels scroll inside whatever room it leaves, exactly as
+they did at a fixed 80%.
+
+It **does** move when the rail itself does. Ticking a category that settles the
+vertical adds the six attribute rows to the *draft's* rail, and the sheet grows
+with them in the same update — 530 → 640. That is the one height change a buyer
+can cause, and it is the same event that already rearranges the rail under them,
+so a 200ms `height` transition carries it; the enter and exit keyframes animate
+`transform`, so nothing fights.
+
+**The floor is 440** — the 330 a Price Range panel needs whole (62px of boxes
+over five 52px bands) plus the 110 of chrome. Price Range is the row this sheet
+opens on, so it is the panel that must not arrive already scrolling. It doesn't
+bind today and exists so a future two-row rail can't hand back a sheet with
+less room than its own first panel.
+
+**The panel's fold had to become live with it.** `SHEET_PANEL_VIEWPORT` was a
+constant 530; it is now what `sheetPanelViewport` returns at the ceiling, and
+`needsSearch` is passed the figure for the height actually rendered. The cost of
+a shorter sheet is that a list earns its search field sooner — eight checkbox
+rows overflow 420 where they fit 530 — which is correct rather than incidental,
+and is the reason this is computed rather than assumed. That function rounds
+before subtracting the chrome: 440 of 800 is 55%, and 55% of 800 comes back as
+440.00000000000006.
+
+**Verified** at 360px, measured rather than eyeballed, no console errors:
+
+| | |
+|---|---|
+| journey, nothing settled | sheet **530px** at y=270 — the rail's last row meets the footer, and the first product card is visible behind |
+| tick *Women's T-Shirts* in the sheet | rail grows to thirteen rows, sheet **640px** at y=160, `Show 191 results` — the August sheet, unchanged |
+| A `/results?q=shirt` | full-bleed **800px**, untouched |
+
+132 tests green (two new: the height for a seven-, thirteen- and two-row rail
+with the fold each leaves, and the field a shrunken sheet earns sooner), lint,
+typecheck and build clean.
+
 ### 2026-09-03 — Category and Brands become a column of rows
 
 **On request** — *"it should be in column view, box, image, name"*. Both facets

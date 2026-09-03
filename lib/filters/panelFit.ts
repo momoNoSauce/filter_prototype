@@ -25,6 +25,14 @@
 import type { PanelType } from "./facets";
 
 /**
+ * The design frame's height. Every figure in this module is in design pixels
+ * for the reason the module exists: the server has no viewport, and below 480px
+ * `DeviceFrame` renders edge to edge, so the real frame is `100dvh` and 800
+ * only in the phone mockup.
+ */
+export const FRAME_H = 800;
+
+/**
  * The 800px frame less the 49px header (`py-[12px]` around a 24px glyph, plus
  * a 1px border) and the 61px `ActionFooter` (`h-[60px]` plus a 1px border).
  */
@@ -44,6 +52,90 @@ export const PANEL_VIEWPORT = 690;
  * that happens to fit costs 56px, where the reverse costs a layout shift.
  */
 export const SHEET_PANEL_VIEWPORT = 530;
+
+/*
+ * Since 2026-09-03 that is the *tallest* the sheet's panel gets: the sheet
+ * takes its height from the rail and only reaches 80% once the rail is long
+ * enough to ask for it. `sheetPanelViewport` below is the live figure, and this
+ * constant is what it returns at `SHEET_MAX_PCT` — which is what the pinned
+ * thresholds are measured at.
+ */
+
+/** The sheet's own chrome: a 49px header and a 61px footer, as full-bleed. */
+export const SHEET_CHROME_H = 110;
+
+/** A rail row — `h-[60px]` in `FilterScreen`. */
+export const RAIL_ROW_H = 60;
+
+/**
+ * The tallest the sheet ever gets: **80%** of the frame, which is where the
+ * whole sheet presentation started on 2026-08-28. Chosen so that what stays
+ * visible behind it is a recognisable piece of the listing rather than a strip
+ * of grey — at 800px it leaves 160px, which is the app bar, the chip strip and
+ * the top of the first card. Much taller and the context the sheet exists to
+ * preserve is a sliver.
+ *
+ * **A ceiling rather than the height, since 2026-09-03.** A fixed 80% left
+ * ~110px of white under a seven-row rail, reported as "a weird gap at the
+ * bottom of the list": the sheet was as tall outside a vertical, where the
+ * journey's rail is seven rows, as inside one, where it is thirteen.
+ * `sheetHeightPct` sizes it to the rail and stops here, so a settled vertical
+ * gets exactly the sheet that shipped in August and nothing else pays for it.
+ */
+export const SHEET_MAX_PCT = 80;
+
+/**
+ * The shortest, in design pixels. **440** = the 330 a Price Range panel needs
+ * whole (62px of boxes over five 52px bands) plus the 110 of chrome. That is
+ * the row the sheet opens on in the one route that uses it, so it is the panel
+ * that must not arrive already scrolling.
+ *
+ * It doesn't bind today — the journey's shortest rail is seven rows, which asks
+ * for 530 — and exists so a future two-row rail can't hand back a sheet with
+ * less room than its own first panel.
+ */
+export const SHEET_MIN_H = 440;
+
+/**
+ * How tall the sheet should be, as a percentage of the frame, for a rail of
+ * `railRows` rows (2026-09-03, on the report of dead space below a short rail).
+ *
+ * **The rail decides, not the open panel.** Sizing to whichever of the two is
+ * taller would resize the sheet on every rail tap — Colour's twenty rows would
+ * grow it and Category's three would shrink it back, which reads as a stutter
+ * rather than as a fit. The rail is the one measurement that holds still while
+ * a buyer moves around the screen, and panels scroll inside whatever room it
+ * leaves, exactly as they did at a fixed 80%.
+ *
+ * It *does* move when the rail itself does: ticking a category that settles a
+ * vertical adds the six attribute rows to the draft's rail, and the sheet grows
+ * with them — 530 → 640 on `/userjourney`. That is the one height change a
+ * buyer can cause, and it is the same event that already rearranges the rail
+ * under them, so the sheet following it is coherent. `FilterScreen` transitions
+ * the height so it reads as growth rather than a jump.
+ *
+ * A **percentage**, not pixels, for the reason `SHEET_PANEL_VIEWPORT` is
+ * computed against the design height: below 480px `DeviceFrame` renders edge to
+ * edge, so the frame is `100dvh` on a phone and 800 only in the mockup. The
+ * arithmetic is done in design pixels and handed back as a ratio.
+ */
+export function sheetHeightPct(railRows: number): number {
+  const wanted = Math.max(SHEET_CHROME_H + railRows * RAIL_ROW_H, SHEET_MIN_H);
+  return Math.min((wanted / FRAME_H) * 100, SHEET_MAX_PCT);
+}
+
+/**
+ * The panel's fold inside a sheet of that height — `needsSearch`'s viewport.
+ *
+ * Rounded before the chrome comes off, because the percentage is a round trip
+ * through a division: 440 of 800 is 55%, and 55% of 800 comes back as
+ * 440.00000000000006. Every figure in this module is a whole number of design
+ * pixels and a threshold compared against a float is a threshold nobody can
+ * pin in a test.
+ */
+export function sheetPanelViewport(pct: number): number {
+  return Math.round((pct / 100) * FRAME_H) - SHEET_CHROME_H;
+}
 
 /** `OptionRow` — `h-[52px]`. */
 export const OPTION_ROW_H = 52;

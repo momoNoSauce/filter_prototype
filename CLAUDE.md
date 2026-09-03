@@ -76,10 +76,15 @@ above their bands. A–D pass nothing, and neither does the journey for
 inside Filters. Put new per-route departures in that object rather than adding
 a prop each; the reasoning is in `docs/decisions.md`.
 
-Its Filters screen is a **bottom sheet at 80%** rather than full-bleed, so the
-listing stays visible behind it. That shortens the panel, so `needsSearch` takes
-a viewport argument — 530 there against the full-bleed 690, giving 11 rows / 13
-tiles instead of 14 / 19. A–D are untouched.
+Its Filters screen is a **bottom sheet** rather than full-bleed, so the listing
+stays visible behind it. **Its height follows the rail** (`sheetHeightPct`),
+capped at 80% of the frame and floored at 440: seven rows outside a vertical
+gives 530, and settling one adds the six attribute rows and grows it to the
+capped 640 — a fixed 80% left ~110px of white under the short rail. That
+shortens the panel, so `needsSearch` takes a viewport argument, computed from
+the height actually rendered (`sheetPanelViewport`) — 530 at the cap against
+the full-bleed 690, giving 11 rows / 9 thumbnail rows / 13 tiles instead of
+14 / 12 / 19, and less again in a shrunken sheet. A–D are untouched.
 
 Its three **range facets** — Price Range, Margin on MRP and MOQ — each carry a
 **typed min/max** (`?price=150-450`, `?margin=60-`, `?moq=5-12`) above their

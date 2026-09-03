@@ -28,7 +28,12 @@ import {
   type SortId,
 } from "@/lib/filters/engine";
 import { SORT_ICONS } from "@/lib/filters/sortIcons";
-import { RANGE_INPUTS_H, SHEET_PANEL_VIEWPORT, needsSearch } from "@/lib/filters/panelFit";
+import {
+  RANGE_INPUTS_H,
+  needsSearch,
+  sheetHeightPct,
+  sheetPanelViewport,
+} from "@/lib/filters/panelFit";
 import { SearchField } from "./SearchField";
 import { OptionRow, RangeInputs, SortRow, ThumbRow } from "./OptionRows";
 
@@ -64,22 +69,6 @@ const RANGE_UNITS: Record<
   margin: { symbol: "%", name: "margin on MRP", noun: "margin", after: true },
   moq: { symbol: "pc", name: "order quantity in pieces", noun: "quantity", after: true },
 };
-
-/**
- * How much of the frame the sheet presentation takes.
- *
- * **80%**, chosen so that what stays visible is a recognisable piece of the
- * listing rather than a strip of grey: at 800px that leaves 160px, which is the
- * app bar, the chip strip and the top of the first card. Much taller and the
- * context it exists to preserve is a sliver; much shorter and the rail — 60px a
- * row — shows too few of its own rows to navigate.
- *
- * It is a percentage because `DeviceFrame` renders edge to edge below 480px, so
- * the frame is `100dvh` on a phone and 800 only in the mockup. `panelFit`
- * computes against the design height for the same reason it computes against
- * the design width: the server has no viewport. See `SHEET_PANEL_VIEWPORT`.
- */
-const SHEET_HEIGHT_PCT = 80;
 
 /**
  * Figma 638:3659 — the full-screen Filters sheet.
@@ -253,6 +242,15 @@ export function FilterScreen({
     ? [{ id: SORT_RAIL_ID, label: "Sort By", facetIds: [] }, ...FACET_RAIL]
     : FACET_RAIL;
 
+  /**
+   * The sheet's height, from the rail it is showing — the ceiling above is only
+   * reached once the rail asks for it. Read off `RAIL` rather than the preset,
+   * so the Sort row counts when it is there and the six attribute rows count
+   * the moment a *draft* category settles the vertical: the sheet grows with
+   * the rows, in the same update that adds them.
+   */
+  const sheetPct = sheetHeightPct(RAIL.length);
+
   const [activeRail, setActiveRail] = useState(RAIL[0].id);
   const [query, setQuery] = useState("");
 
@@ -393,8 +391,10 @@ export function FilterScreen({
       panel: facet.panel,
       optionCount: options.length,
     })),
-    // The sheet's panel is 160px shorter, so lists earn a field sooner there.
-    asSheet ? SHEET_PANEL_VIEWPORT : undefined,
+    // The sheet's panel is shorter, so lists earn a field sooner there — and
+    // *how* much shorter now moves with the rail, so it is computed from the
+    // height actually being rendered rather than from the 80% case.
+    asSheet ? sheetPanelViewport(sheetPct) : undefined,
     // A range panel carries its min/max boxes above the bands.
     rangeFacetId ? RANGE_INPUTS_H : 0,
   );
@@ -759,8 +759,15 @@ export function FilterScreen({
         onClick={dismiss}
       />
       <div
-        style={{ height: `${SHEET_HEIGHT_PCT}%` }}
-        className={`relative flex min-h-0 flex-col overflow-hidden rounded-t-[8px] bg-white drop-shadow-[0px_-4px_8px_rgba(0,0,0,0.25)] ${
+        style={{ height: `${sheetPct}%` }}
+        /*
+         * The height **transitions**, because the one thing that changes it is
+         * a tick: settling a vertical adds six rail rows and takes the sheet
+         * from 530 to 640. Snapping 110px would read as a glitch beside the
+         * rows sliding in above it. The enter and exit keyframes animate
+         * `transform`, so they don't fight this.
+         */
+        className={`relative flex min-h-0 flex-col overflow-hidden rounded-t-[8px] bg-white drop-shadow-[0px_-4px_8px_rgba(0,0,0,0.25)] transition-[height] duration-200 ease-out motion-reduce:transition-none ${
           closing ? "animate-sheet-out" : "animate-sheet-in"
         }`}
         onAnimationEnd={(e) => {

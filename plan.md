@@ -183,7 +183,7 @@ chronology.
 
 ## Verification
 
-- `npm test` — 130 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, the size facet's match-and-active-pack rules, the rail order pinned in both states and for both presets, the panel-fit thresholds for the full-bleed panel and the sheet, and the typed ranges' matching, counting and URL round-trip on all three range facets.
+- `npm test` — 132 tests over the engine: OR-within/AND-across, own-facet-excluded counting, the Girls pruning case, selected-but-zero staying visible, sort ordering, URL round-trip, pack breakups summing to their set size, the size facet's match-and-active-pack rules, the rail order pinned in both states and for both presets, the panel-fit thresholds for the full-bleed panel and the sheet, the sheet's height against its rail, and the typed ranges' matching, counting and URL round-trip on all three range facets.
 - `npm run dev`, then Chrome DevTools at exactly 360px, and compare each screen against its Figma frame.
 - Widen past 480px to confirm the phone mockup appears and the app still renders at 360.
 
