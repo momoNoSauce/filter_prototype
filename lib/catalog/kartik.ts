@@ -83,9 +83,68 @@ const KARTIK_SIZE = 540;
  * ever carries the offer's name. The two values are the ones in the
  * screengrabs.
  */
+/**
+ * The rupee value on a Cashback offer.
+ *
+ * **Widened on 2026-09-03**, from a flat 100/200, so the new Cashback *range*
+ * has something to range over — two values make four bands where three are
+ * always empty. 100 and 200 keep the weight, the screengrab this route is built
+ * from showing `₹100 Cashback`; the rest are the tail.
+ *
+ * Free to widen, for the reason `COLOURS` was free to go from ten to twenty:
+ * `weightedPick` draws **once** however long the table is, so no draw moves and
+ * no count that isn't about cashback amounts changes.
+ */
 const CASHBACK_AMOUNTS = [
-  { amount: 100, weight: 70 },
-  { amount: 200, weight: 30 },
+  { amount: 50, weight: 12 },
+  { amount: 100, weight: 40 },
+  { amount: 150, weight: 14 },
+  { amount: 200, weight: 22 },
+  { amount: 300, weight: 8 },
+  { amount: 500, weight: 4 },
+];
+
+/**
+ * The seller's own discount off the invoice, in **percent** — the magnitude
+ * behind the *Seller Offer* chip (2026-09-03, on request).
+ *
+ * **Not margin, and the distinction is load-bearing.** Margin on MRP is
+ * `(mrp − pricePerPc) / mrp`, the retailer's markup, and it is already a facet.
+ * This is what the *seller* knocks off what the retailer pays, which is an
+ * independent number: a 10% seller offer on a 45%-margin tee is an ordinary
+ * thing to see. Ranging one on the other would give two rail rows filtering the
+ * same figure under two names, which is the dead-control trap wearing a
+ * different hat — don't "simplify" them together.
+ *
+ * It exists wherever `hasOffer` does, that chip being the catch-all for "the
+ * seller is running something on this".
+ */
+const SELLER_OFFER_PCT = [
+  { pct: 5, weight: 26 },
+  { pct: 8, weight: 22 },
+  { pct: 10, weight: 20 },
+  { pct: 12, weight: 14 },
+  { pct: 15, weight: 10 },
+  { pct: 20, weight: 6 },
+  { pct: 25, weight: 2 },
+];
+
+/**
+ * The **rupee payout** on a SOLV Target Scheme (2026-09-03, on request).
+ *
+ * Two readings of "target scheme in ₹" and this takes the one a buyer filters
+ * on: what the scheme *pays* if you hit it, not the spend it asks for. A
+ * retailer sorting stock by scheme value wants "worth ₹1,000 to me", and the
+ * qualifying spend is a property of the scheme rather than of the product.
+ * Flagged for the stakeholder round — if it is meant to be the target instead,
+ * only this table and its label move.
+ */
+const TARGET_SCHEME_AMOUNTS = [
+  { amount: 200, weight: 24 },
+  { amount: 500, weight: 30 },
+  { amount: 1000, weight: 24 },
+  { amount: 2000, weight: 14 },
+  { amount: 5000, weight: 8 },
 ];
 
 /**
@@ -174,6 +233,19 @@ export function generateKartikCatalog(): Product[] {
   const rand = mulberry32(0x6b_a7_74_1c);
   const sizeRand = mulberry32(0x6b_a7_51_2e);
   const attrRand = mulberry32(0x6b_a7_5a_77);
+  /*
+   * **A fourth stream, for the offer magnitudes** (2026-09-03). The Seller
+   * Offer percentage and the Target Scheme payout are new per-product
+   * properties, and the standing rule is that each gets its own stream: two
+   * more draws on `rand` would re-roll every product after them and move all
+   * 540 documented counts — the women's 191 the demo script walks through
+   * included.
+   *
+   * Cashback stays on `rand`, where it already was: its draw is not new, only
+   * the table it picks from is longer, and `weightedPick` draws once whatever
+   * the length.
+   */
+  const offerRand = mulberry32(0x6b_a7_0f_e3);
   const products: Product[] = [];
 
   for (let i = 0; i < KARTIK_SIZE; i += 1) {
@@ -210,6 +282,22 @@ export function generateKartikCatalog(): Product[] {
     const cashback = offers.includes("Cashback")
       ? weightedPick(rand, CASHBACK_AMOUNTS, (c) => c.weight).amount
       : undefined;
+    /*
+     * **Both drawn unconditionally, then kept only where the offer is.** The
+     * conditions are deterministic, so drawing inside them would work — but the
+     * house rule here is that a stream's draw count per product never depends
+     * on anything else, which is what makes it safe to change an offer chance
+     * later without re-rolling the two figures after it. Same reasoning as
+     * `shippingFee` and `packType`, which are still drawn and simply unread.
+     */
+    const sellerOfferDraw = weightedPick(offerRand, SELLER_OFFER_PCT, (o) => o.weight).pct;
+    const targetSchemeDraw = weightedPick(
+      offerRand,
+      TARGET_SCHEME_AMOUNTS,
+      (t) => t.weight,
+    ).amount;
+    const sellerOfferPct = offers.length ? sellerOfferDraw : undefined;
+    const targetScheme = offers.includes("SOLV Target Scheme") ? targetSchemeDraw : undefined;
     const render = Math.floor(rand() * 3);
 
     products.push({
@@ -235,6 +323,8 @@ export function generateKartikCatalog(): Product[] {
       deliveryDays: delivery.days,
       offers,
       cashback,
+      sellerOfferPct,
+      targetScheme,
       bestSeller: rand() < 0.18,
       listedDaysAgo: Math.floor(rand() * 180),
       popularity: Math.floor(rand() * 10000),

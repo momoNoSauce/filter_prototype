@@ -64,10 +64,61 @@ describe("Kartik Exporters' catalog", () => {
   });
 
   it("prices a cashback amount exactly when it carries the offer", () => {
+    // The table widened on 2026-09-03 so the new Cashback *range* has more
+    // than two values to range over; 100 and 200 still carry the weight, the
+    // screengrab showing `₹100 Cashback`.
     for (const p of kartik) {
-      if (p.offers.includes("Cashback")) expect([100, 200]).toContain(p.cashback);
-      else expect(p.cashback).toBeUndefined();
+      if (p.offers.includes("Cashback")) {
+        expect([50, 100, 150, 200, 300, 500]).toContain(p.cashback);
+      } else {
+        expect(p.cashback).toBeUndefined();
+      }
     }
+  });
+
+  it("carries a seller-offer percentage and a scheme payout, only where the offer is", () => {
+    /*
+     * The other two offer magnitudes (2026-09-03). Each is set exactly where
+     * its offer is — a value on a product without the offer would put it in the
+     * first band of a filter it has no business matching.
+     */
+    for (const p of kartik) {
+      if (p.offers.length) expect(p.sellerOfferPct).toBeGreaterThan(0);
+      else expect(p.sellerOfferPct).toBeUndefined();
+
+      if (p.offers.includes("SOLV Target Scheme")) {
+        expect([200, 500, 1000, 2000, 5000]).toContain(p.targetScheme);
+      } else {
+        expect(p.targetScheme).toBeUndefined();
+      }
+    }
+
+    // Both are spread over their tables rather than landing on one value — a
+    // range over a single figure is four bands with three of them empty.
+    expect(new Set(kartik.map((p) => p.sellerOfferPct)).size).toBeGreaterThan(4);
+    expect(new Set(kartik.map((p) => p.targetScheme)).size).toBeGreaterThan(4);
+  });
+
+  it("keeps the offer magnitudes off the main catalog", () => {
+    /*
+     * They live on their own stream *and* on their own catalog. The main
+     * catalog's card prints a cashback ribbon whenever it is given an amount,
+     * so a figure there would change four signed-off variants — which is why
+     * the three rail rows are `/userjourney`'s and not A–D's.
+     */
+    const main = getCatalog();
+    expect(main.some((p) => p.cashback !== undefined)).toBe(false);
+    expect(main.some((p) => p.sellerOfferPct !== undefined)).toBe(false);
+    expect(main.some((p) => p.targetScheme !== undefined)).toBe(false);
+  });
+
+  it("leaves the 540 and every count on it where they were", () => {
+    // What a fourth PRNG stream buys: the two new draws can't re-roll anything
+    // already documented. If this fails, the streams got crossed.
+    expect(kartik).toHaveLength(540);
+    expect(applyFilters(kartik, { gender: ["women"] })).toHaveLength(191);
+    expect(applyFilters(kartik, { category: ["mens-casual-t-shirts"] })).toHaveLength(221);
+    expect(applyFilters(kartik, { category: ["boys-casual-t-shirts"] })).toHaveLength(128);
   });
 });
 

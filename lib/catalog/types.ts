@@ -67,6 +67,22 @@ export interface Product {
    * signed-off variants. Set only when `offers` includes "Cashback".
    */
   cashback?: number;
+  /**
+   * The seller's own discount off the invoice, in **percent** — the magnitude
+   * behind the *Seller Offer* chip, and **not** `marginPct`, which is the
+   * retailer's markup on MRP and already a facet of its own. Set wherever the
+   * product carries any offer at all, that chip being the catch-all for one.
+   *
+   * Kartik's storefront only, like `cashback` and for the same reason: the main
+   * catalog's four variants are signed off, and their card prints what it is
+   * given.
+   */
+  sellerOfferPct?: number;
+  /**
+   * What a SOLV Target Scheme pays out, in rupees. Set only when `offers`
+   * includes it. Kartik's storefront only.
+   */
+  targetScheme?: number;
   bestSeller: boolean;
   /** Days since listing — lower is newer. Drives "Recently Added". */
   listedDaysAgo: number;

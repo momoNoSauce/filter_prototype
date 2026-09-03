@@ -154,6 +154,41 @@ const PRICE_BUCKETS = [
   { id: "p-max", label: "₹900 & above", min: 900, max: Infinity },
 ];
 
+/**
+ * The three offer magnitudes (2026-09-03, on request), each ranged over the
+ * unit the offer is quoted in: **Cashback in ₹, Seller Offer in %, SOLV Target
+ * Scheme in ₹**.
+ *
+ * They exist on Kartik's catalog alone, so their rows are on `/userjourney`'s
+ * rail and not A–D's — the main catalog carries the offer *names* without
+ * magnitudes, and inventing figures there would put cashback ribbons on four
+ * signed-off cards. See `JOURNEY_RAIL_ORDER`.
+ *
+ * A product without the offer has no value, so `valuesOf` returns nothing and
+ * every band excludes it — which is what a buyer asking for "₹200 cashback or
+ * more" means.
+ */
+const CASHBACK_BUCKETS = [
+  { id: "cb-100", label: "Under ₹100", min: 0, max: 99 },
+  { id: "cb-200", label: "₹100 – ₹200", min: 100, max: 200 },
+  { id: "cb-400", label: "₹200 – ₹400", min: 201, max: 400 },
+  { id: "cb-max", label: "₹400 & above", min: 401, max: Infinity },
+];
+
+const SELLER_OFFER_BUCKETS = [
+  { id: "so-10", label: "Under 10%", min: 0, max: 9 },
+  { id: "so-15", label: "10% – 15%", min: 10, max: 15 },
+  { id: "so-20", label: "15% – 20%", min: 16, max: 20 },
+  { id: "so-max", label: "20% & above", min: 21, max: Infinity },
+];
+
+const TARGET_SCHEME_BUCKETS = [
+  { id: "ts-500", label: "Under ₹500", min: 0, max: 499 },
+  { id: "ts-1k", label: "₹500 – ₹1,000", min: 500, max: 1000 },
+  { id: "ts-2k", label: "₹1,000 – ₹2,000", min: 1001, max: 2000 },
+  { id: "ts-max", label: "₹2,000 & above", min: 2001, max: Infinity },
+];
+
 const MARGIN_BUCKETS = [
   { id: "m-30", label: "Under 30%", min: 0, max: 29 },
   { id: "m-45", label: "30% – 45%", min: 30, max: 44 },
@@ -228,6 +263,33 @@ const TYPED_RANGES: {
     valueOf: (p, sizes) => activeVariant(p, sizes).marginPct,
   },
   { id: "moq", label: "MOQ", buckets: MOQ_BUCKETS, valueOf: (p) => p.moq },
+  /*
+   * The three offer magnitudes. `valueOf` returns **-1** where the offer is
+   * absent, rather than 0: a zero would land in the first band and offer
+   * *Under ₹100 cashback* on a product carrying no cashback at all, which is
+   * the same lie as a count that promises a result the tap can't deliver. -1
+   * falls outside every bucket and below every typed floor, so those products
+   * simply don't appear — and `matches` is written off the same figure, so the
+   * bands and the boxes agree.
+   */
+  {
+    id: "cashback",
+    label: "Cashback",
+    buckets: CASHBACK_BUCKETS,
+    valueOf: (p) => p.cashback ?? -1,
+  },
+  {
+    id: "sellerOffer",
+    label: "Seller Offer",
+    buckets: SELLER_OFFER_BUCKETS,
+    valueOf: (p) => p.sellerOfferPct ?? -1,
+  },
+  {
+    id: "targetScheme",
+    label: "SOLV Target Scheme",
+    buckets: TARGET_SCHEME_BUCKETS,
+    valueOf: (p) => p.targetScheme ?? -1,
+  },
 ];
 
 /** Which facets take a typed range — the panel and the exclusivity rule ask. */
@@ -309,6 +371,10 @@ export const FACETS: FacetDef[] = [
   },
   rangeFacet("price"),
   rangeFacet("margin"),
+  // The offer magnitudes, beside the two facets whose chips they qualify.
+  rangeFacet("cashback"),
+  rangeFacet("sellerOffer"),
+  rangeFacet("targetScheme"),
   {
     id: "size",
     label: "Size",
@@ -692,6 +758,31 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
   { id: "price", label: "Price Range", facetIds: ["price"] },
   { id: "margin", label: "Margin on MRP", facetIds: ["margin"] },
   { id: "moq", label: "MOQ", facetIds: ["moq"] },
+  /*
+   * **The offer magnitudes** (2026-09-03, on request): the three chips the
+   * strip carries as yes/no are also ranges here, in the unit each offer is
+   * quoted in. They sit with the commercial rows because that is what they are
+   * — a buyer reads a cashback in rupees the way they read a price.
+   *
+   * **The chips stay binary and these rows do not replace them.** They are
+   * different questions: the chip asks *is there one*, the row asks *how big*.
+   * Nor are they the same facet — the chips select `offers` and `hasOffer`,
+   * which hold names, and these hold numbers — so the two AND, which is what
+   * "has cashback, and it's at least ₹200" has to do. A range on its own
+   * implies the offer (only a product with cashback has an amount), so the chip
+   * is redundant beside a range rather than in conflict with it.
+   *
+   * **A–D don't get these rows**, and that is the one thing to know before
+   * moving them: the magnitudes live on Kartik's products only. On the main
+   * catalog every panel here would be empty, which is the dead control that
+   * took Seller off this same rail earlier today. If the stakeholder round
+   * wants them in A–D, the seed grows the three figures on a new stream and
+   * the rows move to `RAIL_ORDER` — at which point the four cards start
+   * printing cashback amounts, which is the reason it wasn't done first.
+   */
+  { id: "cashback", label: "Cashback", facetIds: ["cashback"] },
+  { id: "sellerOffer", label: "Seller Offer", facetIds: ["sellerOffer"] },
+  { id: "targetScheme", label: "SOLV Target Scheme", facetIds: ["targetScheme"] },
   { id: "category", label: "Category", facetIds: ["category"], only: "filter" },
   { id: "brand", label: "Brands", facetIds: ["brand"] },
   // Seller and Seller City sat here until 2026-09-03 — an empty panel and a

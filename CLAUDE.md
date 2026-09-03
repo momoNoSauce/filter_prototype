@@ -86,9 +86,10 @@ the height actually rendered (`sheetPanelViewport`) — 530 at the cap against
 the full-bleed 690, giving 11 rows / 9 thumbnail rows / 13 tiles instead of
 14 / 12 / 19, and less again in a shrunken sheet. A–D are untouched.
 
-Its three **range facets** — Price Range, Margin on MRP and MOQ — each carry a
-**typed min/max** (`?price=150-450`, `?margin=60-`, `?moq=5-12`) above their
-bands. Per facet the two controls are exclusive, and each disables the other:
+Its **range facets** — Price Range, Margin on MRP, MOQ and, since 2026-09-03,
+the three offer magnitudes (**Cashback ₹**, **Seller Offer %**, **SOLV Target
+Scheme ₹**) — each carry a **typed min/max** (`?price=150-450`, `?margin=60-`,
+`?moq=5-12`, `?cashback=100-200`, `?sellerOffer=12-`) above their bands. Per facet the two controls are exclusive, and each disables the other:
 both are values on one facet, where they would otherwise OR into a wider
 result. An inverted range is refused rather than filtered, with a toast on blur
 naming that facet. All three are built from **one table** (`TYPED_RANGES` in
@@ -100,6 +101,18 @@ overrides `matches` needs `accepts` too** — without it the selection works
 in-session and vanishes on reload. `parseTypedRange` gates on the first
 character before its regex, because `matches` runs per product per value and
 three facets now call it — the 720-walk engine test is the thing that notices.
+
+**The offer magnitudes are journey-only, and the data is why.** Cashback,
+`sellerOfferPct` and `targetScheme` are drawn in `lib/catalog/kartik.ts` — the
+main catalog names its offers without pricing them, and A–D's card prints a
+cashback ribbon whenever it is handed an amount, so figures there would change
+four signed-off variants. The three rail rows are therefore in
+`JOURNEY_RAIL_ORDER` only; on A–D every one of those panels would be empty,
+which is the dead control that took Seller off the journey's own rail. The two
+new properties take **a fourth PRNG stream** (`offerRand`) so none of Kartik's
+540 counts move, and both are drawn unconditionally and kept only where the
+offer is. **The chips stay binary** — they ask *is there one*, the rows ask
+*how big*, on different facets, so the two AND.
 
 **A facet dropped from one rail may still have a chip.** `clearsAlso` on
 `FilterScreen` is how Clear Filters still reaches it — otherwise the toast says

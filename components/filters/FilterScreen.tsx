@@ -68,6 +68,12 @@ const RANGE_UNITS: Record<
   price: { symbol: "₹", name: "price per piece", noun: "price" },
   margin: { symbol: "%", name: "margin on MRP", noun: "margin", after: true },
   moq: { symbol: "pc", name: "order quantity in pieces", noun: "quantity", after: true },
+  // The offer magnitudes (2026-09-03), each in the unit its offer is quoted
+  // in: cashback and the scheme payout in rupees, the seller's own discount in
+  // percent. Same rule as above — ₹ leads its number, % follows.
+  cashback: { symbol: "₹", name: "cashback in rupees", noun: "cashback" },
+  sellerOffer: { symbol: "%", name: "seller offer in percent", noun: "seller offer", after: true },
+  targetScheme: { symbol: "₹", name: "target scheme payout in rupees", noun: "scheme payout" },
 };
 
 /**

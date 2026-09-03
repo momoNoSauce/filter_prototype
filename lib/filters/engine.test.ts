@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getCatalog } from "@/lib/catalog/products";
+import { getKartikCatalog } from "@/lib/catalog/kartik";
 import { CATEGORIES } from "@/lib/catalog/seed";
 import {
   applyFilters,
@@ -23,7 +24,7 @@ import {
   getRailFacetIds,
   settledVertical,
 } from "./facets";
-import { defaultVariant } from "@/lib/catalog/types";
+import { defaultVariant, type Product } from "@/lib/catalog/types";
 import { activeVariant, activeVariantIndex, sizeOptionId } from "./activeVariant";
 import { PV_FACET_IDS, dropOrphanedSelections } from "./facets";
 import { verticalRoutes, verticalScope } from "@/lib/catalog/scope";
@@ -1021,6 +1022,71 @@ describe("variants C and D — the page is the vertical", () => {
     expect(withRange).toEqual(plain);
   });
 
+  it("ranges the three offer magnitudes, in the unit each is quoted in", () => {
+    /*
+     * 2026-09-03, on request: the strip's binary offer chips are also ranges —
+     * Cashback in ₹, Seller Offer in %, SOLV Target Scheme in ₹. Kartik's
+     * catalog only, the main one carrying offer *names* without magnitudes, so
+     * this runs against his 540.
+     */
+    const kartik = getKartikCatalog();
+    const of = (sel: Record<string, string[]>, read: (p: Product) => number | undefined) =>
+      applyFilters(kartik, sel).map(read);
+
+    // A band, and a typed range, on each.
+    expect(of({ cashback: ["cb-200"] }, (p) => p.cashback).every((v) => v! >= 100 && v! <= 200))
+      .toBe(true);
+    expect(of({ cashback: ["300-"] }, (p) => p.cashback).every((v) => v! >= 300)).toBe(true);
+    expect(of({ sellerOffer: ["so-max"] }, (p) => p.sellerOfferPct).every((v) => v! >= 21))
+      .toBe(true);
+    expect(of({ sellerOffer: ["-10"] }, (p) => p.sellerOfferPct).every((v) => v! <= 10))
+      .toBe(true);
+    expect(of({ targetScheme: ["1000-2000"] }, (p) => p.targetScheme).every((v) => v! >= 1000 && v! <= 2000))
+      .toBe(true);
+
+    // Each is non-empty, or the test above passes by matching nothing.
+    const nonEmpty: Selections[] = [
+      { cashback: ["cb-200"] },
+      { sellerOffer: ["so-max"] },
+      { targetScheme: ["1000-2000"] },
+    ];
+    for (const sel of nonEmpty) {
+      expect(applyFilters(kartik, sel).length).toBeGreaterThan(0);
+    }
+
+    /*
+     * **A product without the offer is excluded, not banded.** The value is -1
+     * where the offer is absent rather than 0, so it falls outside every bucket
+     * and below every typed floor — a 0 would have offered *Under ₹100
+     * cashback* on products carrying no cashback at all.
+     */
+    expect(of({ cashback: ["cb-100"] }, (p) => p.cashback).every((v) => v !== undefined))
+      .toBe(true);
+    expect(of({ sellerOffer: ["so-10"] }, (p) => p.sellerOfferPct).every((v) => v !== undefined))
+      .toBe(true);
+    expect(of({ targetScheme: ["ts-500"] }, (p) => p.targetScheme).every((v) => v !== undefined))
+      .toBe(true);
+    expect(of({ cashback: ["-1000"] }, (p) => p.cashback).every((v) => v !== undefined)).toBe(true);
+  });
+
+  it("carries the offer ranges through the URL, and ANDs them with their chip", () => {
+    // `matches` without `accepts` is the trap: it would work in-session and
+    // vanish on reload. And the chip and the row are different questions on
+    // different facets — "has cashback" AND "at least ₹200 of it".
+    const round = (q: string) => parseSelections(new URLSearchParams(q));
+    expect(round("cashback=100-200")).toEqual({ cashback: ["100-200"] });
+    expect(round("sellerOffer=10-")).toEqual({ sellerOffer: ["10-"] });
+    expect(round("targetScheme=ts-1k")).toEqual({ targetScheme: ["ts-1k"] });
+    expect(round("cashback=junk")).toEqual({});
+
+    const kartik = getKartikCatalog();
+    const chip = { offers: ["cashback"] };
+    const both = applyFilters(kartik, { ...chip, cashback: ["300-"] });
+    expect(both.length).toBeGreaterThan(0);
+    expect(both.length).toBeLessThan(applyFilters(kartik, chip).length);
+    expect(both.every((p) => p.offers.includes("Cashback") && p.cashback! >= 300)).toBe(true);
+  });
+
   it("gives /userjourney its own rail order, in full", () => {
     // Pinned in full, like the default rail, because the interesting failure
     // is a row quietly moving rather than one going missing.
@@ -1028,6 +1094,9 @@ describe("variants C and D — the page is the vertical", () => {
       "Price Range",
       "Margin on MRP",
       "MOQ",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
       "Category",
       "Brands",
       "Colour",
@@ -1045,6 +1114,9 @@ describe("variants C and D — the page is the vertical", () => {
       "Price Range",
       "Margin on MRP",
       "MOQ",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
       "Category",
       "Brands",
       "Colour",

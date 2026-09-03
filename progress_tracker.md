@@ -997,6 +997,87 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-03 — the offer chips become ranges as well as switches
+
+**On request**: the three offer chips are yes/no on the strip, and a buyer also
+wants them *by amount*, the way Margin on MRP works. Units named by the
+requester — **Cashback in ₹, Seller Offer in %, SOLV Target Scheme in ₹**.
+Stakeholder confirmation to follow; this is built so there is something to
+confirm.
+
+A rail row each, with bands **and** a typed min/max, joining `TYPED_RANGES`
+rather than growing machinery of their own:
+
+```
+Cashback            Under ₹100 (15) · ₹100–₹200 (77) · ₹200–₹400 (7) · ₹400+ (5)
+Seller Offer        Under 10% (206) · 10–15% (204) · 15–20% (23) · 20%+ (7)
+SOLV Target Scheme  Under ₹500 · ₹500–₹1,000 · ₹1,000–₹2,000 · ₹2,000+
+```
+
+**The chips stay binary, and the rows don't replace them.** The chip asks *is
+there one*, the row asks *how big*, and they sit on different facets — the chips
+select `offers`/`hasOffer`, which hold names, these hold numbers — so the two
+AND, which is what "has cashback, and at least ₹200 of it" has to do. A range
+implies its own offer, so a chip is redundant beside one rather than in conflict
+with it.
+
+**Only Cashback had a number to range over.** `Seller Offer` is the "carries any
+offer at all" catch-all with no magnitude at all, and `SOLV Target Scheme` was a
+name in `offers[]`. So two figures were invented, and three things follow:
+
+- **`sellerOfferPct` is the seller's discount off the invoice, and it is not
+  margin.** `marginPct` is the retailer's markup on MRP and already a facet. A
+  10% seller offer on a 45%-margin tee is an ordinary thing to see, and ranging
+  one on the other would leave two rail rows filtering the same figure under two
+  names — the dead-control trap in a new hat. Commented where it is drawn.
+- **Cashback's table widened** from a flat 100/200 to six values (50 → 500,
+  with 100 and 200 still carrying the weight, the screengrab showing `₹100
+  Cashback`). Four bands over two values is three empty bands. Free to do:
+  `weightedPick` draws once however long the table is — the same licence
+  `COLOURS` used going 10 → 20 — so no draw moved.
+- **A fourth PRNG stream**, `offerRand`. Two new per-product properties means
+  two new draws, and on `rand` they would have re-rolled every product after
+  them and moved all 540 counts, the women's 191 the demo walks through
+  included. Both are drawn **unconditionally** and kept only where the offer is,
+  so changing an offer's chance later can't shift the figure after it.
+
+**Journey-only, and the data decided that rather than taste.** The magnitudes
+live in `kartik.ts`. The main catalog names its offers without pricing them, and
+A–D's card prints a cashback ribbon the moment it is handed an amount — figures
+there would change four signed-off variants. So the rows are in
+`JOURNEY_RAIL_ORDER` alone; on A–D every one of those panels would be empty,
+which is exactly the dead control that took Seller off the journey's own rail
+this morning. Moving them across is three figures on a new stream in `seed.ts`,
+the rows into `RAIL_ORDER`, and an accepted change to the cards.
+
+**A product without the offer reads −1, not 0.** Zero lands in the first band,
+so *Under ₹100 cashback* would have matched products carrying no cashback at
+all. −1 falls outside every bucket and below every typed floor, and `matches`
+reads the same figure, so the bands and the boxes agree.
+
+**The height, as predicted.** *"I think the height would be affected cuz in
+multi pv scenario these will be there"* — correct. The journey rail is ten rows
+now, which asks for 710px against the 640 ceiling, so **the sheet is back at 80%
+in both states** where seven rows had it at 530. The rule from earlier today
+needs no change: the content grew into the room rather than the room being
+wrong, and the shrink still fires if rows are ever dropped again.
+
+**Verified** at 360px, no console errors:
+
+| | |
+|---|---|
+| journey rail | ten rows, `Price Range · Margin on MRP · MOQ · Cashback · Seller Offer · SOLV Target Scheme · Category · Brands · Colour · Fabric` |
+| rail labels | one line each; `SOLV Target Scheme` wraps to two, inside the 60px row |
+| Cashback panel | ₹ boxes over four bands, counts 15 / 77 / 7 / 5 |
+| Seller Offer panel | % boxes over four bands, counts 206 / 204 / 23 / 7 — **440 in total, exactly Kartik's `hasOffer` count**, so the percentage exists precisely where the chip is true |
+| typed `12`% and apply | `?sellerOffer=12-`, `Show 147 results` |
+| sheet | 640px with nothing settled, the 80% ceiling |
+
+137 tests green (five new: the three ranges' matching including the −1
+exclusion, their URL round-trip, the chip-AND-range case, the magnitudes
+existing only where their offer does, the main catalog carrying none of them,
+and Kartik's 540 / 191 / 221 / 128 unmoved), lint, typecheck and build clean.
+
 ### 2026-09-03 — a rail row says how many, not just "some"
 
 **Reported**: *"once a filter is added the dot is not enough signifier."* Right,
