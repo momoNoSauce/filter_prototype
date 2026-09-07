@@ -431,6 +431,10 @@ export function RangeInputs({
    * per piece", "Max margin on MRP".
    */
   unit: { symbol: string; name: string; after?: boolean };
+  /**
+   * A finished, valid pair. Fired on **blur**, never per keystroke — see
+   * `commit`.
+   */
   onChange: (min: string, max: string) => void;
   /** Blurred with min > max. The draft was never given the value. */
   onInvalid: () => void;
@@ -459,11 +463,41 @@ export function RangeInputs({
 
   const inverted = (a: string, b: string) => a !== "" && b !== "" && Number(a) > Number(b);
 
-  const edit = (next: { min: string; max: string }) => {
-    setText(next);
-    // Only a pair the draft can hold reaches it, so the listing behind never
-    // shows the result of a range the buyer is being told is invalid.
-    if (!inverted(next.min, next.max)) onChange(next.min, next.max);
+  /*
+   * **Typing changes nothing but the text** (2026-09-07, closing UX backlog
+   * item 13).
+   *
+   * It used to commit on every keystroke that wasn't inverted, and because
+   * `inverted` is false whenever either box is empty, the first box filled
+   * always committed: typing `900` into an empty min applied `9-`, then `90-`,
+   * then `900-`, so the footer fell to `Show 0 results` — and a dot appeared on
+   * the rail row — before the max had been touched. Every route into a filled
+   * inverted pair therefore left the facet already holding something, which
+   * made the **designed** refusal state unreachable: both boxes red, a toast
+   * naming the rule, and the count *untouched* (the Figma handoff's screen 05).
+   *
+   * So the draft is written on blur, which is the earliest moment the buyer has
+   * said they are finished with a box. A range is legitimately one-ended —
+   * `150-` is a floor, `-450` a ceiling — so "finished" cannot mean "both boxes
+   * filled"; it can only mean the box lost focus. Tabbing from min to max
+   * commits the floor alone, which is a pair the buyer typed rather than a
+   * prefix of one.
+   *
+   * Two things fall out of it, both wanted. The count no longer moves while a
+   * number is being typed, so the listing stops flickering through the answers
+   * to ranges nobody asked for. And the ✕ and `Show N results` both blur the
+   * box before their own handler runs, so a typed value still commits on the
+   * way out — the discard toast keeps working, because the draft did change.
+   */
+  const commit = () => {
+    if (disabled) return;
+    // Nothing to say and nothing to write: the props already hold this pair.
+    if (text.min === min && text.max === max) return;
+    if (inverted(text.min, text.max)) {
+      onInvalid();
+      return;
+    }
+    onChange(text.min, text.max);
   };
 
   return (
@@ -476,9 +510,12 @@ export function RangeInputs({
         disabled={disabled}
         // Never invalid while disabled: the boxes aren't being edited, and a
         // red border on a control nobody can fix is an error with no exit.
+        // Red as soon as the pair reads back to front, where the toast waits
+        // for the blur: the border is a description of what is on screen, and
+        // the toast is an interruption.
         invalid={!disabled && inverted(text.min, text.max)}
-        onChange={(next) => edit({ min: next, max: text.max })}
-        onBlur={() => !disabled && inverted(text.min, text.max) && onInvalid()}
+        onChange={(next) => setText({ min: next, max: text.max })}
+        onBlur={commit}
       />
       <span className={`shrink-0 text-[15px] ${disabled ? "text-[#c4c4c4]" : "text-muted"}`}>
         –
@@ -490,8 +527,8 @@ export function RangeInputs({
         placeholder="Any"
         disabled={disabled}
         invalid={!disabled && inverted(text.min, text.max)}
-        onChange={(next) => edit({ min: text.min, max: next })}
-        onBlur={() => !disabled && inverted(text.min, text.max) && onInvalid()}
+        onChange={(next) => setText({ min: text.min, max: next })}
+        onBlur={commit}
       />
     </div>
   );

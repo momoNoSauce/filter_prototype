@@ -131,7 +131,9 @@ above each one's bands.
 Per facet the two controls are exclusive, and each disables the other: both are
 values on one facet, where they would otherwise OR into a wider result. An
 inverted range is refused rather than filtered, with a toast on blur naming
-that facet. Every band facet is built from **one table** (`RANGE_FACETS` in
+that facet. **The boxes commit on blur, never per keystroke** (2026-09-07) —
+committing each digit applied `9-`, `90-`, `900-` and moved the count before the
+second box was touched, which made the designed refusal state unreachable. Every band facet is built from **one table** (`RANGE_FACETS` in
 `facets.ts`) differing only in the number it compares and, in the UI, the unit
 beside the box — ₹ before the number, `%` and `pc` after. `typed: false` there
 is a facet with bands and no boxes; **nothing sets it today**, and it is kept
