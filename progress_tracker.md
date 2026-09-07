@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-09-03
+Last updated: 2026-09-07
 
 > **Four docs, one job each.** `CLAUDE.md` — the rules, and the only one loaded
 > into every session, so keep it short. `plan.md` — the architecture.
@@ -2404,10 +2404,14 @@ Started as an A/B of control placement on 2026-08-12; C and D added the scope ax
 
 | | Demo URL | Controls | Starts |
 |---|---|---|---|
-| **Variant A** | `/` | Sort · Filters at the bottom | across every category |
+| **Variant A** | `/` | Filters · Sort at the bottom | across every category |
 | **Variant B** | `/b` | The same two as chips at the top | across every category |
-| **Variant C** | `/c` | Sort · Filters at the bottom | inside one vertical |
+| **Variant C** | `/c` | Filters · Sort at the bottom | inside one vertical |
 | **Variant D** | `/d` | The same two as chips at the top | inside one vertical |
+
+**Filter leads and Sort follows in both** since 2026-09-03, chips and pill
+alike — one order across the 2×2, so the only thing it compares stays
+placement.
 
 |  | bottom bar | top chips |
 |---|---|---|
@@ -2418,7 +2422,7 @@ Switching is by URL — chosen over an on-screen toggle so nothing that isn't pr
 
 A and B are each a **closed loop**: hand someone `/b` and the whole journey — home, seller card, PLP, home button — stays in B. `HomeScreen` takes a `basePath` and `AppBar` a `homeHref`; both must be kept in step when adding routes, or a session leaks into another variant mid-demo with no visible cause. C and D are single screens and so carry no home button at all — every href one could hold leads out of the variant, which is that leak rather than a use of the prop.
 
-Verified: no bottom bar in B or D; the chips open the same sheets the bar does and carry the same active vocabulary (dot for Sort, count for Filter); the rails are identical between A and B and between C and D; `/b` → seller card → `/b/seller/baheti` → home → `/b` stays in B; `/c` and `/d` land inside a vertical with no Category or Gender control anywhere.
+Verified: no bottom bar in B or D; the chips open the same sheets the bar does and carry the same active vocabulary (dot for Sort, count for Filter — and since 2026-09-03 a rail row inside Filters carries its count the same way); the rails are identical between A and B and between C and D; `/b` → seller card → `/b/seller/baheti` → home → `/b` stays in B; `/c` and `/d` land inside a vertical with no Category or Gender control anywhere.
 
 Open: the reference image for a category PLP ("Cotton Casual Shirt") also shows a **different card** — pipe-separated `MRP ₹1000 | Pack Size 1pc`, single-size pills, 4 dots, and no share icon in the app bar. C and D now cover the *listing* half of that reference; the card is deliberately still the shared one, so the variants differ by scope and controls alone. Say if the card should change too, and whether it applies to all four.
 
@@ -2426,7 +2430,7 @@ Open: the reference image for a category PLP ("Cotton Casual Shirt") also shows 
 
 Ordered by consequence. None of these block a demo.
 
-1. **Applied filters are hard to read on the PLP.** Three active filters render as one small count on a 24px icon. Scroll away and back and you can't tell what's constraining the list. *Partly closed 2026-08-13:* the contextual chips are defined and built, and a selected chip shows its own state inline — but only for the facets the strip currently offers, so a seller or delivery filter is still just a number on an icon. *Worse on `/userjourney` since 2026-08-28*, knowingly: that strip carries no vertical chip in any state, so after *Category → Women's T-Shirts* nothing on the listing names the cut and the Filter chip's count is the only report of it. Accepted on the call; putting the picked chip back is a one-line change if it reads badly in a demo.
+1. **Applied filters are hard to read on the PLP.** Three active filters render as one small count on a 24px icon. Scroll away and back and you can't tell what's constraining the list. *Partly closed 2026-08-13:* the contextual chips are defined and built, and a selected chip shows its own state inline — but only for the facets the strip currently offers, so a seller or delivery filter is still just a number on an icon. *Worse on `/userjourney` since 2026-08-28*, knowingly: that strip carries no vertical chip in any state, so after *Category → Women's T-Shirts* nothing on the listing names the cut and the Filter chip's count is the only report of it. Accepted on the call; putting the picked chip back is a one-line change if it reads badly in a demo. **Half-closed again 2026-09-03**: inside the Filters screen every facet row now carries its *count* in an 18px filled circle where a 6px dot said only "some", so "how many, and on which facet" is answered there. The listing half is untouched and the answer to it is **applied-filter chips** — `Black ✕` `Under ₹200 ✕` with *Clear all* — which is designed, argued and unbuilt.
 2. **Contrast failures**, inherited from the Figma, on the three numbers a retailer actually reads. **Two of the three closed on 2026-08-14** — not by picking darker colours, but by sampling the live app's own screengrab, which turned out to set both better than the frame does:
    | Text | Was | Ratio | Now | Ratio | AA needs |
    |---|---|---|---|---|---|
@@ -2437,7 +2441,7 @@ Ordered by consequence. None of these block a demo.
    Audience is kirana retailers on mid-range Android in poor light.
 10. ~~**The variants still differ in more than control placement.**~~ **Closed 2026-08-19.** Category left A's bottom bar for the Filters rail, so the last facet-level difference is gone: same card, catalog, engine, rail and facets, and where Sort and Filters sit is the entire variable. A stated preference is now about control placement and nothing else, which is what the A/B was for.
     *Resolved along the way:* A's checkbox-that-behaves-exclusively Gender mismatch went earlier — Gender is an ordinary multi-select rail facet in both variants, so no control claims exclusivity anywhere.
-4. **Tiles show no counts** while every checkbox row does — you can't judge whether a category is worth tapping.
+4. ~~**Tiles show no counts** while every checkbox row does — you can't judge whether a category is worth tapping.~~ **Closed 2026-09-03**, and by the layout rather than by adding a number: Category and Brands became a column of rows, which has the width for `Men's Casual T-Shirts (222)` where three tiles across a 240px panel did not. The tile grid could only put its count in a `title` attribute.
 5. **Hidden zero-count options** are right for the pruning demo but break the user's mental map; most Indian ecommerce greys out instead. A conscious call, not an inherited default.
 6. **No loading / skeleton / stale-results state anywhere.** Filtering is instant only because the catalog is in memory; against a real API it won't be, and the prototype is quietly setting an expectation engineering can't meet.
 7. **Touch targets** below guideline: sheet close X is 15px, set pills 40px (both from the design).
@@ -2449,11 +2453,11 @@ Ordered by consequence. None of these block a demo.
     with every chip in the row, so growing it would grow the whole strip.
     The same pass fixed the chip's **0.5px border**, which was the frame's value
     for a chip drawn on its own and read lighter than its 1px neighbours.
-11. **Two type sizes are held below 12px by frame dimensions**, not by choice — see the 2026-08-20 entry. The tile-grid label (11px, boxed by the 68px cell) and the home seller card's stat line (11px, boxed by the 152px card) were the only sites the type pass could not raise. Both need a wider cell or card to move, which is a designer's call.
+11. **One type size is held below 12px by a frame dimension**, not by choice — see the 2026-08-20 entry. It was two: the tile-grid label (11px, boxed by the 68px cell, raised to 13px on 08-21 and moot since 09-03 — Category and Brands are rows now, and their name sets at 15px) and the **home seller card's stat line** (11px, boxed by the 152px card), which still stops fitting at 13px and stands at 12. A wider card is a designer's call.
 8. **Accessibility**, if this becomes the reference build: filter rows use `aria-pressed` where `role="checkbox"` + `aria-checked` is correct; sheets don't trap focus; the scrim is a full-viewport `<button>` announced as a giant "Close".
 9. **Pagination dots under the set pills** imply snapping the free-scrolling row doesn't do.
 14. **Clear Filters resets Sort, in every variant.** `FilterScreen` commits `onApply(cleared, DEFAULT_SORT)` whether or not Sort is a row on that screen, so a sort set from A's pill or B's chip is cleared by a button labelled *Clear Filters* under a toast reading `All filters cleared` — and Sort is not a filter. Written deliberately for `/userjourney` on 2026-08-28, when Sort *was* on that screen; measured on 2026-09-03 and it was never scoped to that route. Two defensible answers — the button means "return this listing to its untouched state", or it means what it says and Sort keeps its value — and it is a designer's call, not a code one. Left as behaviour, and the decisions row now describes it accurately.
-13. **A typed range commits per keystroke, so its refusal state can't be reached.** All three range facets since 2026-09-03; written when Price was the only one. `edit()` in `RangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
+13. **A typed range commits per keystroke, so its refusal state can't be reached.** All six range facets since 2026-09-03; written when Price was the only one. `edit()` in `RangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
 
 ## Facet imagery
 
@@ -2462,7 +2466,7 @@ became a column of rows on 2026-09-03. Same files, same box, 44px instead of
 56.
 
 - **Category** — Unsplash photos in `public/categories/`, credited in `CREDITS.md`. Re-shot 2026-08-12 for the seven new categories: all worn on a model, since each category names its audience and at 56px a person reads faster than a flat-lay, and picked for seven distinct dominant colours. `boys-casual-t-shirts.jpg` carries an incidental Levi's wordmark, unreadable at tile size — swap it if it bothers anyone.
-- **Brands** — still grey `#d9d9d9` placeholders. Real logos couldn't be sourced: Clearbit's logo API is retired, and Wikipedia/Wikimedia returned unrelated files for 7 of 8 brands. Brand-supplied assets are the right input, and avoid the trademark question of scraping logos.
+- **Brands** — still grey `#d9d9d9` placeholders, and more conspicuous at row size than they were at tile size. Real logos couldn't be sourced: Clearbit's logo API is retired, and Wikipedia/Wikimedia returned unrelated files for 7 of 8 brands. Brand-supplied assets are the right input, and avoid the trademark question of scraping logos. On `/userjourney` the panel is empty rather than grey — every product there is a *Zenifit*, which is not one of `BRANDS`' ten, so the facet has no option to draw at all (open question 4a).
 
 ## Open questions for the designer
 
@@ -2476,7 +2480,7 @@ became a column of rows on 2026-09-03. Same files, same box, 44px instead of
 3a. ~~**An icon for the Target Scheme chip.**~~ **Supplied and in, 2026-08-28** — a blue ring under an orange arc, `public/offers/solv-target-scheme.png`. The chip shipped label-only for a few hours in between, which is what `icon` being optional on `FilterChip` buys. The offer is named **SOLV Target Scheme**: the GOLD prefix went with that branding on 08-19 and SOLV took its place.
 4. Baheti Garments is treated as a storefront aggregating multiple sellers, since the app bar says Baheti while the Seller facet lists other companies. Confirm, or scope it to one seller and drop the Seller facet there. **`/userjourney` took the second reading on 2026-09-03** — Kartik's storefront is one seller, so Seller and Seller City left that rail; A–D still take the first.
 4a. **Brands is an empty panel on `/userjourney`.** Found 2026-09-03 while measuring the two rows above. Every Kartik product is a *Zenifit*, which is not one of `BRANDS`' ten, so the tile grid draws nothing and the panel reads `No options match.` — `kartik.ts` intends "exactly one tile" and left it visible on purpose, so a buyer would learn something from it. Either it goes the way of Seller, or `BRANDS` learns Zenifit and it shows the one tile as intended. One tile is a dead control either way; an empty panel is the worse of the two.
-5. A stray `$299.99` row sits at the bottom of the filter rail in Figma (`638:3712`) and was skipped as an artefact; `Margin` is SemiBold while its eleven rail siblings are Medium.
+5. A stray `$299.99` row sits at the bottom of the filter rail in Figma (`638:3712`) and was skipped as an artefact; `Margin` — now **Margin on MRP** — is SemiBold in the frame while its rail siblings are Medium, and is rendered Medium like the rest.
 6. **Four things the live-app screengrab raises** (2026-08-14), now that the card follows it rather than the frame:
    - ~~**The screengrab has no shipping-fee line.**~~ **Closed 2026-08-20** — the word was said. `+₹50 shipping fee` is not a real charge and is gone from the card in all four variants; the field is still drawn and simply unread, its `rand()` sitting mid-sequence. The card and the screengrab now agree here.
    - ~~**`VIEW DETAILS` is blue in the live app**, orange `#FF7711` here.~~ **Closed 2026-08-20** — confirmed blue, so A–D took `primary` and the contrast went 2.53:1 → **5.72:1**, clearing AA. The exported chevron is stroked `#FF7711`, so it renders through `MaskIcon` rather than an `<img>`, the route `JourneyProductCard` already took; a blue label beside an orange arrow was the thing to avoid. `--color-orange-500` stays — the badges and the detail screen's quantity stepper still use it, all white-on-orange or as a border.

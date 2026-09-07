@@ -14,28 +14,31 @@ npm run build    # production build; also typechecks
 npx eslint .     # lint (from the repo root)
 ```
 
-## The two variants
+## The four variants, and the journey
 
 Four variants over one catalog. A and B walk Home → **search for `shirt`** → PLP → filter and sort; C and D drop you straight inside a product vertical.
 
 | | Home | PLP | Controls |
 |---|---|---|---|
-| **Variant A** | `/` | `/results?q=shirt` | Sort · Filters in a floating pill at the bottom |
+| **Variant A** | `/` | `/results?q=shirt` | Filters · Sort in a floating pill at the bottom |
 | **Variant B** | `/b` | `/b/results?q=shirt` | The same two as chips at the top, no bottom bar |
-| **Variant C** | — | `/c` | Bottom bar, already inside one vertical |
+| **Variant C** | — | `/c` | The same pill, already inside one vertical |
 | **Variant D** | — | `/d` | Top chips, already inside one vertical |
 
 A and B start across every category; C and D start *inside* one, so there is no Category control at all. Together they make a 2×2 of that against control placement. `/c` and `/d` are the listing itself — other seller/vertical pairs are at `/c/seller/[sellerId]/[categoryId]`.
+
+**`/userjourney` is a fifth route and outside the 2×2** — one buyer's named flow (Home → *Kartik exporters* banner → storefront → filter → detail), built 1:1 from screengrabs of the live app rather than from Figma, over its own catalog of 540 tees. It is where controls get tried first: the Filters bottom sheet, the typed min/max on every range facet, and the offer magnitudes all live there and not in A–D.
 
 Card, catalog, engine and sheets are shared — one `PlpScreen` throughout — so within a row of the 2×2 a preference is about control placement, and within a column it is about starting scope. Switch by editing the URL. A and B are closed loops: hand someone `/b` and the whole journey stays in B.
 
 ## Where the documentation lives
 
-Three files, and they are the source of truth rather than something to re-derive:
+Four files, one job each, and they are the source of truth rather than something to re-derive. The deepest reasoning is in the code comments beside the thing they describe — these files run 30–77% comment, and that copy is the one that can't drift from what it documents.
 
-- **`plan.md`** — architecture, the filter engine's one load-bearing rule, the catalog's shape, and every decision taken where the designs were silent.
-- **`progress_tracker.md`** — current state, what's been verified, the UX backlog, and the open questions for the designer.
-- **`CLAUDE.md`** / **`AGENTS.md`** — conventions for anyone (or anything) writing code here: the Figma node map, which decisions are settled, and the traps.
+- **`CLAUDE.md`** / **`AGENTS.md`** — rules and traps only, loaded into every AI session: the Figma node map, the route table, and what must not be broken.
+- **`plan.md`** — the architecture narrative: the filter engine's load-bearing rules, the catalog's shape, the panels.
+- **`docs/decisions.md`** — the long-form record: every call, why it was made, and what was rejected. Read before reversing anything.
+- **`progress_tracker.md`** — the chronology, what's been verified, the UX backlog, and the open questions for the designer.
 
 ## Two things to know before changing anything
 

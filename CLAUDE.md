@@ -70,8 +70,8 @@ behaviour so a route opts *out*, never in. Today that leaves the strip as
 order (`JOURNEY_RAIL_ORDER`), six rows dropped (Gender, Delivery Time, Offers,
 More Filters, and — since the storefront *is* one seller — Seller and Seller
 City), so its cut is **Category → Women's T-Shirts**, not Gender → Women;
-Filters as a bottom sheet; and all three range facets with a typed min/max
-above their bands. A–D pass nothing, and neither does the journey for
+Filters as a bottom sheet; and all six range facets with a typed min/max above
+their bands. A–D pass nothing, and neither does the journey for
 `sortInFilters` — Sort went back to the strip on 2026-09-03 after six days
 inside Filters. Put new per-route departures in that object rather than adding
 a prop each; the reasoning is in `docs/decisions.md`.
@@ -136,20 +136,24 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 |---|---|
 | `lib/catalog/seed.ts` | 1,070 products from a fixed-seed PRNG |
 | `lib/catalog/scope.ts` | Vertical-scoped product sets for C and D |
+| `lib/catalog/kartik.ts` | The journey's separate 540, four PRNG streams, and the only products carrying offer magnitudes |
 | `lib/catalog/productImage.ts` | `gender × kind × colour` → generated art, Figma renders as fallback |
 | `lib/filters/engine.ts` | `applyFilters` (OR within a facet, AND across), `facetOptionsWithCounts`, `sortProducts`, `clearSelections` |
-| `lib/filters/facets.ts` | The facet registry, `RAIL_ORDER`, `VerticalMode`, `settledVertical`, `dropOrphanedSelections` |
+| `lib/filters/facets.ts` | The facet registry, `RAIL_ORDER`, `TYPED_RANGES`, `VerticalMode`, `settledVertical`, `dropOrphanedSelections` |
 | `lib/filters/activeVariant.ts` | Which pack a card is talking about — sizes live on the pack |
 | `lib/filters/contextChips.ts` | Which chips the strip carries, given the selections |
-| `lib/filters/panelFit.ts` | Whether a panel overflows the fold, and so earns a search field |
+| `lib/filters/panelFit.ts` | Whether a panel overflows the fold, and so earns a search field — and how tall the bottom sheet is, from its rail |
 | `lib/filters/urlState.ts` | State mirrored to the query string; local state stays the source of truth |
 | `components/plp/PlpScreen.tsx` | **The** PLP — all five paths, parameterised, never copied |
 | `components/filters/FilterScreen.tsx` | Rail + panel, draft/commit |
 | `components/journey/ProductDetail.tsx` | **The** detail screen — journey, B and D |
 
-Adding a facet is one entry in `FACETS`. Each declares
-`valuesOf(product, sizes?) → string[]`, so thumbnail rows, checkbox lists,
-range buckets and multi-valued delivery windows share one code path.
+**23 facets** behind 13 rail rows — 18 inside a vertical, 17 in C and D, 10 on
+the journey and 16 inside a vertical there. Adding a facet is one entry in
+`FACETS`; a facet with bands *and* a typed range is one entry in `TYPED_RANGES`
+plus a `rangeFacet()` line, which is what keeps all six of those identical. Each
+declares `valuesOf(product, sizes?) → string[]`, so thumbnail rows, checkbox
+lists, range buckets and multi-valued delivery windows share one code path.
 
 **Category and Brands are a column of rows**, not the frame's tile grid, since
 2026-09-03 — `panel: "thumb"` and `ThumbRow`: checkbox, 44px picture, then the
@@ -221,7 +225,7 @@ guidance first). **Always pull; never eyeball.**
 | `638:3659` | Filters screen (rail + panel) |
 | `638:3696` | Tile grid — superseded 2026-09-03 by a row per option (`ThumbRow`) |
 | `644:4435` / `644:4470` | Sort By / Gender sheets |
-| `644:4011` | Sort/Filter chip bar — B and D's controls |
+| `644:4011` | Sort/Filter chip bar — B, D and the journey; drawn Sort-first, built Filter-first |
 | `644:4000` | Filters → Seller |
 | `674:4904` | The product-vertical chip |
 | `688:1687` | `SortbyIcon` — the five Sort sheet glyphs |
