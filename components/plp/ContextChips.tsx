@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import type { ContextChip } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
+import { OFFER_CHIP_ICONS, PRICE_CHIP_ICON } from "@/lib/filters/offerIcons";
 
 /**
  * Every chip in the strip is this tall — the verticals, Price, the offers, and
@@ -118,7 +119,7 @@ export function ContextChips({
           <FilterChip
             key={`${chip.facetId}:${chip.option.id}`}
             label={chip.option.label}
-            icon={OFFER_ICONS[`${chip.facetId}:${chip.option.id}`]}
+            icon={OFFER_CHIP_ICONS[`${chip.facetId}:${chip.option.id}`]}
             selected={selected}
             onClick={() => onToggle(chip.facetId, chip.option.id)}
             chipH={chipH}
@@ -293,7 +294,7 @@ function PriceChip({
     >
       {/* Unlike the offer chips this one has no checkmark to make room for —
           its state is the fill and the label — so the icon stays in both. */}
-      <ChipIcon src={PRICE_ICON} />
+      <ChipIcon src={PRICE_CHIP_ICON} />
       <span
         className={`text-[15px] leading-[20px] font-medium whitespace-nowrap ${
           selected ? "text-primary" : "text-[#323232]"
@@ -329,39 +330,13 @@ function PriceChip({
  * `TopChipBar`'s fully-rounded Figma pills in Variant B; that mismatch closed
  * on 2026-08-14 by taking the pills to 8px too, so the whole row is one radius.
  */
-/**
- * Leading art for an offer chip, keyed by **facet and option**.
- *
- * Supplied as PNGs rather than exported from Figma, which is why they sit in
- * `public/offers/` and not `public/figma/` — the latter is exports only, and a
- * file's folder should not imply an origin it doesn't have. Both are small
- * enough to have little headroom above the 20px they render at; vectors would
- * be better if any turn up.
- *
- * Both parts of the key, because Seller Offer's option id is the bare `any` —
- * it is the catch-all on its own `hasOffer` facet — and a one-word id like
- * that is exactly the sort another facet acquires later.
+/*
+ * The offers' art moved to `lib/filters/offerIcons.ts` on 2026-09-07, for the
+ * reason `SORT_ICONS` moved to `sortIcons.ts`: the Filters panel's merged *All
+ * Offers* row heads its three band groups with the same icons, so the strip is
+ * no longer the only surface drawing them. Both keys, and the note on each
+ * file's headroom, went with it.
  */
-const OFFER_ICONS: Record<string, string> = {
-  "hasOffer:any": "/offers/seller-offer.png",
-  "offers:cashback": "/offers/cashback.png",
-  "offers:free-delivery": "/offers/free-delivery.png",
-  /*
-   * Supplied 2026-08-28, hours after the chip itself — a blue ring under an
-   * orange arc, 240×240 with alpha. It is the one offer icon with real
-   * headroom: `cashback.png` (48×37) and `seller-offer.png` (48×48) are barely
-   * above the 20px they draw at and are logged as wanting vectors, where this
-   * has 12× the room. Not a Figma export, so it lives in `public/offers/` with
-   * the others rather than in `public/figma/`.
-   *
-   * The old `gold-*.svg` exports were **not** used as a stand-in while this was
-   * outstanding: they went with the GOLD branding on 2026-08-19, and the scheme
-   * kept its name without it.
-   */
-  "offers:solv-target-scheme": "/offers/solv-target-scheme.png",
-};
-
-const PRICE_ICON = "/offers/price.png";
 
 /**
  * A chip's leading art.

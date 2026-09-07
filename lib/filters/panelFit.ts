@@ -177,12 +177,25 @@ export const PANEL_TOP_SPACER = 10;
 export const RANGE_INPUTS_H = 62;
 
 /**
- * A facet heading — `pt-[12px]` + a 12px line + `pb-[4px]`. Rendered by any
- * rail row carrying more than one facet: A–D's *Offers* row, which stacks
- * `hasOffer` and `offers`, and since 2026-09-07 `/userjourney`'s, which stacks
- * the three offer magnitudes and so heads three groups of bands.
+ * A facet heading — `pt-[14px]` + a 22.5px row + `pb-[6px]`, measured at 42.5
+ * and carried here as **43**. Rendered by any rail row carrying more than one
+ * facet: A–D's *Offers* row, which stacks `hasOffer` and `offers`, and since
+ * 2026-09-07 `/userjourney`'s, which stacks the three offer magnitudes and so
+ * heads three groups of bands.
+ *
+ * It was 32 — a 12px line in 13px bold `#767676` — until 2026-09-07, when the
+ * headings on that merged panel were reported as not prominent enough. At 15px
+ * on `heading`, with the offer's own 20px icon beside it, the row is 22.5px and
+ * the block 43.
  */
-export const FACET_HEADING_H = 32;
+export const FACET_HEADING_H = 43;
+
+/**
+ * The rule and the space above every group but the first — `mt-[8px]` plus a
+ * 1px `hairline` border (2026-09-07). The whiteboard drew the merged *All
+ * Offers* panel as three boxes, and this is that line.
+ */
+export const FACET_GROUP_RULE_H = 9;
 
 export type PanelBlock = {
   /**
@@ -207,13 +220,14 @@ export type PanelBlock = {
  */
 export function panelContentHeight(blocks: PanelBlock[]): number {
   const headed = blocks.length > 1;
-  return blocks.reduce((total, block) => {
+  return blocks.reduce((total, block, i) => {
     const rowH =
       block.panel === "thumb" ? THUMB_ROW_H : block.panel === "tile" ? 0 : OPTION_ROW_H;
     const body = rowH
       ? block.optionCount * rowH
       : Math.ceil(block.optionCount / TILES_PER_ROW) * TILE_ROW_H;
-    return total + body + (headed ? FACET_HEADING_H : 0);
+    const chrome = headed ? FACET_HEADING_H + (i > 0 ? FACET_GROUP_RULE_H : 0) : 0;
+    return total + body + chrome;
   }, 0);
 }
 

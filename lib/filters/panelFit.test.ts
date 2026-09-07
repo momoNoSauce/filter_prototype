@@ -70,7 +70,10 @@ describe("the search field is earned, not declared", () => {
       { panel: "checkbox", optionCount: 3 },
     ]);
     expect(alone).toBe(6 * 52);
-    expect(stacked).toBe(6 * 52 + 2 * 32);
+    // A 43px heading each, and the 9px rule above the second group — the
+    // headings went to 15px on `heading` with the offer's icon beside them on
+    // 2026-09-07, measured at 42.5.
+    expect(stacked).toBe(6 * 52 + 2 * 43 + 9);
   });
 
   it("never earns a field for a panel of nothing but bands", () => {
@@ -86,7 +89,7 @@ describe("the search field is earned, not declared", () => {
       { panel: "range" as const, optionCount: 4 },
       { panel: "range" as const, optionCount: 4 },
     ];
-    expect(panelContentHeight(offers)).toBe(12 * 52 + 3 * 32);
+    expect(panelContentHeight(offers)).toBe(12 * 52 + 3 * 43 + 2 * 9);
     expect(panelContentHeight(offers)).toBeGreaterThan(PANEL_VIEWPORT);
     expect(needsSearch(offers)).toBe(false);
     expect(needsSearch(offers, SHEET_PANEL_VIEWPORT)).toBe(false);

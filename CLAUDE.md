@@ -87,13 +87,23 @@ selections: a row that came and went as boxes were ticked is the churn the
 A–D — so `dropOrphanedSelections` and `parseSelections` take the rail preset,
 or unticking a category deletes a Size cut whose row is still on screen.
 
-**The three offer magnitudes are one *Offers* row**, not three (2026-09-07): a
-rail row may carry several facets and the panel heads each with its facet
-label, which is the sketch that came with the request — `Cashback`, `Seller
-Offer`, `SOLV Target Scheme`, each over its own bands, one badge summing all
-three. **They lost their typed boxes with the merge** (`typed: false`), and
+**The three offer magnitudes are one **All Offers** row**, not three
+(2026-09-07): a rail row may carry several facets and the panel heads each with
+its facet label, which is the sketch that came with the request — `Cashback`,
+`Seller Offer`, `SOLV Target Scheme`, each over its own bands, one badge summing
+all three. **They lost their typed boxes with the merge** (`typed: false`), and
 `accepts`/`matches` with them, so `?cashback=100-200` is no longer honoured —
 a filter no control can type is one nothing can show or undo.
+
+**A stacked panel's headings are 15px bold on `heading`, with the facet's own
+icon and a rule above each group but the first** (2026-09-07, on the report that
+they read as not prominent): 13px bold `#767676` set two sizes *below* the rows
+it was labelling. The art comes from `lib/filters/offerIcons.ts` — the chip
+strip's own files, so the buyer meets one wallet in both places, and one file to
+edit when the two PNGs that want vectors get them. The rule spans the panel
+because the whiteboard drew three boxes. **`FACET_HEADING_H` is 43, measured**;
+A–D's Offers panel shares the type and the rule and draws no icons, its two
+headings being a catch-all and a list of five different offers.
 
 Its Filters screen is a **bottom sheet** rather than full-bleed, so the listing
 stays visible behind it. **Its height follows the rail** (`sheetHeightPct`),

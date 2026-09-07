@@ -28,6 +28,7 @@ import {
   type Selections,
   type SortId,
 } from "@/lib/filters/engine";
+import { OFFER_FACET_ICONS } from "@/lib/filters/offerIcons";
 import { SORT_ICONS } from "@/lib/filters/sortIcons";
 import {
   RANGE_INPUTS_H,
@@ -686,7 +687,7 @@ export function FilterScreen({
             />
           )}
 
-          {panelFacets.map(({ facet, options: counted }) => {
+          {panelFacets.map(({ facet, options: counted }, group) => {
             const facetId = facet.id;
             const options = activeQuery
               ? counted.filter((option) =>
@@ -695,14 +696,54 @@ export function FilterScreen({
               : counted;
             const chosen = draft[facetId] ?? [];
 
+            /*
+              **A headed, ruled group per facet** — every row that stacks more
+              than one, which is A–D's Offers row and, since 2026-09-07, the
+              journey's three offer magnitudes.
+
+              The heading was 13px bold `#767676` and was reported as not
+              prominent enough on that merged panel (2026-09-07): three groups
+              of near-identical band rows, and the only thing saying which
+              offer you were ticking set two sizes below the rows themselves
+              and in the palette's muted grey. It is now **15px on
+              `heading`** — the app's control-label size, so the section title
+              is not smaller than the options under it, and 16.6:1 against the
+              4.5:1 that grey was scraping past.
+
+              **The rule above each group but the first** is the whiteboard's
+              own: the sketch drew the panel divided into three boxes. It sits
+              on the wrapper rather than the heading so it spans the panel
+              edge to edge, where a border on a `px-[14px]` heading would
+              inset with the text.
+            */
+            const headed = panelFacets.length > 1;
+
             return (
-              <div key={facetId} className="flex w-full flex-col">
-                {/* Only "More Filters" stacks several facets, so only it needs
-                    headings to tell them apart. */}
-                {panelFacets.length > 1 && (
-                  <p className="px-[14px] pt-[12px] pb-[4px] text-[13px] font-bold text-[#767676]">
-                    {facet.label}
-                  </p>
+              <div
+                key={facetId}
+                className={`flex w-full flex-col${
+                  headed && group > 0 ? " mt-[8px] border-t border-hairline" : ""
+                }`}
+              >
+                {headed && (
+                  <div className="flex items-center gap-[6px] px-[14px] pt-[14px] pb-[6px]">
+                    {/* The chip's own art, where the facet has any — so the
+                        heading over the cashback bands carries the wallet the
+                        buyer already met on the strip. A 20px box against a
+                        15px label: the chips draw the same files at 20 inside
+                        their 26px box, and the box equalises three different
+                        aspects the way `ChipIcon` does. A–D's Offers headings
+                        have no entry and draw none. */}
+                    {OFFER_FACET_ICONS[facetId] && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        alt=""
+                        className="size-[20px] shrink-0 object-contain"
+                        src={OFFER_FACET_ICONS[facetId]}
+                      />
+                    )}
+                    <p className="text-[15px] font-bold text-heading">{facet.label}</p>
+                  </div>
                 )}
 
                 {options.length === 0 ? (

@@ -1070,6 +1070,23 @@ facet, so a panel mixing bands with names still earns one.
 the capped 640 at thirteen — which is what sizing to the rail bought on
 2026-09-03.
 
+**The row is labelled *All Offers*** and the panel's headings were rebuilt, both
+on the review of the first build: at 13px bold `#767676` a heading set two sizes
+*below* the rows it labelled, on the one panel where the heading is all that
+says which offer you are ticking. Now **15px bold on `heading`** (16.6:1, where
+that grey was scraping 4.5:1 at 13px), with **the facet's own chip icon** at
+20px beside it and a **1px hairline rule above every group but the first** —
+the whiteboard's own three boxes. `FACET_HEADING_H` went 32 → **43**, measured
+at 42.5, plus a 9px rule constant: a height in the markup has a figure in
+`panelFit`.
+
+The offer art moved to **`lib/filters/offerIcons.ts`** on the `SORT_ICONS`
+precedent — one set of paths, two lookups (`facet:option` for the chips, facet
+alone for the headings), so the two PNGs logged as wanting vectors are one edit.
+A–D's Offers panel takes the type and the rule and stays **text-only**: its two
+headings are a catch-all and a list of five different offers, so one icon would
+label the wrong thing.
+
 **Naming to confirm:** the sketch's middle group reads `SOLV OFFER` where the
 request's own list says *Seller Offer*, which is also the facet name and the
 chip label. Built as **Seller Offer**; one label to change.

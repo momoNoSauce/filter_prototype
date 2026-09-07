@@ -843,7 +843,11 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
   // stay binary; see the header.
   {
     id: "offers",
-    label: "Offers",
+    // **"All Offers", not "Offers"** (2026-09-07, on request). The row holds
+    // three facets rather than one, and the word does the same job the panel's
+    // three headings do — it names a group. A–D's Offers row keeps the bare
+    // label: it carries the offer *names*, not a group of magnitudes.
+    label: "All Offers",
     facetIds: ["cashback", "sellerOffer", "targetScheme"],
   },
   { id: "fabric", label: "Fabric", facetIds: ["fabric"] },

@@ -1132,7 +1132,7 @@ describe("variants C and D — the page is the vertical", () => {
       "Category",
       "Size",
       "Colour",
-      "Offers",
+      "All Offers",
       "Fabric",
     ]);
 
@@ -1145,7 +1145,7 @@ describe("variants C and D — the page is the vertical", () => {
       "Category",
       "Size",
       "Colour",
-      "Offers",
+      "All Offers",
       "Fabric",
       "Fit",
       "Neck Type",
@@ -1168,7 +1168,7 @@ describe("variants C and D — the page is the vertical", () => {
       "Seller City",
       "Size",
       "Colour",
-      "Offers",
+      "All Offers",
       "Fabric",
     ]);
 
@@ -1200,7 +1200,9 @@ describe("variants C and D — the page is the vertical", () => {
     const row = getRail(undefined, FILTER_VERTICALS, null, "journey", singles).find(
       (r) => r.id === "offers",
     )!;
-    expect(row.label).toBe("Offers");
+    // "All Offers" on request (2026-09-07): the row names a group of three
+    // where every other rail row names one facet.
+    expect(row.label).toBe("All Offers");
     expect(row.facetIds).toEqual(["cashback", "sellerOffer", "targetScheme"]);
 
     // A–D's Offers row is a different pair on the same rail id — the two
