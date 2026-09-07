@@ -177,8 +177,10 @@ export const PANEL_TOP_SPACER = 10;
 export const RANGE_INPUTS_H = 62;
 
 /**
- * A facet heading — `pt-[12px]` + a 12px line + `pb-[4px]`. Only "More
- * Filters" stacks enough facets to render them.
+ * A facet heading — `pt-[12px]` + a 12px line + `pb-[4px]`. Rendered by any
+ * rail row carrying more than one facet: A–D's *Offers* row, which stacks
+ * `hasOffer` and `offers`, and since 2026-09-07 `/userjourney`'s, which stacks
+ * the three offer magnitudes and so heads three groups of bands.
  */
 export const FACET_HEADING_H = 32;
 
@@ -233,6 +235,16 @@ export function panelContentHeight(blocks: PanelBlock[]): number {
  * Adding the field only ever costs more room than the spacer it replaces, so
  * a list that overflows without it still overflows with it. The answer can't
  * oscillate, which is why one pass over the counts is enough.
+ *
+ * **A panel of nothing but bands never earns one**, however tall it runs
+ * (2026-09-07). The field searches option *labels*, which is what makes it
+ * worth 56px over twenty colour names — and worthless over `₹200 – ₹400`,
+ * where typing `200` matches two neighbouring bands and a percentage. Bands are
+ * a short ordered vocabulary a buyer reads rather than hunts through, and the
+ * one panel this can reach is the journey's merged *Offers* row: three groups
+ * of four, 730px of them, where a field would cost another 56 and answer
+ * nothing. A panel that mixes bands with a list of names still earns one, and
+ * the bands' height still counts toward it.
  */
 export function needsSearch(
   blocks: PanelBlock[],
@@ -240,5 +252,6 @@ export function needsSearch(
   /** Fixed height above the options — today only `RANGE_INPUTS_H`. */
   lead: number = 0,
 ): boolean {
+  if (blocks.every((block) => block.panel === "range")) return false;
   return PANEL_TOP_SPACER + lead + panelContentHeight(blocks) > viewport;
 }

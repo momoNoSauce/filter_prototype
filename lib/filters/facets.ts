@@ -85,7 +85,7 @@ export interface FacetDef {
  *
  * **Named for the shape rather than for Price** since 2026-09-03, when Margin
  * and MOQ were asked for the same control. The three differ only in the number
- * they compare against, which is what `TYPED_RANGES` below carries.
+ * they compare against, which is what `RANGE_FACETS` below carries.
  */
 const TYPED_RANGE_RE = /^(\d*)-(\d*)$/;
 
@@ -205,14 +205,21 @@ function bucketId<T extends { id: string; min: number; max: number }>(
 }
 
 /**
- * The three facets that carry a **typed min/max above their bands** — Price
- * since 2026-08-28, Margin and MOQ since 2026-09-03, all three on
- * `/userjourney` and all three bands-only in A–D (`controls.rangeInputs`).
+ * Every facet whose options are **bands over a number** — Price, Margin on MRP
+ * and MOQ, plus the three offer magnitudes. The first three also carry a
+ * **typed min/max above those bands** on `/userjourney` (Price from
+ * 2026-08-28, the other two from 2026-09-03, `controls.rangeInputs`); A–D show
+ * the bands alone.
  *
- * One table rather than three near-identical literals, the way
+ * **The three offer magnitudes carry bands only**, since 2026-09-07 and on
+ * request — see `typed` below. They keep their place in this table because a
+ * band is a band: what they lose is the two boxes and the two registry hooks
+ * that exist to serve them.
+ *
+ * One table rather than six near-identical literals, the way
  * `PV_ATTRIBUTE_FACETS` is built: they differ only in the number they compare
- * against, and three copies of `accepts`/`matches` is three chances for one to
- * drift. The reasoning is the same for all three —
+ * against, and six copies of `accepts`/`matches` is six chances for one to
+ * drift. The reasoning is the same for all of them —
  *
  * **Bands and typed ranges live on one facet.** Both answer "which prices" (or
  * margins, or order quantities), so one facet holds them: two would AND
@@ -234,14 +241,29 @@ function bucketId<T extends { id: string; min: number; max: number }>(
  * filtering on a range nobody typed.
  *
  * `valueOf` takes `sizes` because Price and Margin read the pack the card is
- * showing and a Size filter moves it — the one selection any facet may see. MOQ
- * ignores it, `moq` being a property of the product rather than of the pack.
+ * showing and a Size filter moves it — the one selection any facet may see.
+ * MOQ and the three offer figures ignore it, all four being properties of the
+ * product rather than of the pack.
  */
-const TYPED_RANGES: {
+const RANGE_FACETS: {
   id: string;
   label: string;
   buckets: { id: string; label: string; min: number; max: number }[];
   valueOf: (p: Product, sizes?: string[]) => number;
+  /**
+   * `false` where the facet shows its bands **without** the typed boxes — the
+   * three offer magnitudes since 2026-09-07, when the three rows were merged
+   * into one *Offers* panel and the boxes were dropped with them. One panel
+   * carrying three facets has nowhere to put three pairs of boxes, and the
+   * request came with the merge.
+   *
+   * It also drops `accepts` and `matches`, which exist only to serve a typed
+   * range: with no control able to produce `?cashback=100-200`, honouring one
+   * from a hand-written URL would be a filter nothing on the screen can show or
+   * undo. The bands still work through the default set-membership match, which
+   * is what a band is.
+   */
+  typed?: false;
 }[] = [
   {
     id: "price",
@@ -277,33 +299,54 @@ const TYPED_RANGES: {
     label: "Cashback",
     buckets: CASHBACK_BUCKETS,
     valueOf: (p) => p.cashback ?? -1,
+    typed: false,
   },
   {
     id: "sellerOffer",
     label: "Seller Offer",
     buckets: SELLER_OFFER_BUCKETS,
     valueOf: (p) => p.sellerOfferPct ?? -1,
+    typed: false,
   },
   {
     id: "targetScheme",
     label: "SOLV Target Scheme",
     buckets: TARGET_SCHEME_BUCKETS,
     valueOf: (p) => p.targetScheme ?? -1,
+    typed: false,
   },
 ];
 
-/** Which facets take a typed range — the panel and the exclusivity rule ask. */
-export const TYPED_RANGE_FACET_IDS: Set<string> = new Set(TYPED_RANGES.map((r) => r.id));
+/**
+ * Which facets take a typed range — the panel and the exclusivity rule ask.
+ *
+ * A subset of `RANGE_FACETS` since 2026-09-07 rather than all of it: the three
+ * offer magnitudes are bands only, so they are not in here, and the panel puts
+ * no boxes on the row that carries them.
+ */
+export const TYPED_RANGE_FACET_IDS: Set<string> = new Set(
+  RANGE_FACETS.filter((r) => r.typed !== false).map((r) => r.id),
+);
 
 /** One range facet, by id, for placing in `FACETS` without moving its order. */
 function rangeFacet(id: string): FacetDef {
-  const { label, buckets, valueOf } = TYPED_RANGES.find((r) => r.id === id)!;
-  return {
+  const { label, buckets, valueOf, typed } = RANGE_FACETS.find((r) => r.id === id)!;
+  const bands: FacetDef = {
     id,
     label,
+    // Bands over a number, whether or not the panel puts boxes above them —
+    // which is what lets `needsSearch` tell a numeric vocabulary from a list of
+    // names. See `panelFit`.
     panel: "range",
     valuesOf: (p, sizes) => bucketId(buckets, valueOf(p, sizes)),
     options: buckets.map((b) => ({ id: b.id, label: b.label })),
+  };
+  // No boxes, no hooks: the default match is set membership over `valuesOf`,
+  // which is exactly a band, and `accepts` would be honouring a range nothing
+  // can type.
+  if (typed === false) return bands;
+  return {
+    ...bands,
     accepts: (optionId) => parseTypedRange(optionId) !== null,
     matches: (p, chosen, sizes) => {
       const value = valueOf(p, sizes);
@@ -546,6 +589,22 @@ const RAIL_ORDER: (RailEntry & {
   vertical?: true;
   /** The reverse: shown only while the block is *not*. */
   notVertical?: true;
+  /**
+   * Hidden when the page's *scope* holds at most one of this row's values —
+   * `/userjourney`'s Brands, Seller and Seller City since 2026-09-07.
+   *
+   * The question is where the buyer **landed**, not what they have ticked, so
+   * it is answered from the page's products by `singleValuedFacets` and never
+   * from the selections: a row that appeared and vanished as boxes were ticked
+   * is the churn the 2026-08-19 reorder exists to prevent.
+   *
+   * Not set on `RAIL_ORDER`'s own rows, deliberately. A–D span ten brands,
+   * eight sellers and six cities, so the flag would never fire there — and
+   * `/seller/[sellerId]` is documented as a storefront *aggregating* sellers,
+   * which is a reading this would quietly overturn. Setting it there is a
+   * one-word change if that reading ever flips.
+   */
+  hideIfSingle?: true;
 })[] = [
   { id: "category", label: "Category", facetIds: ["category"], only: "filter" },
   /*
@@ -612,9 +671,16 @@ const RAIL_ORDER: (RailEntry & {
  * The facets the vertical-specific rows own, for the orphan check below. Typed
  * as strings because every caller is testing an arbitrary selection key.
  */
-export const PV_FACET_IDS: Set<string> = new Set(
-  RAIL_ORDER.filter((r) => r.vertical).flatMap((r) => r.facetIds),
-);
+const pvFacetIds = (rail: typeof RAIL_ORDER) =>
+  new Set(rail.filter((r) => r.vertical).flatMap((r) => r.facetIds));
+
+/**
+ * A–D's vertical-only facets. `dropOrphanedSelections` reads the per-preset
+ * table instead (`PV_FACET_IDS_BY_PRESET`), the two rails having disagreed
+ * about Size since 2026-09-07 — this stays exported as the default rail's
+ * answer, which is what every caller reasoning about A–D wants.
+ */
+export const PV_FACET_IDS: Set<string> = pvFacetIds(RAIL_ORDER);
 
 /** Whether the rail is showing its vertical-specific block. */
 export const inSingleVertical = (category?: string[]) => category?.length === 1;
@@ -695,103 +761,92 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  * as page scope instead.
  */
 /**
- * `/userjourney`'s rail, from the 2026-08-28 stakeholder whiteboard.
+ * `/userjourney`'s rail — the 2026-08-28 stakeholder whiteboard, re-ordered on
+ * **2026-09-07** on request:
+ *
+ *     Price Range · Margin on MRP · MOQ · Category · Brands · Seller ·
+ *     Seller City · Size · Colour · Offers, then Fabric and the garment
+ *     attributes.
  *
  * **A second order, not a re-order of the first.** A–D keep `RAIL_ORDER`, which
  * follows a reference apparel PLP and is pinned by its own test; this is one
  * route's request and the two are allowed to disagree. The 2×2 is a comparison
- * of control *placement*, and the journey has never been part of it.
+ * of control *placement*, and the journey has never been part of it. Confirmed
+ * on the request: this route only.
  *
- * The sequence asked for was Sort · Price · Margin · MOQ · Category · Brand ·
- * Seller · Seller Location · Attributes. Two readings of it:
+ * Four things in it are not just a sequence —
  *
- * - **Sort isn't here**, and since 2026-09-03 it isn't on this rail at all —
- *   it went back to a chip on the strip, beside Filter. It was the rail's first
- *   row for those six days, and even then it was never in this array: it is not
- *   a facet, `FilterScreen` prepends it, and nothing may look up a sort in
- *   `FACET_BY_ID`.
- * - **"Attributes" is eight rows, not one** (settled on the call): Colour,
- *   Fabric and Size join the five vertical-specific rows at the foot, because
- *   the note grouped them by position rather than asking for one panel. One
- *   merged row would have stacked ~60 options behind a single entry and earned
- *   a search field.
+ * **The three offer magnitudes are one *Offers* row**, not three (2026-09-07).
+ * A rail row may carry several facets — A–D's own Offers row carries two — and
+ * the panel already heads each one with its facet's label, which is exactly the
+ * sketch that came with the request: `Cashback`, `Seller Offer` and `SOLV
+ * Target Scheme`, each over its own bands, in one panel behind one row. **They
+ * lose their typed boxes with the merge** (`typed: false` in `RANGE_FACETS`):
+ * one panel has nowhere to put three pairs of them, and the bands were always
+ * the fast path. The row's badge sums all three, which is what a merged row has
+ * to report.
  *
- * **Six rows were dropped outright**: Gender, Delivery Time, Offers, More
- * Filters, Seller and Seller City. Three of those have consequences worth
- * keeping in view —
+ * **The chips stay binary and this row does not replace them.** The chip asks
+ * *is there one*, the row asks *how big*, on different facets — the chips
+ * select `offers`/`hasOffer`, which hold names, and this holds numbers — so the
+ * two AND. `hasOffer` and `offers` are still off this rail and still reached
+ * through `clearsAlso`, or `All filters cleared` would close onto a lit chip.
  *
- * - **Gender** was this journey's documented cut. *Category → Women's T-Shirts*
- *   replaces it and settles the vertical identically, Kartik carrying exactly
- *   three verticals of which one is women's. The demo script changed with it.
- * - **Offers** owned `hasOffer` and `offers`, which the three strip chips
- *   select. With no rail row they no longer count toward the Filters badge —
- *   correct, since a lit chip already reports itself and double-reporting is
- *   what that badge rule exists to prevent — but Clear Filters must still reach
- *   them, or `All filters cleared` closes onto two lit chips. `PlpScreen` passes
- *   them to `FilterScreen` as `clearsAlso` for exactly that reason.
- * - **Seller and Seller City** went on 2026-09-03, and they are the one pair
- *   the whiteboard *did* ask for. **You are already inside one seller** — this
- *   route is Kartik's storefront and nothing else is in scope — so both rows
- *   are dead controls by the same test that took Gender off C and D's rail: a
- *   filter that can only offer the single value every product in scope already
- *   has. Measured rather than reasoned, against `getKartikCatalog()`: Seller
- *   counts **no options at all** (Kartik is his own `Seller`, not one of
- *   `SELLERS`' eight, so every option in that panel is a zero and zeroes are
- *   hidden) and Seller City counts exactly **one**, Tiruppur 540, which is all
- *   of them. An empty panel and a one-option panel, where A–D show eight and
- *   six real choices — the rows only ever looked like controls here.
+ * **Three rows hide when the buyer *landed* inside one value** (`hideIfSingle`,
+ * 2026-09-07, and the reason Seller and Seller City are back in the list at
+ * all). Brands, Seller and Seller City are dead controls on a storefront that
+ * carries one brand in one city — which Kartik's is, all 540 products being
+ * `Zenifit` out of Tiruppur — and live the moment a listing spans more than
+ * one. Measured off scope rather than off the selections, so a row can't come
+ * and go as boxes are ticked; see `singleValuedFacets`. This is what closes the
+ * empty Brands panel logged as open question 4a, and it restores the two rows
+ * dropped by hand on 2026-09-03 as a rule instead of a deletion.
  *
- *   They take no `clearsAlso` entry, unlike Offers: nothing on this listing
- *   selects them, so there is no lit chip for `All filters cleared` to close
- *   onto. The one case left is a hand-written `?seller=grasim`, which no click
- *   can reach and which empties the listing — and the empty state's own Clear
- *   Filters commits `{}`, every selection rather than the rail's, so it clears
- *   that too and the URL goes bare. Verified, not assumed. That is what makes
- *   these safe to drop where a chip-backed facet would not be.
+ * **Size is global here**, where A–D show it only inside one settled vertical
+ * (2026-09-07, on request: *"Size — global for Apparels & Footwear"*). The
+ * standing argument against it is that M in menswear is not M in womenswear;
+ * this route is one seller's tee catalogue, and the request is explicit. The
+ * cost, accepted: before a vertical is settled the panel lists adult letters
+ * and boys' age bands in one column. It also means `dropOrphanedSelections`
+ * must read *this* rail's vertical-only set — see `PV_FACET_IDS_BY_PRESET`, or
+ * unticking a category would silently delete a Size cut whose row is still
+ * there.
  *
- * Colour and Fabric stay visible whether or not a vertical is settled. Grouping
- * them under "attributes" is about where they sit, not when they show: Cotton
- * means the same on a shirt as on a tee, which is the standing argument for
- * Fabric never having joined the vertical block.
+ * **Gender, Delivery Time and More Filters stay dropped.** Gender was this
+ * journey's documented cut until 2026-08-28; *Category → Women's T-Shirts*
+ * replaces it and settles the vertical identically, Kartik carrying exactly
+ * three verticals of which one is women's.
+ *
+ * Colour and Fabric show whether or not a vertical is settled — Cotton means
+ * the same on a shirt as on a tee, which is the standing argument for Fabric
+ * never having joined the vertical block. Only the five garment attributes
+ * wait for one.
  */
 const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
   { id: "price", label: "Price Range", facetIds: ["price"] },
   { id: "margin", label: "Margin on MRP", facetIds: ["margin"] },
   { id: "moq", label: "MOQ", facetIds: ["moq"] },
-  /*
-   * **The offer magnitudes** (2026-09-03, on request): the three chips the
-   * strip carries as yes/no are also ranges here, in the unit each offer is
-   * quoted in. They sit with the commercial rows because that is what they are
-   * — a buyer reads a cashback in rupees the way they read a price.
-   *
-   * **The chips stay binary and these rows do not replace them.** They are
-   * different questions: the chip asks *is there one*, the row asks *how big*.
-   * Nor are they the same facet — the chips select `offers` and `hasOffer`,
-   * which hold names, and these hold numbers — so the two AND, which is what
-   * "has cashback, and it's at least ₹200" has to do. A range on its own
-   * implies the offer (only a product with cashback has an amount), so the chip
-   * is redundant beside a range rather than in conflict with it.
-   *
-   * **A–D don't get these rows**, and that is the one thing to know before
-   * moving them: the magnitudes live on Kartik's products only. On the main
-   * catalog every panel here would be empty, which is the dead control that
-   * took Seller off this same rail earlier today. If the stakeholder round
-   * wants them in A–D, the seed grows the three figures on a new stream and
-   * the rows move to `RAIL_ORDER` — at which point the four cards start
-   * printing cashback amounts, which is the reason it wasn't done first.
-   */
-  { id: "cashback", label: "Cashback", facetIds: ["cashback"] },
-  { id: "sellerOffer", label: "Seller Offer", facetIds: ["sellerOffer"] },
-  { id: "targetScheme", label: "SOLV Target Scheme", facetIds: ["targetScheme"] },
   { id: "category", label: "Category", facetIds: ["category"], only: "filter" },
-  { id: "brand", label: "Brands", facetIds: ["brand"] },
-  // Seller and Seller City sat here until 2026-09-03 — an empty panel and a
-  // one-option panel on a single-seller storefront. See the header.
-  // The attribute block. Colour and Fabric always; the rest only inside one
-  // settled vertical, exactly as in the default rail.
+  { id: "brand", label: "Brands", facetIds: ["brand"], hideIfSingle: true },
+  { id: "seller", label: "Seller", facetIds: ["seller"], hideIfSingle: true },
+  {
+    id: "sellerCity",
+    label: "Seller City",
+    facetIds: ["sellerCity"],
+    hideIfSingle: true,
+  },
+  // Global on this rail, vertical-only on A–D's. See the header.
+  { id: "size", label: "Size", facetIds: ["size"] },
   { id: "colour", label: "Colour", facetIds: ["colour"] },
+  // One row, three facets, three headed groups of bands — the sketch that came
+  // with the request. The strip's four offer chips are a different question and
+  // stay binary; see the header.
+  {
+    id: "offers",
+    label: "Offers",
+    facetIds: ["cashback", "sellerOffer", "targetScheme"],
+  },
   { id: "fabric", label: "Fabric", facetIds: ["fabric"] },
-  { id: "size", label: "Size", facetIds: ["size"], vertical: true },
   { id: "fit", label: "Fit", facetIds: ["fit"], vertical: true },
   { id: "neck", label: "Neck Type", facetIds: ["neck"], vertical: true },
   { id: "sleeve", label: "Sleeve Type", facetIds: ["sleeve"], vertical: true },
@@ -813,11 +868,68 @@ const RAILS: Record<RailPreset, typeof RAIL_ORDER> = {
   journey: JOURNEY_RAIL_ORDER,
 };
 
+/**
+ * Each rail's vertical-only facets, which stopped being one set on 2026-09-07:
+ * Size is vertical-only in A–D and global on the journey. Declared here rather
+ * than beside `PV_FACET_IDS` because both arrays have to exist first.
+ */
+const PV_FACET_IDS_BY_PRESET: Record<RailPreset, Set<string>> = {
+  default: PV_FACET_IDS,
+  journey: pvFacetIds(JOURNEY_RAIL_ORDER),
+};
+
+/**
+ * The facets a listing can be *scoped* to, and so the only ones a rail row may
+ * hide itself over — see `hideIfSingle`.
+ *
+ * Three, not every facet. A single-brand storefront has no use for a Brands
+ * row; a listing that happens to carry one colour is a filter doing its job,
+ * and taking Colour away would be removing the control that got it there.
+ */
+const SCOPE_FACET_IDS = ["brand", "seller", "sellerCity"] as const;
+
+/**
+ * Which of those the given scope has **at most one value of** — the input to
+ * `getRail`'s `hideIfSingle`.
+ *
+ * Asked of the page's products, once, rather than of the buyer's selections:
+ * the rule is about where they landed. Pure and exported so `PlpScreen`'s badge
+ * and the Filters screen's rail read the same answer.
+ *
+ * **Zero counts as one.** On Kartik's storefront the Seller panel draws no
+ * options at all — he is his own seller and not one of `SELLERS`' eight, so
+ * every option in it is a hidden zero — and an empty panel is as dead a control
+ * as a one-option one. Measured on 2026-09-03, which is what took both rows off
+ * that rail by hand before this rule replaced the deletion.
+ */
+export function singleValuedFacets(products: Product[]): Set<string> {
+  const dead = new Set<string>();
+  for (const id of SCOPE_FACET_IDS) {
+    const facet = FACET_BY_ID.get(id)!;
+    const seen = new Set<string>();
+    for (const product of products) {
+      for (const value of facet.valuesOf(product)) seen.add(value);
+      if (seen.size > 1) break;
+    }
+    if (seen.size <= 1) dead.add(id);
+  }
+  return dead;
+}
+
+/** Nothing is scoped down — the default for every caller that can't say. */
+const NO_SINGLES: ReadonlySet<string> = new Set();
+
 export function getRail(
   category?: string[],
   mode: VerticalMode = FILTER_VERTICALS,
   settled: string | null = null,
   preset: RailPreset = "default",
+  /**
+   * Facets the page's scope has at most one value of, from
+   * `singleValuedFacets` — what `hideIfSingle` rows are tested against.
+   * Defaults to nothing scoped out, so every existing caller is unchanged.
+   */
+  scopeSingles: ReadonlySet<string> = NO_SINGLES,
 ): RailEntry[] {
   const locked = mode.kind === "locked";
   /*
@@ -835,12 +947,17 @@ export function getRail(
   const genderRedundant = locked || inSingleVertical(category);
   const showVertical = genderRedundant || settled !== null;
 
-  return RAILS[preset].filter(
-    (row) =>
-      !(locked && row.only === "filter") &&
-      !(row.vertical && !showVertical) &&
-      !(row.notVertical && genderRedundant),
-  ).map(({ id, label, facetIds }) => ({ id, label, facetIds }));
+  return RAILS[preset]
+    .filter(
+      (row) =>
+        !(locked && row.only === "filter") &&
+        !(row.vertical && !showVertical) &&
+        !(row.notVertical && genderRedundant) &&
+        // `every`, not `some`: a row carrying several facets is only dead when
+        // scope has silenced all of them.
+        !(row.hideIfSingle && row.facetIds.every((id) => scopeSingles.has(id))),
+    )
+    .map(({ id, label, facetIds }) => ({ id, label, facetIds }));
 }
 
 /**
@@ -853,8 +970,11 @@ export function getRailFacetIds(
   mode: VerticalMode = FILTER_VERTICALS,
   settled: string | null = null,
   preset: RailPreset = "default",
+  scopeSingles: ReadonlySet<string> = NO_SINGLES,
 ): Set<string> {
-  return new Set(getRail(category, mode, settled, preset).flatMap((entry) => entry.facetIds));
+  return new Set(
+    getRail(category, mode, settled, preset, scopeSingles).flatMap((entry) => entry.facetIds),
+  );
 }
 
 /**
@@ -892,6 +1012,14 @@ export function dropOrphanedSelections<T extends Record<string, string[]>>(
   selections: T,
   mode: VerticalMode = FILTER_VERTICALS,
   settled: string | null = null,
+  /**
+   * Which rail's vertical-only set to measure against, since the two disagree
+   * about Size (2026-09-07): vertical-only in A–D, global on `/userjourney`.
+   * Reading the default set on the journey would delete a live Size cut the
+   * moment the buyer unticked their category — while its row stayed on the
+   * rail, which is the orphan trap pointing the wrong way.
+   */
+  preset: RailPreset = "default",
 ): T {
   // Under `locked` the vertical is the page, so the block is always on — and
   // `category` isn't in the selections to prove it.
@@ -902,7 +1030,7 @@ export function dropOrphanedSelections<T extends Record<string, string[]>>(
 
   const orphaned = (id: string) => {
     if (byCategory) return id === "gender";
-    return showVertical ? false : PV_FACET_IDS.has(id);
+    return showVertical ? false : PV_FACET_IDS_BY_PRESET[preset].has(id);
   };
 
   if (!Object.keys(selections).some(orphaned)) return selections;

@@ -23,6 +23,8 @@ import {
   parseTypedRange,
   getRailFacetIds,
   settledVertical,
+  singleValuedFacets,
+  TYPED_RANGE_FACET_IDS,
 } from "./facets";
 import { defaultVariant, type Product } from "@/lib/catalog/types";
 import { activeVariant, activeVariantIndex, sizeOptionId } from "./activeVariant";
@@ -1022,33 +1024,35 @@ describe("variants C and D — the page is the vertical", () => {
     expect(withRange).toEqual(plain);
   });
 
-  it("ranges the three offer magnitudes, in the unit each is quoted in", () => {
+  it("bands the three offer magnitudes, in the unit each is quoted in", () => {
     /*
      * 2026-09-03, on request: the strip's binary offer chips are also ranges —
      * Cashback in ₹, Seller Offer in %, SOLV Target Scheme in ₹. Kartik's
      * catalog only, the main one carrying offer *names* without magnitudes, so
      * this runs against his 540.
+     *
+     * **Bands alone since 2026-09-07**, when the three rows merged into one
+     * *Offers* panel and lost their typed boxes with the merge — see the URL
+     * test below for what that removed.
      */
     const kartik = getKartikCatalog();
     const of = (sel: Record<string, string[]>, read: (p: Product) => number | undefined) =>
       applyFilters(kartik, sel).map(read);
 
-    // A band, and a typed range, on each.
     expect(of({ cashback: ["cb-200"] }, (p) => p.cashback).every((v) => v! >= 100 && v! <= 200))
       .toBe(true);
-    expect(of({ cashback: ["300-"] }, (p) => p.cashback).every((v) => v! >= 300)).toBe(true);
     expect(of({ sellerOffer: ["so-max"] }, (p) => p.sellerOfferPct).every((v) => v! >= 21))
       .toBe(true);
-    expect(of({ sellerOffer: ["-10"] }, (p) => p.sellerOfferPct).every((v) => v! <= 10))
+    expect(of({ sellerOffer: ["so-10"] }, (p) => p.sellerOfferPct).every((v) => v! <= 9))
       .toBe(true);
-    expect(of({ targetScheme: ["1000-2000"] }, (p) => p.targetScheme).every((v) => v! >= 1000 && v! <= 2000))
+    expect(of({ targetScheme: ["ts-2k"] }, (p) => p.targetScheme).every((v) => v! >= 1001 && v! <= 2000))
       .toBe(true);
 
     // Each is non-empty, or the test above passes by matching nothing.
     const nonEmpty: Selections[] = [
       { cashback: ["cb-200"] },
       { sellerOffer: ["so-max"] },
-      { targetScheme: ["1000-2000"] },
+      { targetScheme: ["ts-2k"] },
     ];
     for (const sel of nonEmpty) {
       expect(applyFilters(kartik, sel).length).toBeGreaterThan(0);
@@ -1066,62 +1070,83 @@ describe("variants C and D — the page is the vertical", () => {
       .toBe(true);
     expect(of({ targetScheme: ["ts-500"] }, (p) => p.targetScheme).every((v) => v !== undefined))
       .toBe(true);
-    expect(of({ cashback: ["-1000"] }, (p) => p.cashback).every((v) => v !== undefined)).toBe(true);
   });
 
-  it("carries the offer ranges through the URL, and ANDs them with their chip", () => {
-    // `matches` without `accepts` is the trap: it would work in-session and
-    // vanish on reload. And the chip and the row are different questions on
-    // different facets — "has cashback" AND "at least ₹200 of it".
+  it("refuses a typed range on a facet whose boxes are gone", () => {
+    /*
+     * The boxes left the three offer magnitudes on 2026-09-07, and `accepts`
+     * and `matches` went with them: with no control able to type
+     * `?cashback=100-200`, honouring one from a hand-written URL would be a
+     * filter nothing on the screen can show or undo — the standing trap. The
+     * bands are unaffected, being ordinary options.
+     *
+     * The three numeric facets keep both, which is what makes this a change of
+     * scope rather than a retreat: Price, Margin and MOQ still round-trip.
+     */
     const round = (q: string) => parseSelections(new URLSearchParams(q));
-    expect(round("cashback=100-200")).toEqual({ cashback: ["100-200"] });
-    expect(round("sellerOffer=10-")).toEqual({ sellerOffer: ["10-"] });
-    expect(round("targetScheme=ts-1k")).toEqual({ targetScheme: ["ts-1k"] });
+    expect(round("cashback=100-200")).toEqual({});
+    expect(round("sellerOffer=10-")).toEqual({});
+    expect(round("targetScheme=1000-2000")).toEqual({});
     expect(round("cashback=junk")).toEqual({});
 
+    // Bands, on all three, still survive a reload.
+    expect(round("cashback=cb-200")).toEqual({ cashback: ["cb-200"] });
+    expect(round("targetScheme=ts-1k")).toEqual({ targetScheme: ["ts-1k"] });
+
+    // And the typed pair is still exactly Price, Margin on MRP and MOQ.
+    expect([...TYPED_RANGE_FACET_IDS].sort()).toEqual(["margin", "moq", "price"]);
+    expect(round("price=150-450")).toEqual({ price: ["150-450"] });
+    expect(round("margin=60-")).toEqual({ margin: ["60-"] });
+    expect(round("moq=5-12")).toEqual({ moq: ["5-12"] });
+
+    // In-session too: an id nothing can type matches nothing rather than
+    // filtering, so there is no path where it half-works.
+    expect(applyFilters(getKartikCatalog(), { cashback: ["300-"] })).toEqual([]);
+  });
+
+  it("ANDs an offer chip with the magnitude of that offer", () => {
+    // The chip and the row are different questions on different facets — "has
+    // cashback" AND "at least ₹200 of it" — so they narrow together.
     const kartik = getKartikCatalog();
     const chip = { offers: ["cashback"] };
-    const both = applyFilters(kartik, { ...chip, cashback: ["300-"] });
+    const both = applyFilters(kartik, { ...chip, cashback: ["cb-400"] });
     expect(both.length).toBeGreaterThan(0);
     expect(both.length).toBeLessThan(applyFilters(kartik, chip).length);
-    expect(both.every((p) => p.offers.includes("Cashback") && p.cashback! >= 300)).toBe(true);
+    expect(both.every((p) => p.offers.includes("Cashback") && p.cashback! >= 201)).toBe(true);
   });
 
   it("gives /userjourney its own rail order, in full", () => {
     // Pinned in full, like the default rail, because the interesting failure
-    // is a row quietly moving rather than one going missing.
-    expect(getRail(undefined, FILTER_VERTICALS, null, "journey").map((r) => r.label)).toEqual([
+    // is a row quietly moving rather than one going missing. Re-ordered on
+    // 2026-09-07: the commercial numbers lead, the three offer magnitudes are
+    // one *Offers* row, and Size is global here.
+    const kartik = getKartikCatalog();
+    const singles = singleValuedFacets(kartik);
+    const rail = (category?: string[], settled: string | null = null) =>
+      getRail(category, FILTER_VERTICALS, settled, "journey", singles).map((r) => r.label);
+
+    expect(rail()).toEqual([
       "Price Range",
       "Margin on MRP",
       "MOQ",
-      "Cashback",
-      "Seller Offer",
-      "SOLV Target Scheme",
       "Category",
-      "Brands",
+      "Size",
       "Colour",
+      "Offers",
       "Fabric",
     ]);
 
-    // Inside one settled vertical the attribute block joins at the foot, and
-    // Colour and Fabric stay above it — they are grouped there by position,
-    // not by when they show.
-    expect(
-      getRail(["womens-t-shirts"], FILTER_VERTICALS, "womens-t-shirts", "journey").map(
-        (r) => r.label,
-      ),
-    ).toEqual([
+    // Inside one settled vertical the five garment attributes join at the foot.
+    // Size does not move — it was already there.
+    expect(rail(["womens-t-shirts"], "womens-t-shirts")).toEqual([
       "Price Range",
       "Margin on MRP",
       "MOQ",
-      "Cashback",
-      "Seller Offer",
-      "SOLV Target Scheme",
       "Category",
-      "Brands",
-      "Colour",
-      "Fabric",
       "Size",
+      "Colour",
+      "Offers",
+      "Fabric",
       "Fit",
       "Neck Type",
       "Sleeve Type",
@@ -1129,18 +1154,131 @@ describe("variants C and D — the page is the vertical", () => {
       "Closure Type",
     ]);
 
-    // The six that were dropped, and the default rail keeping every one of
-    // them — the two orders are allowed to disagree.
-    const journey = getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey");
+    // Brands, Seller and Seller City are in the order and hidden by *this*
+    // storefront: one brand, one seller, one city. On a scope that spans
+    // several they are all three back, in the place the request put them.
+    expect(singles).toEqual(new Set(["brand", "seller", "sellerCity"]));
+    expect(getRail(undefined, FILTER_VERTICALS, null, "journey").map((r) => r.label)).toEqual([
+      "Price Range",
+      "Margin on MRP",
+      "MOQ",
+      "Category",
+      "Brands",
+      "Seller",
+      "Seller City",
+      "Size",
+      "Colour",
+      "Offers",
+      "Fabric",
+    ]);
+
+    // The three that stay dropped, and the default rail keeping every one.
+    const journey = getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey", singles);
     const dflt = getRailFacetIds();
-    for (const gone of ["gender", "delivery", "hasOffer", "offers", "tags", "seller", "sellerCity"]) {
+    for (const gone of ["gender", "delivery", "tags"]) {
       expect(journey.has(gone)).toBe(false);
       expect(dflt.has(gone)).toBe(true);
     }
 
     // Gender leaving does not strand it: Category is still there, and it is a
-    // ticked category that settles the vertical which puts Size on the rail.
+    // ticked category that settles the vertical which puts the attributes on
+    // the rail.
     expect(journey.has("category")).toBe(true);
+  });
+
+  it("merges the three offer magnitudes into one Offers row", () => {
+    /*
+     * 2026-09-07, on request, and drawn on the whiteboard as one panel with a
+     * headed group per offer — which is what a rail row carrying several
+     * facets already renders. The row's badge sums all three, the way *More
+     * Filters* and A–D's own Offers row do.
+     *
+     * The chips are untouched and stay binary: they select `offers` and
+     * `hasOffer`, which hold names, where these hold numbers, so the two AND.
+     */
+    const singles = singleValuedFacets(getKartikCatalog());
+    const row = getRail(undefined, FILTER_VERTICALS, null, "journey", singles).find(
+      (r) => r.id === "offers",
+    )!;
+    expect(row.label).toBe("Offers");
+    expect(row.facetIds).toEqual(["cashback", "sellerOffer", "targetScheme"]);
+
+    // A–D's Offers row is a different pair on the same rail id — the two
+    // orders are allowed to disagree.
+    expect(getRail().find((r) => r.id === "offers")!.facetIds).toEqual([
+      "hasOffer",
+      "offers",
+    ]);
+
+    // The binary pair is still off this rail, so *Clear Filters* still needs
+    // `clearsAlso` to reach a lit chip.
+    const journey = getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey", singles);
+    expect(journey.has("hasOffer")).toBe(false);
+    expect(journey.has("offers")).toBe(false);
+    for (const id of ["cashback", "sellerOffer", "targetScheme"]) {
+      expect(journey.has(id)).toBe(true);
+    }
+  });
+
+  it("hides a row the buyer landed inside, and only from scope", () => {
+    /*
+     * `hideIfSingle` (2026-09-07): Brands, Seller and Seller City are dead
+     * controls on a storefront carrying one brand in one city, and live
+     * anywhere that spans more. Measured off the page's products, never off
+     * the selections — a row that came and went as boxes were ticked is the
+     * churn the 2026-08-19 reorder exists to prevent.
+     */
+    expect(singleValuedFacets(getKartikCatalog())).toEqual(
+      new Set(["brand", "seller", "sellerCity"]),
+    );
+    // The main catalog spans ten brands, eight sellers and six cities.
+    expect(singleValuedFacets(catalog)).toEqual(new Set());
+
+    // Narrowing to one brand by *filtering* changes nothing: the rail is asked
+    // about scope, and this is scope's answer either way.
+    const oneBrand = applyFilters(catalog, { brand: ["killer"] });
+    expect(singleValuedFacets(oneBrand)).toEqual(new Set(["brand"]));
+    const rail = getRail(undefined, FILTER_VERTICALS, null, "journey", singleValuedFacets(catalog));
+    expect(rail.map((r) => r.id)).toContain("brand");
+
+    // A–D never set the flag, so their rail is unmoved whatever it is handed.
+    expect(getRail().map((r) => r.id)).toEqual(
+      getRail(undefined, FILTER_VERTICALS, null, "default", new Set(["brand", "seller"])).map(
+        (r) => r.id,
+      ),
+    );
+  });
+
+  it("keeps Size global on the journey and vertical-only in A–D", () => {
+    /*
+     * 2026-09-07, on request: *"Size — global for Apparels & Footwear"*. The
+     * standing argument against it is that M in menswear is not M in
+     * womenswear, and this route is one seller's tee catalogue.
+     *
+     * The orphan guard has to follow the rail that shows the row, or unticking
+     * a category would delete a Size cut whose control is still on screen.
+     */
+    const singles = singleValuedFacets(getKartikCatalog());
+    expect(
+      getRail(undefined, FILTER_VERTICALS, null, "journey", singles).map((r) => r.id),
+    ).toContain("size");
+    expect(getRail().map((r) => r.id)).not.toContain("size");
+
+    const sized = { size: ["m", "l"] };
+    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, "journey")).toEqual(sized);
+    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null)).toEqual({});
+
+    // The five garment attributes are still vertical-only on both rails.
+    const withFit = { size: ["m"], fit: ["slim-fit"] };
+    expect(dropOrphanedSelections(withFit, FILTER_VERTICALS, null, "journey")).toEqual({
+      size: ["m"],
+    });
+
+    // And a shared link keeps what its own rail would show.
+    expect(
+      parseSelections(new URLSearchParams("size=m,l"), FILTER_VERTICALS, [], "journey"),
+    ).toEqual(sized);
+    expect(parseSelections(new URLSearchParams("size=m,l"))).toEqual({});
   });
 
   it("still clears a facet whose chip outlived its rail row", () => {

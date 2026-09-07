@@ -997,6 +997,88 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-07 — the journey's rail is re-ordered, and Offers becomes one row
+
+**On request**, and the whole of it is `/userjourney` — confirmed on the ask, so
+A–D keep the reference-PLP order and stay byte-identical. The order asked for:
+
+    Price Range · Margin on MRP · MOQ · Category · Brands · Seller ·
+    Seller City · Size · Colour · Offers
+
+with three hide rules, Size marked *global for Apparels & Footwear*, the three
+offer magnitudes *combined into one Offers filter*, and the typed input boxes
+removed from them. Fabric and the five garment attributes keep their place at
+the foot, which was the one thing the list didn't say and the one question
+answered before building.
+
+**The rail is eight rows outside a vertical and thirteen inside one**, measured
+in the browser at 360px:
+
+    Price Range · Margin on MRP · MOQ · Category · Size · Colour · Offers ·
+    Fabric   (+ Fit · Neck Type · Sleeve Type · Pattern · Closure Type)
+
+Brands, Seller and Seller City are in the array and hidden here, which is the
+new part.
+
+**`hideIfSingle`, asked of scope and not of the selections.** Three rows carry
+the flag and `singleValuedFacets(products)` answers it once, from the page's
+products: Kartik is one brand (*Zenifit*), one seller and one city (Tiruppur
+540), so all three rows go. Filtering down to one brand does *not* hide the row
+— the rule is about where the buyer landed — because a row that came and went as
+boxes were ticked is the churn the 2026-08-19 reorder exists to stop. This
+replaces the 2026-09-03 hand-deletion of Seller and Seller City with a
+condition, and **closes open question 4a**: the Brands panel here drew nothing
+at all, Zenifit not being one of `BRANDS`' ten. Zero counts as one — Kartik's
+Seller panel had no options rather than one, which is as dead either way.
+
+**One *Offers* row, three headed groups of bands** — and it needed no new
+mechanism. A rail entry already carries several facet ids (A–D's own Offers row
+stacks `hasOffer` and `offers`) and the panel already heads each facet with its
+label, which is exactly what the whiteboard drew. Measured: `Cashback` 4 bands,
+`Seller Offer` 4, `SOLV Target Scheme` 4, one badge summing all three, and the
+Cashback chip AND the `₹200 – ₹400` band gives 7 of 540. The chips are
+untouched and stay binary — different facets, so the two AND — and `clearsAlso`
+still reaches them, verified: `All filters cleared` leaves all four chips white
+and the URL bare.
+
+**The boxes went with the merge**, as asked. They are a *panel* lead, not a row,
+so three pairs would open the panel on 186px of empty inputs. `RANGE_FACETS`
+(renamed from `TYPED_RANGES`, half of it no longer being typed) carries
+`typed: false` for the three, which also drops their `accepts` and `matches`:
+those exist only to serve a typed range, and honouring `?cashback=100-200` when
+no control can produce one is a filter nothing can show or undo. `?cashback=cb-200`
+still round-trips. Price, Margin and MOQ keep their boxes — verified, 2 inputs on
+the Margin panel and 0 on Offers.
+
+**Size global cost the orphan guard a second set.** `PV_FACET_IDS` was one set;
+it is now per rail preset, because unticking the last category has to orphan a
+Size cut on A–D's rail and must not on this one, where the row is still there.
+`dropOrphanedSelections` and `parseSelections` both take the preset now.
+Verified: tick M, untick the category, the rail goes 13 rows → 8 and `Size 1`
+is still badged with `?size=m` still in the URL. The accepted cost is that
+before a vertical is settled the panel lists letters above age bands in one
+column — XS 32 … 3XL 25, then 2-3Y 37 … 12-13Y 8.
+
+**One new rule in `panelFit`: a panel of nothing but bands never earns a search
+field.** The merged Offers panel is 720px — three groups of four 52px rows with
+a 32px heading each — so it overflows both folds, and a field over `₹200 – ₹400`
+answers nothing: typing `200` matches two neighbouring bands and a percentage.
+It scrolls instead, as Colour's twenty do. Written on the blocks rather than the
+facet, so a panel mixing bands with names still earns one.
+
+**The sheet follows the rail with no change to the rule** — 590 at eight rows,
+the capped 640 at thirteen — which is what sizing to the rail bought on
+2026-09-03.
+
+**Naming to confirm:** the sketch's middle group reads `SOLV OFFER` where the
+request's own list says *Seller Offer*, which is also the facet name and the
+chip label. Built as **Seller Offer**; one label to change.
+
+142 tests green (five new: the re-ordered rail in both states, the merged row's
+facets, hide-on-single-scope against both catalogs, Size's two presets, and the
+refusal of a typed range on a facet whose boxes are gone). Lint and typecheck
+clean.
+
 ### 2026-09-03 — the offer chips become ranges as well as switches
 
 **On request**: the three offer chips are yes/no on the strip, and a buyer also
@@ -2457,7 +2539,7 @@ Ordered by consequence. None of these block a demo.
 8. **Accessibility**, if this becomes the reference build: filter rows use `aria-pressed` where `role="checkbox"` + `aria-checked` is correct; sheets don't trap focus; the scrim is a full-viewport `<button>` announced as a giant "Close".
 9. **Pagination dots under the set pills** imply snapping the free-scrolling row doesn't do.
 14. **Clear Filters resets Sort, in every variant.** `FilterScreen` commits `onApply(cleared, DEFAULT_SORT)` whether or not Sort is a row on that screen, so a sort set from A's pill or B's chip is cleared by a button labelled *Clear Filters* under a toast reading `All filters cleared` — and Sort is not a filter. Written deliberately for `/userjourney` on 2026-08-28, when Sort *was* on that screen; measured on 2026-09-03 and it was never scoped to that route. Two defensible answers — the button means "return this listing to its untouched state", or it means what it says and Sort keeps its value — and it is a designer's call, not a code one. Left as behaviour, and the decisions row now describes it accurately.
-13. **A typed range commits per keystroke, so its refusal state can't be reached.** All six range facets since 2026-09-03; written when Price was the only one. `edit()` in `RangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
+13. **A typed range commits per keystroke, so its refusal state can't be reached.** Price Range, Margin on MRP and MOQ — six facets between 2026-09-03 and 2026-09-07, when the three offer magnitudes lost their boxes; written when Price was the only one. `edit()` in `RangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
 
 ## Facet imagery
 
@@ -2466,7 +2548,7 @@ became a column of rows on 2026-09-03. Same files, same box, 44px instead of
 56.
 
 - **Category** — Unsplash photos in `public/categories/`, credited in `CREDITS.md`. Re-shot 2026-08-12 for the seven new categories: all worn on a model, since each category names its audience and at 56px a person reads faster than a flat-lay, and picked for seven distinct dominant colours. `boys-casual-t-shirts.jpg` carries an incidental Levi's wordmark, unreadable at tile size — swap it if it bothers anyone.
-- **Brands** — still grey `#d9d9d9` placeholders, and more conspicuous at row size than they were at tile size. Real logos couldn't be sourced: Clearbit's logo API is retired, and Wikipedia/Wikimedia returned unrelated files for 7 of 8 brands. Brand-supplied assets are the right input, and avoid the trademark question of scraping logos. On `/userjourney` the panel is empty rather than grey — every product there is a *Zenifit*, which is not one of `BRANDS`' ten, so the facet has no option to draw at all (open question 4a).
+- **Brands** — still grey `#d9d9d9` placeholders, and more conspicuous at row size than they were at tile size. Real logos couldn't be sourced: Clearbit's logo API is retired, and Wikipedia/Wikimedia returned unrelated files for 7 of 8 brands. Brand-supplied assets are the right input, and avoid the trademark question of scraping logos. On `/userjourney` there is no Brands panel at all since 2026-09-07 — the row hides itself on a one-brand storefront, which is what closed open question 4a; it used to draw an empty panel, every product there being a *Zenifit* and Zenifit not one of `BRANDS`' ten.
 
 ## Open questions for the designer
 
@@ -2479,7 +2561,7 @@ became a column of rows on 2026-09-03. Same files, same box, 44px instead of
 3. `Offers` vs `Seller Offers` — the two filter frames disagree; currently **Offers**.
 3a. ~~**An icon for the Target Scheme chip.**~~ **Supplied and in, 2026-08-28** — a blue ring under an orange arc, `public/offers/solv-target-scheme.png`. The chip shipped label-only for a few hours in between, which is what `icon` being optional on `FilterChip` buys. The offer is named **SOLV Target Scheme**: the GOLD prefix went with that branding on 08-19 and SOLV took its place.
 4. Baheti Garments is treated as a storefront aggregating multiple sellers, since the app bar says Baheti while the Seller facet lists other companies. Confirm, or scope it to one seller and drop the Seller facet there. **`/userjourney` took the second reading on 2026-09-03** — Kartik's storefront is one seller, so Seller and Seller City left that rail; A–D still take the first.
-4a. **Brands is an empty panel on `/userjourney`.** Found 2026-09-03 while measuring the two rows above. Every Kartik product is a *Zenifit*, which is not one of `BRANDS`' ten, so the tile grid draws nothing and the panel reads `No options match.` — `kartik.ts` intends "exactly one tile" and left it visible on purpose, so a buyer would learn something from it. Either it goes the way of Seller, or `BRANDS` learns Zenifit and it shows the one tile as intended. One tile is a dead control either way; an empty panel is the worse of the two.
+4a. ~~**Brands is an empty panel on `/userjourney`.**~~ **Closed 2026-09-07** — it went the way of Seller, and as a rule rather than a deletion: the Brands row carries `hideIfSingle`, so it is hidden wherever the page's scope holds one brand, and Kartik's 540 are all *Zenifit*. Seller and Seller City came back into that rail's order under the same flag, replacing the 2026-09-03 hand-deletion. `BRANDS` still doesn't know Zenifit, which no longer matters: nothing asks it to draw a tile.
 5. A stray `$299.99` row sits at the bottom of the filter rail in Figma (`638:3712`) and was skipped as an artefact; `Margin` — now **Margin on MRP** — is SemiBold in the frame while its rail siblings are Medium, and is rendered Medium like the rest.
 6. **Four things the live-app screengrab raises** (2026-08-14), now that the card follows it rather than the frame:
    - ~~**The screengrab has no shipping-fee line.**~~ **Closed 2026-08-20** — the word was said. `+₹50 shipping fee` is not a real charge and is gone from the card in all four variants; the field is still drawn and simply unread, its `rand()` sitting mid-sequence. The card and the screengrab now agree here.

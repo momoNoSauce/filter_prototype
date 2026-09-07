@@ -11,6 +11,7 @@ import {
   getRailFacetIds,
   parseTypedRange,
   typedRangeId,
+  singleValuedFacets,
   TYPED_RANGE_FACET_IDS,
   settledVertical,
   type RailPreset,
@@ -68,12 +69,10 @@ const RANGE_UNITS: Record<
   price: { symbol: "₹", name: "price per piece", noun: "price" },
   margin: { symbol: "%", name: "margin on MRP", noun: "margin", after: true },
   moq: { symbol: "pc", name: "order quantity in pieces", noun: "quantity", after: true },
-  // The offer magnitudes (2026-09-03), each in the unit its offer is quoted
-  // in: cashback and the scheme payout in rupees, the seller's own discount in
-  // percent. Same rule as above — ₹ leads its number, % follows.
-  cashback: { symbol: "₹", name: "cashback in rupees", noun: "cashback" },
-  sellerOffer: { symbol: "%", name: "seller offer in percent", noun: "seller offer", after: true },
-  targetScheme: { symbol: "₹", name: "target scheme payout in rupees", noun: "scheme payout" },
+  // The three offer magnitudes had entries here from 2026-09-03 until
+  // 2026-09-07, when their rows merged into one *Offers* panel and lost the
+  // boxes with the merge — `typed: false` in `RANGE_FACETS`. Nothing reads a
+  // unit for a facet with no boxes; git history has the strings.
 };
 
 /**
@@ -192,16 +191,18 @@ export function FilterScreen({
    */
   asSheet?: boolean;
   /**
-   * Add a typed **min and max** above the bands of every range facet —
-   * `TYPED_RANGE_FACET_IDS`, which is Price Range, Margin on MRP and MOQ.
+   * Add a typed **min and max** above the bands of every facet in
+   * `TYPED_RANGE_FACET_IDS` — Price Range, Margin on MRP and MOQ.
    * `/userjourney` only: Price from 2026-08-28, the other two from 2026-09-03,
    * on the same argument. The bands are the fast path and carry the counts; the
    * boxes are the escape hatch for a range nobody predicted.
    *
    * **One flag for the three**, not one per facet. They are the same control
    * answering the same objection, and a route that wants a typed price but
-   * banded margins is a screen nobody has asked for — when someone does, this
-   * becomes a set of facet ids and the panel already reads it that way.
+   * banded margins is a screen nobody has asked for. Which facets it reaches is
+   * the registry's answer, not this flag's — the three offer magnitudes were in
+   * that set from 2026-09-03 until 2026-09-07, when their rows merged into one
+   * *Offers* panel and dropped the boxes (`typed: false` in `RANGE_FACETS`).
    *
    * The two controls are **exclusive**, per facet: typing replaces any ticked
    * band and ticking a band clears a typed range. Both are values on one facet,
@@ -229,8 +230,21 @@ export function FilterScreen({
   // takes it away again, without waiting for "Show N results". A Gender cut
   // that leaves one vertical standing does the same — see `settledVertical`.
   const settled = settledVertical(products, draft, verticalMode);
-  const FACET_RAIL = getRail(draft.category, verticalMode, settled, railPreset);
-  const RAIL_FACET_IDS = getRailFacetIds(draft.category, verticalMode, settled, railPreset);
+  /*
+   * What the page's scope has at most one of — Brands, Seller and Seller City
+   * on a one-brand, one-seller storefront (2026-09-07). Off `products`, so it
+   * holds still while the buyer filters: a row that came and went as boxes were
+   * ticked is what the 2026-08-19 reorder set out to stop. See `hideIfSingle`.
+   */
+  const scopeSingles = useMemo(() => singleValuedFacets(products), [products]);
+  const FACET_RAIL = getRail(draft.category, verticalMode, settled, railPreset, scopeSingles);
+  const RAIL_FACET_IDS = getRailFacetIds(
+    draft.category,
+    verticalMode,
+    settled,
+    railPreset,
+    scopeSingles,
+  );
 
   /**
    * What Clear Filters empties: the rail, plus anything the listing shows that
@@ -482,6 +496,9 @@ export function FilterScreen({
         next,
         verticalMode,
         settledVertical(products, next, verticalMode),
+        // This rail's own vertical-only set: Size is global on the journey, so
+        // unticking a category there must not take the ticked sizes with it.
+        railPreset,
       );
     });
 

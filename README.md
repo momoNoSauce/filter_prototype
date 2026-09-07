@@ -27,7 +27,7 @@ Four variants over one catalog. A and B walk Home → **search for `shirt`** →
 
 A and B start across every category; C and D start *inside* one, so there is no Category control at all. Together they make a 2×2 of that against control placement. `/c` and `/d` are the listing itself — other seller/vertical pairs are at `/c/seller/[sellerId]/[categoryId]`.
 
-**`/userjourney` is a fifth route and outside the 2×2** — one buyer's named flow (Home → *Kartik exporters* banner → storefront → filter → detail), built 1:1 from screengrabs of the live app rather than from Figma, over its own catalog of 540 tees. It is where controls get tried first: the Filters bottom sheet, the typed min/max on every range facet, and the offer magnitudes all live there and not in A–D.
+**`/userjourney` is a fifth route and outside the 2×2** — one buyer's named flow (Home → *Kartik exporters* banner → storefront → filter → detail), built 1:1 from screengrabs of the live app rather than from Figma, over its own catalog of 540 tees. It is where controls get tried first: the Filters bottom sheet, the typed min/max on Price, Margin and MOQ, the offer magnitudes behind one *Offers* panel, and its own rail order — commercial numbers first, and Brands, Seller and Seller City hidden because the storefront is one of each — all live there and not in A–D.
 
 Card, catalog, engine and sheets are shared — one `PlpScreen` throughout — so within a row of the 2×2 a preference is about control placement, and within a column it is about starting scope. Switch by editing the URL. A and B are closed loops: hand someone `/b` and the whole journey stays in B.
 

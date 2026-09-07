@@ -7,6 +7,7 @@ import {
   dropOrphanedSelections,
   getRail,
   settledVertical,
+  singleValuedFacets,
 } from "@/lib/filters/facets";
 import { parseSelections } from "@/lib/filters/urlState";
 
@@ -173,20 +174,38 @@ describe("a vertical settled by scope, not by a Category tick", () => {
     expect(rail).toContain("gender");
   });
 
-  it("has nothing for a Seller or Seller City row to offer", () => {
-    // Why both rows left this route's rail on 2026-09-03. You are already
-    // inside one seller here, so neither can do anything but name him — the
-    // same dead-control test that took Gender off C and D. Measured, so that a
-    // catalog change which makes them live again fails here rather than
-    // silently leaving the journey a control short.
+  it("has nothing for a Brands, Seller or Seller City row to offer", () => {
+    /*
+     * Why all three rows hide on this route. You are already inside one seller,
+     * one brand and one city here, so none of them can do anything but name it
+     * — the same dead-control test that took Gender off C and D. Measured, so
+     * that a catalog change which makes them live again fails here rather than
+     * silently leaving the journey three controls short.
+     *
+     * They left the rail by hand on 2026-09-03 and came back on 2026-09-07 as
+     * `hideIfSingle`, which is the same answer arrived at from scope — and
+     * which is what closes the empty Brands panel of open question 4a.
+     */
     expect(facetOptionsWithCounts(kartik, {}, "seller")).toEqual([]);
     expect(facetOptionsWithCounts(kartik, {}, "sellerCity")).toEqual([
       { id: "tiruppur", label: "Tiruppur", count: kartik.length },
     ]);
+    // Zenifit is not one of `BRANDS`' ten, so the panel drew nothing at all.
+    expect(facetOptionsWithCounts(kartik, {}, "brand")).toEqual([]);
 
-    const rail = getRail(undefined, undefined, settledVertical(kartik, women), "journey");
-    expect(rail.map((r) => r.id)).not.toContain("seller");
-    expect(rail.map((r) => r.id)).not.toContain("sellerCity");
+    const singles = singleValuedFacets(kartik);
+    expect(singles).toEqual(new Set(["brand", "seller", "sellerCity"]));
+
+    const rail = getRail(
+      undefined,
+      undefined,
+      settledVertical(kartik, women),
+      "journey",
+      singles,
+    ).map((r) => r.id);
+    expect(rail).not.toContain("brand");
+    expect(rail).not.toContain("seller");
+    expect(rail).not.toContain("sellerCity");
   });
 });
 
@@ -211,6 +230,13 @@ describe("the orphan guard no longer erases the cut that narrowed scope", () => 
     const settled = settledVertical(kartik, widened);
     expect(settled).toBeNull();
     expect(dropOrphanedSelections(widened, undefined, settled)).toEqual({});
+
+    // On this route's own rail the Size row is global since 2026-09-07, so
+    // only the garment attribute is orphaned — the guard reads the rail that
+    // is showing, not the default one.
+    expect(dropOrphanedSelections(widened, undefined, settled, "journey")).toEqual({
+      size: ["m"],
+    });
   });
 
   it("round-trips a shared link whose Gender cut settles the vertical", () => {

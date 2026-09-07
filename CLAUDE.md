@@ -67,48 +67,72 @@ Its listing departs from the documented control layout, via **one prop** —
 `rail`, `filterSheet`, `rangeInputs`), each field defaulting to the documented
 behaviour so a route opts *out*, never in. Today that leaves the strip as
 `Sort` and `Filter` plus the four offer chips; that rail in this route's own
-order (`JOURNEY_RAIL_ORDER`), six rows dropped (Gender, Delivery Time, Offers,
-More Filters, and — since the storefront *is* one seller — Seller and Seller
-City), so its cut is **Category → Women's T-Shirts**, not Gender → Women;
-Filters as a bottom sheet; and all six range facets with a typed min/max above
-their bands. A–D pass nothing, and neither does the journey for
+order (`JOURNEY_RAIL_ORDER`), three rows dropped (Gender, Delivery Time, More
+Filters), so its cut is **Category → Women's T-Shirts**, not Gender → Women;
+Filters as a bottom sheet; and the three numeric range facets with a typed
+min/max above their bands. A–D pass nothing, and neither does the journey for
 `sortInFilters` — Sort went back to the strip on 2026-09-03 after six days
 inside Filters. Put new per-route departures in that object rather than adding
 a prop each; the reasoning is in `docs/decisions.md`.
 
+**Its rail is `JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price
+Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City · Size ·
+Colour · Offers, then Fabric and the five garment attributes. Three of those
+rows carry `hideIfSingle` — **Brands, Seller and Seller City hide when the page
+scope holds one value of them**, which Kartik's does (one brand, one seller, one
+city), so the rail renders **8 rows outside a vertical and 13 inside one**. It
+is measured off the page's products (`singleValuedFacets`), never off the
+selections: a row that came and went as boxes were ticked is the churn the
+2026-08-19 reorder exists to stop. **Size is global here** and vertical-only in
+A–D — so `dropOrphanedSelections` and `parseSelections` take the rail preset,
+or unticking a category deletes a Size cut whose row is still on screen.
+
+**The three offer magnitudes are one *Offers* row**, not three (2026-09-07): a
+rail row may carry several facets and the panel heads each with its facet
+label, which is the sketch that came with the request — `Cashback`, `Seller
+Offer`, `SOLV Target Scheme`, each over its own bands, one badge summing all
+three. **They lost their typed boxes with the merge** (`typed: false`), and
+`accepts`/`matches` with them, so `?cashback=100-200` is no longer honoured —
+a filter no control can type is one nothing can show or undo.
+
 Its Filters screen is a **bottom sheet** rather than full-bleed, so the listing
 stays visible behind it. **Its height follows the rail** (`sheetHeightPct`),
-capped at 80% of the frame and floored at 440: seven rows outside a vertical
-gives 530, and settling one adds the six attribute rows and grows it to the
-capped 640 — a fixed 80% left ~110px of white under the short rail. That
+capped at 80% of the frame and floored at 440: eight rows outside a vertical
+gives 590, and settling one adds the five attribute rows and grows it to the
+capped 640 — a fixed 80% left ~110px of white under a short rail. That
 shortens the panel, so `needsSearch` takes a viewport argument, computed from
 the height actually rendered (`sheetPanelViewport`) — 530 at the cap against
 the full-bleed 690, giving 11 rows / 9 thumbnail rows / 13 tiles instead of
-14 / 12 / 19, and less again in a shrunken sheet. A–D are untouched.
+14 / 12 / 19, and less again in a shrunken sheet. **A panel of nothing but
+bands never earns a field** however tall it runs: the field searches labels,
+and the merged Offers panel's 720px of `₹200 – ₹400` is a vocabulary you read
+rather than hunt through. A–D are untouched.
 
-Its **range facets** — Price Range, Margin on MRP, MOQ and, since 2026-09-03,
-the three offer magnitudes (**Cashback ₹**, **Seller Offer %**, **SOLV Target
-Scheme ₹**) — each carry a **typed min/max** (`?price=150-450`, `?margin=60-`,
-`?moq=5-12`, `?cashback=100-200`, `?sellerOffer=12-`) above their bands. Per facet the two controls are exclusive, and each disables the other:
-both are values on one facet, where they would otherwise OR into a wider
-result. An inverted range is refused rather than filtered, with a toast on blur
-naming that facet. All three are built from **one table** (`TYPED_RANGES` in
-`facets.ts`) differing only in the number they compare and, in the UI, the unit
-beside the box — ₹ before the number, `%` and `pc` after. They cost the facet
+Its **typed ranges** are **Price Range, Margin on MRP and MOQ**
+(`?price=150-450`, `?margin=60-`, `?moq=5-12`), a min/max above their bands.
+Per facet the two controls are exclusive, and each disables the other: both are
+values on one facet, where they would otherwise OR into a wider result. An
+inverted range is refused rather than filtered, with a toast on blur naming
+that facet. Every band facet is built from **one table** (`RANGE_FACETS` in
+`facets.ts`) differing only in the number it compares and, in the UI, the unit
+beside the box — ₹ before the number, `%` and `pc` after; the three offer
+magnitudes are in that table with `typed: false`. The boxes cost the facet
 registry two optional hooks: **`matches`** overrides the default set-membership
-test, and **`accepts`** widens `parseSelections`'s id validation. **A facet that
-overrides `matches` needs `accepts` too** — without it the selection works
-in-session and vanishes on reload. `parseTypedRange` gates on the first
-character before its regex, because `matches` runs per product per value and
-three facets now call it — the 720-walk engine test is the thing that notices.
+test, and **`accepts`** widens `parseSelections`'s id validation. **A facet
+that overrides `matches` needs `accepts` too** — without it the selection works
+in-session and vanishes on reload, and a facet with **neither** must have no
+control that can produce a range. `parseTypedRange` gates on the first
+character before its regex, because `matches` runs per product per value — the
+720-walk engine test is the thing that notices.
 
 **The offer magnitudes are journey-only, and the data is why.** Cashback,
 `sellerOfferPct` and `targetScheme` are drawn in `lib/catalog/kartik.ts` — the
 main catalog names its offers without pricing them, and A–D's card prints a
 cashback ribbon whenever it is handed an amount, so figures there would change
-four signed-off variants. The three rail rows are therefore in
-`JOURNEY_RAIL_ORDER` only; on A–D every one of those panels would be empty,
-which is the dead control that took Seller off the journey's own rail. The two
+four signed-off variants. The merged *Offers* row is therefore in
+`JOURNEY_RAIL_ORDER` only; on A–D all three of its groups would be empty, and
+A–D's own Offers row stacks `hasOffer` and `offers` — the offer *names* — as it
+always did. The two
 new properties take **a fourth PRNG stream** (`offerRand`) so none of Kartik's
 540 counts move, and both are drawn unconditionally and kept only where the
 offer is. **The chips stay binary** — they ask *is there one*, the rows ask
@@ -116,7 +140,8 @@ offer is. **The chips stay binary** — they ask *is there one*, the rows ask
 
 **A facet dropped from one rail may still have a chip.** `clearsAlso` on
 `FilterScreen` is how Clear Filters still reaches it — otherwise the toast says
-`All filters cleared` over a lit chip.
+`All filters cleared` over a lit chip. `hasOffer` and `offers` are that case on
+the journey: the merged *Offers* row holds the magnitudes, not the names.
 
 Detail routes are `{base}/product/[productId]` for all five paths, dynamic
 rather than pre-rendered.
@@ -139,7 +164,7 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 | `lib/catalog/kartik.ts` | The journey's separate 540, four PRNG streams, and the only products carrying offer magnitudes |
 | `lib/catalog/productImage.ts` | `gender × kind × colour` → generated art, Figma renders as fallback |
 | `lib/filters/engine.ts` | `applyFilters` (OR within a facet, AND across), `facetOptionsWithCounts`, `sortProducts`, `clearSelections` |
-| `lib/filters/facets.ts` | The facet registry, `RAIL_ORDER`, `TYPED_RANGES`, `VerticalMode`, `settledVertical`, `dropOrphanedSelections` |
+| `lib/filters/facets.ts` | The facet registry, `RAIL_ORDER`, `RANGE_FACETS`, `VerticalMode`, `settledVertical`, `singleValuedFacets`, `dropOrphanedSelections` |
 | `lib/filters/activeVariant.ts` | Which pack a card is talking about — sizes live on the pack |
 | `lib/filters/contextChips.ts` | Which chips the strip carries, given the selections |
 | `lib/filters/panelFit.ts` | Whether a panel overflows the fold, and so earns a search field — and how tall the bottom sheet is, from its rail |
@@ -148,10 +173,11 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 | `components/filters/FilterScreen.tsx` | Rail + panel, draft/commit |
 | `components/journey/ProductDetail.tsx` | **The** detail screen — journey, B and D |
 
-**23 facets** behind 13 rail rows — 18 inside a vertical, 17 in C and D, 10 on
-the journey and 16 inside a vertical there. Adding a facet is one entry in
-`FACETS`; a facet with bands *and* a typed range is one entry in `TYPED_RANGES`
-plus a `rangeFacet()` line, which is what keeps all six of those identical. Each
+**23 facets** behind 13 rail rows — 18 inside a vertical, 17 in C and D, 8 on
+the journey and 13 inside a vertical there. Adding a facet is one entry in
+`FACETS`; a facet with bands is one entry in `RANGE_FACETS` plus a
+`rangeFacet()` line, and `typed: false` there is a facet with bands and no
+boxes — which is what keeps all six of those identical. Each
 declares `valuesOf(product, sizes?) → string[]`, so thumbnail rows, checkbox
 lists, range buckets and multi-valued delivery windows share one code path.
 

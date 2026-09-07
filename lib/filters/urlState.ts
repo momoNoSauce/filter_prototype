@@ -3,6 +3,7 @@ import {
   FILTER_VERTICALS,
   dropOrphanedSelections,
   settledVertical,
+  type RailPreset,
   type VerticalMode,
 } from "./facets";
 import { DEFAULT_SORT, SORT_OPTIONS, type Selections, type SortId } from "./engine";
@@ -27,6 +28,14 @@ export function parseSelections(
    * an explicit category or `locked`.
    */
   products: { category: string; gender: string }[] = [],
+  /**
+   * Which rail the page shows, because the orphan check below reads its
+   * vertical-only set and the two rails disagree about Size since 2026-09-07 —
+   * vertical-only in A–D, global on `/userjourney`. A shared `?size=s,m` with
+   * no category beside it survives on that route and is still stripped on A–D,
+   * which is what each rail's own rows make true.
+   */
+  preset: RailPreset = "default",
 ): Selections {
   const selections: Selections = {};
   for (const facet of FACETS) {
@@ -48,6 +57,7 @@ export function parseSelections(
     selections,
     mode,
     settledVertical(products, selections, mode),
+    preset,
   );
 }
 

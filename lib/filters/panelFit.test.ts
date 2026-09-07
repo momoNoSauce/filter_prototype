@@ -62,7 +62,8 @@ describe("the search field is earned, not declared", () => {
   });
 
   it("charges a stacked panel for its headings", () => {
-    // Only "More Filters" stacks facets, and only then are headings rendered.
+    // Any row carrying more than one facet heads each group: A–D's Offers row,
+    // and since 2026-09-07 the journey's three offer magnitudes.
     const alone = panelContentHeight([{ panel: "checkbox", optionCount: 6 }]);
     const stacked = panelContentHeight([
       { panel: "checkbox", optionCount: 3 },
@@ -70,6 +71,34 @@ describe("the search field is earned, not declared", () => {
     ]);
     expect(alone).toBe(6 * 52);
     expect(stacked).toBe(6 * 52 + 2 * 32);
+  });
+
+  it("never earns a field for a panel of nothing but bands", () => {
+    /*
+     * 2026-09-07, with the journey's merged *Offers* row: three facets, four
+     * bands each and a heading apiece is 720px, which overflows both folds. A
+     * field would cost another 56 and answer nothing — it searches option
+     * labels, and typing `200` into `₹200 – ₹400` matches two neighbouring
+     * bands and a percentage. Bands are a short ordered vocabulary you read.
+     */
+    const offers = [
+      { panel: "range" as const, optionCount: 4 },
+      { panel: "range" as const, optionCount: 4 },
+      { panel: "range" as const, optionCount: 4 },
+    ];
+    expect(panelContentHeight(offers)).toBe(12 * 52 + 3 * 32);
+    expect(panelContentHeight(offers)).toBeGreaterThan(PANEL_VIEWPORT);
+    expect(needsSearch(offers)).toBe(false);
+    expect(needsSearch(offers, SHEET_PANEL_VIEWPORT)).toBe(false);
+
+    // A panel that mixes bands with a list of names still earns one, and the
+    // bands' height still counts toward it.
+    expect(
+      needsSearch([
+        { panel: "range", optionCount: 4 },
+        { panel: "checkbox", optionCount: 11 },
+      ]),
+    ).toBe(true);
   });
 
   it("leaves every rail panel but Colour inside the fold", () => {
@@ -183,15 +212,17 @@ describe("the sheet presentation's shorter fold", () => {
 
   it("sizes the sheet to its rail, and stops at 80%", () => {
     /*
-     * 2026-09-03, on the report of dead space below a short rail. The journey's
-     * rail is seven rows outside a vertical and thirteen inside one, and a
-     * fixed 80% meant the short one carried ~110px of white under it.
+     * 2026-09-03, on the report of dead space below a short rail. A fixed 80%
+     * meant a short rail carried ~110px of white under it. The journey's rail
+     * is eight rows outside a vertical and thirteen inside one since the
+     * 2026-09-07 re-order, so the arithmetic is pinned generically and the two
+     * live cases sit below it.
      */
     const px = (n: number) => Math.round((sheetHeightPct(n) / 100) * FRAME_H);
 
-    // Seven rows: 110 of chrome plus 420 of rail, so 530 of the 800 frame.
-    expect(px(7)).toBe(SHEET_CHROME_H + 7 * RAIL_ROW_H);
-    expect(sheetHeightPct(7)).toBeCloseTo(66.25);
+    // Eight rows: 110 of chrome plus 480 of rail, so 590 of the 800 frame.
+    expect(px(8)).toBe(SHEET_CHROME_H + 8 * RAIL_ROW_H);
+    expect(sheetHeightPct(8)).toBeCloseTo(73.75);
 
     // Thirteen rows want 890 and get the ceiling — the sheet a settled
     // vertical has had since 2026-08-28, unchanged.
@@ -204,7 +235,7 @@ describe("the sheet presentation's shorter fold", () => {
     // The panel's fold follows the height, and at the ceiling it is the figure
     // every threshold above is pinned at.
     expect(sheetPanelViewport(SHEET_MAX_PCT)).toBe(SHEET_PANEL_VIEWPORT);
-    expect(sheetPanelViewport(sheetHeightPct(7))).toBe(420);
+    expect(sheetPanelViewport(sheetHeightPct(8))).toBe(480);
   });
 
   it("earns a field sooner in a sheet that shrank with its rail", () => {

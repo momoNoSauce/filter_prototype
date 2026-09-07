@@ -15,6 +15,7 @@ import {
   FILTER_VERTICALS,
   dropOrphanedSelections,
   getRailFacetIds,
+  singleValuedFacets,
   settledVertical,
   type PlpVariant,
   type RailPreset,
@@ -206,11 +207,14 @@ export type PlpControls = {
    */
   sortInFilters?: boolean;
   /**
-   * Which Filters rail this listing shows. `"journey"` is the 2026-08-28
-   * stakeholder order — Price · Margin · MOQ · Category · Brands, then the
-   * attribute block — with Gender, Delivery Time, Offers, More Filters and
-   * (2026-09-03) Seller and Seller City dropped. A–D say nothing and keep
-   * `"default"`, which follows the reference apparel PLP. See `RailPreset`.
+   * Which Filters rail this listing shows. `"journey"` is the 2026-09-07 order
+   * — Price · Margin · MOQ · Category · Brands · Seller · Seller City · Size ·
+   * Colour · Offers, then Fabric and the garment attributes — where the three
+   * offer magnitudes are one *Offers* panel, Size is global rather than
+   * vertical-only, and Brands, Seller and Seller City hide themselves on a
+   * storefront that carries one of each. Gender, Delivery Time and More Filters
+   * stay dropped. A–D say nothing and keep `"default"`, which follows the
+   * reference apparel PLP. See `RailPreset`.
    */
   rail?: RailPreset;
   /**
@@ -345,6 +349,15 @@ export function PlpScreen({
   // still here when the buyer comes back to the listing.
   const { line } = useCart();
 
+  const railPreset = controls?.rail ?? "default";
+  /*
+   * Facets the page's scope has at most one value of, so the badge counts
+   * exactly the rows the Filters screen shows — a one-brand storefront hides
+   * Brands (2026-09-07). Declared up here because the URL effect below reads
+   * the preset, and both are pure functions of props.
+   */
+  const scopeSingles = useMemo(() => singleValuedFacets(products), [products]);
+
   const listRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   /** Last scroll offset, to read direction off. */
@@ -373,13 +386,15 @@ export function PlpScreen({
       // `products` is passed so a link whose Gender cut settles a vertical keeps
       // its Size and attributes on load — the rail shows those rows on such a
       // page, so stripping them would be the bug.
-      setSelections(parseSelections(params, verticalMode, products));
+      // The preset goes too: Size is global on the journey's rail, so a shared
+      // `?size=s,m` must survive a load with no category beside it.
+      setSelections(parseSelections(params, verticalMode, products, railPreset));
       setSort(parseSort(params));
     };
     sync();
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
-  }, [verticalMode, products]);
+  }, [verticalMode, products, railPreset]);
 
   const commit = useCallback(
     (raw: Selections, nextSort: SortId) => {
@@ -392,6 +407,7 @@ export function PlpScreen({
         raw,
         verticalMode,
         settledVertical(products, raw, verticalMode),
+        railPreset,
       );
       setSelections(nextSelections);
       setSort(nextSort);
@@ -403,7 +419,7 @@ export function PlpScreen({
         `${pathname}${buildQuery(nextSelections, nextSort)}`,
       );
     },
-    [pathname, verticalMode, products],
+    [pathname, verticalMode, products, railPreset],
   );
 
   const results = useMemo(
@@ -453,7 +469,6 @@ export function PlpScreen({
   // once a single vertical is settled, whether a Category tick or a Gender cut
   // settled it.
   const settled = settledVertical(products, selections, verticalMode);
-  const railPreset = controls?.rail ?? "default";
 
   /*
    * One chip height for the whole strip (2026-08-28). 44 exists because the
@@ -471,7 +486,13 @@ export function PlpScreen({
    * sets the same flag, which is a one-word change.
    */
   const chipH = (controls?.verticalChips ?? true) ? CHIP_H_TALL : CHIP_H_SHORT;
-  const railFacetIds = getRailFacetIds(selections.category, verticalMode, settled, railPreset);
+  const railFacetIds = getRailFacetIds(
+    selections.category,
+    verticalMode,
+    settled,
+    railPreset,
+    scopeSingles,
+  );
 
   const sortActive = sort !== DEFAULT_SORT;
 
