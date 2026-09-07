@@ -1087,14 +1087,40 @@ A–D's Offers panel takes the type and the rule and stays **text-only**: its tw
 headings are a catch-all and a list of five different offers, so one icon would
 label the wrong thing.
 
+**Then the merge was reversed, hours later** — *"split All Offers, and go back
+to three types of offers, at the last of all filters"*, and **Fabric off the
+rail** with it. So the three magnitudes are a row each again, moved from beside
+the commercial numbers to the **foot**, and the rail is **nine rows outside a
+vertical and fourteen inside one**:
+
+    Price Range · Margin on MRP · MOQ · Category · Size · Colour
+    (+ Fit · Neck Type · Sleeve Type · Pattern · Closure Type)
+    · Cashback · Seller Offer · SOLV Target Scheme
+
+Last in the array is last in **both** states, the attribute block being
+`vertical: true` and arriving above them — measured, 9 rows then 14 with the
+sheet at the 640 cap in both. Two things carried over from the merge rather than
+being undone: the **typed boxes stay gone** (dropping them was its own
+instruction that morning, not a consequence of the merge), and **each offer
+panel still heads itself** with the offer's name and its chip art, alone as well
+as stacked, because an offer's bands are the one list in the app whose rows
+don't name themselves — `Under ₹100` says nothing about *what* is under ₹100,
+where `Black` and `Cotton` do. `headed` is a `PanelBlock` field now rather than
+"this panel has several facets", set from the expression the markup branches on.
+
+Fabric keeps its `FACETS` entry for A–D, which still show the row. The only way
+to reach it here is a hand-written `?fabric=cotton` — the same accepted case as
+`?seller=grasim`, which no click can produce and which the empty state's own
+Clear Filters resolves, committing every selection rather than the rail's.
+
 **Naming to confirm:** the sketch's middle group reads `SOLV OFFER` where the
 request's own list says *Seller Offer*, which is also the facet name and the
 chip label. Built as **Seller Offer**; one label to change.
 
-142 tests green (five new: the re-ordered rail in both states, the merged row's
-facets, hide-on-single-scope against both catalogs, Size's two presets, and the
-refusal of a typed range on a facet whose boxes are gone). Lint and typecheck
-clean.
+143 tests green (six new: the re-ordered rail in both states, the three offer
+rows sitting last in both, hide-on-single-scope against both catalogs, Size's
+two presets, the refusal of a typed range on a facet whose boxes are gone, and a
+lone panel charged for the heading it draws). Lint and typecheck clean.
 
 ### 2026-09-03 — the offer chips become ranges as well as switches
 

@@ -776,15 +776,17 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  *
  * Four things in it are not just a sequence —
  *
- * **The three offer magnitudes are one *Offers* row**, not three (2026-09-07).
- * A rail row may carry several facets — A–D's own Offers row carries two — and
- * the panel already heads each one with its facet's label, which is exactly the
- * sketch that came with the request: `Cashback`, `Seller Offer` and `SOLV
- * Target Scheme`, each over its own bands, in one panel behind one row. **They
- * lose their typed boxes with the merge** (`typed: false` in `RANGE_FACETS`):
- * one panel has nowhere to put three pairs of them, and the bands were always
- * the fast path. The row's badge sums all three, which is what a merged row has
- * to report.
+ * **The three offer magnitudes are a row each, at the foot** (2026-09-07,
+ * second pass). They were merged behind one *All Offers* row for a few hours
+ * that morning — one rail row can carry several facets, and the panel heads
+ * each with its facet label, which was the sketch that came with the first
+ * request — and the ask reversed: three types of offer, three rows, last of all
+ * the filters. **They keep no typed boxes** (`typed: false` in
+ * `RANGE_FACETS`): losing them was its own instruction in the first request,
+ * not a consequence of the merge, so the split does not hand them back. Each
+ * panel still heads itself with the offer's name and its chip art, which is the
+ * one thing the merge is worth keeping — four rows reading `Under ₹100` say
+ * nothing about *what* is under ₹100.
  *
  * **The chips stay binary and this row does not replace them.** The chip asks
  * *is there one*, the row asks *how big*, on different facets — the chips
@@ -812,15 +814,16 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  * unticking a category would silently delete a Size cut whose row is still
  * there.
  *
- * **Gender, Delivery Time and More Filters stay dropped.** Gender was this
- * journey's documented cut until 2026-08-28; *Category → Women's T-Shirts*
+ * **Gender, Delivery Time, More Filters and — since the second 2026-09-07 pass
+ * — Fabric stay dropped.** Gender was this journey's documented cut until
+ * 2026-08-28; *Category → Women's T-Shirts*
  * replaces it and settles the vertical identically, Kartik carrying exactly
  * three verticals of which one is women's.
  *
- * Colour and Fabric show whether or not a vertical is settled — Cotton means
- * the same on a shirt as on a tee, which is the standing argument for Fabric
- * never having joined the vertical block. Only the five garment attributes
- * wait for one.
+ * Colour shows whether or not a vertical is settled; only the five garment
+ * attributes wait for one. Fabric used to sit beside Colour on the same
+ * argument — Cotton means the same on a shirt as on a tee — and simply isn't
+ * on this rail any more.
  */
 const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
   { id: "price", label: "Price Range", facetIds: ["price"] },
@@ -838,24 +841,43 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
   // Global on this rail, vertical-only on A–D's. See the header.
   { id: "size", label: "Size", facetIds: ["size"] },
   { id: "colour", label: "Colour", facetIds: ["colour"] },
-  // One row, three facets, three headed groups of bands — the sketch that came
-  // with the request. The strip's four offer chips are a different question and
-  // stay binary; see the header.
-  {
-    id: "offers",
-    // **"All Offers", not "Offers"** (2026-09-07, on request). The row holds
-    // three facets rather than one, and the word does the same job the panel's
-    // three headings do — it names a group. A–D's Offers row keeps the bare
-    // label: it carries the offer *names*, not a group of magnitudes.
-    label: "All Offers",
-    facetIds: ["cashback", "sellerOffer", "targetScheme"],
-  },
-  { id: "fabric", label: "Fabric", facetIds: ["fabric"] },
+  // Fabric had a row here until 2026-09-07 (second pass), when it was dropped
+  // on request. It stays in `FACETS` for A–D, which still carry the row; the
+  // only way to reach it here is a hand-written `?fabric=cotton`, the same
+  // accepted case as `?seller=grasim` — no click can produce it, and the empty
+  // state's own Clear Filters commits every selection rather than the rail's.
   { id: "fit", label: "Fit", facetIds: ["fit"], vertical: true },
   { id: "neck", label: "Neck Type", facetIds: ["neck"], vertical: true },
   { id: "sleeve", label: "Sleeve Type", facetIds: ["sleeve"], vertical: true },
   { id: "pattern", label: "Pattern", facetIds: ["pattern"], vertical: true },
   { id: "closure", label: "Closure Type", facetIds: ["closure"], vertical: true },
+  /*
+   * **A row each, at the foot of the rail** (2026-09-07, second pass, on
+   * request: *"split All Offers, go back to three types of offers, at the last
+   * of all filters"*). They spent the morning merged behind one *All Offers*
+   * row; the three-row shape is what 2026-09-03 built and what this returns to,
+   * moved from beside the commercial numbers to the end.
+   *
+   * **Last in the array is last in both states.** The five garment attributes
+   * are `vertical: true` and sit above them, so outside a vertical these three
+   * follow Colour and inside one they follow Closure Type — the foot either
+   * way, which is what the request asks for and what an index-based insert
+   * would have got wrong.
+   *
+   * **Still bands only.** The typed boxes came off on the same day's first
+   * request (*"we can remove the input values for these items"*) and that was
+   * its own instruction rather than a consequence of the merge, so splitting
+   * the row back out does not hand them back. `typed: false` in
+   * `RANGE_FACETS`, which is also what keeps `?cashback=100-200` refused.
+   *
+   * **The chips stay binary and these rows do not replace them** — the chip
+   * asks *is there one*, the row asks *how big*, on different facets, so the
+   * two AND. `hasOffer` and `offers` are still off this rail and still reached
+   * by `clearsAlso`.
+   */
+  { id: "cashback", label: "Cashback", facetIds: ["cashback"] },
+  { id: "sellerOffer", label: "Seller Offer", facetIds: ["sellerOffer"] },
+  { id: "targetScheme", label: "SOLV Target Scheme", facetIds: ["targetScheme"] },
 ];
 
 /**

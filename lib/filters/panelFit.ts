@@ -211,6 +211,14 @@ export type PanelBlock = {
    * make the remainder fit.
    */
   optionCount: number;
+  /**
+   * Whether this block draws a heading. Defaults to "the panel stacks more than
+   * one facet", which is what decided it until 2026-09-07 — since then an offer
+   * magnitude heads its own panel alone, its bands being the one list in the
+   * app whose rows don't name themselves. Set from the same expression the
+   * markup branches on, so the two can't drift.
+   */
+  headed?: boolean;
 };
 
 /**
@@ -219,13 +227,14 @@ export type PanelBlock = {
  * counting it would push a list that fits exactly onto the wrong side.
  */
 export function panelContentHeight(blocks: PanelBlock[]): number {
-  const headed = blocks.length > 1;
+  const many = blocks.length > 1;
   return blocks.reduce((total, block, i) => {
     const rowH =
       block.panel === "thumb" ? THUMB_ROW_H : block.panel === "tile" ? 0 : OPTION_ROW_H;
     const body = rowH
       ? block.optionCount * rowH
       : Math.ceil(block.optionCount / TILES_PER_ROW) * TILE_ROW_H;
+    const headed = block.headed ?? many;
     const chrome = headed ? FACET_HEADING_H + (i > 0 ? FACET_GROUP_RULE_H : 0) : 0;
     return total + body + chrome;
   }, 0);

@@ -1118,8 +1118,9 @@ describe("variants C and D — the page is the vertical", () => {
   it("gives /userjourney its own rail order, in full", () => {
     // Pinned in full, like the default rail, because the interesting failure
     // is a row quietly moving rather than one going missing. Re-ordered on
-    // 2026-09-07: the commercial numbers lead, the three offer magnitudes are
-    // one *Offers* row, and Size is global here.
+    // 2026-09-07: the commercial numbers lead, Size is global here, and the
+    // three offer magnitudes are a row each at the **foot** — last in both
+    // states, which is what the second pass that day asked for.
     const kartik = getKartikCatalog();
     const singles = singleValuedFacets(kartik);
     const rail = (category?: string[], settled: string | null = null) =>
@@ -1132,12 +1133,14 @@ describe("variants C and D — the page is the vertical", () => {
       "Category",
       "Size",
       "Colour",
-      "All Offers",
-      "Fabric",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
     ]);
 
-    // Inside one settled vertical the five garment attributes join at the foot.
-    // Size does not move — it was already there.
+    // Inside one settled vertical the five garment attributes join — *above*
+    // the three offer rows, which stay last. Size does not move, having been
+    // there all along, and Fabric is off this rail since 2026-09-07.
     expect(rail(["womens-t-shirts"], "womens-t-shirts")).toEqual([
       "Price Range",
       "Margin on MRP",
@@ -1145,13 +1148,14 @@ describe("variants C and D — the page is the vertical", () => {
       "Category",
       "Size",
       "Colour",
-      "All Offers",
-      "Fabric",
       "Fit",
       "Neck Type",
       "Sleeve Type",
       "Pattern",
       "Closure Type",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
     ]);
 
     // Brands, Seller and Seller City are in the order and hidden by *this*
@@ -1168,14 +1172,15 @@ describe("variants C and D — the page is the vertical", () => {
       "Seller City",
       "Size",
       "Colour",
-      "All Offers",
-      "Fabric",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
     ]);
 
-    // The three that stay dropped, and the default rail keeping every one.
+    // The four that stay dropped, and the default rail keeping every one.
     const journey = getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey", singles);
     const dflt = getRailFacetIds();
-    for (const gone of ["gender", "delivery", "tags"]) {
+    for (const gone of ["gender", "delivery", "tags", "fabric"]) {
       expect(journey.has(gone)).toBe(false);
       expect(dflt.has(gone)).toBe(true);
     }
@@ -1186,31 +1191,43 @@ describe("variants C and D — the page is the vertical", () => {
     expect(journey.has("category")).toBe(true);
   });
 
-  it("merges the three offer magnitudes into one Offers row", () => {
+  it("gives each offer magnitude its own row, at the foot of the rail", () => {
     /*
-     * 2026-09-07, on request, and drawn on the whiteboard as one panel with a
-     * headed group per offer — which is what a rail row carrying several
-     * facets already renders. The row's badge sums all three, the way *More
-     * Filters* and A–D's own Offers row do.
+     * 2026-09-07, second pass. They were merged behind one *All Offers* row
+     * earlier the same day — a rail row can carry several facets and the panel
+     * heads each group, which was the first request's own sketch — and the ask
+     * reversed: three types of offer, three rows, last of all the filters.
      *
-     * The chips are untouched and stay binary: they select `offers` and
-     * `hasOffer`, which hold names, where these hold numbers, so the two AND.
+     * The chips are untouched and stay binary either way: they select `offers`
+     * and `hasOffer`, which hold names, where these hold numbers, so the two
+     * AND.
      */
     const singles = singleValuedFacets(getKartikCatalog());
-    const row = getRail(undefined, FILTER_VERTICALS, null, "journey", singles).find(
-      (r) => r.id === "offers",
-    )!;
-    // "All Offers" on request (2026-09-07): the row names a group of three
-    // where every other rail row names one facet.
-    expect(row.label).toBe("All Offers");
-    expect(row.facetIds).toEqual(["cashback", "sellerOffer", "targetScheme"]);
+    const rail = getRail(undefined, FILTER_VERTICALS, null, "journey", singles);
 
-    // A–D's Offers row is a different pair on the same rail id — the two
-    // orders are allowed to disagree.
+    // One facet each, and the last three rows in that order.
+    expect(rail.slice(-3)).toEqual([
+      { id: "cashback", label: "Cashback", facetIds: ["cashback"] },
+      { id: "sellerOffer", label: "Seller Offer", facetIds: ["sellerOffer"] },
+      { id: "targetScheme", label: "SOLV Target Scheme", facetIds: ["targetScheme"] },
+    ]);
+
+    // Last inside a vertical too, where five attribute rows arrive above them.
+    const settled = getRail(["womens-t-shirts"], FILTER_VERTICALS, "womens-t-shirts", "journey", singles);
+    expect(settled.slice(-3).map((r) => r.id)).toEqual([
+      "cashback",
+      "sellerOffer",
+      "targetScheme",
+    ]);
+    expect(settled.at(-4)!.id).toBe("closure");
+
+    // A–D's Offers row is untouched — a different pair of facets, and theirs
+    // is the offer *names*.
     expect(getRail().find((r) => r.id === "offers")!.facetIds).toEqual([
       "hasOffer",
       "offers",
     ]);
+    expect(rail.some((r) => r.id === "offers")).toBe(false);
 
     // The binary pair is still off this rail, so *Clear Filters* still needs
     // `clearsAlso` to reach a lit chip.

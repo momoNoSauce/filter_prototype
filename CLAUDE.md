@@ -77,33 +77,40 @@ a prop each; the reasoning is in `docs/decisions.md`.
 
 **Its rail is `JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price
 Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City · Size ·
-Colour · Offers, then Fabric and the five garment attributes. Three of those
-rows carry `hideIfSingle` — **Brands, Seller and Seller City hide when the page
+Colour, then the five garment attributes, then **Cashback · Seller Offer · SOLV
+Target Scheme at the foot**. Fabric has no row here. Three of those rows carry
+`hideIfSingle` — **Brands, Seller and Seller City hide when the page
 scope holds one value of them**, which Kartik's does (one brand, one seller, one
-city), so the rail renders **8 rows outside a vertical and 13 inside one**. It
+city), so the rail renders **9 rows outside a vertical and 14 inside one**. It
 is measured off the page's products (`singleValuedFacets`), never off the
 selections: a row that came and went as boxes were ticked is the churn the
 2026-08-19 reorder exists to stop. **Size is global here** and vertical-only in
 A–D — so `dropOrphanedSelections` and `parseSelections` take the rail preset,
 or unticking a category deletes a Size cut whose row is still on screen.
 
-**The three offer magnitudes are one **All Offers** row**, not three
-(2026-09-07): a rail row may carry several facets and the panel heads each with
-its facet label, which is the sketch that came with the request — `Cashback`,
-`Seller Offer`, `SOLV Target Scheme`, each over its own bands, one badge summing
-all three. **They lost their typed boxes with the merge** (`typed: false`), and
-`accepts`/`matches` with them, so `?cashback=100-200` is no longer honoured —
-a filter no control can type is one nothing can show or undo.
+**The three offer magnitudes are a row each, last on the rail** — they spent a
+few hours of 2026-09-07 merged behind one *All Offers* row (a rail row may carry
+several facets, and the panel heads each with its facet label, which was that
+request's own sketch) and the ask reversed the same day: three types of offer,
+three rows, at the foot. Last in the array, so they are last in **both** states
+— the five garment attributes are `vertical: true` and arrive above them.
+**They carry no typed boxes** (`typed: false`), and no `accepts`/`matches` with
+them, so `?cashback=100-200` is refused: dropping the boxes was its own
+instruction in that morning's request, not a consequence of the merge, so the
+split doesn't hand them back.
 
-**A stacked panel's headings are 15px bold on `heading`, with the facet's own
-icon and a rule above each group but the first** (2026-09-07, on the report that
-they read as not prominent): 13px bold `#767676` set two sizes *below* the rows
-it was labelling. The art comes from `lib/filters/offerIcons.ts` — the chip
-strip's own files, so the buyer meets one wallet in both places, and one file to
-edit when the two PNGs that want vectors get them. The rule spans the panel
-because the whiteboard drew three boxes. **`FACET_HEADING_H` is 43, measured**;
-A–D's Offers panel shares the type and the rule and draws no icons, its two
-headings being a catch-all and a list of five different offers.
+**A panel heads itself when it stacks several facets *or* is an offer's** —
+15px bold on `heading`, the facet's own icon at 20px, and a hairline rule above
+each group but the first (2026-09-07, on the report that 13px bold `#767676`
+read as not prominent: it set two sizes *below* the rows it labelled). An offer
+panel heads itself even alone, because its bands are the one list in the app
+whose rows don't name themselves — `Under ₹100` says nothing about *what* is
+under ₹100. Art comes from `lib/filters/offerIcons.ts`, the chip strip's own
+files, so the buyer meets one wallet in both places and the two PNGs that want
+vectors are one edit. **`FACET_HEADING_H` is 43, measured**, and `headed` is a
+`PanelBlock` field set from the same expression the markup branches on. A–D's
+Offers panel takes the type and the rule and draws no icons, its two headings
+being a catch-all and a list of five different offers.
 
 Its Filters screen is a **bottom sheet** rather than full-bleed, so the listing
 stays visible behind it. **Its height follows the rail** (`sheetHeightPct`),

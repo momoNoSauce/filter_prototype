@@ -411,6 +411,8 @@ export function FilterScreen({
     panelFacets.map(({ facet, options }) => ({
       panel: facet.panel,
       optionCount: options.length,
+      // The same condition the markup branches on — see `headed` below.
+      headed: panelFacets.length > 1 || facet.id in OFFER_FACET_ICONS,
     })),
     // The sheet's panel is shorter, so lists earn a field sooner there — and
     // *how* much shorter now moves with the rail, so it is computed from the
@@ -698,8 +700,16 @@ export function FilterScreen({
 
             /*
               **A headed, ruled group per facet** — every row that stacks more
-              than one, which is A–D's Offers row and, since 2026-09-07, the
-              journey's three offer magnitudes.
+              than one (A–D's Offers row), and every offer magnitude even alone
+              (2026-09-07, second pass, when the merged *All Offers* row split
+              back into three).
+
+              **An offer panel heads itself.** Its bands read `Under ₹100`,
+              `₹100 – ₹200` — four rows that say nothing about *what* is under
+              ₹100, where every other panel in the app lists things that name
+              themselves (`Black`, `Cotton`, `Killer`). The offer's name and its
+              chip art at the top is the one part of the merge worth keeping,
+              and it is what the icons were asked for.
 
               The heading was 13px bold `#767676` and was reported as not
               prominent enough on that merged panel (2026-09-07): three groups
@@ -716,7 +726,7 @@ export function FilterScreen({
               edge to edge, where a border on a `px-[14px]` heading would
               inset with the text.
             */
-            const headed = panelFacets.length > 1;
+            const headed = panelFacets.length > 1 || facetId in OFFER_FACET_ICONS;
 
             return (
               <div
