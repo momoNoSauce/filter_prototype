@@ -104,21 +104,16 @@ describe("the search field is earned, not declared", () => {
     ).toBe(true);
   });
 
-  it("charges a lone panel for the heading it draws", () => {
+  it("leaves a lone panel unheaded", () => {
     /*
-     * 2026-09-07, second pass: an offer magnitude heads its own panel even
-     * alone, its bands being the one list in the app whose rows don't name
-     * themselves — `Under ₹100` says nothing about *what* is under ₹100. So
-     * headedness is a property of the block rather than of the panel's length,
-     * set from the same expression the markup branches on.
+     * The rail row names the panel, in primary, two columns to the left — so a
+     * heading over a single facet's options repeats it. An offer magnitude had
+     * one for an hour of 2026-09-07, while the three were merged behind *All
+     * Offers* and a heading was the only thing telling the groups apart; with a
+     * row each it came off again, art and all.
      */
-    expect(panelContentHeight([{ panel: "range", optionCount: 4, headed: true }])).toBe(
-      4 * 52 + 43,
-    );
-    // No rule on a first group, and none on a lone one.
     expect(panelContentHeight([{ panel: "range", optionCount: 4 }])).toBe(4 * 52);
-    // A lone offer panel is nowhere near either fold, heading and all.
-    expect(needsSearch([{ panel: "range", optionCount: 4, headed: true }], 480)).toBe(false);
+    expect(panelContentHeight([{ panel: "checkbox", optionCount: 20 }])).toBe(20 * 52);
   });
 
   it("leaves every rail panel but Colour inside the fold", () => {

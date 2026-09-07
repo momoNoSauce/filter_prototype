@@ -1100,13 +1100,30 @@ vertical and fourteen inside one**:
 Last in the array is last in **both** states, the attribute block being
 `vertical: true` and arriving above them — measured, 9 rows then 14 with the
 sheet at the 640 cap in both. Two things carried over from the merge rather than
-being undone: the **typed boxes stay gone** (dropping them was its own
-instruction that morning, not a consequence of the merge), and **each offer
-panel still heads itself** with the offer's name and its chip art, alone as well
-as stacked, because an offer's bands are the one list in the app whose rows
-don't name themselves — `Under ₹100` says nothing about *what* is under ₹100,
-where `Black` and `Cotton` do. `headed` is a `PanelBlock` field now rather than
-"this panel has several facets", set from the expression the markup branches on.
+being undone. **The typed boxes came back**, hours later and on request —
+*"bring back the input range and similar behaviour for the three offers"*. They
+had gone with the merge, which had nowhere to put three pairs of them (the boxes
+are a panel lead, not a per-facet row), and the split gave them somewhere again.
+Similar means identical to Price, Margin and MOQ, which is what one
+`RANGE_FACETS` table buys — bands and boxes exclusive per facet, each disabling
+the other, an inverted pair refused on blur with a toast naming the facet.
+Measured: `₹150 – ₹400` on Cashback greys all four bands, badges the rail row 1
+and reads 42 results; inverting it reddens both boxes and says `Min cashback
+can't be higher than max`. All six band facets carry boxes again, and
+`typed: false` stays in the table with no user — the one word the detour needed.
+
+**The panel headings and their icons came off too**, on the follow-up — *"we
+don't need the icon and the text inside the offers, right?"* — and that is
+right: the rail row names each panel in primary two columns to the left, so a
+heading over one facet's options repeats it. They were kept for an hour on the
+argument that an offer's bands are the one list in the app whose rows don't name
+themselves, which held while three offers shared a panel and stopped holding
+when each got a row. So `headed` is `blocks.length > 1` again rather than a
+`PanelBlock` field, `OFFER_FACET_ICONS` is deleted, and the raised 15px heading
+survives where it is still drawn — A–D's Offers row, which stacks two facets.
+The art stays in `lib/filters/offerIcons.ts` with the chip strip as its only
+caller again: that is where a second surface should take it from, and the two
+PNGs logged as wanting vectors are one edit there.
 
 Fabric keeps its `FACETS` entry for A–D, which still show the row. The only way
 to reach it here is a hand-written `?fabric=cotton` — the same accepted case as
@@ -2582,7 +2599,7 @@ Ordered by consequence. None of these block a demo.
 8. **Accessibility**, if this becomes the reference build: filter rows use `aria-pressed` where `role="checkbox"` + `aria-checked` is correct; sheets don't trap focus; the scrim is a full-viewport `<button>` announced as a giant "Close".
 9. **Pagination dots under the set pills** imply snapping the free-scrolling row doesn't do.
 14. **Clear Filters resets Sort, in every variant.** `FilterScreen` commits `onApply(cleared, DEFAULT_SORT)` whether or not Sort is a row on that screen, so a sort set from A's pill or B's chip is cleared by a button labelled *Clear Filters* under a toast reading `All filters cleared` — and Sort is not a filter. Written deliberately for `/userjourney` on 2026-08-28, when Sort *was* on that screen; measured on 2026-09-03 and it was never scoped to that route. Two defensible answers — the button means "return this listing to its untouched state", or it means what it says and Sort keeps its value — and it is a designer's call, not a code one. Left as behaviour, and the decisions row now describes it accurately.
-13. **A typed range commits per keystroke, so its refusal state can't be reached.** Price Range, Margin on MRP and MOQ — six facets between 2026-09-03 and 2026-09-07, when the three offer magnitudes lost their boxes; written when Price was the only one. `edit()` in `RangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
+13. **A typed range commits per keystroke, so its refusal state can't be reached.** All six range facets — Price Range, Margin on MRP, MOQ and the three offer magnitudes, which lost their boxes for a few hours on 2026-09-07 and have them back; written when Price was the only one. Confirmed still live on 2026-09-07 against Cashback: `400` into min against a max of `400` commits `400-400` and the footer falls to `Show 0 results`, then typing `150` into max is correctly withheld — so the red boxes and the toast arrive over a count the *previous* keystroke already moved. `edit()` in `RangeInputs` writes to the draft on every keystroke the pair isn't inverted on, and `inverted()` returns false whenever either box is empty. So the first box filled always commits: typing `900` into an empty min commits `9-`, `90-`, then `900-`, and the footer falls to `Show 0 results` with a dot on Price Range before the max has been touched. Filling max first commits `-450` the same way. Every route into a filled inverted pair therefore leaves the facet already holding something, so the designed state — both boxes red, a toast naming the rule, and the count untouched at `Show 191 results` with Category the only dot — is unreachable in the current build. Found 2026-08-28 while drawing the Figma handoff, whose screen 05 shows that designed state. **The design is right and the control wants the fix:** hold a partial entry in local text and commit only on blur, once the pair is both complete and valid. The boxes already do exactly this for a *refused* pair — `edit` withholds `onChange` — so the change is widening that rule to cover a half-typed one.
 
 ## Facet imagery
 

@@ -211,10 +211,12 @@ function bucketId<T extends { id: string; min: number; max: number }>(
  * 2026-08-28, the other two from 2026-09-03, `controls.rangeInputs`); A–D show
  * the bands alone.
  *
- * **The three offer magnitudes carry bands only**, since 2026-09-07 and on
- * request — see `typed` below. They keep their place in this table because a
- * band is a band: what they lose is the two boxes and the two registry hooks
- * that exist to serve them.
+ * **All six take the boxes again** since 2026-09-07: the three offer
+ * magnitudes lost them that morning, when their rows merged into one *All
+ * Offers* panel with nowhere to put three pairs, and got them back the same
+ * evening once the rows split apart again — *"bring back the input range and
+ * similar behaviour for the three offers"*. Similar means identical: one
+ * table, one control, one exclusivity rule, one refusal toast.
  *
  * One table rather than six near-identical literals, the way
  * `PV_ATTRIBUTE_FACETS` is built: they differ only in the number they compare
@@ -251,11 +253,14 @@ const RANGE_FACETS: {
   buckets: { id: string; label: string; min: number; max: number }[];
   valueOf: (p: Product, sizes?: string[]) => number;
   /**
-   * `false` where the facet shows its bands **without** the typed boxes — the
-   * three offer magnitudes since 2026-09-07, when the three rows were merged
-   * into one *Offers* panel and the boxes were dropped with them. One panel
-   * carrying three facets has nowhere to put three pairs of boxes, and the
-   * request came with the merge.
+   * `false` where the facet shows its bands **without** the typed boxes.
+   *
+   * **Nothing sets it today**, and it is kept because this flipped twice on
+   * 2026-09-07: the three offer magnitudes lost their boxes when their rows
+   * merged into one panel — which had nowhere to put three pairs — and took
+   * them back when the rows split apart again hours later. A route or a facet
+   * that wants bands alone is one word, and the machinery below is what makes
+   * it one word.
    *
    * It also drops `accepts` and `matches`, which exist only to serve a typed
    * range: with no control able to produce `?cashback=100-200`, honouring one
@@ -299,30 +304,27 @@ const RANGE_FACETS: {
     label: "Cashback",
     buckets: CASHBACK_BUCKETS,
     valueOf: (p) => p.cashback ?? -1,
-    typed: false,
   },
   {
     id: "sellerOffer",
     label: "Seller Offer",
     buckets: SELLER_OFFER_BUCKETS,
     valueOf: (p) => p.sellerOfferPct ?? -1,
-    typed: false,
   },
   {
     id: "targetScheme",
     label: "SOLV Target Scheme",
     buckets: TARGET_SCHEME_BUCKETS,
     valueOf: (p) => p.targetScheme ?? -1,
-    typed: false,
   },
 ];
 
 /**
  * Which facets take a typed range — the panel and the exclusivity rule ask.
  *
- * A subset of `RANGE_FACETS` since 2026-09-07 rather than all of it: the three
- * offer magnitudes are bands only, so they are not in here, and the panel puts
- * no boxes on the row that carries them.
+ * All of `RANGE_FACETS` again since 2026-09-07 — the three offer magnitudes
+ * were bands only for the hours their rows were merged. It is still computed
+ * from the flag rather than hard-coded, so the subset case stays one word away.
  */
 export const TYPED_RANGE_FACET_IDS: Set<string> = new Set(
   RANGE_FACETS.filter((r) => r.typed !== false).map((r) => r.id),
@@ -781,12 +783,13 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  * that morning — one rail row can carry several facets, and the panel heads
  * each with its facet label, which was the sketch that came with the first
  * request — and the ask reversed: three types of offer, three rows, last of all
- * the filters. **They keep no typed boxes** (`typed: false` in
- * `RANGE_FACETS`): losing them was its own instruction in the first request,
- * not a consequence of the merge, so the split does not hand them back. Each
- * panel still heads itself with the offer's name and its chip art, which is the
- * one thing the merge is worth keeping — four rows reading `Under ₹100` say
- * nothing about *what* is under ₹100.
+ * the filters. **They carry the typed min/max again** — dropped that morning
+ * with the merge, which had nowhere to put three pairs of boxes, and asked back
+ * hours after the split: the same control Price, Margin and MOQ carry, from the
+ * same table, with the same exclusivity and the same refusal toast. What did
+ * *not* come back is the panel heading: the rail row names each panel in
+ * primary two columns to the left, so the offer's name and chip art inside it
+ * were repeating it.
  *
  * **The chips stay binary and this row does not replace them.** The chip asks
  * *is there one*, the row asks *how big*, on different facets — the chips
@@ -864,11 +867,12 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
    * way, which is what the request asks for and what an index-based insert
    * would have got wrong.
    *
-   * **Still bands only.** The typed boxes came off on the same day's first
-   * request (*"we can remove the input values for these items"*) and that was
-   * its own instruction rather than a consequence of the merge, so splitting
-   * the row back out does not hand them back. `typed: false` in
-   * `RANGE_FACETS`, which is also what keeps `?cashback=100-200` refused.
+   * **The typed min/max is back on all three** (2026-09-07, on request, hours
+   * after the split): boxes above the bands, exclusive with them, each
+   * disabling the other, an inverted pair refused on blur with a toast naming
+   * the facet — the same control Price, Margin and MOQ carry, from the same
+   * table. They had come off that morning with the merge, one panel having
+   * nowhere to put three pairs of boxes.
    *
    * **The chips stay binary and these rows do not replace them** — the chip
    * asks *is there one*, the row asks *how big*, on different facets, so the

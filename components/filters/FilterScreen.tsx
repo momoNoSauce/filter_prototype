@@ -28,7 +28,6 @@ import {
   type Selections,
   type SortId,
 } from "@/lib/filters/engine";
-import { OFFER_FACET_ICONS } from "@/lib/filters/offerIcons";
 import { SORT_ICONS } from "@/lib/filters/sortIcons";
 import {
   RANGE_INPUTS_H,
@@ -70,10 +69,19 @@ const RANGE_UNITS: Record<
   price: { symbol: "₹", name: "price per piece", noun: "price" },
   margin: { symbol: "%", name: "margin on MRP", noun: "margin", after: true },
   moq: { symbol: "pc", name: "order quantity in pieces", noun: "quantity", after: true },
-  // The three offer magnitudes had entries here from 2026-09-03 until
-  // 2026-09-07, when their rows merged into one *Offers* panel and lost the
-  // boxes with the merge — `typed: false` in `RANGE_FACETS`. Nothing reads a
-  // unit for a facet with no boxes; git history has the strings.
+  /*
+   * The offer magnitudes (2026-09-03), each in the unit its offer is quoted in:
+   * cashback and the scheme payout in rupees, the seller's own discount in
+   * percent. Same rule as above — ₹ leads its number, `%` and `pc` follow
+   * theirs, which is how all three are written outside software.
+   *
+   * They were removed on 2026-09-07 when the three rows merged into one panel
+   * that had nowhere to put three pairs of boxes, and restored hours later with
+   * the boxes when the rows split apart again.
+   */
+  cashback: { symbol: "₹", name: "cashback in rupees", noun: "cashback" },
+  sellerOffer: { symbol: "%", name: "seller offer in percent", noun: "seller offer", after: true },
+  targetScheme: { symbol: "₹", name: "target scheme payout in rupees", noun: "scheme payout" },
 };
 
 /**
@@ -411,8 +419,6 @@ export function FilterScreen({
     panelFacets.map(({ facet, options }) => ({
       panel: facet.panel,
       optionCount: options.length,
-      // The same condition the markup branches on — see `headed` below.
-      headed: panelFacets.length > 1 || facet.id in OFFER_FACET_ICONS,
     })),
     // The sheet's panel is shorter, so lists earn a field sooner there — and
     // *how* much shorter now moves with the rail, so it is computed from the
@@ -699,34 +705,34 @@ export function FilterScreen({
             const chosen = draft[facetId] ?? [];
 
             /*
-              **A headed, ruled group per facet** — every row that stacks more
-              than one (A–D's Offers row), and every offer magnitude even alone
-              (2026-09-07, second pass, when the merged *All Offers* row split
-              back into three).
-
-              **An offer panel heads itself.** Its bands read `Under ₹100`,
-              `₹100 – ₹200` — four rows that say nothing about *what* is under
-              ₹100, where every other panel in the app lists things that name
-              themselves (`Black`, `Cotton`, `Killer`). The offer's name and its
-              chip art at the top is the one part of the merge worth keeping,
-              and it is what the icons were asked for.
+              **A headed, ruled group per facet, where a panel stacks more than
+              one** — today only A–D's Offers row, which carries `hasOffer` and
+              `offers`.
 
               The heading was 13px bold `#767676` and was reported as not
-              prominent enough on that merged panel (2026-09-07): three groups
-              of near-identical band rows, and the only thing saying which
-              offer you were ticking set two sizes below the rows themselves
-              and in the palette's muted grey. It is now **15px on
-              `heading`** — the app's control-label size, so the section title
-              is not smaller than the options under it, and 16.6:1 against the
-              4.5:1 that grey was scraping past.
+              prominent enough (2026-09-07), on the merged *All Offers* panel
+              that existed for a few hours: three groups of near-identical band
+              rows, with the only thing saying which offer you were ticking set
+              two sizes below the rows themselves and in the palette's muted
+              grey. It is now **15px on `heading`** — the app's control-label
+              size, so a section title is not smaller than the options under
+              it, and 16.6:1 against the 4.5:1 that grey was scraping past.
 
-              **The rule above each group but the first** is the whiteboard's
-              own: the sketch drew the panel divided into three boxes. It sits
-              on the wrapper rather than the heading so it spans the panel
-              edge to edge, where a border on a `px-[14px]` heading would
-              inset with the text.
+              **The rule above each group but the first** is that panel's own
+              sketch, which drew three boxes. It sits on the wrapper rather
+              than the heading so it spans the panel edge to edge, where a
+              border on a `px-[14px]` heading would inset with the text.
+
+              **A lone panel is never headed**, including an offer's. It had
+              the offer's name and chip art for an hour of 2026-09-07, while
+              the three magnitudes were merged and a heading was the only thing
+              telling the groups apart; with a row each, the rail already names
+              the panel in primary two columns to the left, and the heading was
+              repeating it. `OFFER_FACET_ICONS` went with it — the art is still
+              in `lib/filters/offerIcons.ts`, which is where a panel that wants
+              it again should take it from.
             */
-            const headed = panelFacets.length > 1 || facetId in OFFER_FACET_ICONS;
+            const headed = panelFacets.length > 1;
 
             return (
               <div
@@ -736,24 +742,9 @@ export function FilterScreen({
                 }`}
               >
                 {headed && (
-                  <div className="flex items-center gap-[6px] px-[14px] pt-[14px] pb-[6px]">
-                    {/* The chip's own art, where the facet has any — so the
-                        heading over the cashback bands carries the wallet the
-                        buyer already met on the strip. A 20px box against a
-                        15px label: the chips draw the same files at 20 inside
-                        their 26px box, and the box equalises three different
-                        aspects the way `ChipIcon` does. A–D's Offers headings
-                        have no entry and draw none. */}
-                    {OFFER_FACET_ICONS[facetId] && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        alt=""
-                        className="size-[20px] shrink-0 object-contain"
-                        src={OFFER_FACET_ICONS[facetId]}
-                      />
-                    )}
-                    <p className="text-[15px] font-bold text-heading">{facet.label}</p>
-                  </div>
+                  <p className="px-[14px] pt-[14px] pb-[6px] text-[15px] font-bold text-heading">
+                    {facet.label}
+                  </p>
                 )}
 
                 {options.length === 0 ? (

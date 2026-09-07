@@ -94,23 +94,22 @@ several facets, and the panel heads each with its facet label, which was that
 request's own sketch) and the ask reversed the same day: three types of offer,
 three rows, at the foot. Last in the array, so they are last in **both** states
 — the five garment attributes are `vertical: true` and arrive above them.
-**They carry no typed boxes** (`typed: false`), and no `accepts`/`matches` with
-them, so `?cashback=100-200` is refused: dropping the boxes was its own
-instruction in that morning's request, not a consequence of the merge, so the
-split doesn't hand them back.
+**They carry the typed min/max again** — dropped that morning with the merge,
+which had nowhere to put three pairs of boxes, and asked back hours after the
+split: the same control Price, Margin and MOQ carry, from the same table, with
+the same exclusivity and the same refusal toast.
 
-**A panel heads itself when it stacks several facets *or* is an offer's** —
-15px bold on `heading`, the facet's own icon at 20px, and a hairline rule above
-each group but the first (2026-09-07, on the report that 13px bold `#767676`
-read as not prominent: it set two sizes *below* the rows it labelled). An offer
-panel heads itself even alone, because its bands are the one list in the app
-whose rows don't name themselves — `Under ₹100` says nothing about *what* is
-under ₹100. Art comes from `lib/filters/offerIcons.ts`, the chip strip's own
-files, so the buyer meets one wallet in both places and the two PNGs that want
-vectors are one edit. **`FACET_HEADING_H` is 43, measured**, and `headed` is a
-`PanelBlock` field set from the same expression the markup branches on. A–D's
-Offers panel takes the type and the rule and draws no icons, its two headings
-being a catch-all and a list of five different offers.
+**Only a panel that stacks several facets is headed** — today just A–D's Offers
+row (`hasOffer` + `offers`). The heading is 15px bold on `heading` with a
+hairline rule above each group but the first, raised on 2026-09-07 from 13px
+bold `#767676`, which set two sizes *below* the rows it labelled;
+**`FACET_HEADING_H` is 43, measured**. A **lone panel is never headed**,
+including an offer's: the rail row already names it in primary two columns to
+the left, so a heading repeats it. The three offer panels carried the offer's
+name and its chip art for an hour that day, while all three were merged and a
+heading was the only thing telling the groups apart. The art stays in
+`lib/filters/offerIcons.ts` — the chip strip is its only caller again, and it is
+where a panel that wants it back should take it from.
 
 Its Filters screen is a **bottom sheet** rather than full-bleed, so the listing
 stays visible behind it. **Its height follows the rail** (`sheetHeightPct`),
@@ -125,15 +124,20 @@ bands never earns a field** however tall it runs: the field searches labels,
 and the merged Offers panel's 720px of `₹200 – ₹400` is a vocabulary you read
 rather than hunt through. A–D are untouched.
 
-Its **typed ranges** are **Price Range, Margin on MRP and MOQ**
-(`?price=150-450`, `?margin=60-`, `?moq=5-12`), a min/max above their bands.
+Its **typed ranges** are **all six band facets** — Price Range, Margin on MRP,
+MOQ, Cashback, Seller Offer and SOLV Target Scheme (`?price=150-450`,
+`?margin=60-`, `?moq=5-12`, `?cashback=100-200`, `?sellerOffer=10-`) — a min/max
+above each one's bands.
 Per facet the two controls are exclusive, and each disables the other: both are
 values on one facet, where they would otherwise OR into a wider result. An
 inverted range is refused rather than filtered, with a toast on blur naming
 that facet. Every band facet is built from **one table** (`RANGE_FACETS` in
 `facets.ts`) differing only in the number it compares and, in the UI, the unit
-beside the box — ₹ before the number, `%` and `pc` after; the three offer
-magnitudes are in that table with `typed: false`. The boxes cost the facet
+beside the box — ₹ before the number, `%` and `pc` after. `typed: false` there
+is a facet with bands and no boxes; **nothing sets it today**, and it is kept
+because the three offer magnitudes flipped twice on 2026-09-07 — off with the
+merge that gave them one shared panel, back on when the rows split again. The
+boxes cost the facet
 registry two optional hooks: **`matches`** overrides the default set-membership
 test, and **`accepts`** widens `parseSelections`'s id validation. **A facet
 that overrides `matches` needs `accepts` too** — without it the selection works

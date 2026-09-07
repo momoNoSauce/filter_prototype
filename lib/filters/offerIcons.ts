@@ -1,17 +1,19 @@
 /**
  * The offers' art, in one place.
  *
- * Split out of `ContextChips` on 2026-09-07, for the reason `SORT_ICONS` moved
- * to `sortIcons.ts` on 08-28: the chip strip is no longer the only surface that
- * draws these. The Filters panel's merged *All Offers* row heads each of its
- * three band groups with the same icon the strip's chip carries, so a buyer
- * ticking `₹200 – ₹400` under a wallet is looking at the control they already
- * met at the top of the listing.
+ * Split out of `ContextChips` on 2026-09-07, when the Filters panel's merged
+ * *All Offers* row headed each of its three band groups with the same icon the
+ * strip's chip carries — the `SORT_ICONS` precedent, a table two surfaces draw.
+ * That panel lasted an hour: the magnitudes went back to a row each, the rail
+ * label names each panel, and the headings and their art came off with the
+ * merge.
  *
- * One set of file paths, two lookups over it. `cashback.png` (48×37) and
- * `seller-offer.png` (48×48) have almost no headroom above the 20px they draw
- * at and are logged as wanting vectors — when they arrive, this is the one file
- * to edit.
+ * **The chip strip is the only caller again, and this stays the art's one
+ * home.** It is data rather than markup, and the paths are what a second
+ * surface would need: `cashback.png` (48×37) and `seller-offer.png` (48×48)
+ * have almost no headroom above the 20px they draw at and are logged as wanting
+ * vectors, so when those arrive this is the one file to edit. The
+ * facet-keyed lookup the panel used is in git history.
  *
  * They live in `public/offers/`, not `public/figma/`: they were supplied rather
  * than exported from a frame, and a folder shouldn't imply an origin the file
@@ -53,18 +55,3 @@ export const OFFER_CHIP_ICONS: Record<string, string> = {
 
 /** Price opens a sheet rather than toggling a value, and keeps its icon in both states. */
 export const PRICE_CHIP_ICON = ART.price;
-
-/**
- * The three offer **magnitude** facets, for the *All Offers* panel's headings.
- *
- * Keyed by facet id alone: these are numbers on their own facets, not options
- * on a shared one. `hasOffer` and `offers` are deliberately absent — they are
- * A–D's Offers panel, where one heading is a catch-all and the other is a list
- * of five different offers, so a single icon would be labelling the wrong
- * thing. Text-only headings there; a lookup miss simply draws no art.
- */
-export const OFFER_FACET_ICONS: Record<string, string> = {
-  cashback: ART.cashback,
-  sellerOffer: ART.sellerOffer,
-  targetScheme: ART.targetScheme,
-};

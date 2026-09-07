@@ -184,16 +184,18 @@ export const RANGE_INPUTS_H = 62;
  * heads three groups of bands.
  *
  * It was 32 — a 12px line in 13px bold `#767676` — until 2026-09-07, when the
- * headings on that merged panel were reported as not prominent enough. At 15px
- * on `heading`, with the offer's own 20px icon beside it, the row is 22.5px and
- * the block 43.
+ * headings on the merged *All Offers* panel were reported as not prominent
+ * enough. At 15px on `heading` the row is 22.5px and the block 43. (That panel
+ * carried the offer's 20px icon beside the label for an hour, which fits the
+ * same 22.5 — the row is the taller of the two.)
  */
 export const FACET_HEADING_H = 43;
 
 /**
  * The rule and the space above every group but the first — `mt-[8px]` plus a
  * 1px `hairline` border (2026-09-07). The whiteboard drew the merged *All
- * Offers* panel as three boxes, and this is that line.
+ * Offers* panel as three boxes, and this is that line; A–D's Offers panel is
+ * the one that draws it now.
  */
 export const FACET_GROUP_RULE_H = 9;
 
@@ -211,14 +213,6 @@ export type PanelBlock = {
    * make the remainder fit.
    */
   optionCount: number;
-  /**
-   * Whether this block draws a heading. Defaults to "the panel stacks more than
-   * one facet", which is what decided it until 2026-09-07 — since then an offer
-   * magnitude heads its own panel alone, its bands being the one list in the
-   * app whose rows don't name themselves. Set from the same expression the
-   * markup branches on, so the two can't drift.
-   */
-  headed?: boolean;
 };
 
 /**
@@ -227,14 +221,13 @@ export type PanelBlock = {
  * counting it would push a list that fits exactly onto the wrong side.
  */
 export function panelContentHeight(blocks: PanelBlock[]): number {
-  const many = blocks.length > 1;
+  const headed = blocks.length > 1;
   return blocks.reduce((total, block, i) => {
     const rowH =
       block.panel === "thumb" ? THUMB_ROW_H : block.panel === "tile" ? 0 : OPTION_ROW_H;
     const body = rowH
       ? block.optionCount * rowH
       : Math.ceil(block.optionCount / TILES_PER_ROW) * TILE_ROW_H;
-    const headed = block.headed ?? many;
     const chrome = headed ? FACET_HEADING_H + (i > 0 ? FACET_GROUP_RULE_H : 0) : 0;
     return total + body + chrome;
   }, 0);

@@ -1072,36 +1072,49 @@ describe("variants C and D — the page is the vertical", () => {
       .toBe(true);
   });
 
-  it("refuses a typed range on a facet whose boxes are gone", () => {
+  it("round-trips a typed range on all six band facets", () => {
     /*
-     * The boxes left the three offer magnitudes on 2026-09-07, and `accepts`
-     * and `matches` went with them: with no control able to type
-     * `?cashback=100-200`, honouring one from a hand-written URL would be a
-     * filter nothing on the screen can show or undo — the standing trap. The
-     * bands are unaffected, being ordinary options.
+     * `matches` without `accepts` is the trap: it would work in-session and
+     * vanish on reload, which is how that pairing was found in August.
      *
-     * The three numeric facets keep both, which is what makes this a change of
-     * scope rather than a retreat: Price, Margin and MOQ still round-trip.
+     * All six carry the boxes again as of 2026-09-07. The three offer
+     * magnitudes had them from 2026-09-03, lost them that morning when their
+     * rows merged into one panel with nowhere to put three pairs, and took them
+     * back hours after the rows split apart — *"bring back the input range and
+     * similar behaviour for the three offers"*. Similar means identical, which
+     * is what one `RANGE_FACETS` table buys.
      */
     const round = (q: string) => parseSelections(new URLSearchParams(q));
-    expect(round("cashback=100-200")).toEqual({});
-    expect(round("sellerOffer=10-")).toEqual({});
-    expect(round("targetScheme=1000-2000")).toEqual({});
-    expect(round("cashback=junk")).toEqual({});
 
-    // Bands, on all three, still survive a reload.
-    expect(round("cashback=cb-200")).toEqual({ cashback: ["cb-200"] });
-    expect(round("targetScheme=ts-1k")).toEqual({ targetScheme: ["ts-1k"] });
+    expect([...TYPED_RANGE_FACET_IDS].sort()).toEqual([
+      "cashback",
+      "margin",
+      "moq",
+      "price",
+      "sellerOffer",
+      "targetScheme",
+    ]);
 
-    // And the typed pair is still exactly Price, Margin on MRP and MOQ.
-    expect([...TYPED_RANGE_FACET_IDS].sort()).toEqual(["margin", "moq", "price"]);
     expect(round("price=150-450")).toEqual({ price: ["150-450"] });
     expect(round("margin=60-")).toEqual({ margin: ["60-"] });
     expect(round("moq=5-12")).toEqual({ moq: ["5-12"] });
+    expect(round("cashback=100-200")).toEqual({ cashback: ["100-200"] });
+    expect(round("sellerOffer=10-")).toEqual({ sellerOffer: ["10-"] });
+    expect(round("targetScheme=-2000")).toEqual({ targetScheme: ["-2000"] });
 
-    // In-session too: an id nothing can type matches nothing rather than
-    // filtering, so there is no path where it half-works.
-    expect(applyFilters(getKartikCatalog(), { cashback: ["300-"] })).toEqual([]);
+    // Bands still survive a reload, and nonsense still doesn't — the guard is
+    // widened by `accepts`, not dropped.
+    expect(round("cashback=cb-200")).toEqual({ cashback: ["cb-200"] });
+    expect(round("cashback=junk")).toEqual({});
+
+    // And a typed range matches the number, not a bucket.
+    const kartik = getKartikCatalog();
+    const typed = applyFilters(kartik, { cashback: ["300-"] });
+    expect(typed.length).toBeGreaterThan(0);
+    expect(typed.every((p) => p.cashback! >= 300)).toBe(true);
+    // An inverted pair is honest rather than an error: the control refuses it
+    // on blur, and a hand-written one matches nothing.
+    expect(applyFilters(kartik, { sellerOffer: ["20-10"] })).toEqual([]);
   });
 
   it("ANDs an offer chip with the magnitude of that offer", () => {
