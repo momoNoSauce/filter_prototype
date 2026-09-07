@@ -55,3 +55,11 @@ next-env.d.ts
 # Live-app screengrabs the /userjourney route was measured from.
 # Same class as /design/ — reference source, nothing in the app serves them.
 /userflow/
+
+# Throwaway measurement scripts. The /userjourney frames are re-measured off the
+# running app rather than eyeballed, which means a lot of one-shot Playwright
+# scripts that have to live in the repo root for `import { chromium }` to
+# resolve. They are working notes, not source, and six were swept into a commit
+# on 2026-09-07 by a pass that ran `git add -A` while several were on disk.
+__*.mjs
+_*.mjs
