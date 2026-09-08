@@ -339,8 +339,16 @@ as it already does for the product card.
   hid it here while the number would have been the screengrab's fixed ₹717;
   the bar computes its own total since 2026-08-21 and the constant is deleted —
   see *Adding to the basket*.
-- The **seller header scrolls away** with the listing (it renders *inside* the
-  scroller); the app bar and chip strip stay fixed.
+- ~~The **seller header scrolls away** with the listing~~ — **removed
+  2026-09-08 on request.** The storefront tile, `Kartik Exporters` and an inert
+  `More info ›` restated an app bar that already names the seller in caps, on a
+  route that is one seller's storefront reached through his own banner, and cost
+  ~66px of the fold before the first card. It rendered *inside* the scroller, so
+  it also took the list's 12px top padding with it when it arrived — that is
+  back now, being the screengrab's own measurement, and the first card clears
+  the chip strip by it. `/journey/storefront.png` stays in `public/` and is drawn
+  by nothing: a screengrab crop is not regenerable. The app bar and chip strip
+  are unchanged and still fixed.
 - **`Order Again` and `Top Brands` are built** (2026-08-20), so the home screen is
   now the screengrab end to end. Both are **inert** — the products are Magic Fit's
   and match nothing in either catalog — and both are `overflow-x-hidden`, like the

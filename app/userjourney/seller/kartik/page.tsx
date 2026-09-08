@@ -1,5 +1,4 @@
 import { PlpScreen } from "@/components/plp/PlpScreen";
-import { SellerHeader } from "@/components/journey/StorefrontChrome";
 import { KARTIK, getKartikCatalog } from "@/lib/catalog/kartik";
 
 /**
@@ -112,14 +111,14 @@ export default function Page() {
       // No Share on this bar in the screengrab, and dropping it is also what
       // lets `KARTIK EXPORTERS` fit at 20px instead of truncating.
       appBar={{ showShare: false, cartBadge: 3 }}
-      aboveList={<SellerHeader name={KARTIK.name} />}
       // 9px inset and a 14px gap on `#f7f7f7`, all measured off the screengrab
-      // at 3× — against the shared card's 16px on white. **No top padding**:
-      // the seller block is the first thing in the scroller and is white, so
-      // 12px of `#f7f7f7` above it read as a stray band between it and the chip
-      // strip rather than as breathing room. The first *card* still clears it,
-      // the header's own `mb` plus the list gap sitting between the two.
-      listClassName="gap-[14px] bg-[#f7f7f7] px-[9px] pb-[12px]"
+      // at 3× — against the shared card's 16px on white. **The 12px top
+      // padding is back** (2026-09-08): it was dropped because the seller block
+      // was the first thing in the scroller and white, so `#f7f7f7` above it
+      // read as a stray band. With that block gone the first card would butt
+      // straight against the chip strip, and 12px is the screengrab's own
+      // measurement.
+      listClassName="gap-[14px] bg-[#f7f7f7] px-[9px] pt-[12px] pb-[12px]"
     />
   );
 }

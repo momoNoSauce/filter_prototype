@@ -1,37 +1,18 @@
 const inr = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
-/**
- * The seller block under the app bar — storefront tile, name, `More info ›`.
- *
- * Note the name appears in **three casings across two screens** of the live app:
- * `Kartik exporters` on the home banner, `KARTIK EXPORTERS` in the app bar, and
- * `Kartik Exporters` here. Reproduced rather than harmonised, per the
- * instruction to follow the quirks; worth raising with the designer.
- *
- * The tile is a crop from the screengrab, not a redraw — a lavender square with
- * a purple warehouse glyph, which no icon in `public/figma/` supplies.
+/*
+ * `SellerHeader` was here — the storefront tile, `Kartik Exporters` and an inert
+ * `More info ›`, bleeding past the list's inset so its white band reached both
+ * frame edges. **Removed on 2026-09-08 on request**: the app bar already names
+ * the seller, in caps, on a route that is one seller's storefront and reached
+ * through his own banner, so the block restated it and cost ~66px of the fold
+ * before the first card. `/journey/storefront.png` is left in place, being a
+ * screengrab crop rather than something regenerable, and is now drawn by
+ * nothing. It also carried the note that the live app writes the name three
+ * ways across two screens — `Kartik exporters` on the banner, `KARTIK
+ * EXPORTERS` in the bar, `Kartik Exporters` here — which is now two ways, both
+ * still reproduced rather than harmonised.
  */
-export function SellerHeader({ name }: { name: string }) {
-  return (
-    // Bleeds past the list's 9px inset so its white band reaches both frame
-    // edges, as the screengrab has it. It lives *inside* the scroller — see
-    // `PlpScreen` — so it needs the negative margin the cards don't.
-    <div className="-mx-[9px] mb-[2px] flex w-[calc(100%+18px)] shrink-0 items-center gap-[16px] bg-white px-[9px] py-[10px]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        alt=""
-        className="size-[46px] shrink-0 rounded-[4px]"
-        src="/journey/storefront.png"
-      />
-      <div className="flex min-w-0 flex-col items-start gap-[2px]">
-        <p className="truncate text-[18px] leading-[22px] font-bold text-black">{name}</p>
-        {/* Inert: there is no "More info" screengrab, so it renders and doesn't
-            navigate rather than inventing a sheet the real app may not have. */}
-        <p className="text-[15px] leading-[18px] font-medium text-primary">More info ›</p>
-      </div>
-    </div>
-  );
-}
 
 /**
  * The bar's height, and **the one place it is declared**: the slots that hide it

@@ -997,6 +997,25 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-08 — the storefront's seller header is gone
+
+Removed on request. The block under the chip strip — a storefront tile,
+`Kartik Exporters` and an inert `More info ›` — restated an app bar that already
+reads `KARTIK EXPORTERS`, on a route reached by tapping Kartik's own banner, and
+spent ~66px of the fold doing it. The listing now starts on its first card.
+
+Two things it took with it. The list's **12px top padding is back**: it had been
+dropped because the header was the first thing in the scroller and white, so
+`#f7f7f7` above it read as a stray band — with the header gone the first card
+would butt against the chip strip, and 12px is the screengrab's own figure
+(measured 12 after the change). And the note that the live app writes the seller
+three ways across two screens is down to **two** — `Kartik exporters` on the
+banner, `KARTIK EXPORTERS` in the bar — both still reproduced rather than
+harmonised.
+
+`/journey/storefront.png` is left in `public/` and is now drawn by nothing: it is
+a crop from a screengrab, not something regenerable.
+
 ### 2026-09-08 — Seller Offer's chip icon, and the root swept
 
 **A supplied icon replaces the one that was standing in.** `seller-offer.png` is
