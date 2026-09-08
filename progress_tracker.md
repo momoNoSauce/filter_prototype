@@ -997,6 +997,25 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-08 — Category and Brands rows lose the checkbox
+
+On request: *"remove the checkbox, make it a box that becomes blue and
+selected"*. A selected row now fills `primary/subtle` with a 1px `primary`
+border and sets its name and count in primary bold — the offer chips' selected
+state at row scale, and the tile grid's own three signals (ring, veil, bold
+primary label) minus the tick.
+
+Three answers settled before building, since a checkbox is the ordinary signal
+for a set: the **whole row** fills rather than just the picture; **Brands takes
+it too**, the two having shared one row design since the grid; and it **stays
+multi-select**.
+
+Measured at 360px: the row is 60px in both states, so `THUMB_ROW_H` holds — the
+border is on the row either way and merely transparent when unselected, which is
+also what stops anything shifting on tap. The picture sits at the row's own 14px
+inset now, the checkbox and its 8px gap having been what pushed it to 42, so the
+name has 28px more width and wraps later.
+
 ### 2026-09-08 — Size and Colour leave the journey's rail
 
 Dropped on request, so that rail is **seven rows outside a vertical and twelve

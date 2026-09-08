@@ -79,11 +79,22 @@ export function OptionRow({
  * with room to spare. `panelFit` carries it as `THUMB_ROW_H` — a height in the
  * markup with no figure there is what that module exists to prevent.
  *
- * **The checkbox carries the selection, not a ring or a veil.** The tile needed
- * both because it had no box; here the row is the same shape as every other
- * multi-select row on the screen, so it states itself the same way — box
- * filled, label primary. Colour's dot is the precedent: a leading ornament that
- * doesn't restate what the box already says.
+ * **The row itself carries the selection, and there is no checkbox**
+ * (2026-09-08, on request: *"remove the checkbox, make it a box that becomes
+ * blue and selected"*). Selected is `primary/subtle` behind the whole row, a
+ * 1px `primary` border, and the name and count in primary bold — the offer
+ * chips' selected state at row scale, and the same three signals the tile grid
+ * used before it (ring, veil, bold primary label) minus the tick.
+ *
+ * Three notes on making that not move anything. **The border is on the row in
+ * both states**, transparent when unselected, so nothing shifts by a pixel as
+ * it is tapped; with `box-sizing: border-box` the row is 60px either way and
+ * `panelFit`'s `THUMB_ROW_H` holds. **The picture moves to the row's own
+ * 14px inset**, the checkbox and its 8px gap having been what pushed it to 42 —
+ * so the name gets 28px more width and wraps later. And **it stays
+ * multi-select**: several rows can be blue at once, confirmed on the request.
+ * A checkbox is the ordinary signal for that, which is why it was worth asking
+ * before removing it.
  *
  * Brands have no logos — Clearbit is retired and Wikimedia returned unrelated
  * files for seven of eight — so their box stays the frame's flat `#d9d9d9`, as
@@ -103,14 +114,15 @@ export function ThumbRow({
     <button
       onClick={onToggle}
       aria-pressed={selected}
-      className="flex h-[60px] w-full shrink-0 cursor-pointer items-center pr-[16px] pl-[14px] text-left"
+      className={`flex h-[60px] w-full shrink-0 cursor-pointer items-center rounded-[8px] border pr-[16px] pl-[14px] text-left ${
+        selected ? "border-primary bg-primary-subtle" : "border-transparent"
+      }`}
     >
-      <Checkbox checked={selected} />
       <span
         // The tile's own corner, kept proportional: 9.333 of 56 is 16.667%,
         // which on a 44px box is 7.33 — so the two layouts round their pictures
         // by the same rule rather than by two hand-picked radii.
-        className="ml-[8px] size-[44px] shrink-0 overflow-hidden rounded-[16.667%] bg-[#d9d9d9]"
+        className="size-[44px] shrink-0 overflow-hidden rounded-[16.667%] bg-[#d9d9d9]"
       >
         {option.image && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -131,8 +143,8 @@ export function ThumbRow({
         height doesn't move and `panelFit`'s figure holds.
       */}
       <span
-        className={`ml-[8px] line-clamp-2 min-w-0 flex-1 text-[15px] leading-[20px] ${
-          selected ? "font-medium text-primary" : "text-[#323232]"
+        className={`ml-[12px] line-clamp-2 min-w-0 flex-1 text-[15px] leading-[20px] ${
+          selected ? "font-bold text-primary" : "text-[#323232]"
         }`}
       >
         {option.label} ({option.count})

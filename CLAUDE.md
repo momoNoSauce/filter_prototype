@@ -207,8 +207,12 @@ declares `valuesOf(product, sizes?) → string[]`, so thumbnail rows, checkbox
 lists, range buckets and multi-valued delivery windows share one code path.
 
 **Category and Brands are a column of rows**, not the frame's tile grid, since
-2026-09-03 — `panel: "thumb"` and `ThumbRow`: checkbox, 44px picture, then the
-name and count wrapped to two lines. Three tiles across a 240px panel gave the
+2026-09-03 — `panel: "thumb"` and `ThumbRow`: a 44px picture, then the name and
+count wrapped to two lines. **No checkbox since 2026-09-08** — the row itself
+fills `primary/subtle` with a 1px `primary` border and its label in primary
+bold, still multi-select. The border sits on the row in both states,
+transparent when unselected, so the 60px `THUMB_ROW_H` holds and nothing shifts
+on tap. Three tiles across a 240px panel gave the
 name ~72px, and one truncated line made *Men's Casual Shirts* and *Men's Casual
 T-Shirts* both read `Men's Casu…`. `TileGrid` is still there with no caller.
 
