@@ -176,7 +176,7 @@ const CASHBACK_BUCKETS = [
 ];
 
 const SELLER_OFFER_BUCKETS = [
-  { id: "so-10", label: "Under 10%", min: 0, max: 9 },
+  { id: "so-10", label: "Upto 10%", min: 0, max: 9 },
   { id: "so-15", label: "10% – 15%", min: 10, max: 15 },
   { id: "so-20", label: "15% – 20%", min: 16, max: 20 },
   { id: "so-max", label: "20% & above", min: 21, max: Infinity },
@@ -190,12 +190,28 @@ const TARGET_SCHEME_BUCKETS = [
 ];
 
 const MARGIN_BUCKETS = [
-  { id: "m-30", label: "Under 30%", min: 0, max: 29 },
+  { id: "m-30", label: "Upto 30%", min: 0, max: 29 },
   { id: "m-45", label: "30% – 45%", min: 30, max: 44 },
   { id: "m-60", label: "45% – 60%", min: 45, max: 59 },
   { id: "m-max", label: "60% & above", min: 60, max: Infinity },
 ];
 
+/**
+ * **A percentage's first bucket reads `Upto X`, never `Under X`** (2026-09-08,
+ * on request: *"it's never Under 10%, it's Upto 10%"* — and, on the correction
+ * that followed, **percentages only**). So Seller Offer and Margin on MRP say
+ * `Upto 10%` and `Upto 30%`, while the three money bands keep `Under ₹200`,
+ * `Under ₹100`, `Under ₹500` and MOQ keeps `Up to 4 pc`.
+ *
+ * A rate and an amount are read differently: a discount is quoted as a ceiling
+ * the seller might reach — *upto* 10% off — where a price is a threshold you
+ * stay under. `Upto` closed up is the Indian retail idiom, and the standing
+ * rule here is that the live app's vocabulary wins over a tidier one; the
+ * product card sets `MRP/PC` beside `SET of:` for the same reason.
+ *
+ * **No band's arithmetic moved.** `Upto 10%` is still 0–9, so every documented
+ * count is untouched — this is a copy change on two labels.
+ */
 function bucketId<T extends { id: string; min: number; max: number }>(
   buckets: T[],
   value: number,
