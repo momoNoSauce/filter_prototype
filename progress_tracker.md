@@ -1010,11 +1010,20 @@ for a set: the **whole row** fills rather than just the picture; **Brands takes
 it too**, the two having shared one row design since the grid; and it **stays
 multi-select**.
 
-Measured at 360px: the row is 60px in both states, so `THUMB_ROW_H` holds — the
-border is on the row either way and merely transparent when unselected, which is
-also what stops anything shifting on tap. The picture sits at the row's own 14px
-inset now, the checkbox and its 8px gap having been what pushed it to 42, so the
-name has 28px more width and wraps later.
+**The inset took two goes.** It shipped edge to edge, which read as a band
+across the screen rather than a box you picked — a fill touching the rail's
+divider on one side and the frame on the other. Inset 8px horizontally, two
+selected rows then merged into one taller band, so the box also took 4px top and
+bottom: **8px between boxes, matching the 8px beside them**, with 8px of padding
+inside for `padding | picture | name | padding`.
+
+Measured at 360px: the box is 60px with 8px gaps all round, the picture 17px in
+(8 margin + 8 padding + 1 border) where the checkbox used to push it to 42, and
+two adjacent selections clearly separate. The row's footprint is a flat 68px —
+flex children don't collapse margins — so `THUMB_ROW_H` went 60 → 68 and the
+search-field thresholds with it: 11 rows full-bleed rather than 12, 8 in the
+sheet rather than 9. Nothing shifts on tap, the margin, padding and border all
+being on the row in both states with only the border's colour changing.
 
 ### 2026-09-08 — Size and Colour leave the journey's rail
 

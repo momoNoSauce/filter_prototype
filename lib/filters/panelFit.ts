@@ -141,10 +141,15 @@ export function sheetPanelViewport(pct: number): number {
 export const OPTION_ROW_H = 52;
 
 /**
- * `ThumbRow` — `h-[60px]`: a 44px thumbnail with 8px above and below. Category
- * and Brands, since 2026-09-03.
+ * `ThumbRow` — Category and Brands, since 2026-09-03.
+ *
+ * **68**: a 60px box (a 44px thumbnail with 8px above and below) plus the
+ * `my-[4px]` it gained on 2026-09-08, when the row became a box that fills
+ * rather than a row with a checkbox and needed air around it. Flex children
+ * don't collapse margins, so every row occupies the full 68 — which is what
+ * moved the thresholds below from 12 rows to 11, and from 9 to 8 in the sheet.
  */
-export const THUMB_ROW_H = 60;
+export const THUMB_ROW_H = 68;
 
 /**
  * `TileGrid` — **105px** cells, three across: a 56px tile, a 4px gap and a
@@ -236,9 +241,10 @@ export function panelContentHeight(blocks: PanelBlock[]): number {
 /**
  * Whether the panel earns a search field.
  *
- * At the full-bleed 690 that is **14 checkbox rows**, **12 thumbnail rows** or
+ * At the full-bleed 690 that is **14 checkbox rows**, **11 thumbnail rows** or
  * **19 tiles** — 13 checkbox rows come to 686px against the 690 the panel has,
- * and the fourteenth pushes it over. In the 530px sheet it is **11 rows**, **9
+ * and the fourteenth pushes it over; ten thumbnail rows come to exactly 690 and
+ * the eleventh is one too many. In the 530px sheet it is **11 rows**, **8
  * thumbnail rows** or **13 tiles**. A test pins all of them, so changing a row
  * height in the markup without changing it here fails loudly rather than moving
  * a field by one row.

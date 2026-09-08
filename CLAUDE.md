@@ -210,9 +210,11 @@ lists, range buckets and multi-valued delivery windows share one code path.
 2026-09-03 — `panel: "thumb"` and `ThumbRow`: a 44px picture, then the name and
 count wrapped to two lines. **No checkbox since 2026-09-08** — the row itself
 fills `primary/subtle` with a 1px `primary` border and its label in primary
-bold, still multi-select. The border sits on the row in both states,
-transparent when unselected, so the 60px `THUMB_ROW_H` holds and nothing shifts
-on tap. Three tiles across a 240px panel gave the
+bold, still multi-select. **The box is inset 8px on every side** — 8 between
+two boxes as well, so the air around one reads even — with 8px of padding
+inside it, and the border sits on the row in both states, merely transparent
+when unselected, so nothing shifts on tap. Flex margins don't collapse, so a
+row's footprint is a flat **68px** and that is `THUMB_ROW_H`. Three tiles across a 240px panel gave the
 name ~72px, and one truncated line made *Men's Casual Shirts* and *Men's Casual
 T-Shirts* both read `Men's Casu…`. `TileGrid` is still there with no caller.
 

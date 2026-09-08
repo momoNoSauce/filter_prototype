@@ -49,16 +49,18 @@ describe("the search field is earned, not declared", () => {
     expect(needsSearch([{ panel: "tile", optionCount: 19 }])).toBe(true);
   });
 
-  it("puts the threshold at 12 thumbnail rows", () => {
-    // Category and Brands since 2026-09-03: one 60px row per option, so 11
-    // fit the 690px panel (10 + 660) and the twelfth doesn't. Neither facet
-    // gets near it — seven categories and ten brands — so the field is
-    // theoretical, exactly as the tile thresholds were.
-    expect(needsSearch([{ panel: "thumb", optionCount: 11 }])).toBe(false);
-    expect(needsSearch([{ panel: "thumb", optionCount: 12 }])).toBe(true);
+  it("puts the threshold at 11 thumbnail rows", () => {
+    // Category and Brands: a 68px row per option since 2026-09-08, so ten come
+    // to exactly the 690 the panel has (10 + 680) and the eleventh is one too
+    // many. Neither facet gets near it — seven categories and ten brands — so
+    // the field is theoretical, exactly as the tile thresholds are.
+    expect(needsSearch([{ panel: "thumb", optionCount: 10 }])).toBe(false);
+    expect(needsSearch([{ panel: "thumb", optionCount: 11 }])).toBe(true);
 
-    // A row is 60px, not `OPTION_ROW_H`'s 52 — the 44px thumbnail sets it.
-    expect(panelContentHeight([{ panel: "thumb", optionCount: 5 }])).toBe(5 * 60);
+    // 68, not `OPTION_ROW_H`'s 52: a 44px thumbnail with 8px above and below
+    // makes the box 60, and the box carries 4px of margin top and bottom so
+    // two selected rows don't merge into one band.
+    expect(panelContentHeight([{ panel: "thumb", optionCount: 5 }])).toBe(5 * 68);
   });
 
   it("charges a stacked panel for its headings", () => {
@@ -217,12 +219,12 @@ describe("the sheet presentation's shorter fold", () => {
     expect(needsSearch(tiles(19))).toBe(true);
   });
 
-  it("takes 9 thumbnail rows, where the full-bleed panel takes 12", () => {
+  it("takes 8 thumbnail rows, where the full-bleed panel takes 11", () => {
     const thumbs = (n: number) => [{ panel: "thumb" as const, optionCount: n }];
-    expect(needsSearch(thumbs(8), SHEET_PANEL_VIEWPORT)).toBe(false);
-    expect(needsSearch(thumbs(9), SHEET_PANEL_VIEWPORT)).toBe(true);
-    expect(needsSearch(thumbs(11))).toBe(false);
-    expect(needsSearch(thumbs(12))).toBe(true);
+    expect(needsSearch(thumbs(7), SHEET_PANEL_VIEWPORT)).toBe(false);
+    expect(needsSearch(thumbs(8), SHEET_PANEL_VIEWPORT)).toBe(true);
+    expect(needsSearch(thumbs(10))).toBe(false);
+    expect(needsSearch(thumbs(11))).toBe(true);
   });
 
   it("sizes the sheet to its rail, and stops at 80%", () => {

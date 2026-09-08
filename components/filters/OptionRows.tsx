@@ -86,15 +86,27 @@ export function OptionRow({
  * chips' selected state at row scale, and the same three signals the tile grid
  * used before it (ring, veil, bold primary label) minus the tick.
  *
- * Three notes on making that not move anything. **The border is on the row in
- * both states**, transparent when unselected, so nothing shifts by a pixel as
- * it is tapped; with `box-sizing: border-box` the row is 60px either way and
- * `panelFit`'s `THUMB_ROW_H` holds. **The picture moves to the row's own
- * 14px inset**, the checkbox and its 8px gap having been what pushed it to 42 —
- * so the name gets 28px more width and wraps later. And **it stays
- * multi-select**: several rows can be blue at once, confirmed on the request.
- * A checkbox is the ordinary signal for that, which is why it was worth asking
- * before removing it.
+ * **The box is inset on all four sides, not the full panel width.** It shipped
+ * edge to edge and that read wrong — a fill touching the rail's divider on one
+ * side and the frame on the other is a band across the screen rather than a box
+ * you picked, and two selected rows in a row merged into one taller band. So
+ * the row is `8px` clear on each side with `8px` of padding inside it
+ * (`padding | picture | name | padding`, as asked) and `4px` top and bottom,
+ * which puts **8px between two boxes** — the same figure as the side inset, so
+ * the gap around a box reads even. In a column flex container a stretched child
+ * takes container width *less* its margins, which is why the `w-full` had to go
+ * with it: left in place it would have been 100% of the container plus 16px of
+ * margin, overflowing the panel. Flex children don't collapse margins, so each
+ * row occupies a flat **68px** and `panelFit` carries that.
+ *
+ * Three notes on making that not move anything. **The margin, the padding and
+ * the border are all on the row in both states**, the border merely
+ * transparent when unselected, so nothing shifts by a pixel as it is tapped;
+ * with `box-sizing: border-box` the box is 60px either way. **The picture sits 17px in** — 8 of margin, 8 of
+ * padding, 1 of border — where the checkbox and its gap used to push it to 42.
+ * And **it stays multi-select**: several rows can be blue at once, confirmed on
+ * the request. A checkbox is the ordinary signal for that, which is why it was
+ * worth asking before removing it.
  *
  * Brands have no logos — Clearbit is retired and Wikimedia returned unrelated
  * files for seven of eight — so their box stays the frame's flat `#d9d9d9`, as
@@ -114,7 +126,7 @@ export function ThumbRow({
     <button
       onClick={onToggle}
       aria-pressed={selected}
-      className={`flex h-[60px] w-full shrink-0 cursor-pointer items-center rounded-[8px] border pr-[16px] pl-[14px] text-left ${
+      className={`mx-[8px] my-[4px] flex h-[60px] shrink-0 cursor-pointer items-center rounded-[8px] border px-[8px] text-left ${
         selected ? "border-primary bg-primary-subtle" : "border-transparent"
       }`}
     >
