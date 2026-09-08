@@ -1000,11 +1000,13 @@ bare, Popularity being omitted from the query by design.
 ### 2026-09-08 — the Sort sheet's order, and a margin that names its base
 
 On request: **Popularity · Price/pc (low → high) · Price/pc (high → low) ·
-Highest Margin on MRP · Recently Added**. The frames put Recently Added second;
+Highest Margin on MRP · Newest Products**. The frames put that last row second;
 a buyer on this catalog sorts on the three numbers they buy against first, and
-how new a line is comes after them. `Highest Margin` becomes **Highest Margin on
-MRP**, matching the facet renamed on 2026-09-03 — a bare "margin" leaves two
-candidate denominators.
+how new a line is comes after them. Two renames came with it, both on the same
+day: `Highest Margin` → **Highest Margin on MRP**, matching the facet renamed on
+2026-09-03 since a bare "margin" leaves two candidate denominators, and
+`Recently Added` → **Newest Products**. Both ids are untouched — `margin_desc`
+and `recent` — so every shared link still works.
 
 One `SORT_OPTIONS` entry each, so both the Sort sheet (A–D and the journey) and
 the Filters screen's dormant Sort panel take it from one place. The order is

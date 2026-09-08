@@ -19,8 +19,8 @@ export const SORT_OPTIONS: { id: SortId; label: string }[] = [
    */
   { id: "popularity", label: "Popularity (Default)" },
   /*
-   * **The two prices and the margin lead, and Recently Added trails**
-   * (2026-09-08, on request). The frames put Recently Added second; a B2B buyer
+   * **The two prices and the margin lead, and the newest trail**
+   * (2026-09-08, on request). The frames put that row second; a B2B buyer
    * on this catalog sorts on the three numbers they buy against — price per
    * piece both ways, then the margin — and how new a line is comes after them.
    *
@@ -36,7 +36,12 @@ export const SORT_OPTIONS: { id: SortId; label: string }[] = [
    * the one it is a percentage of.
    */
   { id: "margin_desc", label: "Highest Margin on MRP" },
-  { id: "recent", label: "Recently Added" },
+  /*
+   * **"Newest Products"**, renamed on 2026-09-08 from *Recently Added*, which
+   * is what the frames drew. The id stays `recent`, so `?sort=recent` and every
+   * link already shared still work.
+   */
+  { id: "recent", label: "Newest Products" },
 ];
 
 export const DEFAULT_SORT: SortId = "popularity";

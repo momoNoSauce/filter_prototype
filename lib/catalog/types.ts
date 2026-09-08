@@ -84,7 +84,7 @@ export interface Product {
    */
   targetScheme?: number;
   bestSeller: boolean;
-  /** Days since listing — lower is newer. Drives "Recently Added". */
+  /** Days since listing — lower is newer. Drives "Newest Products". */
   listedDaysAgo: number;
   /** Drives "Popularity" */
   popularity: number;
