@@ -823,15 +823,13 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  * empty Brands panel logged as open question 4a, and it restores the two rows
  * dropped by hand on 2026-09-03 as a rule instead of a deletion.
  *
- * **Size is global here**, where A–D show it only inside one settled vertical
- * (2026-09-07, on request: *"Size — global for Apparels & Footwear"*). The
- * standing argument against it is that M in menswear is not M in womenswear;
- * this route is one seller's tee catalogue, and the request is explicit. The
- * cost, accepted: before a vertical is settled the panel lists adult letters
- * and boys' age bands in one column. It also means `dropOrphanedSelections`
- * must read *this* rail's vertical-only set — see `PV_FACET_IDS_BY_PRESET`, or
- * unticking a category would silently delete a Size cut whose row is still
- * there.
+ * **Size and Colour are off this rail** (2026-09-08, on request). Size was
+ * briefly the interesting one: A–D show it only inside a settled vertical, on
+ * the argument that M in menswear is not M in womenswear, and on 2026-09-07
+ * this route asked for it always — which is why `dropOrphanedSelections` reads
+ * *this* rail's vertical-only set (`PV_FACET_IDS_BY_PRESET`) rather than one
+ * shared set. That split still earns its place: A–D drop a Size cut when the
+ * vertical goes, and this rail has no Size row to drop one for.
  *
  * **Gender, Delivery Time, More Filters and — since the second 2026-09-07 pass
  * — Fabric stay dropped.** Gender was this journey's documented cut until
@@ -839,10 +837,9 @@ export const FILTER_VERTICALS: VerticalMode = { kind: "filter" };
  * replaces it and settles the vertical identically, Kartik carrying exactly
  * three verticals of which one is women's.
  *
- * Colour shows whether or not a vertical is settled; only the five garment
- * attributes wait for one. Fabric used to sit beside Colour on the same
- * argument — Cotton means the same on a shirt as on a tee — and simply isn't
- * on this rail any more.
+ * Only the five garment attributes wait for a settled vertical. Colour and
+ * Fabric used to sit above them and show either way — Cotton means the same on
+ * a shirt as on a tee — and neither is on this rail any more.
  */
 const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
   { id: "price", label: "Price Range", facetIds: ["price"] },
@@ -857,9 +854,14 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
     facetIds: ["sellerCity"],
     hideIfSingle: true,
   },
-  // Global on this rail, vertical-only on A–D's. See the header.
-  { id: "size", label: "Size", facetIds: ["size"] },
-  { id: "colour", label: "Colour", facetIds: ["colour"] },
+  /*
+   * Size and Colour had rows here until 2026-09-08, when both were dropped on
+   * request — Size global (it was vertical-only on A–D's rail and this route
+   * had asked for it always), Colour beside it. Both keep their `FACETS` entry
+   * for A–D; the only way to reach either here is a hand-written `?size=m`,
+   * which no click can produce and which the empty state's own Clear Filters
+   * resolves — the same accepted case as `?fabric=cotton`.
+   */
   // Fabric had a row here until 2026-09-07 (second pass), when it was dropped
   // on request. It stays in `FACETS` for A–D, which still carry the row; the
   // only way to reach it here is a hand-written `?fabric=cotton`, the same

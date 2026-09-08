@@ -1144,23 +1144,19 @@ describe("variants C and D — the page is the vertical", () => {
       "Margin on MRP",
       "MOQ",
       "Category",
-      "Size",
-      "Colour",
       "Cashback",
       "Seller Offer",
       "SOLV Target Scheme",
     ]);
 
     // Inside one settled vertical the five garment attributes join — *above*
-    // the three offer rows, which stay last. Size does not move, having been
-    // there all along, and Fabric is off this rail since 2026-09-07.
+    // the three offer rows, which stay last. Fabric left this rail on
+    // 2026-09-07, Size and Colour on 2026-09-08.
     expect(rail(["womens-t-shirts"], "womens-t-shirts")).toEqual([
       "Price Range",
       "Margin on MRP",
       "MOQ",
       "Category",
-      "Size",
-      "Colour",
       "Fit",
       "Neck Type",
       "Sleeve Type",
@@ -1183,8 +1179,6 @@ describe("variants C and D — the page is the vertical", () => {
       "Brands",
       "Seller",
       "Seller City",
-      "Size",
-      "Colour",
       "Cashback",
       "Seller Offer",
       "SOLV Target Scheme",
@@ -1193,10 +1187,13 @@ describe("variants C and D — the page is the vertical", () => {
     // The four that stay dropped, and the default rail keeping every one.
     const journey = getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey", singles);
     const dflt = getRailFacetIds();
-    for (const gone of ["gender", "delivery", "tags", "fabric"]) {
+    for (const gone of ["gender", "delivery", "tags", "fabric", "colour"]) {
       expect(journey.has(gone)).toBe(false);
       expect(dflt.has(gone)).toBe(true);
     }
+    // Size too, though A–D only carry it inside a settled vertical.
+    expect(journey.has("size")).toBe(false);
+    expect(getRailFacetIds(["womens-t-shirts"]).has("size")).toBe(true);
 
     // Gender leaving does not strand it: Category is still there, and it is a
     // ticked category that settles the vertical which puts the attributes on
@@ -1281,36 +1278,32 @@ describe("variants C and D — the page is the vertical", () => {
     );
   });
 
-  it("keeps Size global on the journey and vertical-only in A–D", () => {
+  it("keeps one vertical-only set per rail", () => {
     /*
-     * 2026-09-07, on request: *"Size — global for Apparels & Footwear"*. The
-     * standing argument against it is that M in menswear is not M in
-     * womenswear, and this route is one seller's tee catalogue.
-     *
-     * The orphan guard has to follow the rail that shows the row, or unticking
-     * a category would delete a Size cut whose control is still on screen.
+     * Size is vertical-only on A–D's rail, on the argument that M in menswear
+     * is not M in womenswear. On 2026-09-07 the journey asked for it always,
+     * which is what split `PV_FACET_IDS` per preset; on 2026-09-08 that route
+     * dropped the row altogether, along with Colour. The split still holds the
+     * difference: A–D orphan a Size cut when the vertical goes, and this rail
+     * has no Size row to orphan one for.
      */
     const singles = singleValuedFacets(getKartikCatalog());
-    expect(
-      getRail(undefined, FILTER_VERTICALS, null, "journey", singles).map((r) => r.id),
-    ).toContain("size");
+    const journey = getRail(undefined, FILTER_VERTICALS, null, "journey", singles).map(
+      (r) => r.id,
+    );
+    expect(journey).not.toContain("size");
+    expect(journey).not.toContain("colour");
     expect(getRail().map((r) => r.id)).not.toContain("size");
+    expect(getRail(["womens-t-shirts"]).map((r) => r.id)).toContain("size");
 
     const sized = { size: ["m", "l"] };
-    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, "journey")).toEqual(sized);
     expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null)).toEqual({});
+    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, "journey")).toEqual(sized);
 
-    // The five garment attributes are still vertical-only on both rails.
-    const withFit = { size: ["m"], fit: ["slim-fit"] };
-    expect(dropOrphanedSelections(withFit, FILTER_VERTICALS, null, "journey")).toEqual({
-      size: ["m"],
-    });
-
-    // And a shared link keeps what its own rail would show.
-    expect(
-      parseSelections(new URLSearchParams("size=m,l"), FILTER_VERTICALS, [], "journey"),
-    ).toEqual(sized);
-    expect(parseSelections(new URLSearchParams("size=m,l"))).toEqual({});
+    // The five garment attributes are vertical-only on both rails.
+    const withFit = { fit: ["slim-fit"] };
+    expect(dropOrphanedSelections(withFit, FILTER_VERTICALS, null, "journey")).toEqual({});
+    expect(dropOrphanedSelections(withFit, FILTER_VERTICALS, null)).toEqual({});
   });
 
   it("still clears a facet whose chip outlived its rail row", () => {

@@ -997,6 +997,23 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-08 — Size and Colour leave the journey's rail
+
+Dropped on request, so that rail is **seven rows outside a vertical and twelve
+inside one** — Price Range · Margin on MRP · MOQ · Category, the five garment
+attributes once a vertical settles, then the three offer rows. Measured: the
+sheet follows it down to 530 outside a vertical and stays at the capped 640
+inside one.
+
+Both keep their `FACETS` entry for A–D. The only way to reach either here is a
+hand-written `?size=m`, which no click can produce and which the empty state's
+own Clear Filters resolves — the accepted `?fabric=cotton` case.
+
+Size had been global on this rail for exactly one day (2026-09-07), which is
+what split `PV_FACET_IDS` per rail preset. That split still earns its place, and
+its test now says why: A–D orphan a Size cut when the vertical goes, and this
+rail has no Size row to orphan one for.
+
 ### 2026-09-08 — the storefront's seller header is gone
 
 Removed on request. The block under the chip strip — a storefront tile,

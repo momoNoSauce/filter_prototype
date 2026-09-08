@@ -76,17 +76,19 @@ inside Filters. Put new per-route departures in that object rather than adding
 a prop each; the reasoning is in `docs/decisions.md`.
 
 **Its rail is `JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price
-Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City · Size ·
-Colour, then the five garment attributes, then **Cashback · Seller Offer · SOLV
-Target Scheme at the foot**. Fabric has no row here. Three of those rows carry
+Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City, then the
+five garment attributes, then **Cashback · Seller Offer · SOLV Target Scheme at
+the foot**. Fabric has no row here, and neither do Size or Colour since
+2026-09-08. Three of those rows carry
 `hideIfSingle` — **Brands, Seller and Seller City hide when the page
 scope holds one value of them**, which Kartik's does (one brand, one seller, one
-city), so the rail renders **9 rows outside a vertical and 14 inside one**. It
+city), so the rail renders **7 rows outside a vertical and 12 inside one**. It
 is measured off the page's products (`singleValuedFacets`), never off the
 selections: a row that came and went as boxes were ticked is the churn the
-2026-08-19 reorder exists to stop. **Size is global here** and vertical-only in
-A–D — so `dropOrphanedSelections` and `parseSelections` take the rail preset,
-or unticking a category deletes a Size cut whose row is still on screen.
+2026-08-19 reorder exists to stop. **Size and Colour are off this rail** (2026-09-08); Size was global
+here for a day, which is why `dropOrphanedSelections` and `parseSelections` take
+the rail preset — A–D orphan a Size cut when the vertical goes and this rail has
+no Size row to orphan one for.
 
 **The three offer magnitudes are a row each, last on the rail** — they spent a
 few hours of 2026-09-07 merged behind one *All Offers* row (a rail row may carry
@@ -113,8 +115,8 @@ where a panel that wants it back should take it from.
 
 Its Filters screen is a **bottom sheet** rather than full-bleed, so the listing
 stays visible behind it. **Its height follows the rail** (`sheetHeightPct`),
-capped at 80% of the frame and floored at 440: eight rows outside a vertical
-gives 590, and settling one adds the five attribute rows and grows it to the
+capped at 80% of the frame and floored at 440: seven rows outside a vertical
+gives 530, and settling one adds the five attribute rows and grows it to the
 capped 640 — a fixed 80% left ~110px of white under a short rail. That
 shortens the panel, so `needsSearch` takes a viewport argument, computed from
 the height actually rendered (`sheetPanelViewport`) — 530 at the cap against
