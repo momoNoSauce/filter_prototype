@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-09-07
+Last updated: 2026-09-08
 
 > **Four docs, one job each.** `CLAUDE.md` — the rules, and the only one loaded
 > into every session, so keep it short. `plan.md` — the architecture.
@@ -194,7 +194,7 @@ Worth noting the frames were already inconsistent here: A's bottom bar uses `fil
 
 Supplied PNGs in a 26px `object-contain` box, leading all three offer chips and Price. The offer chips lose theirs when selected — M3's checkmark takes the slot — while Price keeps its rupee in both states, having no checkmark to make room for: its state is the fill and the label. `ChipIcon` is the single place the box is declared. A box rather than a fixed height: the three are different aspects, and sizing by height alone left the square Seller Offer box 20px on its longest edge while the two landscape ones reached 26 — the longest edge being what the eye actually compares. The map is keyed by **facet and option** rather than option alone: Seller Offer's option id is the bare `any`, being the catch-all on its own `hasOffer` facet, and a one-word id like that is exactly what another facet acquires later. **The checkmark replaces it when selected**, per Material 3, rather than the two sitting side by side — so the chip has one leading element in either state and the label doesn't shift as you tick it. The 8px left inset, previously only for the selected state, now applies whenever anything leads.
 
-It sits in `public/offers/` rather than `public/figma/`: that folder is Figma exports, and a file's location shouldn't imply an origin it doesn't have. `cashback.png` (48×37) and `seller-offer.png` (48×48) have almost no headroom above the 20px they render at and will soften on a 3× display — both **want vectors**. `free-delivery.png` at 416×312 has room to spare. The map in `ContextChips.tsx` takes more without a code change.
+It sits in `public/offers/` rather than `public/figma/`: that folder is Figma exports, and a file's location shouldn't imply an origin it doesn't have. `cashback.png` (48×37) has almost no headroom above the 20px it renders at and will soften on a 3× display — it **wants a vector**. `free-delivery.png` at 416×312 has room to spare, and `seller-offer.png` was replaced on 2026-09-08 (see that entry). The map takes more without a code change — it moved to `lib/filters/offerIcons.ts` on 2026-09-07.
 
 ### 2026-08-19 — GOLD removed
 
@@ -997,6 +997,43 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-08 — Seller Offer's chip icon, and the root swept
+
+**A supplied icon replaces the one that was standing in.** `seller-offer.png` is
+**Phosphor's `SealPercent`** — a percent sign inside a seal — where it had been
+a blue parcel. That was a delivery metaphor on the one chip in the row that
+means *discount*, sitting two chips along from a `Free Delivery` chip that owns
+the metaphor properly. Same 48×48 with alpha, so nothing about `ChipIcon`'s 26px
+box changes, and one line in `lib/filters/offerIcons.ts` — which is the whole
+point of that file having moved out of `ContextChips` the day before.
+
+Two properties worth recording. It is **one colour, and that colour is the
+`primary` token exactly**: measured `#004FFA` across 417 of its 418 opaque
+pixels, the odd one an anti-aliased `#0050FA`. That puts it beside `price.png`
+as an icon that *could* go through `MaskIcon` if it ever had to tint — it
+doesn't today, the chip's selected state replacing the art with a checkmark
+rather than recolouring it. And being from a released icon set, **its vector
+exists upstream**, so this file's "wants vectors" note is closed by a download
+rather than by a drawing. `cashback.png` (48×37) is the only one left on that
+list.
+
+Verified at 360px, 3×: natural 48×48 drawing at 26×26 in the chip, and the
+selected state still filled `primary/subtle` with the checkmark in the art's
+place and the label in primary, per M3.
+
+**And the repo root is swept.** Thirteen one-shot Playwright measurement scripts
+were sitting there — the working notes the 2026-09-07 `.gitignore` rule was
+written for. Four of them (`__m05.mjs`, `__measure_06.mjs`, `__measure_sort.mjs`,
+`_measure_tmp.mjs`) were still **tracked**, because ignoring a path does nothing
+about a file already committed, which is the half of that sweep that got missed;
+they are `git rm --cached`'d and deleted, and history keeps them. The other nine
+were untracked and are simply gone. `npx eslint .` now prints nothing at all —
+every one of the ten warnings it had been carrying came from those files.
+
+They have to live in the repo root for `import { chromium }` to resolve, so the
+pattern to keep is the one `CLAUDE.md` already states: install Playwright ad
+hoc, screenshot, uninstall, and delete the script in the same breath.
+
 ### 2026-09-07 — the journey's rail is re-ordered, and Offers becomes one row
 
 **On request**, and the whole of it is `/userjourney` — confirmed on the ask, so
@@ -1082,7 +1119,8 @@ at 42.5, plus a 9px rule constant: a height in the markup has a figure in
 
 The offer art moved to **`lib/filters/offerIcons.ts`** on the `SORT_ICONS`
 precedent — one set of paths, two lookups (`facet:option` for the chips, facet
-alone for the headings), so the two PNGs logged as wanting vectors are one edit.
+alone for the headings), so the two PNGs then logged as wanting vectors are one
+edit — `seller-offer.png` took exactly that edit on 2026-09-08.
 A–D's Offers panel takes the type and the rule and stays **text-only**: its two
 headings are a catch-all and a list of five different offers, so one icon would
 label the wrong thing.
@@ -1123,7 +1161,8 @@ when each got a row. So `headed` is `blocks.length > 1` again rather than a
 survives where it is still drawn — A–D's Offers row, which stacks two facets.
 The art stays in `lib/filters/offerIcons.ts` with the chip strip as its only
 caller again: that is where a second surface should take it from, and the two
-PNGs logged as wanting vectors are one edit there.
+PNGs then logged as wanting vectors are one edit there — which is what
+`seller-offer.png` took on 2026-09-08.
 
 Fabric keeps its `FACETS` entry for A–D, which still show the row. The only way
 to reach it here is a hand-written `?fabric=cotton` — the same accepted case as
@@ -1681,8 +1720,8 @@ chip.
 **The icon arrived hours later** and is in — `public/offers/solv-target-scheme.png`,
 a blue ring under an orange arc, 240×240 with alpha. It is the one offer icon
 with real headroom: it draws at 20px in the 26px box, where `cashback.png`
-(48×37) and `seller-offer.png` (48×48) have almost none and are logged as
-wanting vectors. In the gap the chip rendered label-only, which is what `icon`
+(48×37) and — until 2026-09-08 — `seller-offer.png` (48×48) have almost none and
+were logged as wanting vectors. In the gap the chip rendered label-only, which is what `icon`
 being optional buys; nothing was drawn in to fill it, and the retired
 `gold-*.svg` exports were deliberately not used as a stand-in. Verified: no
 404s, natural 240×240 drawing at 26×26, and the checkmark still replaces it on
