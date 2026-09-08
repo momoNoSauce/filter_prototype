@@ -997,6 +997,21 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
+### 2026-09-08 — the Sort sheet's order, and a margin that names its base
+
+On request: **Popularity · Price/pc (low → high) · Price/pc (high → low) ·
+Highest Margin on MRP · Recently Added**. The frames put Recently Added second;
+a buyer on this catalog sorts on the three numbers they buy against first, and
+how new a line is comes after them. `Highest Margin` becomes **Highest Margin on
+MRP**, matching the facet renamed on 2026-09-03 — a bare "margin" leaves two
+candidate denominators.
+
+One `SORT_OPTIONS` entry each, so both the Sort sheet (A–D and the journey) and
+the Filters screen's dormant Sort panel take it from one place. The order is
+display only: `SortId` is what the URL and `sortProducts` carry, so nothing else
+moved and Popularity is still first and still the default. Verified in the
+journey's sheet and B's, same five rows in the same order.
+
 ### 2026-09-08 — Category and Brands rows lose the checkbox
 
 On request: *"remove the checkbox, make it a box that becomes blue and

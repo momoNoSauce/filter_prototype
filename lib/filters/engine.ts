@@ -18,10 +18,25 @@ export const SORT_OPTIONS: { id: SortId; label: string }[] = [
    * row to render it, for one word on one option that never moves.
    */
   { id: "popularity", label: "Popularity (Default)" },
-  { id: "recent", label: "Recently Added" },
+  /*
+   * **The two prices and the margin lead, and Recently Added trails**
+   * (2026-09-08, on request). The frames put Recently Added second; a B2B buyer
+   * on this catalog sorts on the three numbers they buy against — price per
+   * piece both ways, then the margin — and how new a line is comes after them.
+   *
+   * The order is display only. `SortId` is what the URL and `sortProducts`
+   * carry, so moving a row moves nothing else, and Popularity stays the default
+   * and stays first.
+   */
   { id: "price_asc", label: "Price/pc (low → high)" },
   { id: "price_desc", label: "Price/pc (high → low)" },
-  { id: "margin_desc", label: "Highest Margin" },
+  /*
+   * **"Highest Margin on MRP"** since 2026-09-08, matching the facet renamed on
+   * 2026-09-03: a bare "margin" has two candidate denominators and this names
+   * the one it is a percentage of.
+   */
+  { id: "margin_desc", label: "Highest Margin on MRP" },
+  { id: "recent", label: "Recently Added" },
 ];
 
 export const DEFAULT_SORT: SortId = "popularity";
