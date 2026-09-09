@@ -57,19 +57,19 @@ export default function Page() {
        * - `priceChip: false` — Price Range stays a rail facet, so the bands are
        *   still reachable in the panel and nothing is orphaned.
        * - `rail: "journey-gated"` (2026-09-09) — `JOURNEY_RAIL_ORDER` with a
-       *   **Fashion Trends** row standing where the vertical block goes. The
-       *   other two Kartik rails simply remove those rows, so a buyer who never
-       *   ticks a category never learns there was anything to tick *for*; this
-       *   one keeps a row there, names what is behind it in six padlocked chips
-       *   and offers the categories inside its own panel, so unlocking is a tap
-       *   rather than an instruction. **The placeholder then leaves** and Size ·
-       *   Fit · Neck Type · Sleeve Type · Pattern · Closure Type arrive as rows
-       *   of their own — 8 rows to 13, sheet 590 → 640, panel landing on
-       *   Category. **Size has a row here and on no other Kartik rail**, which
-       *   closes the gap logged when this route dropped `guidedPv`. Order below
-       *   is otherwise: Price ·
-       *   Price · Margin · MOQ · Category · Brands · Seller · Seller City,
-       *   Garment Details, then the three offer magnitudes at the foot.
+       *   **Style Filters** row at the foot standing in for the vertical block.
+       *   The other two Kartik rails simply remove those rows, so a buyer who
+       *   never ticks a category never learns there was anything to tick *for*;
+       *   this one keeps a row there, tickers the names of what is behind it
+       *   through its own label, and offers the categories inside its panel, so
+       *   unlocking is a tap rather than an instruction. **The placeholder then
+       *   leaves** and Size · Fit · Neck Type · Sleeve Type · Pattern · Closure
+       *   Type take its slot at the foot — 8 rows to 13, sheet 590 → 640, panel
+       *   landing on Category. **Size has a row here and on no other Kartik
+       *   rail**, which closes the gap logged when this route dropped
+       *   `guidedPv`. Order below is otherwise: Price ·
+       *   Price · Margin · MOQ · Category · Brands · Seller · Seller City, the
+       *   three offer magnitudes, then Style Filters — or the six it becomes.
        *   Gender, Delivery Time and More Filters have no row, so the central cut
        *   is **Category → Women's T-Shirts**, which is what settles the vertical
        *   and puts Size on the rail. Brands, Seller and Seller City are

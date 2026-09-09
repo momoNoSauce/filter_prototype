@@ -120,22 +120,28 @@ garment attributes once a vertical settles, `/pvfilters` on the listing in *Find
 It Fast* and `/pvfilters2` inside the Filters sheet.
 
 **`/pvfilters2` reveals them through a placeholder rail row** — `rail:
-"journey-gated"`, the same afternoon. A **Fashion Trends** row sits where the
-vertical block goes, and its panel spends the locked state naming what is behind
-it (six `primary-subtle` chips, each with a padlock) and offering the three
-categories as `ThumbRow`s, so unlocking is a tap *inside the panel* rather than
-an instruction to go elsewhere. A row that isn't there teaches nobody, which is
-the whole argument.
+"journey-gated"`, the same afternoon. A **Style Filters** row sits at the **foot
+of the rail**, and its panel spends the locked state saying how many are behind
+it and offering the three categories as `ThumbRow`s, so unlocking is a tap
+*inside the panel* rather than an instruction to go elsewhere. A row that isn't
+there teaches nobody, which is the whole argument.
 
-Three rules on it, each a correction from the first render:
+Four rules on it, each a correction from an earlier render:
 
 - **It is drawn like any other row.** It shipped dimmed and read as *disabled*,
   which is the one thing it is not — it is the row you are meant to press.
+- **Its label tickers while locked** — `Style Filters → Size → Style Filters →
+  Fit → …`, alternating so the row is findable by name half the time and
+  teasing the rest. One word at a time, each arriving and stopping; it **stops
+  when the row is open**, and never starts under `prefers-reduced-motion`
+  (checked in `TickerLabel`, not left to the CSS, which can only slow travel and
+  not stop words changing).
 - **It leaves when the real rows arrive.** `gated` is the mirror of `vertical:
   true` and is read off `showVertical`, so ticking a category swaps the
   placeholder for **Size · Fit · Neck Type · Sleeve Type · Pattern · Closure
-  Type** as rows of their own: 8 rows to 13, and the sheet 590 → 640 with them.
-  A stand-in must not outlive the thing it stood in for.
+  Type** — which take that same slot at the foot, below the offer rows. 8 rows
+  to 13, sheet 590 → 640. This is the rail's one departure from
+  `JOURNEY_RAIL_ORDER`'s order, which puts the block above the offers.
 - **Unlocking lands on Category**, not the first row — `FilterScreen`'s rail
   fallback, so the swap and the landing happen in one render. The rail lights
   `rail.id`, not `activeRail`, or nothing would be highlighted after the swap.

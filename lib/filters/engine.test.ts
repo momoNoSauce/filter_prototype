@@ -1234,10 +1234,15 @@ describe("variants C and D — the page is the vertical", () => {
     /*
      * `/pvfilters2`, 2026-09-09. The other two Kartik rails *remove* the garment
      * attributes until a vertical settles, so a buyer who never ticks a category
-     * never learns there was anything to tick for. This one puts a **Fashion
-     * Trends** placeholder there instead — and the placeholder leaves the moment
-     * the real rows arrive, which is the correction that came back on the first
-     * render: a stand-in should not outlive the thing it stood in for.
+     * never learns there was anything to tick for. This one puts a **Style
+     * Filters** placeholder there instead — and the placeholder leaves the
+     * moment the real rows arrive: a stand-in should not outlive the thing it
+     * stood in for.
+     *
+     * **Both live at the foot of the rail**, which is this rail's one departure
+     * from `JOURNEY_RAIL_ORDER`'s order — that puts the block above the three
+     * offer magnitudes. Asked for, and the reason is the swap: the six should
+     * arrive where the row you tapped stood, not somewhere you were not looking.
      */
     const singles = singleValuedFacets(getKartikCatalog());
     const gated = (category?: string[], settled: string | null = null) =>
@@ -1248,28 +1253,28 @@ describe("variants C and D — the page is the vertical", () => {
       "Margin on MRP",
       "MOQ",
       "Category",
-      "Fashion Trends",
       "Cashback",
       "Seller Offer",
       "SOLV Target Scheme",
+      "Style Filters",
     ]);
 
     // Settled: the placeholder is gone and all six are rows of their own, in
-    // the place it held — Size leading, then `JOURNEY_RAIL_ORDER`'s own order.
+    // the slot it held — Size leading, then `JOURNEY_RAIL_ORDER`'s own order.
     expect(gated(["womens-t-shirts"], "womens-t-shirts").map((r) => r.label)).toEqual([
       "Price Range",
       "Margin on MRP",
       "MOQ",
       "Category",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
       "Size",
       "Fit",
       "Neck Type",
       "Sleeve Type",
       "Pattern",
       "Closure Type",
-      "Cashback",
-      "Seller Offer",
-      "SOLV Target Scheme",
     ]);
 
     // Exactly one of the two states carries the placeholder — never both, which
@@ -1278,7 +1283,8 @@ describe("variants C and D — the page is the vertical", () => {
     expect(gated(["womens-t-shirts"], "womens-t-shirts").filter((r) => r.gated)).toHaveLength(0);
 
     // Its facetIds are the six it hands over, so Clear Filters reaches them
-    // while it is standing in for them.
+    // while it is standing in for them — and they are also what the rail row's
+    // ticker reads out, in this order.
     expect(gated().find((r) => r.gated)!.facetIds).toEqual([
       "size",
       "fit",

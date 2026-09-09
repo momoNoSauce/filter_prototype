@@ -654,14 +654,13 @@ order — and the order is the argument:
    instruction. Because the whole screen runs off the draft, the panel fills
    under the finger rather than on `Show N results`.
 
-**Chips, not rows, for the preview.** Rows were the first build and read better
-in isolation — the panel looked exactly like the one it becomes — but six at the
-real 44px pitch is 264px of a 410px panel and pushed the category picker below
-the fold. The tap is the point of the screen; a preview that hides it costs more
-than it buys. Chips wrap into two lines and still name every filter. They are
-`aria-hidden`: a screen reader announcing six controls that don't work is worse
-than silence, and the heading carries the same information in a line it does
-read.
+**The preview went through three shapes and ended up gone.** Six dimmed rows at
+the real 44px pitch was 264px of a 410px panel and pushed the category picker
+below the fold — the tap is the point of the screen. Six padlocked
+`primary-subtle` chips fixed that and named every filter in two lines. Then the
+rail row learned to ticker the names one at a time, and the chips became the
+same information twice in one glance, so they went. What is left is the count
+and the padlock on one heading.
 
 **Size rides in with them**, which gives this route a Size control for the first
 time and closes the gap logged when it dropped `guidedPv`. It is the most
@@ -675,7 +674,7 @@ order, come from `JOURNEY_RAIL_ORDER`, so a row added there lands on both rails.
 `pvFacetIds` — the six still orphan when the vertical goes, because the row that
 holds them locks.
 
-#### Four corrections on the first render (same day)
+#### Corrections, in two rounds the same day
 
 The build above went up as *Garment Details*, dimmed, permanently on the rail.
 All four notes back were right.
@@ -714,6 +713,43 @@ their pick ticked. It is done in `FilterScreen`'s rail fallback rather than a
 same render as the tap with no ordering to get wrong. The rail's highlight moved
 to `rail.id` from `activeRail` for the same reason — they differ for exactly
 this render, and the rail must light the panel that is open.
+
+#### Second round: Style Filters, and a ticker
+
+**The name again**: *Fashion Trends* → **Style Filters**.
+
+**It moved to the foot of the rail**, last of the eight — and the six that
+replace it take that same slot, below the three offer magnitudes. This is the
+gated rail's one departure from `JOURNEY_RAIL_ORDER`'s order, which puts the
+block above the offers. The reason is the swap: the rail should read as the row
+you tapped expanding where it stood, not as rows appearing somewhere you were
+not looking.
+
+**The label tickers while the row is locked** — `Style Filters → Size → Style
+Filters → Fit → Style Filters → Neck Type → …`, a word every 1.8s.
+
+*Alternating, not a plain cycle through the six.* The row still has to be
+findable: a buyer scanning the rail for the thing they tapped a moment ago
+should never wait through five other words for its name. Every other step is the
+name, so it is on screen half the time and the tease has the rest.
+
+*One word at a time, arriving and stopping, not a marquee.* A word that stops
+moving is a word you can read, and the rail column is 140px — barely a marquee's
+runway. The travel is 8px with the fade doing the work, for the same reason.
+
+*It stops when the row is open.* Tapping it is the buyer asking what it is;
+answering with a moving target would be perverse. Under
+`prefers-reduced-motion` it never starts, which leaves the same still name — and
+that query is read in `TickerLabel` rather than left to the CSS, because CSS can
+only slow the travel, not stop the words changing.
+
+**The chips went with it.** Once the rail row reads the names out, spelling them
+again above the picker is the same information twice in one glance — and it cost
+the categories most of the fold. The locked panel is now a padlocked heading
+(`6 style filters locked`), one plain line (`Pick a category to see them`), and
+the three categories. `panelPreview` survives as a length rather than a list, so
+a seventh filter in the block still changes the heading without anyone
+remembering to.
 
 ### `/pvfilters` gets the guided block — *Find It Fast* (2026-09-09)
 

@@ -916,7 +916,7 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
 ];
 
 /**
- * **The gated rail** — `JOURNEY_RAIL_ORDER` with a **Fashion Trends** row
+ * **The gated rail** — `JOURNEY_RAIL_ORDER` with a **Style Filters** row
  * standing in for the vertical block until a vertical is settled (2026-09-09).
  *
  * The problem it answers: a row that isn't there teaches nobody. On the other
@@ -934,6 +934,14 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
  * the thing it stood in for. The rail goes 8 rows to 13, and the sheet 590 to
  * 640 with it.
  *
+ * **Both live at the foot of the rail** (asked for: *keep it at the last of the
+ * initial filter list*). The placeholder is the last of the eight, and the six
+ * that replace it take that same slot below the three offer magnitudes — so the
+ * rail reads as the row you tapped expanding where it stood, rather than rows
+ * appearing somewhere you were not looking. This is the one place the gated rail
+ * departs from `JOURNEY_RAIL_ORDER`'s order, which puts the block above the
+ * offers.
+ *
  * **Size gets a row of its own**, which no Kartik rail has carried since
  * 2026-09-08. It is the most vertical-specific facet there is — M in menswear
  * is not M in womenswear, which is why it is `vertical: true` on A–D's rail —
@@ -945,28 +953,29 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
  * two can't drift. Both the placeholder and the Size row go in where the block
  * has always appeared: below Category, above the three offer magnitudes.
  */
-const FASHION_RAIL_ID = "fashion";
+export const STYLE_RAIL_ID = "style";
 
 const JOURNEY_GATED_RAIL_ORDER: typeof RAIL_ORDER = (() => {
-  const at = JOURNEY_RAIL_ORDER.findIndex((row) => row.vertical);
-  const blocked = JOURNEY_RAIL_ORDER.filter((row) => row.vertical);
   const size: (typeof RAIL_ORDER)[number] = {
     id: SIZE_FACET_ID,
     label: "Size",
     facetIds: [SIZE_FACET_ID],
     vertical: true,
   };
+  // Size leads the block, here and in the panel's own order: it is the one a
+  // buyer came for.
+  const block = [size, ...JOURNEY_RAIL_ORDER.filter((row) => row.vertical)];
   return [
-    ...JOURNEY_RAIL_ORDER.slice(0, at),
+    ...JOURNEY_RAIL_ORDER.filter((row) => !row.vertical),
     {
-      id: FASHION_RAIL_ID,
-      label: "Fashion Trends",
-      // The same six the block hands over, in the order they arrive as rows.
-      facetIds: [SIZE_FACET_ID, ...blocked.flatMap((row) => row.facetIds)],
+      id: STYLE_RAIL_ID,
+      label: "Style Filters",
+      // The same six the block hands over, in the order they arrive as rows —
+      // which is also the order the locked panel's ticker reads them in.
+      facetIds: block.flatMap((row) => row.facetIds),
       gated: true,
     },
-    size,
-    ...JOURNEY_RAIL_ORDER.slice(at),
+    ...block,
   ];
 })();
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
 import {
@@ -51,6 +51,58 @@ const CATEGORY_FACET_ID = "category";
  * same answer. `currentColor`, so it takes the chip's primary from the class
  * list rather than hard-coding the hex a token already names.
  */
+/** How long each word holds before the next slides in. */
+const TICKER_MS = 1800;
+
+/**
+ * The rail label for a **locked `Style Filters` row** — a horizontal ticker
+ * alternating the row's own name with the filters behind it:
+ *
+ *     Style Filters → Size → Style Filters → Fit → Style Filters → Neck Type …
+ *
+ * **Alternating, not a plain cycle through the six.** The row still has to be
+ * findable: a buyer scanning the rail for the thing they tapped a moment ago
+ * should never have to wait through five other words for its name. Every other
+ * step is the name, so it is on screen half the time and the tease occupies the
+ * rest.
+ *
+ * One word at a time, each arriving and stopping, rather than a continuous
+ * marquee — a word that stops moving is a word you can read, and the rail
+ * column is 140px, which is barely a marquee's worth of runway.
+ *
+ * **It stops when the row is open.** Tapping it is the buyer asking what it is;
+ * answering with a moving target would be perverse, so `running` goes false and
+ * the name stands still. It also never starts under `prefers-reduced-motion`,
+ * which leaves the same still name — the query is read here rather than left to
+ * the CSS, because the CSS can only slow the travel and not stop the words
+ * changing.
+ */
+function TickerLabel({ label, words }: { label: string; words: string[] }) {
+  // Alternate, and start on the name so the first paint and the server agree.
+  const sequence = useMemo(
+    () => words.flatMap((word) => [label, word]),
+    [label, words],
+  );
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(
+      () => setStep((n) => (n + 1) % sequence.length),
+      TICKER_MS,
+    );
+    return () => window.clearInterval(id);
+  }, [sequence.length]);
+
+  return (
+    // `key` restarts the keyframe on every word. The row is a fixed 60px and
+    // this span is one line, so nothing reflows as the words change width.
+    <span key={step} className="animate-ticker-in block truncate">
+      {sequence[step]}
+    </span>
+  );
+}
+
 function Padlock() {
   return (
     <svg viewBox="0 0 12 12" aria-hidden className="size-[11px] shrink-0">
@@ -474,10 +526,13 @@ export function FilterScreen({
     ? facetOptionsWithCounts(products, draft, CATEGORY_FACET_ID)
     : [];
 
-  /** The names behind the lock, off the row itself so the two cannot disagree. */
-  const panelPreview = locked
-    ? rail.facetIds.map((facetId) => FACET_BY_ID.get(facetId)!.label)
-    : [];
+  /**
+   * What is behind the lock. Only its **length** is read now — the panel counts
+   * them and the rail row's ticker reads the names — but it stays derived from
+   * the row rather than hard-coded, so adding a seventh filter to the block
+   * changes the heading without anyone remembering to.
+   */
+  const panelPreview = locked ? rail.facetIds : [];
 
   /*
    * The field is earned, not declared. It replaced a static `searchable` flag
@@ -682,7 +737,15 @@ export function FilterScreen({
                     active ? "font-bold text-primary" : "font-medium text-[#323232]"
                   }`}
                 >
-                  {entry.label}
+                  {/* A locked row tickers; open, it answers with its name. */}
+                  {entry.gated && !active ? (
+                    <TickerLabel
+                      label={entry.label}
+                      words={entry.facetIds.map((id) => FACET_BY_ID.get(id)!.label)}
+                    />
+                  ) : (
+                    entry.label
+                  )}
                 </span>
                 {applied > 0 &&
                   (entry.id === SORT_RAIL_ID ? (
@@ -783,76 +846,45 @@ export function FilterScreen({
           )}
 
           {/*
-            **The locked panel** — `/pvfilters2`'s *Garment Details* before a
+            **The locked panel** — `/pvfilters2`'s *Style Filters* before a
             vertical is settled (2026-09-09).
 
-            Three things in one screen, in this order, and the order is the
-            argument: *what* you get, *why* you can't have it yet, and *the tap
-            that fixes it*. Naming the filters first is what turns a dead row
-            into an offer; a bare "select a category" says a rule and leaves the
-            payoff to the imagination.
+            Two lines and the picker, in that order: what you get and how many,
+            then the one instruction, then the tap that carries it out. Naming
+            the payoff first is what turns a dead row into an offer; a bare
+            *select a category* states a rule and leaves the payoff to the
+            imagination.
 
-            The six names are **chips, not rows**. Rows were the first build and
-            read better in isolation — the panel looked exactly like the one it
-            becomes — but six at the real 44px pitch is 264px of a 410px panel,
-            and it pushed the category picker below the fold. The tap that
-            unlocks the row is the whole point of the screen; a preview that
-            hides it has cost more than it bought. Chips wrap into two lines,
-            keep all three categories in view, and still name every filter.
-
-            **Primary, with a padlock each — not grey** (2026-09-09, corrected
-            on the render). Grey chips read as *disabled*, which is the wrong
-            word for something being offered to you: these are the reward, and
-            the lock is the only part that should say "not yet". So
-            `primary-subtle` ground with `primary` text, and the padlock in
-            primary beside each name.
-
-            The padlock is an inline SVG, not a `public/figma/` export, because
-            no lock was ever drawn for this file. The rule it sits under is
-            *never redraw an asset that exists* — the check on `/pvfilters`'
-            selected tile is the same case and the same answer.
-
-            `aria-hidden`, because they are a preview and a screen reader
-            announcing six controls that don't work is worse than silence — the
-            heading above them carries the same information in a line it *will*
-            read.
+            **The six names are gone from here.** They spent an afternoon as
+            padlocked chips and the padlock survives them, on the heading — the
+            rail row's ticker now reads the names out one at a time, so spelling
+            them again above the picker was the same information twice in one
+            glance, and it cost the categories most of the fold.
 
             The categories are the real `ThumbRow`s with live counts and the
-            same `toggle`, so ticking here is ticking the Category row two
-            columns to the left — and because the whole screen runs off the
-            draft, the panel unlocks under the finger rather than on
-            `Show N results`.
+            same `toggle` as the Category row up the rail, so ticking here is
+            ticking there — and because the whole screen runs off the draft, the
+            row unlocks under the finger rather than on `Show N results`.
           */}
           {locked && (
             <div className="flex w-full flex-col">
-              <p className="px-[14px] pt-[6px] pb-[10px] text-[15px] font-bold text-heading">
-                {panelPreview.length} fashion filters, locked
+              <p className="flex items-center gap-[6px] px-[14px] pt-[6px] text-[15px] font-bold text-heading">
+                <span className="text-primary">
+                  <Padlock />
+                </span>
+                {panelPreview.length} style filters locked
               </p>
-              <div aria-hidden className="flex flex-wrap gap-[6px] px-[14px] pb-[14px]">
-                {panelPreview.map((label) => (
-                  <span
-                    key={label}
-                    className="flex items-center gap-[4px] rounded-[6px] bg-primary-subtle px-[8px] py-[5px] text-[13px] font-medium text-primary"
-                  >
-                    <Padlock />
-                    {label}
-                  </span>
-                ))}
-              </div>
-
-              <div className="border-t border-hairline pt-[14px]">
-                <p className="px-[14px] pb-[8px] text-[15px] font-bold text-heading">
-                  Pick a category to unlock them
-                </p>
-                {unlockOptions.map((option) => (
-                  <ThumbRow
-                    key={option.id}
-                    option={option}
-                    selected={(draft[CATEGORY_FACET_ID] ?? []).includes(option.id)}
-                    onToggle={() => toggle(CATEGORY_FACET_ID, option.id)}
-                  />
-                ))}
-              </div>
+              <p className="px-[14px] pt-[4px] pb-[12px] text-[14px] text-muted">
+                Pick a category to see them
+              </p>
+              {unlockOptions.map((option) => (
+                <ThumbRow
+                  key={option.id}
+                  option={option}
+                  selected={(draft[CATEGORY_FACET_ID] ?? []).includes(option.id)}
+                  onToggle={() => toggle(CATEGORY_FACET_ID, option.id)}
+                />
+              ))}
             </div>
           )}
 

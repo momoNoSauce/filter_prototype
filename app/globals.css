@@ -296,6 +296,30 @@ input {
 }
 
 /*
+ * The ticker on `/pvfilters2`'s locked *Style Filters* rail row: each word
+ * arrives from the right and settles. One shot per word — the component swaps
+ * the element on a timer and React's `key` restarts this — rather than a
+ * looping marquee, because a word that stops moving is a word you can read.
+ *
+ * 8px of travel, not the row's width: the rail column is 140px and a full slide
+ * would have the label off screen for most of its life. This reads as a nudge
+ * with the fade doing the work.
+ */
+@keyframes ticker-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-ticker-in {
+  animation: ticker-in 240ms cubic-bezier(0.05, 0.7, 0.1, 1) both;
+}
+
+/*
  * Toast: rise and fade in, hold, fade out. One animation covers the whole
  * lifetime and `onAnimationEnd` unmounts it, so the duration is declared here
  * only — a setTimeout alongside would be a second copy free to drift.
@@ -347,7 +371,11 @@ input {
   .animate-dialog-in,
   .animate-dialog-out,
   .animate-screen-in,
-  .animate-screen-out {
+  .animate-screen-out,
+  /* The ticker's *travel*. Whether it advances at all is decided in the
+     component, which reads the same query and simply never starts the timer —
+     so a reduced-motion reader gets the row's own name and nothing moving. */
+  .animate-ticker-in {
     animation-duration: 1ms;
   }
   .animate-toast {
