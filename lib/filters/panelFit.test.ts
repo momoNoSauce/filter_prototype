@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { getCatalog } from "@/lib/catalog/products";
 import { COLOURS } from "@/lib/catalog/seed";
 import { facetOptionsWithCounts } from "./engine";
-import { FACET_BY_ID, getRail } from "./facets";
+import { FACET_BY_ID, FILTER_VERTICALS, getRail, singleValuedFacets } from "./facets";
+import { getKartikCatalog } from "@/lib/catalog/kartik";
 import {
   FRAME_H,
   PANEL_VIEWPORT,
@@ -253,6 +254,29 @@ describe("the sheet presentation's shorter fold", () => {
     // every threshold above is pinned at.
     expect(sheetPanelViewport(SHEET_MAX_PCT)).toBe(SHEET_PANEL_VIEWPORT);
     expect(sheetPanelViewport(sheetHeightPct(8))).toBe(480);
+  });
+
+  it("holds the flat rail's sheet at one height", () => {
+    /*
+     * 2026-09-09. `/userjourney` moved to the `"journey-flat"` rail, which never
+     * grows on a settled vertical — and because the height is read off the rail
+     * rather than off the open panel, the sheet stops moving with it.
+     *
+     * This is the one height change a buyer could cause, so removing the rows
+     * removes it: 530 whatever they tick, where `"journey"` still climbs to the
+     * capped 640 the moment a category settles the vertical.
+     */
+    const singles = singleValuedFacets(getKartikCatalog());
+    const rowsOn = (preset: "journey" | "journey-flat") =>
+      getRail(["womens-t-shirts"], FILTER_VERTICALS, "womens-t-shirts", preset, singles).length;
+
+    expect(rowsOn("journey-flat")).toBe(7);
+    expect(sheetHeightPct(rowsOn("journey-flat"))).toBe(sheetHeightPct(7));
+    expect(Math.round((sheetHeightPct(7) / 100) * FRAME_H)).toBe(530);
+
+    // The rail it came from, for contrast: twelve rows, over the cap, 640.
+    expect(rowsOn("journey")).toBe(12);
+    expect(sheetHeightPct(rowsOn("journey"))).toBe(SHEET_MAX_PCT);
   });
 
   it("earns a field sooner in a sheet that shrank with its rail", () => {

@@ -580,6 +580,65 @@ same reason.
 Only the journey's men's tees still fall back to the Figma shirt — see
 *`/userjourney`*.
 
+
+### `/userjourney` drops the vertical block — the launch build (2026-09-09)
+
+On request: *"remove the behaviour of showing more filters when a pv is
+selected, this is what we are launching now."*
+
+Settling a product vertical used to grow this rail from 7 rows to 12 — Fit, Neck
+Type, Sleeve Type, Pattern, Closure Type — and grow the bottom sheet 530 → 640
+with them. Both are gone. `/userjourney` shows a flat seven rows and a flat 530
+whatever the buyer ticks, and the only thing *Category → Women's T-Shirts* does
+now is filter.
+
+**`/pvfilters` keeps the old behaviour**, deliberately. It still goes 7 → 12 and
+530 → 640. That route is where product-vertical filtering carries on, and this
+is the deletion the two listings were un-shared for, hours earlier the same day.
+
+**A new rail preset, `"journey-flat"`, over the same array.** `RAILS` maps it to
+`JOURNEY_RAIL_ORDER` unchanged — the order, the labels, the `hideIfSingle` rows
+and the three offer magnitudes at the foot are all stated once, so a row added
+to the journey rail is on both. What differs is one set, `FLAT_RAILS`, which
+`getRail` reads to force `showVertical` false. A third hand-maintained array was
+the alternative and would have drifted the first time either rail moved.
+
+**Hung off the preset, not off `controls`.** Two functions have to agree about
+this: `getRail`, which decides whether the rows show, and
+`dropOrphanedSelections`, which decides whether a selection on them survives.
+They are reached by different callers with different props, and a disagreement
+between them is precisely the orphan trap — a live filter with nothing to
+display or undo it, surviving Clear Filters and uncounted by the badge. The
+preset is the one thing both already carry.
+
+**The trap it opened, and the fix.** `dropOrphanedSelections` read:
+
+```
+if (byCategory) return id === "gender";
+return showVertical ? false : PV.has(id);
+```
+
+That early return was correct only because a settled category always turned the
+attribute rows *on* — so the attribute test it skipped was always false there.
+On a flat rail it isn't. `?fit=slim` arriving alongside a category would have
+survived with no row to show it. The branch became two independent clauses:
+
+```
+(!showVertical && PV.has(id)) || (byCategory && id === "gender")
+```
+
+On every existing rail the behaviour is identical — where `byCategory` holds,
+`showVertical` holds with it, so the first clause is false and only Gender is
+dropped. Three tests pin it, including all five attributes at once.
+
+**The sheet followed for free.** `sheetHeightPct` reads the rail's row count,
+not the open panel, so switching the rows off pinned the height without touching
+`panelFit`. That was the one height change a buyer could cause; it is gone from
+this route.
+
+Verified at 360px against `/pvfilters` side by side: both sheets open at seven
+rows, ticking *Women's T-Shirts* leaves the journey at seven rows and 530 and
+takes `/pvfilters` to twelve and 640.
 ## Design source — always pull from Figma, never eyeball
 
 File `hdArN93DmnLu5JDB46SOwd` (`Filter-and-Sort`), section `651:4873`. Use the Figma MCP `get_design_context` (load the `figma-design-to-code` guidance first).

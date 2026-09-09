@@ -1201,6 +1201,109 @@ describe("variants C and D — the page is the vertical", () => {
     expect(journey.has("category")).toBe(true);
   });
 
+  it("never grows the flat rail, whatever settles the vertical", () => {
+    /*
+     * 2026-09-09, on request: *"remove the behaviour of showing more filters
+     * when a pv is selected, this is what we are launching now"*. `/userjourney`
+     * moved to `"journey-flat"`, which is `JOURNEY_RAIL_ORDER` with the vertical
+     * block switched off in every state.
+     *
+     * The same three inputs that grow the `"journey"` rail from 7 rows to 12 —
+     * a ticked category, a settled vertical, both — are asserted to move
+     * nothing here. Three, not one, because the two callers used to disagree
+     * about which of them counted and that disagreement is the orphan trap.
+     */
+    const kartik = getKartikCatalog();
+    const singles = singleValuedFacets(kartik);
+    const flat = (category?: string[], settled: string | null = null) =>
+      getRail(category, FILTER_VERTICALS, settled, "journey-flat", singles).map((r) => r.label);
+
+    const SEVEN = [
+      "Price Range",
+      "Margin on MRP",
+      "MOQ",
+      "Category",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
+    ];
+
+    expect(flat()).toEqual(SEVEN);
+    expect(flat(["womens-t-shirts"])).toEqual(SEVEN);
+    expect(flat(undefined, "womens-t-shirts")).toEqual(SEVEN);
+    expect(flat(["womens-t-shirts"], "womens-t-shirts")).toEqual(SEVEN);
+
+    // The row it removes is exactly the vertical block, and nothing else: the
+    // two rails agree outside a vertical and differ only inside one.
+    const journey = (category?: string[], settled: string | null = null) =>
+      getRail(category, FILTER_VERTICALS, settled, "journey", singles).map((r) => r.label);
+    expect(journey()).toEqual(flat());
+    expect(journey(["womens-t-shirts"], "womens-t-shirts")).not.toEqual(
+      flat(["womens-t-shirts"], "womens-t-shirts"),
+    );
+
+    // `hideIfSingle` still works on it — the flat rail is the same array, so a
+    // scope spanning several brands gets those three rows back.
+    expect(getRail(undefined, FILTER_VERTICALS, null, "journey-flat").map((r) => r.label)).toEqual([
+      "Price Range",
+      "Margin on MRP",
+      "MOQ",
+      "Category",
+      "Brands",
+      "Seller",
+      "Seller City",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
+    ]);
+  });
+
+  it("orphans an attribute cut on the flat rail in every state", () => {
+    /*
+     * The trap the flat rail opens, and the reason `dropOrphanedSelections`
+     * stopped branching on `byCategory` (2026-09-09).
+     *
+     * On every other rail a ticked category *turns the attribute rows on*, so
+     * the old early return could skip the attribute test there and be right. On
+     * this one it doesn't, and a `?fit=slim` arriving with a category would have
+     * survived with no control to show or undo it — surviving Clear Filters,
+     * uncounted by the badge, quietly hiding products.
+     */
+    const withFit = { category: ["womens-t-shirts"], fit: ["slim"] };
+
+    // `"journey"`: the rows are on, so the cut is reachable and stays.
+    expect(dropOrphanedSelections(withFit, FILTER_VERTICALS, "womens-t-shirts", "journey"))
+      .toEqual(withFit);
+
+    // `"journey-flat"`: no row in any state, so it goes in every state.
+    for (const settled of [null, "womens-t-shirts"]) {
+      expect(
+        dropOrphanedSelections(withFit, FILTER_VERTICALS, settled, "journey-flat"),
+      ).toEqual({ category: ["womens-t-shirts"] });
+      expect(
+        dropOrphanedSelections({ fit: ["slim"] }, FILTER_VERTICALS, settled, "journey-flat"),
+      ).toEqual({});
+    }
+
+    // Every one of the five, not just the one that reads well in a test.
+    const all = {
+      category: ["womens-t-shirts"],
+      fit: ["slim"],
+      neck: ["round-neck"],
+      sleeve: ["half-sleeves"],
+      pattern: ["solid"],
+      closure: ["pullover"],
+    };
+    expect(
+      dropOrphanedSelections(all, FILTER_VERTICALS, "womens-t-shirts", "journey-flat"),
+    ).toEqual({ category: ["womens-t-shirts"] });
+
+    // And nothing the rail *does* carry is touched by the new clause.
+    const kept = { category: ["womens-t-shirts"], price: ["p-200-400"], cashback: ["cb-400"] };
+    expect(dropOrphanedSelections(kept, FILTER_VERTICALS, "womens-t-shirts", "journey-flat"))
+      .toEqual(kept);
+  });
+
   it("gives each offer magnitude its own row, at the foot of the rail", () => {
     /*
      * 2026-09-07, second pass. They were merged behind one *All Offers* row

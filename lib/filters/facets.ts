@@ -908,13 +908,47 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
  * than an array prop because these pages are Server Components handing props to
  * a Client one, and a name keeps the arrays — and the tests that pin them —
  * in this file.
+ *
+ * **`"journey-flat"` is that same rail with the vertical block switched off**
+ * (2026-09-09, on request: *this is what we are launching now*). Same array,
+ * same order, same `hideIfSingle` rows — it differs in one thing, that settling
+ * a vertical no longer grows the rail. See `FLAT_RAILS`.
  */
-export type RailPreset = "default" | "journey";
+export type RailPreset = "default" | "journey" | "journey-flat";
 
 const RAILS: Record<RailPreset, typeof RAIL_ORDER> = {
   default: RAIL_ORDER,
   journey: JOURNEY_RAIL_ORDER,
+  // The same array. `FLAT_RAILS` is what makes the two differ, so the order,
+  // the labels and every row's flags are stated once — a row added to the
+  // journey rail is on both rails, which is the point of not copying it.
+  "journey-flat": JOURNEY_RAIL_ORDER,
 };
+
+/**
+ * Rails on which the **vertical block never appears**: settling a product
+ * vertical adds no rows, and a selection on one of those facets is orphaned in
+ * every state rather than only outside a vertical.
+ *
+ * `/userjourney` since 2026-09-09, on request — *"remove the behaviour of
+ * showing more filters when a pv is selected, this is what we are launching
+ * now"*. The rail is a flat 7 rows on Kartik's scope, whatever the buyer ticks,
+ * and the bottom sheet a flat 530 with it (`sheetHeightPct` reads the rail, so
+ * that follows for free).
+ *
+ * **A property of the rail, not a `controls` flag.** Two things have to agree
+ * about it — `getRail`, which decides whether the rows show, and
+ * `dropOrphanedSelections`, which decides whether a selection on them survives
+ * — and they are reached by different callers with different props. Hanging it
+ * off the preset that both already carry is what keeps them from disagreeing;
+ * that disagreement is exactly the orphan trap, and it has been introduced here
+ * twice before.
+ *
+ * **`/pvfilters` deliberately keeps `"journey"`.** The two listings were
+ * un-shared the same morning precisely so this deletion could land on one of
+ * them; product-vertical filtering carries on there.
+ */
+const FLAT_RAILS: ReadonlySet<RailPreset> = new Set<RailPreset>(["journey-flat"]);
 
 /**
  * Each rail's vertical-only facets, which stopped being one set on 2026-09-07:
@@ -924,6 +958,10 @@ const RAILS: Record<RailPreset, typeof RAIL_ORDER> = {
 const PV_FACET_IDS_BY_PRESET: Record<RailPreset, Set<string>> = {
   default: PV_FACET_IDS,
   journey: pvFacetIds(JOURNEY_RAIL_ORDER),
+  // The same five garment attributes — but on a flat rail they are orphaned in
+  // *every* state, not just outside a vertical, because no state puts a row
+  // back. `dropOrphanedSelections` is where that difference is applied.
+  "journey-flat": pvFacetIds(JOURNEY_RAIL_ORDER),
 };
 
 /**
@@ -993,7 +1031,14 @@ export function getRail(
    * exists to prevent. Caught by a test, not by reading.
    */
   const genderRedundant = locked || inSingleVertical(category);
-  const showVertical = genderRedundant || settled !== null;
+  /*
+   * **A flat rail answers no** whatever the scope — see `FLAT_RAILS`. It is
+   * checked here rather than by stripping the rows out of a third array, so the
+   * journey and `/pvfilters` still read one `JOURNEY_RAIL_ORDER` and a row
+   * added to it lands on both.
+   */
+  const showVertical =
+    !FLAT_RAILS.has(preset) && (genderRedundant || settled !== null);
 
   return RAILS[preset]
     .filter(
@@ -1073,13 +1118,29 @@ export function dropOrphanedSelections<T extends Record<string, string[]>>(
   // `category` isn't in the selections to prove it.
   const byCategory =
     mode.kind === "locked" || inSingleVertical(selections.category);
-  // Scope may be one vertical without a category selection saying so.
-  const showVertical = byCategory || settled !== null;
+  // Scope may be one vertical without a category selection saying so — unless
+  // the rail never shows the block at all, which is the whole of `FLAT_RAILS`.
+  const showVertical =
+    !FLAT_RAILS.has(preset) && (byCategory || settled !== null);
 
-  const orphaned = (id: string) => {
-    if (byCategory) return id === "gender";
-    return showVertical ? false : PV_FACET_IDS_BY_PRESET[preset].has(id);
-  };
+  /**
+   * **Two independent orphans, not a branch between them**, since 2026-09-09.
+   *
+   * It used to read `if (byCategory) return id === "gender"`, which was right
+   * only because a settled category always turned the attribute rows *on*: the
+   * early return could skip the attribute test because that test was always
+   * false there. On a flat rail it isn't — ticking a category shows no rows —
+   * so the early return would have kept `?fit=slim` alive with nothing to
+   * display or undo it. That is the trap this function exists for, arriving
+   * through the door the function itself left open.
+   *
+   * As two clauses the behaviour on every existing rail is unchanged: where
+   * `byCategory` holds, `showVertical` holds with it, so the first clause is
+   * false and only Gender is dropped, exactly as before.
+   */
+  const orphaned = (id: string) =>
+    (!showVertical && PV_FACET_IDS_BY_PRESET[preset].has(id)) ||
+    (byCategory && id === "gender");
 
   if (!Object.keys(selections).some(orphaned)) return selections;
 

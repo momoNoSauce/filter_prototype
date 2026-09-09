@@ -98,14 +98,28 @@ min/max above their bands. A–D pass nothing, and neither does the journey for
 inside Filters. Put new per-route departures in that object rather than adding
 a prop each; the reasoning is in `docs/decisions.md`.
 
-**Its rail is `JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price
+**`/userjourney` shows no vertical block at all** (2026-09-09, on request —
+*this is what we are launching now*). Its `controls.rail` is
+**`"journey-flat"`**, which is `JOURNEY_RAIL_ORDER` with the five garment
+attribute rows switched off in *every* state: settling a vertical no longer adds
+rows, and the bottom sheet no longer grows with them. A flat **7 rows and 530**
+on Kartik's scope whatever the buyer ticks. **`/pvfilters` keeps `"journey"`**
+and still goes 7 → 12 and 530 → 640 — that route is where product-vertical
+filtering carries on, and the split is why the two listings were un-shared.
+`FLAT_RAILS` is the one switch, hung off the preset because `getRail` and
+`dropOrphanedSelections` must agree about it and are reached by different
+callers; a disagreement there is the orphan trap, which is why
+`dropOrphanedSelections` stopped branching on `byCategory` the same day. On a
+flat rail a hand-written `?fit=slim` is dropped in every state.
+
+**Both rails come from `JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price
 Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City, then the
 five garment attributes, then **Cashback · Seller Offer · SOLV Target Scheme at
 the foot**. Fabric has no row here, and neither do Size or Colour since
 2026-09-08. Three of those rows carry
 `hideIfSingle` — **Brands, Seller and Seller City hide when the page
 scope holds one value of them**, which Kartik's does (one brand, one seller, one
-city), so the rail renders **7 rows outside a vertical and 12 inside one**. It
+city), so that array yields **7 rows outside a vertical and 12 inside one**. It
 is measured off the page's products (`singleValuedFacets`), never off the
 selections: a row that came and went as boxes were ticked is the churn the
 2026-08-19 reorder exists to stop. **Size and Colour are off this rail** (2026-09-08); Size was global
@@ -138,9 +152,10 @@ where a panel that wants it back should take it from.
 
 Its Filters screen is a **bottom sheet** rather than full-bleed, so the listing
 stays visible behind it. **Its height follows the rail** (`sheetHeightPct`),
-capped at 80% of the frame and floored at 440: seven rows outside a vertical
-gives 530, and settling one adds the five attribute rows and grows it to the
-capped 640 — a fixed 80% left ~110px of white under a short rail. That
+capped at 80% of the frame and floored at 440: seven rows gives 530, and the
+five attribute rows grow it to the capped 640 — a fixed 80% left ~110px of white
+under a short rail. **On `/userjourney` that growth is gone** since the rail went
+flat, so its sheet is 530 in every state; `/pvfilters` still climbs. That
 shortens the panel, so `needsSearch` takes a viewport argument, computed from
 the height actually rendered (`sheetPanelViewport`) — 530 at the cap against
 the full-bleed 690, giving 11 rows / 9 thumbnail rows / 13 tiles instead of
@@ -223,7 +238,8 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 | `components/journey/ProductDetail.tsx` | **The** detail screen — journey, `/pvfilters`, B and D |
 
 **23 facets** behind 13 rail rows — 18 inside a vertical, 17 in C and D, 8 on
-the journey and 13 inside a vertical there. Adding a facet is one entry in
+the journey's rail and 13 inside a vertical on `/pvfilters`, which is the only
+route that still opens that block. Adding a facet is one entry in
 `FACETS`; a facet with bands is one entry in `RANGE_FACETS` plus a
 `rangeFacet()` line, and `typed: false` there is a facet with bands and no
 boxes — which is what keeps all six of those identical. Each

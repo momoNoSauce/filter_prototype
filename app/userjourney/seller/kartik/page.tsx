@@ -7,10 +7,11 @@ import { KARTIK, getKartikCatalog } from "@/lib/catalog/kartik";
  *
  * `filter` mode, not `locked`: the storefront carries three tee verticals, and
  * the journey's central cut is *Category → Women's T-Shirts*, which needs the
- * Category row on the rail. Picking it leaves one vertical standing, which is
- * what puts Size there — see `settledVertical`. (It read *Gender → Women* until
- * 2026-09-09; Gender came off this rail on 09-03 and the `controls` note below
- * had already been corrected.)
+ * Category row on the rail. **Settling a vertical no longer adds anything** —
+ * see the `rail: "journey-flat"` note below; it used to unlock the five garment
+ * attribute rows. (This paragraph read *Gender → Women* until 2026-09-09;
+ * Gender came off this rail on 09-03 and the `controls` note below had already
+ * been corrected.)
  *
  * Everything here beyond the card and chrome is the shared `PlpScreen`: same
  * engine, same rail, same sheets, same Sort options. Only the skin is the
@@ -79,7 +80,20 @@ export default function Page() {
        *   still resets it, as it does in every variant: it commits
        *   `DEFAULT_SORT` whether or not Sort is on that screen, which is why
        *   the documented demo has the URL going bare.
-       * - **This route's own rail order**, with Gender, Delivery Time, Offers,
+       * - **No vertical block** (2026-09-09, on request — *"remove the behaviour of
+ *   showing more filters when a pv is selected, this is what we are launching
+ *   now"*). `rail: "journey-flat"` rather than `"journey"`: the same array in
+ *   the same order, with the five garment attribute rows switched off in every
+ *   state. Settling *Category → Women's T-Shirts* used to take the rail from 7
+ *   rows to 12 and grow the sheet 530 → 640; it now leaves both exactly where
+ *   they were, and the only thing a category tick does is filter. Fit, Neck,
+ *   Sleeve, Pattern and Closure keep their `FACETS` entries for A–D and for
+ *   `/pvfilters`; here a hand-written `?fit=slim` is dropped by
+ *   `dropOrphanedSelections` in every state, which is the same accepted case as
+ *   `?fabric=cotton`. **`/pvfilters` keeps the old behaviour on purpose** —
+ *   that route is where product-vertical filtering carries on, and it is why
+ *   the two listings were un-shared that morning.
+ * - **This route's own rail order**, with Gender, Delivery Time, Offers,
        *   More Filters, Seller and Seller City dropped — see
        *   `JOURNEY_RAIL_ORDER`. Three of those cost something and all three
        *   are paid for there: Gender was this journey's documented cut, and
@@ -114,7 +128,7 @@ export default function Page() {
       controls={{
         verticalChips: false,
         priceChip: false,
-        rail: "journey",
+        rail: "journey-flat",
         filterSheet: true,
         rangeInputs: true,
       }}
