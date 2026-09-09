@@ -581,6 +581,42 @@ Only the journey's men's tees still fall back to the Figma shirt — see
 *`/userjourney`*.
 
 
+### `/pvfilters2` — the clone made separate from the start (2026-09-09)
+
+On request, a third Kartik listing:
+
+```
+/pvfilters2                      the listing itself
+/pvfilters2/product/[productId]  the detail screen
+```
+
+A second cut at the product-vertical filtering, so one can be tried beside the
+other rather than on top of it.
+
+**Independent from the moment it was made**, with no shared-config stage at all.
+That is the one thing this repo learned twice in a day: `/pvfilters` was cloned
+off `/userjourney` behind a shared `KartikStorefront` and un-shared within the
+hour, the moment the journey needed something *removed*. A route made in order
+to diverge does not go behind a shared config, however identical it looks on the
+day it is made. Three listings, three prop blocks.
+
+**That is not licence to copy screens**, and the line has not moved:
+`PlpScreen`, `ProductDetail` and `FindItFast` stay shared by all of them —
+screens and surfaces, parameterised. Something one route wants of those that
+another does not is a prop with a default, the way `cartBadge` and `guidedPv`
+already are. What each route owns is its prop block, exactly as `/` and
+`/b/results` do.
+
+`basePath` is spelled into `homeHref` and `productBasePath` as before, and the
+detail route passes `homeHref` explicitly because `ProductDetail` still defaults
+it to `/userjourney`.
+
+Verified at 360px: `/pvfilters2` and `/pvfilters` render byte-identical PNGs, as
+do their two detail screens; the Find It Fast block commits
+`?category=womens-t-shirts&size=m`, a card opens
+`/pvfilters2/product/k-0371`, Home returns to `/pvfilters2`, and a main-catalog
+id 404s.
+
 ### `/pvfilters` gets the guided block — *Find It Fast* (2026-09-09)
 
 Built from two screengrabs of a competitor's search results, supplied as the

@@ -112,6 +112,16 @@ callers; a disagreement there is the orphan trap, which is why
 `dropOrphanedSelections` stopped branching on `byCategory` the same day. On a
 flat rail a hand-written `?fit=slim` is dropped in every state.
 
+**`/pvfilters2`** (2026-09-09) is a clone of `/pvfilters`, made **independent
+from the start** — a second cut at the PV filtering, tried beside the first
+rather than on top of it. Byte-identical today; that is a fact about this
+afternoon, not an invariant. **Three Kartik listings now spell out their own
+props over the one `PlpScreen`, and that is deliberate**: sharing them behind a
+component was tried and reversed the same morning, so don't "fix" the
+duplication. What stays shared is `PlpScreen`, `ProductDetail` and
+`FindItFast` — screens and surfaces, parameterised; something one route wants of
+them that another doesn't is a prop with a default.
+
 **`/pvfilters` puts that growth on the listing instead** — the **Find It Fast**
 block (`controls.guidedPv`, 2026-09-09, from two screengrabs of a competitor's
 search results, drawn in our tokens): *choose gender* as three pictures, and
@@ -220,7 +230,7 @@ offer is. **The chips stay binary** — they ask *is there one*, the rows ask
 `All filters cleared` over a lit chip. `hasOffer` and `offers` are that case on
 the journey: the merged *Offers* row holds the magnitudes, not the names.
 
-Detail routes are `{base}/product/[productId]` for all six paths, dynamic
+Detail routes are `{base}/product/[productId]` for all seven paths, dynamic
 rather than pre-rendered.
 
 **Each variant is a closed loop** — hand someone `/b` and the journey stays in
@@ -246,7 +256,7 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 | `lib/filters/contextChips.ts` | Which chips the strip carries, given the selections |
 | `lib/filters/panelFit.ts` | Whether a panel overflows the fold, and so earns a search field — and how tall the bottom sheet is, from its rail |
 | `lib/filters/urlState.ts` | State mirrored to the query string; local state stays the source of truth |
-| `components/plp/PlpScreen.tsx` | **The** PLP — all six paths, parameterised, never copied |
+| `components/plp/PlpScreen.tsx` | **The** PLP — all seven paths, parameterised, never copied |
 | `components/plp/VerticalPlp.tsx` | The C/D listing configuration, shared by their four routes |
 | `components/plp/FindItFast.tsx` | `/pvfilters`' guided *choose gender → choose size* block |
 | `components/filters/FilterScreen.tsx` | Rail + panel, draft/commit |
