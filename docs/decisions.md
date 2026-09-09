@@ -725,13 +725,15 @@ block above the offers. The reason is the swap: the rail should read as the row
 you tapped expanding where it stood, not as rows appearing somewhere you were
 not looking.
 
-**The label tickers while the row is locked** — `Style Filters → Size → Style
-Filters → Fit → Style Filters → Neck Type → …`, a word every 1.8s.
+**The label tickers while the row is locked** — `Style Filters → Size → Fit →
+Neck Type → Sleeve Type → Pattern → Closure Type →` and round again, a word
+every 1.8s.
 
-*Alternating, not a plain cycle through the six.* The row still has to be
-findable: a buyer scanning the rail for the thing they tapped a moment ago
-should never wait through five other words for its name. Every other step is the
-name, so it is on screen half the time and the tease has the rest.
+*One list, the name leading each lap.* It shipped **alternating** — name,
+filter, name, filter — on the reasoning that the row had to stay findable by
+name. Reported the same day as reading like a stutter, and rightly: the name
+came back every other beat while the six filters, which are the interesting
+part, had only half the time. Leading each lap identifies the row well enough.
 
 *One word at a time, arriving and stopping, not a marquee.* A word that stops
 moving is a word you can read, and the rail column is 140px — barely a marquee's

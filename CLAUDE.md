@@ -130,12 +130,13 @@ Four rules on it, each a correction from an earlier render:
 
 - **It is drawn like any other row.** It shipped dimmed and read as *disabled*,
   which is the one thing it is not — it is the row you are meant to press.
-- **Its label tickers while locked** — `Style Filters → Size → Style Filters →
-  Fit → …`, alternating so the row is findable by name half the time and
-  teasing the rest. One word at a time, each arriving and stopping; it **stops
-  when the row is open**, and never starts under `prefers-reduced-motion`
-  (checked in `TickerLabel`, not left to the CSS, which can only slow travel and
-  not stop words changing).
+- **Its label tickers while locked** — `Style Filters → Size → Fit → Neck Type →
+  Sleeve Type → Pattern → Closure Type →` and round again. **One list, name
+  first**: it shipped alternating name-and-filter and that read as a stutter.
+  One word at a time, each arriving and stopping; it **stops when the row is
+  open**, and never starts under `prefers-reduced-motion` (checked in
+  `TickerLabel`, not left to the CSS, which can only slow travel and not stop
+  words changing).
 - **It leaves when the real rows arrive.** `gated` is the mirror of `vertical:
   true` and is read off `showVertical`, so ticking a category swaps the
   placeholder for **Size · Fit · Neck Type · Sleeve Type · Pattern · Closure

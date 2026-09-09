@@ -56,15 +56,16 @@ const TICKER_MS = 1800;
 
 /**
  * The rail label for a **locked `Style Filters` row** — a horizontal ticker
- * alternating the row's own name with the filters behind it:
+ * reading the row's name and then the filters behind it, once each:
  *
- *     Style Filters → Size → Style Filters → Fit → Style Filters → Neck Type …
+ *     Style Filters → Size → Fit → Neck Type → Sleeve Type → Pattern →
+ *     Closure Type → Style Filters → …
  *
- * **Alternating, not a plain cycle through the six.** The row still has to be
- * findable: a buyer scanning the rail for the thing they tapped a moment ago
- * should never have to wait through five other words for its name. Every other
- * step is the name, so it is on screen half the time and the tease occupies the
- * rest.
+ * **One list, not the name between every word.** It shipped alternating — name,
+ * filter, name, filter — on the reasoning that the row had to stay findable by
+ * name; in practice the name came back so often it read as a stutter, and the
+ * six filters, which are the interesting part, only had half the time. The name
+ * still leads every lap, which is enough to identify the row.
  *
  * One word at a time, each arriving and stopping, rather than a continuous
  * marquee — a word that stops moving is a word you can read, and the rail
@@ -78,11 +79,9 @@ const TICKER_MS = 1800;
  * changing.
  */
 function TickerLabel({ label, words }: { label: string; words: string[] }) {
-  // Alternate, and start on the name so the first paint and the server agree.
-  const sequence = useMemo(
-    () => words.flatMap((word) => [label, word]),
-    [label, words],
-  );
+  // Name first, then each filter once. Starting on the name is also what makes
+  // the first paint and the server agree.
+  const sequence = useMemo(() => [label, ...words], [label, words]);
   const [step, setStep] = useState(0);
 
   useEffect(() => {
