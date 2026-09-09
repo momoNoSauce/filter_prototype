@@ -581,6 +581,75 @@ Only the journey's men's tees still fall back to the Figma shirt — see
 *`/userjourney`*.
 
 
+### `/pvfilters` gets the guided block — *Get It Right* (2026-09-09)
+
+Built from two screengrabs of a competitor's search results, supplied as the
+spec: a card at the head of the listing with **CHOOSE GENDER** as three pictures
+and, once one is picked, a **CHOOSE SIZE** step unfolding beneath it.
+
+The mirror image of the morning's other change. `/userjourney` had "settling a
+vertical reveals more filters" removed for launch; here it is the whole point,
+and it moves out of the Filters sheet onto the listing where a buyer meets it
+without opening anything.
+
+**Drawn in the SOLV tokens, not the reference's pink.** Layout, copy and
+behaviour are the screengrab's; `primary` and `primary-subtle` replace the
+purple tab and the pink ground, and a selected tile takes the same
+`border-primary` + primary-bold treatment the Filters panel's Category rows
+already use. Two palettes in one prototype is the drift the token rule exists to
+stop, and none of this is a Figma export to be preserved. Confirmed on the ask.
+
+**The tiles select `category`, not `gender`**, though the heading says what the
+reference's says. Category → gender is 1:1 here and Kartik's three verticals
+*are* Men's, Women's and Boy's, so the two narrow identically — and Category is
+on the rail, which means the Filters badge counts it, the panel shows it ticked
+and Clear Filters reaches it, all for free. Gender has no row on this rail, so
+driving it would have stranded a filter the sheet couldn't undo. The label is
+the gender word because *Men* reads better than *Men's Casual T-Shirts* in a
+98px tile.
+
+**Three things it got wrong on the first render, all found by looking at it:**
+
+1. **The Boys tile vanished** once M and L were ticked — Kartik's kids' tees
+   carry age bands, not letters, so the option honestly fell to zero and
+   `facetOptionsWithCounts` hid it. Correct for a facet list, wrong for a guided
+   block: a step must not be narrowed by the step below it. The vertical count
+   now excludes Size. Cuts made in the Filters sheet still narrow it — that is
+   an option honestly at zero, not a step eating its own parent.
+2. **`Women` truncated to `Wom…`** at three tiles across: 326px of card leaves
+   the label ~50px and 14px Roboto bold needs 52. A 34px picture and 13px label
+   buy the 8px.
+3. **A wrapping flex row made the leftovers grow.** Seven sizes (XS–3XL) put
+   `2XL` and `3XL` on a second row at half the frame each. A five-column grid
+   keeps every tile the first row's width, whatever the vocabulary.
+
+**Switching vertical clears the size cut**, and this had to be said by hand in
+`pickVertical`: tapping a tile *off* un-settles the vertical and
+`dropOrphanedSelections` handles it, but switching from Women to Boys never
+un-settles anything, so the guard sees nothing to drop. M in menswear is not M
+in womenswear — the whole reason Size is vertical-only — and Kartik's kids' tees
+have no letters at all, so a carried-over `size=m` hands back an empty listing
+whose cause is invisible.
+
+**Size joined this rail's vertical-only set**, which is the third reading of one
+rule rather than a third policy. Strip a cut where something on the page could
+have shown it and now can't: A–D have a vertical-only Size *row*; `/pvfilters`
+has this block's second step, drawn only inside a settled vertical;
+`/userjourney` has no Size control in any state, so `?size=m` stays the accepted
+hand-written case there. Measured live: `/pvfilters?size=m` shows all 540,
+`/userjourney/seller/kartik?size=m` shows 205.
+
+**Size is deliberately uncounted by the Filters badge**, and reached by
+`clearsAlso` instead — the rule the offer chips already set. A lit control on the
+listing reports itself; counting it on the badge as well is the double-reporting
+that rule exists to prevent. Without `clearsAlso` the sheet would announce
+`All filters cleared` over a lit size tile.
+
+**`guidedPv` is the one opt-in field on `controls`.** The rest switch off a
+behaviour every route documents, so a route opts out; this adds a surface no
+other route has, so the default is `false`. It must never be set beside
+`rail: "journey-flat"` — that would draw a size step nothing can unfold.
+
 ### `/userjourney` drops the vertical block — the launch build (2026-09-09)
 
 On request: *"remove the behaviour of showing more filters when a pv is

@@ -10,6 +10,9 @@ import {
   SELLERS,
 } from "@/lib/catalog/seed";
 import type { Product } from "@/lib/catalog/types";
+// The facet id, not the facet: `activeVariant` imports nothing from here, so
+// the one direction stays one direction.
+import { SIZE_FACET_ID } from "./activeVariant";
 import { activeVariant, sizeOptionId } from "./activeVariant";
 
 export type PanelType = "tile" | "thumb" | "checkbox" | "swatch" | "range";
@@ -957,10 +960,34 @@ const FLAT_RAILS: ReadonlySet<RailPreset> = new Set<RailPreset>(["journey-flat"]
  */
 const PV_FACET_IDS_BY_PRESET: Record<RailPreset, Set<string>> = {
   default: PV_FACET_IDS,
-  journey: pvFacetIds(JOURNEY_RAIL_ORDER),
+  /*
+   * The five garment attributes, **plus Size** since 2026-09-09.
+   *
+   * Size has no row on this rail and did not need to be here while nothing
+   * could select it: a hand-written `?size=m` was the documented accepted case,
+   * and on 2026-09-07 this route had asked for Size to survive without a
+   * vertical, which is what split this map per preset in the first place.
+   *
+   * `/pvfilters`' guided block changed the premise. *CHOOSE SIZE* is a real
+   * control now, and it is drawn **only once a vertical is settled** — so a Size
+   * cut that outlives the vertical outlives the only thing that can show or undo
+   * it. That is the orphan trap, and the fix is to say so here rather than to
+   * teach the block to clean up after itself.
+   *
+   * A–D reach the same answer through the row itself: Size is `vertical: true`
+   * on `RAIL_ORDER`, so `pvFacetIds` finds it. This rail has to name it by hand
+   * because the control isn't a rail row.
+   */
+  journey: new Set([...pvFacetIds(JOURNEY_RAIL_ORDER), SIZE_FACET_ID]),
   // The same five garment attributes — but on a flat rail they are orphaned in
   // *every* state, not just outside a vertical, because no state puts a row
   // back. `dropOrphanedSelections` is where that difference is applied.
+  //
+  // **Size is deliberately not here.** `/userjourney` has no Size control in
+  // any state, so `?size=m` stays the accepted hand-written case it has been
+  // since 2026-09-08 — unreachable by clicking, and cleared by the empty
+  // state's own Clear Filters, which commits every selection rather than the
+  // rail's.
   "journey-flat": pvFacetIds(JOURNEY_RAIL_ORDER),
 };
 

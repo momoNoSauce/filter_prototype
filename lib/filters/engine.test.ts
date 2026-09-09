@@ -1201,6 +1201,35 @@ describe("variants C and D — the page is the vertical", () => {
     expect(journey.has("category")).toBe(true);
   });
 
+  it("strips a shared Size link where a control could have shown it", () => {
+    /*
+     * One rule read three ways (2026-09-09), and the reason `parseSelections`
+     * takes the rail preset: strip a cut where something on the page could have
+     * shown it and now can't.
+     *
+     * - A–D: a vertical-only Size **row**, so `?size=m` with no vertical goes.
+     * - `/pvfilters`: no row, but the guided block's *choose size* step, drawn
+     *   only inside a settled vertical — so it goes there too.
+     * - `/userjourney`: no Size control in any state, so nothing was stranded
+     *   and the link survives, as it has since the row came off on 2026-09-08.
+     */
+    const kartik = getKartikCatalog();
+    const bare = new URLSearchParams("size=m");
+    expect(parseSelections(bare, FILTER_VERTICALS, kartik)).toEqual({});
+    expect(parseSelections(bare, FILTER_VERTICALS, kartik, "journey")).toEqual({});
+    expect(parseSelections(bare, FILTER_VERTICALS, kartik, "journey-flat")).toEqual({
+      size: ["m"],
+    });
+
+    // With the vertical beside it the step is on screen, so `/pvfilters` keeps
+    // it — the link a buyer would actually share out of that block.
+    const withVertical = new URLSearchParams("category=womens-t-shirts&size=m,l");
+    expect(parseSelections(withVertical, FILTER_VERTICALS, kartik, "journey")).toEqual({
+      category: ["womens-t-shirts"],
+      size: ["m", "l"],
+    });
+  });
+
   it("never grows the flat rail, whatever settles the vertical", () => {
     /*
      * 2026-09-09, on request: *"remove the behaviour of showing more filters
@@ -1386,9 +1415,20 @@ describe("variants C and D — the page is the vertical", () => {
      * Size is vertical-only on A–D's rail, on the argument that M in menswear
      * is not M in womenswear. On 2026-09-07 the journey asked for it always,
      * which is what split `PV_FACET_IDS` per preset; on 2026-09-08 that route
-     * dropped the row altogether, along with Colour. The split still holds the
-     * difference: A–D orphan a Size cut when the vertical goes, and this rail
-     * has no Size row to orphan one for.
+     * dropped the row altogether, along with Colour.
+     *
+     * **The split now runs the other way round** (2026-09-09), and it is the
+     * two Kartik rails that disagree rather than Kartik against A–D:
+     *
+     * - `"journey"` (`/pvfilters`) orphans a Size cut like A–D, because the
+     *   guided block's *choose size* step is a real control and is drawn only
+     *   inside a settled vertical.
+     * - `"journey-flat"` (`/userjourney`) keeps it, because that route has no
+     *   Size control in any state — `?size=m` is a hand-written URL nothing can
+     *   strand, and the empty state's Clear Filters resolves it.
+     *
+     * Neither rail has a Size *row*; what differs is whether anything on the
+     * page can show or undo the cut.
      */
     const singles = singleValuedFacets(getKartikCatalog());
     const journey = getRail(undefined, FILTER_VERTICALS, null, "journey", singles).map(
@@ -1401,11 +1441,19 @@ describe("variants C and D — the page is the vertical", () => {
 
     const sized = { size: ["m", "l"] };
     expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null)).toEqual({});
-    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, "journey")).toEqual(sized);
+    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, "journey")).toEqual({});
+    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, "journey-flat")).toEqual(sized);
 
-    // The five garment attributes are vertical-only on both rails.
+    // Inside a settled vertical `/pvfilters` keeps it, the step being on screen
+    // — which is the whole difference between the two rails.
+    expect(
+      dropOrphanedSelections(sized, FILTER_VERTICALS, "womens-t-shirts", "journey"),
+    ).toEqual(sized);
+
+    // The five garment attributes are vertical-only on every rail.
     const withFit = { fit: ["slim-fit"] };
     expect(dropOrphanedSelections(withFit, FILTER_VERTICALS, null, "journey")).toEqual({});
+    expect(dropOrphanedSelections(withFit, FILTER_VERTICALS, null, "journey-flat")).toEqual({});
     expect(dropOrphanedSelections(withFit, FILTER_VERTICALS, null)).toEqual({});
   });
 

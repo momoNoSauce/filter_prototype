@@ -27,6 +27,7 @@ import { SIZE_FACET_ID } from "@/lib/filters/activeVariant";
 import { ProductCard } from "./ProductCard";
 import { BottomActionBar, PILL_GAP, PILL_H } from "./BottomActionBar";
 import { TopChipBar } from "./TopChipBar";
+import { GetItRight } from "./GetItRight";
 import { CHIP_H_SHORT, CHIP_H_TALL, ChipStrip, ContextChips } from "./ContextChips";
 import { contextChips } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
@@ -234,6 +235,19 @@ export type PlpControls = {
    * the bands alone.
    */
   rangeInputs?: boolean;
+  /**
+   * The guided *Get It Right* block at the head of the listing — choose a
+   * gender, then choose a size. `true` on `/pvfilters` (2026-09-09), built from
+   * two screengrabs of a competitor's search results. See `GetItRight`.
+   *
+   * **The one field here that is opt-*in***, where the rest are opt-outs. The
+   * others switch off a behaviour every route documents; this adds a surface no
+   * other route has, so the documented default is `false` and the route that
+   * wants it says so. Turning it on where the vertical block is switched off
+   * would draw a size step nothing can unfold — `/userjourney` is exactly that
+   * route since this morning, which is why it does not pass this.
+   */
+  guidedPv?: boolean;
 };
 
 export function PlpScreen({
@@ -443,6 +457,37 @@ export function PlpScreen({
   const toggleChip = (facetId: string, optionId: string) =>
     commit(toggleSelection(selections, facetId, optionId), sort);
 
+  const guidedPv = controls?.guidedPv ?? false;
+
+  /**
+   * A gender tile in the guided block — **replaces** the category cut rather
+   * than adding to it, and clears it when the tile already stood alone.
+   *
+   * Not `toggleSelection`, which is a multi-select union and is right for every
+   * other control including the Filters panel's own Category rows. The block is
+   * a guided single choice: its second step exists only while exactly one
+   * vertical is settled, so a tap that could leave two ticked would let the
+   * buyer close the step they are standing in. Picking a second gender in the
+   * block means *that one instead*.
+   *
+   * **The Size cut goes with the vertical, both ways.** Tapping the tile *off*
+   * is handled by `dropOrphanedSelections` inside `commit` — Size is in this
+   * rail's vertical-only set for exactly that tap. Switching to a *different*
+   * vertical has to be said here, because the vertical never un-settles and the
+   * guard sees nothing to drop: M in menswear is not M in womenswear, which is
+   * the whole reason Size is vertical-only, and Kartik's kids' tees don't carry
+   * letters at all — so keeping `size=m` across a switch to Boys hands back an
+   * empty listing whose cause is invisible.
+   */
+  const pickVertical = (categoryId: string) => {
+    const current = selections.category ?? [];
+    const alone = current.length === 1 && current[0] === categoryId;
+    const rest = { ...selections };
+    delete rest.category;
+    delete rest[SIZE_FACET_ID];
+    commit(alone ? rest : { ...rest, category: [categoryId] }, sort);
+  };
+
   // Re-measured whenever the strip's contents change — the chips rewrite
   // themselves as a buyer drills in, and a vertical chip's label can run to two
   // lines. `chips.length` and the variant are the only things that change its
@@ -519,8 +564,22 @@ export function PlpScreen({
    * double-reporting that badge rule exists to prevent.
    */
   const clearsAlso = useMemo(
-    () => [...new Set(chips.map((chip) => chip.facetId).filter((id) => !railFacetIds.has(id)))],
-    [chips, railFacetIds],
+    () => [
+      ...new Set(
+        [
+          ...chips.map((chip) => chip.facetId),
+          /*
+           * Size, when the guided block is drawing it. It is a control on the
+           * listing exactly as a chip is, and it has no row on this rail — so
+           * without this, *Clear Filters* would close the sheet on a lit size
+           * tile and announce `All filters cleared` over it. Same reason as the
+           * offer chips above, arriving from a different surface.
+           */
+          ...(guidedPv ? [SIZE_FACET_ID] : []),
+        ].filter((id) => !railFacetIds.has(id)),
+      ),
+    ],
+    [chips, railFacetIds, guidedPv],
   );
   // Counts exactly what the Filters screen owns — which, since Category
   // rejoined the rail, is every facet in both variants. Nothing is reported
@@ -677,6 +736,19 @@ export function PlpScreen({
             context you read once, and 66px of it is worth more as results. The
             app bar and the chip strip stay fixed; only this scrolls. */}
         {aboveList}
+
+        {/* First thing in the scroller, under the pinned chip strip and above
+            the cards, as the reference has it — so it scrolls away with the
+            listing rather than holding a third of the frame for good. */}
+        {guidedPv && (
+          <GetItRight
+            products={products}
+            selections={selections}
+            settled={settled}
+            onPickVertical={pickVertical}
+            onToggleSize={(sizeId) => toggleChip(SIZE_FACET_ID, sizeId)}
+          />
+        )}
 
         {results.length === 0 ? (
           <EmptyState

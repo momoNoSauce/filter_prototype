@@ -231,10 +231,20 @@ describe("the orphan guard no longer erases the cut that narrowed scope", () => 
     expect(settled).toBeNull();
     expect(dropOrphanedSelections(widened, undefined, settled)).toEqual({});
 
-    // On this route's own rail the Size row is global since 2026-09-07, so
-    // only the garment attribute is orphaned — the guard reads the rail that
-    // is showing, not the default one.
-    expect(dropOrphanedSelections(widened, undefined, settled, "journey")).toEqual({
+    /*
+     * **Both rails drop Size here now** (2026-09-09), where `"journey"` used to
+     * keep it: that route asked for a global Size on 2026-09-07, dropped the
+     * row on 09-08, and on 09-09 got the guided block back — whose *choose
+     * size* step is drawn only inside a settled vertical. A control that comes
+     * and goes with the vertical orphans its cut with the vertical.
+     *
+     * `"journey-flat"` is the one that still keeps it, and for the opposite
+     * reason: `/userjourney` has no Size control in *any* state, so `?size=m`
+     * stays the accepted hand-written case rather than something a tap can
+     * strand.
+     */
+    expect(dropOrphanedSelections(widened, undefined, settled, "journey")).toEqual({});
+    expect(dropOrphanedSelections(widened, undefined, settled, "journey-flat")).toEqual({
       size: ["m"],
     });
   });

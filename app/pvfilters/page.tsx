@@ -19,12 +19,14 @@ import { KARTIK, getKartikCatalog } from "@/lib/catalog/kartik";
  * screen for every route in the prototype. This file only spells out props over
  * it, which is exactly what `/`, `/b/results` and the two seller routes each do.
  *
- * The prop block below is identical to the journey's as of today, so the two
- * render byte for byte. Each setting is annotated with *what* it does and one
- * line of *why*; the long history behind each — which stakeholder call, what it
- * reversed, what it cost — lives in `docs/decisions.md` under
- * `/userjourney`, and it is not repeated here precisely so the two files have no
- * shared prose to drift.
+ * The prop block below started identical to the journey's and **has diverged
+ * twice since**, both on 2026-09-09: the journey took `rail: "journey-flat"` and
+ * stopped growing on a settled vertical, and this route took `guidedPv` and put
+ * that growth on the listing where a buyer can see it. Each setting is annotated
+ * with *what* it does and one line of *why*; the long history behind the ones
+ * inherited from the journey — which stakeholder call, what it reversed, what it
+ * cost — lives in `docs/decisions.md`, and is not repeated here precisely so the
+ * two files have no shared prose to drift.
  */
 export default function Page() {
   return (
@@ -68,6 +70,17 @@ export default function Page() {
        *   other, both being values on one facet; an inverted range is refused
        *   with a toast rather than filtered, and the boxes commit on blur, never
        *   per keystroke.
+       * - `guidedPv: true` — the **Get It Right** block at the head of the
+       *   listing (2026-09-09), from two screengrabs of a competitor's search
+       *   results: *choose gender* as three pictures, and once one is picked a
+       *   *choose size* step unfolds under it. The one opt-*in* field in this
+       *   object, because it adds a surface no other route has rather than
+       *   switching one off. It is this route's whole point — the "settling a
+       *   vertical reveals more filters" behaviour that came off `/userjourney`
+       *   the same morning, made visible on the listing instead of waiting
+       *   behind the Filters button. See `GetItRight`; and note that the size
+       *   step is gated on the *same* settled vertical the rail is, so the
+       *   block and the sheet unfold in one tap.
        *
        * Not `locked` mode, which C and D use — that would take Category off the
        * rail, and Category is the cut this listing turns on.
@@ -78,6 +91,7 @@ export default function Page() {
         rail: "journey",
         filterSheet: true,
         rangeInputs: true,
+        guidedPv: true,
       }}
       /*
        * Both point here, and both must: the home button keeps a session inside

@@ -112,6 +112,20 @@ callers; a disagreement there is the orphan trap, which is why
 `dropOrphanedSelections` stopped branching on `byCategory` the same day. On a
 flat rail a hand-written `?fit=slim` is dropped in every state.
 
+**`/pvfilters` puts that growth on the listing instead** — the **Get It Right**
+block (`controls.guidedPv`, 2026-09-09, from two screengrabs of a competitor's
+search results, drawn in our tokens): *choose gender* as three pictures, and
+picking one unfolds *choose size* beneath it. The tiles select **`category`**,
+not `gender` — 1:1 in this catalog, and Category is on the rail, so the badge,
+the panel and Clear Filters all reach it for free. Three rules it must keep:
+each step is counted against the steps *above* it and never below (Size zeroed
+the Boys tile outright); picking a different vertical **clears the size cut**,
+sizes being vertical-specific; and Size is in this rail's vertical-only set, so
+an unsettled `?size=m` is stripped here where `/userjourney` keeps it. It is the
+**one opt-in** field on `controls` — it adds a surface rather than switching one
+off — and it must never be set beside `"journey-flat"`, which would draw a step
+nothing can unfold.
+
 **Both rails come from `JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price
 Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City, then the
 five garment attributes, then **Cashback · Seller Offer · SOLV Target Scheme at
@@ -234,6 +248,7 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 | `lib/filters/urlState.ts` | State mirrored to the query string; local state stays the source of truth |
 | `components/plp/PlpScreen.tsx` | **The** PLP — all six paths, parameterised, never copied |
 | `components/plp/VerticalPlp.tsx` | The C/D listing configuration, shared by their four routes |
+| `components/plp/GetItRight.tsx` | `/pvfilters`' guided *choose gender → choose size* block |
 | `components/filters/FilterScreen.tsx` | Rail + panel, draft/commit |
 | `components/journey/ProductDetail.tsx` | **The** detail screen — journey, `/pvfilters`, B and D |
 

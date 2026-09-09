@@ -30,10 +30,15 @@ export function parseSelections(
   products: { category: string; gender: string }[] = [],
   /**
    * Which rail the page shows, because the orphan check below reads its
-   * vertical-only set and the two rails disagree about Size since 2026-09-07 —
-   * vertical-only in A–D, global on `/userjourney`. A shared `?size=s,m` with
-   * no category beside it survives on that route and is still stripped on A–D,
-   * which is what each rail's own rows make true.
+   * vertical-only set and the three rails disagree about Size.
+   *
+   * A shared `?size=s,m` with no category beside it is **stripped on A–D and on
+   * `/pvfilters`, and survives on `/userjourney`** — which is not a quirk of
+   * three arrays but the same rule read three times: strip it where something
+   * on the page could have shown it and now can't. A–D have a vertical-only
+   * Size row; `/pvfilters` has the guided block's *choose size* step, drawn only
+   * inside a settled vertical (2026-09-09); `/userjourney` has no Size control
+   * in any state, so nothing was stranded and there is nothing to clean up.
    */
   preset: RailPreset = "default",
 ): Selections {
