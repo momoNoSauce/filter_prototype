@@ -623,14 +623,70 @@ reveal the five garment attributes once a vertical settles, both being
 `rail: "journey"` rather than the journey's flat one, but `/pvfilters` surfaces
 the choice on the listing and `/pvfilters2` leaves it behind the Filters button.
 
-**One consequence, flagged rather than fixed: `/pvfilters2` has no Size control
-at all.** The journey rail has carried no Size row since 2026-09-08, and the
-block was the only other way to reach one. So `?size=m` there is the accepted
-hand-written case `?fabric=cotton` already is on that rail — no click can
-produce it, and outside a settled vertical `dropOrphanedSelections` strips it,
-Size being in this rail's vertical-only set since the block arrived. If this
-variant should offer sizes, the answer is a Size row on a rail of its own, not
-`guidedPv` back.
+**One consequence, flagged at the time: `/pvfilters2` had no Size control at
+all** — the journey rail has carried no Size row since 2026-09-08 and the block
+was the only other way to reach one. The note said the answer was a Size row on
+a rail of its own, not `guidedPv` back. That is what the gated rail below is.
+
+### The gated rail — a row that says what it is hiding (2026-09-09)
+
+On the question *"how do we make it obvious that you need to select a PV to show
+specific attribute filters?"*
+
+**The problem: a row that isn't there teaches nobody.** On `"journey"` and
+`"journey-flat"` the garment attributes simply do not exist until a vertical
+settles. A buyer who never ticks a category never learns there was anything to
+tick *for* — the filters are not hidden behind a rule, they are hidden behind
+nothing at all.
+
+**The answer: `rail: "journey-gated"`.** `JOURNEY_RAIL_ORDER`'s five
+`vertical: true` rows collapse into one **Garment Details** row that is on the
+rail from the first render, dimmed. Its panel, locked, is three things in this
+order — and the order is the argument:
+
+1. **What you get** — `6 garment filters, locked`, then the six names as dimmed
+   chips. Naming the payoff first is what turns a dead row into an offer; a bare
+   *select a category* states a rule and leaves the payoff to the imagination.
+2. **A rule.**
+3. **The tap that fixes it** — the three categories as real `ThumbRow`s with
+   live counts and the same `toggle` as the Category row two columns left. The
+   picker is *in* the panel, so unlocking is one tap, not a navigation
+   instruction. Because the whole screen runs off the draft, the panel fills
+   under the finger rather than on `Show N results`.
+
+**Chips, not rows, for the preview.** Rows were the first build and read better
+in isolation — the panel looked exactly like the one it becomes — but six at the
+real 44px pitch is 264px of a 410px panel and pushed the category picker below
+the fold. The tap is the point of the screen; a preview that hides it costs more
+than it buys. Chips wrap into two lines and still name every filter. They are
+`aria-hidden`: a screen reader announcing six controls that don't work is worse
+than silence, and the heading carries the same information in a line it does
+read.
+
+**Size rides in with them**, which gives this route a Size control for the first
+time and closes the gap logged when it dropped `guidedPv`. It is the most
+vertical-specific facet there is — the reason it is `vertical: true` on A–D's
+rail — so a row that exists to hold vertical-specific filters is where it
+belongs.
+
+**Steady 8 rows and 590px in both states**, and unlike `"journey-flat"` the
+reason is not that there is nothing to add. The tap that unlocks the row happens
+**inside its own panel**, so a sheet that grew on that tap would resize under
+the finger that made it. This is the one rail where a fixed height is a feature
+rather than a side effect.
+
+**The row stays pressable while dimmed.** Disabling it would hide the panel that
+explains the lock, which is the only thing on the screen doing the teaching. No
+lock glyph either: there is no Figma export for one and the rule here is never
+to draw an asset — the dim plus the panel does the work.
+
+**The array is derived, not retyped.** The collapse happens where the first
+`vertical: true` row sat, and every other row comes from `JOURNEY_RAIL_ORDER`
+itself, so a row added there lands on both rails. `PV_FACET_IDS_BY_PRESET` reads
+the gated row's own `facetIds` rather than `pvFacetIds`, which looks for
+`vertical: true` rows and this rail deliberately has none — the contents still
+orphan when the vertical goes, because the panel locks even though the row
+stays.
 
 ### `/pvfilters` gets the guided block — *Find It Fast* (2026-09-09)
 

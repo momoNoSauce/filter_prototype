@@ -56,9 +56,21 @@ export default function Page() {
        *   only report of it.
        * - `priceChip: false` — Price Range stays a rail facet, so the bands are
        *   still reachable in the panel and nothing is orphaned.
-       * - `rail: "journey"` — `JOURNEY_RAIL_ORDER`, not `RAIL_ORDER`: Price ·
-       *   Margin · MOQ · Category · Brands · Seller · Seller City, the five
-       *   garment attributes, then the three offer magnitudes at the foot.
+       * - `rail: "journey-gated"` (2026-09-09) — `JOURNEY_RAIL_ORDER` with its
+       *   five garment attribute rows collapsed into **one row that is always
+       *   there**, *Garment Details*, dimmed until a vertical settles. The other
+       *   two Kartik rails simply remove those rows, so a buyer who never ticks
+       *   a category never learns there was anything to tick *for*; this one
+       *   keeps the row, names what is behind it and offers the categories
+       *   inside its own panel, so unlocking is a tap rather than an
+       *   instruction. **Size rides in with them**, which gives this route a
+       *   Size control for the first time and closes the gap logged when it
+       *   dropped `guidedPv`. The rail is a steady 8 rows and the sheet a steady
+       *   590 in both states — deliberate, because the tap that unlocks the row
+       *   happens inside the panel and a sheet resizing under the finger is
+       *   worse here than anywhere. Order below is otherwise: Price ·
+       *   Price · Margin · MOQ · Category · Brands · Seller · Seller City,
+       *   Garment Details, then the three offer magnitudes at the foot.
        *   Gender, Delivery Time and More Filters have no row, so the central cut
        *   is **Category → Women's T-Shirts**, which is what settles the vertical
        *   and puts Size on the rail. Brands, Seller and Seller City are
@@ -85,13 +97,9 @@ export default function Page() {
        *   surfaces the choice **on the listing** in `FindItFast`, and this route
        *   leaves it **behind the Filters button** where it has always been.
        *
-       *   **One thing it takes with it: Size has no control here at all.** The
-       *   journey rail has carried no Size row since 2026-09-08, and the block
-       *   was the only other place to reach one. So `?size=m` on this route is
-       *   the accepted hand-written case `?fabric=cotton` already is — no click
-       *   can produce it, and outside a settled vertical `dropOrphanedSelections`
-       *   strips it anyway. If this variant ought to offer sizes, the answer is
-       *   a Size row on a rail of its own, not `guidedPv` back.
+       *   It cost this route its only Size control for a few hours; the gated
+       *   rail below is the answer that was flagged at the time — a Size row on
+       *   a rail of its own, not `guidedPv` back.
        *
        * Not `locked` mode, which C and D use — that would take Category off the
        * rail, and Category is the cut this listing turns on.
@@ -99,7 +107,7 @@ export default function Page() {
       controls={{
         verticalChips: false,
         priceChip: false,
-        rail: "journey",
+        rail: "journey-gated",
         filterSheet: true,
         rangeInputs: true,
       }}

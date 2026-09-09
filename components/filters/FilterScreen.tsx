@@ -39,6 +39,12 @@ import { SearchField } from "./SearchField";
 import { OptionRow, RangeInputs, SortRow, ThumbRow } from "./OptionRows";
 
 /**
+ * The facet the locked panel offers, which is the same one the rail's own
+ * Category row does. A constant rather than the string twice.
+ */
+const CATEGORY_FACET_ID = "category";
+
+/**
  * The rail id of the Sort By row — `/userjourney` only, and deliberately not a
  * facet id: Sort is one value where every facet is a set, it is not in
  * `FACETS`, and nothing may look it up in `FACET_BY_ID`. The `__` marks it as
@@ -402,10 +408,38 @@ export function FilterScreen({
    * loop: the search field's visibility is decided from how many there are,
    * and then the very same lists are what get rendered.
    */
-  const panelFacets = rail.facetIds.map((facetId) => {
-    const facet = FACET_BY_ID.get(facetId)!;
-    return { facet, options: facetOptionsWithCounts(products, draft, facetId) };
-  });
+  /**
+   * **A gated row with no vertical settled** — `/pvfilters2`'s *Garment
+   * Details* (2026-09-09). The row stays on the rail in both states; this is
+   * what decides which panel it opens.
+   *
+   * Read off the *draft*, like everything else on this screen, so ticking a
+   * category in the locked panel unlocks it in the same tap rather than on
+   * `Show N results`.
+   */
+  const locked = Boolean(rail.gated) && settled === null;
+
+  const panelFacets = locked
+    ? []
+    : rail.facetIds.map((facetId) => {
+        const facet = FACET_BY_ID.get(facetId)!;
+        return { facet, options: facetOptionsWithCounts(products, draft, facetId) };
+      });
+
+  /**
+   * The categories offered *inside* the locked panel, so unlocking is a tap
+   * rather than an instruction to go and find another row. Same facet, same
+   * counts and same `toggle` as the Category row two columns to the left —
+   * ticking here ticks there.
+   */
+  const unlockOptions = locked
+    ? facetOptionsWithCounts(products, draft, CATEGORY_FACET_ID)
+    : [];
+
+  /** The names behind the lock, off the row itself so the two cannot disagree. */
+  const panelPreview = locked
+    ? rail.facetIds.map((facetId) => FACET_BY_ID.get(facetId)!.label)
+    : [];
 
   /*
    * The field is earned, not declared. It replaced a static `searchable` flag
@@ -415,6 +449,9 @@ export function FilterScreen({
    * Now it appears only when the options overflow, and goes away again when
    * pruning shortens them. See `lib/filters/panelFit.ts`.
    */
+  // A locked panel has no options to hunt through — it has a prompt and three
+  // categories — so it never earns a field. `panelFacets` is empty there, which
+  // says so already; this is the comment, not a second condition.
   const searchable = needsSearch(
     panelFacets.map(({ facet, options }) => ({
       panel: facet.panel,
@@ -577,6 +614,18 @@ export function FilterScreen({
               entry.id === SORT_RAIL_ID
                 ? Number(draftSort !== DEFAULT_SORT)
                 : entry.facetIds.reduce((sum, id) => sum + (draft[id]?.length ?? 0), 0);
+            /*
+             * A gated row before its vertical is settled. It stays pressable —
+             * the panel behind it is the thing that explains the lock, so
+             * disabling the row would hide the explanation — but it is dimmed,
+             * so the rail says *unavailable*, not *broken*, before the buyer
+             * opens it.
+             *
+             * No lock glyph: there is no Figma export for one, and the rule
+             * here is never to draw an asset. The dim plus the panel does the
+             * work, and the panel is where the work belongs.
+             */
+            const dim = Boolean(entry.gated) && settled === null && !active;
             return (
               <button
                 key={entry.id}
@@ -592,7 +641,11 @@ export function FilterScreen({
               >
                 <span
                   className={`min-w-0 flex-1 text-[15px] ${
-                    active ? "font-bold text-primary" : "font-medium text-[#323232]"
+                    active
+                      ? "font-bold text-primary"
+                      : dim
+                        ? "font-medium text-[#a0a0a0]"
+                        : "font-medium text-[#323232]"
                   }`}
                 >
                   {entry.label}
@@ -693,6 +746,68 @@ export function FilterScreen({
               onInvalid={() => onInvalidRange(RANGE_UNITS[rangeFacetId].noun)}
               disabled={bandTicked}
             />
+          )}
+
+          {/*
+            **The locked panel** — `/pvfilters2`'s *Garment Details* before a
+            vertical is settled (2026-09-09).
+
+            Three things in one screen, in this order, and the order is the
+            argument: *what* you get, *why* you can't have it yet, and *the tap
+            that fixes it*. Naming the filters first is what turns a dead row
+            into an offer; a bare "select a category" says a rule and leaves the
+            payoff to the imagination.
+
+            The six names are **dimmed chips, not dimmed rows**. Rows were the
+            first build and read better in isolation — the panel looked exactly
+            like the one it becomes — but six at the real 44px pitch is 264px of
+            a 410px panel, and it pushed the category picker below the fold. The
+            tap that unlocks the row is the whole point of the screen; a preview
+            that hides it has cost more than it bought. Chips wrap into two
+            lines, keep all three categories in view, and still name every
+            filter.
+
+            `aria-hidden`, because they are a preview and a screen reader
+            announcing six controls that don't work is worse than silence — the
+            heading above them carries the same information in a line it *will*
+            read.
+
+            The categories are the real `ThumbRow`s with live counts and the
+            same `toggle`, so ticking here is ticking the Category row two
+            columns to the left — and because the whole screen runs off the
+            draft, the panel unlocks under the finger rather than on
+            `Show N results`.
+          */}
+          {locked && (
+            <div className="flex w-full flex-col">
+              <p className="px-[14px] pt-[6px] pb-[10px] text-[15px] font-bold text-heading">
+                {panelPreview.length} garment filters, locked
+              </p>
+              <div aria-hidden className="flex flex-wrap gap-[6px] px-[14px] pb-[14px]">
+                {panelPreview.map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-[6px] bg-rail px-[8px] py-[5px] text-[13px] text-[#a0a0a0]"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+
+              <div className="border-t border-hairline pt-[14px]">
+                <p className="px-[14px] pb-[8px] text-[15px] font-bold text-heading">
+                  Pick a category to unlock them
+                </p>
+                {unlockOptions.map((option) => (
+                  <ThumbRow
+                    key={option.id}
+                    option={option}
+                    selected={(draft[CATEGORY_FACET_ID] ?? []).includes(option.id)}
+                    onToggle={() => toggle(CATEGORY_FACET_ID, option.id)}
+                  />
+                ))}
+              </div>
+            </div>
           )}
 
           {panelFacets.map(({ facet, options: counted }, group) => {

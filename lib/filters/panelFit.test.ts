@@ -279,6 +279,25 @@ describe("the sheet presentation's shorter fold", () => {
     expect(sheetHeightPct(rowsOn("journey"))).toBe(SHEET_MAX_PCT);
   });
 
+  it("holds the gated rail's sheet at one height too, and for a better reason", () => {
+    /*
+     * `/pvfilters2`, 2026-09-09. `"journey-flat"` stops the sheet moving by
+     * having nothing to add; this rail stops it by adding the row up front. The
+     * reason matters more here: the tap that unlocks *Garment Details* happens
+     * **inside its own panel**, so a sheet that grew on that tap would resize
+     * under the finger that made it.
+     */
+    const singles = singleValuedFacets(getKartikCatalog());
+    const rowsOn = (settled: string | null) =>
+      getRail(settled ? [settled] : undefined, FILTER_VERTICALS, settled, "journey-gated", singles)
+        .length;
+
+    expect(rowsOn(null)).toBe(8);
+    expect(rowsOn("womens-t-shirts")).toBe(8);
+    expect(sheetHeightPct(8)).toBe(sheetHeightPct(rowsOn("womens-t-shirts")));
+    expect(Math.round((sheetHeightPct(8) / 100) * FRAME_H)).toBe(590);
+  });
+
   it("earns a field sooner in a sheet that shrank with its rail", () => {
     // The cost of a shorter sheet, and the reason the viewport is computed
     // rather than assumed: a panel in a seven-row sheet has 420px, not 530.

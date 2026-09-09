@@ -117,10 +117,20 @@ from the start** — a second cut at the PV filtering, tried beside the first
 rather than on top of it. It **does not pass `guidedPv`** (dropped hours after
 the clone, on request), so the two are the real comparison: both reveal the
 garment attributes once a vertical settles, `/pvfilters` on the listing in *Find
-It Fast* and `/pvfilters2` behind the Filters button. One consequence —
-**`/pvfilters2` has no Size control at all**, the journey rail having carried no
-Size row since 2026-09-08 and the block having been the only other way in, so
-`?size=` there is the accepted hand-written case `?fabric=` already is.
+It Fast* and `/pvfilters2` inside the Filters sheet.
+
+**`/pvfilters2` reveals them through a gated rail row** — `rail:
+"journey-gated"`, the same afternoon. `JOURNEY_RAIL_ORDER`'s five `vertical:
+true` rows collapse into one **Garment Details** row that never leaves the rail:
+dimmed until a vertical settles, and its panel spends the locked state naming
+what is behind it (six dimmed chips) and offering the three categories as
+`ThumbRow`s, so unlocking is a tap *inside the panel* rather than an instruction
+to go elsewhere. A row that isn't there teaches nobody, which is the whole
+argument. **Size rides in with it** and is that route's only Size control — no
+Kartik rail has carried a Size row since 2026-09-08. The rail is a steady **8
+rows and 590** in both states, deliberately: the unlocking tap happens inside
+the panel, so a sheet that grew on it would resize under the finger. The array
+is *derived* from `JOURNEY_RAIL_ORDER`, so a row added there lands on both.
 **Three Kartik listings now spell out their own
 props over the one `PlpScreen`, and that is deliberate**: sharing them behind a
 component was tried and reversed the same morning, so don't "fix" the

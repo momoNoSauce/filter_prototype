@@ -556,6 +556,16 @@ export interface RailEntry {
   id: string;
   label: string;
   facetIds: string[];
+  /**
+   * **Always on the rail, but locked until a vertical is settled** — the row
+   * says the filters exist and its panel says how to reach them, where
+   * `vertical: true` simply removes the rows and leaves the buyer to guess.
+   * `/pvfilters2` since 2026-09-09; see `JOURNEY_GATED_RAIL_ORDER`.
+   *
+   * Carried out of `getRail` rather than looked up again, because the Filters
+   * screen needs it per row and the rail is the only thing that knows.
+   */
+  gated?: boolean;
 }
 
 /**
@@ -906,6 +916,55 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
 ];
 
 /**
+ * **The gated rail** — `JOURNEY_RAIL_ORDER` with its five `vertical: true` rows
+ * collapsed into one row that is *always* on the rail (2026-09-09, on request).
+ *
+ * The problem it answers: a row that isn't there teaches nobody. On the other
+ * two Kartik rails the garment attributes simply don't exist until a vertical
+ * settles, so a buyer who never ticks a category never learns there was
+ * anything to tick *for*. Here **Garment Details** sits on the rail from the
+ * first render, dimmed, and its panel spends the locked state naming what is
+ * behind it and offering the categories to unlock it — the picker is *in* the
+ * panel, so it is one tap rather than an instruction to go elsewhere.
+ *
+ * **Size rides in with them.** It is the most vertical-specific facet there is
+ * — M in menswear is not M in womenswear, which is why it is `vertical: true`
+ * on A–D's rail — and it has had no row on any Kartik rail since 2026-09-08.
+ * Putting it in this row gives `/pvfilters2` a Size control for the first time
+ * and closes the gap logged when that route dropped `guidedPv`.
+ *
+ * **Derived, not retyped.** The order, the labels and every other row come from
+ * `JOURNEY_RAIL_ORDER` itself, so a row added there lands on both rails and the
+ * two can't drift. The collapse happens where the first `vertical: true` row
+ * sat, which is where the block has always appeared: above the three offer
+ * magnitudes and below Category.
+ *
+ * One steady consequence: this rail is **8 rows in every state** on Kartik's
+ * scope, where `"journey"` is 7 and 12. The sheet is a steady 590 with it, so
+ * nothing resizes under a buyer standing in the panel — which matters more here
+ * than elsewhere, because the tap that unlocks the row happens *inside* it.
+ */
+const GARMENT_RAIL_ID = "garment";
+
+const JOURNEY_GATED_RAIL_ORDER: typeof RAIL_ORDER = (() => {
+  const at = JOURNEY_RAIL_ORDER.findIndex((row) => row.vertical);
+  const blocked = JOURNEY_RAIL_ORDER.filter((row) => row.vertical);
+  const rest = JOURNEY_RAIL_ORDER.filter((row) => !row.vertical);
+  return [
+    ...rest.slice(0, at),
+    {
+      id: GARMENT_RAIL_ID,
+      label: "Garment Details",
+      // Size first: it is the one a buyer came for, and the panel heads each
+      // facet in this order.
+      facetIds: [SIZE_FACET_ID, ...blocked.flatMap((row) => row.facetIds)],
+      gated: true,
+    },
+    ...rest.slice(at),
+  ];
+})();
+
+/**
  * Which rail a screen shows. `"default"` is A–D and every route that says
  * nothing; `"journey"` is the 2026-08-28 order above. A named preset rather
  * than an array prop because these pages are Server Components handing props to
@@ -917,7 +976,7 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
  * same order, same `hideIfSingle` rows — it differs in one thing, that settling
  * a vertical no longer grows the rail. See `FLAT_RAILS`.
  */
-export type RailPreset = "default" | "journey" | "journey-flat";
+export type RailPreset = "default" | "journey" | "journey-flat" | "journey-gated";
 
 const RAILS: Record<RailPreset, typeof RAIL_ORDER> = {
   default: RAIL_ORDER,
@@ -926,6 +985,7 @@ const RAILS: Record<RailPreset, typeof RAIL_ORDER> = {
   // the labels and every row's flags are stated once — a row added to the
   // journey rail is on both rails, which is the point of not copying it.
   "journey-flat": JOURNEY_RAIL_ORDER,
+  "journey-gated": JOURNEY_GATED_RAIL_ORDER,
 };
 
 /**
@@ -989,6 +1049,18 @@ const PV_FACET_IDS_BY_PRESET: Record<RailPreset, Set<string>> = {
   // state's own Clear Filters, which commits every selection rather than the
   // rail's.
   "journey-flat": pvFacetIds(JOURNEY_RAIL_ORDER),
+  /*
+   * The same six the gated row carries. The row itself never leaves the rail,
+   * but its *contents* do — the panel shows the locked state outside a vertical
+   * — so a cut made inside one and left behind when the buyer widens is as
+   * orphaned as it would be on a rail that dropped the rows outright.
+   *
+   * Read off the row rather than `pvFacetIds`, which finds `vertical: true`
+   * rows and this rail deliberately has none.
+   */
+  "journey-gated": new Set(
+    JOURNEY_GATED_RAIL_ORDER.find((row) => row.gated)!.facetIds,
+  ),
 };
 
 /**
@@ -1077,7 +1149,9 @@ export function getRail(
         // scope has silenced all of them.
         !(row.hideIfSingle && row.facetIds.every((id) => scopeSingles.has(id))),
     )
-    .map(({ id, label, facetIds }) => ({ id, label, facetIds }));
+    // `gated` comes through: a locked row is on the rail in both states and the
+    // Filters screen has to know which one it is in.
+    .map(({ id, label, facetIds, gated }) => ({ id, label, facetIds, gated }));
 }
 
 /**
