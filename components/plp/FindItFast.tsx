@@ -54,17 +54,34 @@ const CATEGORY_FACET_ID = "category";
  * panel already use. Two palettes in one prototype is the drift the token rule
  * exists to stop, and nothing here is a Figma export to be preserved.
  *
- * **Sizes come from the settled vertical**, counted the way every Size list in
- * this app is: by *applying* each option alone rather than tallying it, since
- * the active pack moves with the cut. `facetOptionsWithCounts` does that; this
- * component must not shortcut it.
+ * **The second step is a row of buttons, not a list of sizes** (2026-09-09, on
+ * request). It began as *choose size*, five tiles of the settled vertical's own
+ * size vocabulary; it is now one button per **style filter** — Fit, Neck Type,
+ * Sleeve Type, Pattern, Closure Type — each opening the Filters sheet on that
+ * facet's own panel.
+ *
+ * The trade is deliberate: sizes were one facet answered in place, and this is
+ * five facets *reached* in one tap each. A guided block earns its space by
+ * being the shortest way into the filters a buyer would otherwise hunt for, and
+ * five doors beat one answer.
+ *
+ * **Five, not the six `/pvfilters2` locks.** Size has no row on this rail, so a
+ * Size button would open the sheet on Price Range — the rows come from
+ * `styleRows`, which reads the rail, so the buttons cannot claim a panel that
+ * is not there.
+ *
+ * **The pictures are grey boxes**, `#d9d9d9`, the same placeholder `ThumbRow`
+ * shows while an image loads or is missing. Art per style filter is wanted and
+ * has not been drawn; the box holds its space at the right size so dropping the
+ * real thing in is a `src`, not a re-layout.
  */
 export function FindItFast({
   products,
   selections,
   settled,
   onPickVertical,
-  onToggleSize,
+  styles,
+  onOpenStyle,
 }: {
   /** The page's scope, so the tiles offer only verticals that exist here. */
   products: Product[];
@@ -77,8 +94,13 @@ export function FindItFast({
   settled: string | null;
   /** Tap a gender tile: replaces the category cut, or clears its own. */
   onPickVertical: (categoryId: string) => void;
-  /** Tap a size tile: multi-select, like every other Size control. */
-  onToggleSize: (sizeId: string) => void;
+  /**
+   * The style filters to offer once a vertical is settled — `styleRows` for the
+   * page's rail, so the buttons and the rail agree about what exists.
+   */
+  styles: { id: string; label: string }[];
+  /** Tap one: opens the Filters sheet with that rail row already showing. */
+  onOpenStyle: (railId: string) => void;
 }) {
   const genderOf = useMemo(
     () => new Map(CATEGORIES.map((c) => [c.id, GENDER_LABEL[c.gender]])),
@@ -105,11 +127,6 @@ export function FindItFast({
     delete upstream[SIZE_FACET_ID];
     return facetOptionsWithCounts(products, upstream, CATEGORY_FACET_ID);
   }, [products, selections]);
-
-  const sizes = useMemo(
-    () => (settled ? facetOptionsWithCounts(products, selections, SIZE_FACET_ID) : []),
-    [products, selections, settled],
-  );
 
   // A storefront with one vertical has nothing to choose between, and the block
   // would be a heading over a single tile you cannot deselect into anything.
@@ -195,46 +212,46 @@ export function FindItFast({
       {/*
         **The second step only exists once a vertical is settled**, which is the
         behaviour the whole route is for. It is the same gate the rail uses, so
-        the sheet grows its attribute rows in the same tap that unfolds this.
+        the sheet grows its style rows in the same tap that unfolds this — and
+        that is what these buttons open on to.
 
-        `sizes.length > 0` as well as `settled`: a vertical whose products carry
-        no size at all would otherwise draw a heading over nothing.
+        `styles.length > 0` as well as `settled`: a rail with no style rows would
+        otherwise draw a heading over nothing.
       */}
-      {settled && sizes.length > 0 && (
+      {settled && styles.length > 0 && (
         <>
           {/* Full-bleed across the card, so it reads as dividing the two steps
               rather than as a rule inside one of them. */}
           <div className="mt-[10px] -mx-[8px] h-px bg-primary/15" />
-          <Step label="Choose size" />
+          <Step label="Shop by style" />
           {/*
-            **A five-column grid, not a wrapping flex row.** Wrapping was the
-            first try and `flex-1` made the leftovers grow: Kartik's women's tees
-            run XS–3XL, so the second row was `2XL` and `3XL` at half the frame
-            each, which reads as two buttons of a different kind. A grid keeps
-            every tile the width of the first row's, whatever the vocabulary —
-            and five across is what the reference draws.
+            **Two across, picture beside label** — the gender tiles' shape, one
+            step smaller, so the two rows of this block read as one family.
 
-            Wrapping rather than scrolling either way: a horizontal scroller
-            hides options past the edge with nothing to say they are there.
+            Not the five-across grid the sizes had: `Closure Type` and `Sleeve
+            Type` need ~70px of label where `2XL` needed 24, and a picture to
+            the left of that puts three across well past the 326px the card has.
+            Five buttons over three rows, the last alone at half width.
           */}
-          <div className="grid grid-cols-5 gap-[8px]">
-            {sizes.map((option) => {
-              const selected = (selections[SIZE_FACET_ID] ?? []).includes(option.id);
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => onToggleSize(option.id)}
-                  aria-pressed={selected}
-                  className={`h-[44px] cursor-pointer rounded-[8px] border text-[15px] font-bold ${
-                    selected
-                      ? "border-primary bg-primary text-white"
-                      : "border-hairline bg-white text-heading"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
+          <div className="grid grid-cols-2 gap-[8px]">
+            {styles.map((style) => (
+              <button
+                key={style.id}
+                onClick={() => onOpenStyle(style.id)}
+                className="flex h-[46px] min-w-0 cursor-pointer items-center gap-[6px] rounded-[8px] border border-hairline bg-white px-[5px] text-left"
+              >
+                {/*
+                  **A grey box until the art lands.** `#d9d9d9` is the same
+                  placeholder `ThumbRow` shows for an image that is missing or
+                  still loading, and it is sized to the picture that is coming,
+                  so dropping the real one in is a `src` and not a re-layout.
+                */}
+                <span className="size-[34px] shrink-0 rounded-[6px] bg-[#d9d9d9]" />
+                <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-heading">
+                  {style.label}
+                </span>
+              </button>
+            ))}
           </div>
         </>
       )}

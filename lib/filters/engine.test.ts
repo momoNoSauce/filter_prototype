@@ -24,6 +24,7 @@ import {
   getRailFacetIds,
   settledVertical,
   singleValuedFacets,
+  styleRows,
   TYPED_RANGE_FACET_IDS,
 } from "./facets";
 import { defaultVariant, type Product } from "@/lib/catalog/types";
@@ -1208,26 +1209,71 @@ describe("variants C and D — the page is the vertical", () => {
      * shown it and now can't.
      *
      * - A–D: a vertical-only Size **row**, so `?size=m` with no vertical goes.
-     * - `/pvfilters`: no row, but the guided block's *choose size* step, drawn
-     *   only inside a settled vertical — so it goes there too.
-     * - `/userjourney`: no Size control in any state, so nothing was stranded
-     *   and the link survives, as it has since the row came off on 2026-09-08.
+     * - `/pvfilters2`: no row until a vertical settles, when *Style Filters*
+     *   hands Size one — so it goes there too.
+     * - `/userjourney` and `/pvfilters`: no Size control in any state, so
+     *   nothing was stranded and the link survives. (`/pvfilters` briefly had
+     *   one on 2026-09-09, while its guided block drew size tiles; they became
+     *   style buttons that open the five garment attributes and not Size.)
      */
     const kartik = getKartikCatalog();
     const bare = new URLSearchParams("size=m");
     expect(parseSelections(bare, FILTER_VERTICALS, kartik)).toEqual({});
-    expect(parseSelections(bare, FILTER_VERTICALS, kartik, "journey")).toEqual({});
-    expect(parseSelections(bare, FILTER_VERTICALS, kartik, "journey-flat")).toEqual({
-      size: ["m"],
-    });
+    expect(parseSelections(bare, FILTER_VERTICALS, kartik, "journey-gated")).toEqual({});
+    for (const preset of ["journey", "journey-flat"] as const) {
+      expect(parseSelections(bare, FILTER_VERTICALS, kartik, preset)).toEqual({ size: ["m"] });
+    }
 
-    // With the vertical beside it the step is on screen, so `/pvfilters` keeps
-    // it — the link a buyer would actually share out of that block.
+    // With the vertical beside it `/pvfilters2` keeps it too — the row is on
+    // screen, which is the link a buyer would actually share out of it.
     const withVertical = new URLSearchParams("category=womens-t-shirts&size=m,l");
-    expect(parseSelections(withVertical, FILTER_VERTICALS, kartik, "journey")).toEqual({
+    expect(parseSelections(withVertical, FILTER_VERTICALS, kartik, "journey-gated")).toEqual({
       category: ["womens-t-shirts"],
       size: ["m", "l"],
     });
+  });
+
+  it("offers a rail's own style rows as the guided block's buttons", () => {
+    /*
+     * `/pvfilters`, 2026-09-09. The block's second step was five size tiles and
+     * is now a button per style filter, each opening the Filters sheet on that
+     * row — so the buttons are read off the rail rather than listed, and a
+     * button can never claim a panel that is not there.
+     *
+     * **Five on `"journey"`, not six.** Size has no row on it, which is exactly
+     * why the size step went rather than becoming a sixth button: it would have
+     * opened the sheet on Price Range.
+     */
+    expect(styleRows("journey").map((r) => r.label)).toEqual([
+      "Fit",
+      "Neck Type",
+      "Sleeve Type",
+      "Pattern",
+      "Closure Type",
+    ]);
+    expect(styleRows("journey").map((r) => r.id)).not.toContain("size");
+
+    // Every one of them is a real row once a vertical settles — the state the
+    // buttons are drawn in — so every button has a panel to open.
+    const rail = getRail(
+      ["womens-t-shirts"],
+      FILTER_VERTICALS,
+      "womens-t-shirts",
+      "journey",
+      singleValuedFacets(getKartikCatalog()),
+    ).map((r) => r.id);
+    for (const row of styleRows("journey")) expect(rail).toContain(row.id);
+
+    // `"journey-gated"` adds Size to its block, so its style rows are six —
+    // the two routes disagree, and the rail is what each one reads.
+    expect(styleRows("journey-gated").map((r) => r.id)).toEqual([
+      "size",
+      "fit",
+      "neck",
+      "sleeve",
+      "pattern",
+      "closure",
+    ]);
   });
 
   it("swaps the gated row for the rows it stood in for", () => {
@@ -1526,15 +1572,16 @@ describe("variants C and D — the page is the vertical", () => {
      * **The split now runs the other way round** (2026-09-09), and it is the
      * two Kartik rails that disagree rather than Kartik against A–D:
      *
-     * - `"journey"` (`/pvfilters`) orphans a Size cut like A–D, because the
-     *   guided block's *choose size* step is a real control and is drawn only
-     *   inside a settled vertical.
-     * - `"journey-flat"` (`/userjourney`) keeps it, because that route has no
-     *   Size control in any state — `?size=m` is a hand-written URL nothing can
-     *   strand, and the empty state's Clear Filters resolves it.
+     * - `"journey-gated"` (`/pvfilters2`) orphans a Size cut like A–D, because
+     *   its *Style Filters* row hands Size a row of its own on settling.
+     * - `"journey"` and `"journey-flat"` keep it: neither `/pvfilters` nor
+     *   `/userjourney` has a Size control in any state, so `?size=m` is a
+     *   hand-written URL nothing can strand, and the empty state's Clear
+     *   Filters resolves it.
      *
-     * Neither rail has a Size *row*; what differs is whether anything on the
-     * page can show or undo the cut.
+     * What differs is never whether a rail has a Size *row* — none of the three
+     * has one outside a vertical — but whether anything on the page can show or
+     * undo the cut.
      */
     const singles = singleValuedFacets(getKartikCatalog());
     const journey = getRail(undefined, FILTER_VERTICALS, null, "journey", singles).map(
@@ -1547,13 +1594,15 @@ describe("variants C and D — the page is the vertical", () => {
 
     const sized = { size: ["m", "l"] };
     expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null)).toEqual({});
-    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, "journey")).toEqual({});
-    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, "journey-flat")).toEqual(sized);
+    expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, "journey-gated")).toEqual({});
+    for (const preset of ["journey", "journey-flat"] as const) {
+      expect(dropOrphanedSelections(sized, FILTER_VERTICALS, null, preset)).toEqual(sized);
+    }
 
-    // Inside a settled vertical `/pvfilters` keeps it, the step being on screen
-    // — which is the whole difference between the two rails.
+    // Inside a settled vertical `/pvfilters2` keeps it, the row being on screen
+    // — which is the whole difference between that rail and the other two.
     expect(
-      dropOrphanedSelections(sized, FILTER_VERTICALS, "womens-t-shirts", "journey"),
+      dropOrphanedSelections(sized, FILTER_VERTICALS, "womens-t-shirts", "journey-gated"),
     ).toEqual(sized);
 
     // The five garment attributes are vertical-only on every rail.

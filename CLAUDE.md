@@ -167,16 +167,22 @@ them that another doesn't is a prop with a default.
 **`/pvfilters` puts that growth on the listing instead** — the **Find It Fast**
 block (`controls.guidedPv`, 2026-09-09, from two screengrabs of a competitor's
 search results, drawn in our tokens): *choose gender* as three pictures, and
-picking one unfolds *choose size* beneath it. The tiles select **`category`**,
-not `gender` — 1:1 in this catalog, and Category is on the rail, so the badge,
-the panel and Clear Filters all reach it for free. Three rules it must keep:
-each step is counted against the steps *above* it and never below (Size zeroed
-the Boys tile outright); picking a different vertical **clears the size cut**,
-sizes being vertical-specific; and Size is in this rail's vertical-only set, so
-an unsettled `?size=m` is stripped here where `/userjourney` keeps it. It is the
-**one opt-in** field on `controls` — it adds a surface rather than switching one
-off — and it must never be set beside `"journey-flat"`, which would draw a step
-nothing can unfold.
+picking one unfolds **shop by style** beneath it: a button per style filter —
+Fit · Neck Type · Sleeve Type · Pattern · Closure Type — each opening the
+Filters sheet **on that row's own panel** (`initialRail` on `FilterScreen`).
+The buttons come from `styleRows(preset)`, so they are the rail's own rows and
+can never claim a panel that isn't there; **Size is not among them** on this
+rail, which is why the *choose size* step it replaced went rather than becoming
+a sixth button.
+
+The gender tiles select **`category`**, not `gender` — 1:1 in this catalog, and
+Category is on the rail, so the badge, the panel and Clear Filters all reach it
+for free. Two rules it must keep: each step is counted against the steps *above*
+it and never below (Size zeroed the Boys tile outright, back when the second
+step was sizes); and picking a different vertical **clears the size cut**, sizes
+being vertical-specific. `guidedPv` is the **one opt-in** field on `controls` —
+it adds a surface rather than switching one off — and it must never be set
+beside `"journey-flat"`, which would draw a step nothing can unfold.
 
 **Both rails come from `JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price
 Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City, then the

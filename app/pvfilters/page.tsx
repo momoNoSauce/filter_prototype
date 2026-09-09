@@ -73,7 +73,9 @@ export default function Page() {
        * - `guidedPv: true` — the **Find It Fast** block at the head of the
        *   listing (2026-09-09), from two screengrabs of a competitor's search
        *   results: *choose gender* as three pictures, and once one is picked a
-       *   *choose size* step unfolds under it. The one opt-*in* field in this
+       *   *shop by style* step unfolds under it — a button per style filter,
+       *   each opening the Filters sheet on that row's panel. (It was *choose
+       *   size* for a few hours the same day.) The one opt-*in* field in this
        *   object, because it adds a surface no other route has rather than
        *   switching one off. It is this route's whole point — the "settling a
        *   vertical reveals more filters" behaviour that came off `/userjourney`

@@ -210,6 +210,7 @@ export function FilterScreen({
   verticalMode = FILTER_VERTICALS,
   sort,
   railPreset = "default",
+  initialRail,
   clearsAlso,
   asSheet = false,
   rangeInputs = false,
@@ -269,6 +270,20 @@ export function FilterScreen({
   sort?: SortId;
   /** Which rail this screen shows — see `RailPreset`. */
   railPreset?: RailPreset;
+  /**
+   * The rail row to open on, or `null`/absent for the first — which is what the
+   * Filter chip has always done.
+   *
+   * `/pvfilters`' guided block names one (2026-09-09): its style buttons *are*
+   * a way into a specific panel, and landing on Price Range would make the
+   * button a decoration. Read once, as the initial state, because this screen
+   * unmounts when the sheet closes — a row that stayed pinned would fight the
+   * buyer's own taps on the rail.
+   *
+   * An unknown id is harmless: the rail lookup already falls back, for the
+   * separate case of a row vanishing under the cursor.
+   */
+  initialRail?: string | null;
   /**
    * Facets **Clear Filters must also reach**, though no rail row shows them.
    *
@@ -375,7 +390,7 @@ export function FilterScreen({
    */
   const sheetPct = sheetHeightPct(RAIL.length);
 
-  const [activeRail, setActiveRail] = useState(RAIL[0].id);
+  const [activeRail, setActiveRail] = useState(initialRail ?? RAIL[0].id);
   const [query, setQuery] = useState("");
 
   /** What the screen opened with, frozen, so the ✕ can tell edits from none. */

@@ -830,13 +830,47 @@ in womenswear — the whole reason Size is vertical-only — and Kartik's kids' 
 have no letters at all, so a carried-over `size=m` hands back an empty listing
 whose cause is invisible.
 
-**Size joined this rail's vertical-only set**, which is the third reading of one
-rule rather than a third policy. Strip a cut where something on the page could
-have shown it and now can't: A–D have a vertical-only Size *row*; `/pvfilters`
-has this block's second step, drawn only inside a settled vertical;
-`/userjourney` has no Size control in any state, so `?size=m` stays the accepted
-hand-written case there. Measured live: `/pvfilters?size=m` shows all 540,
-`/userjourney/seller/kartik?size=m` shows 205.
+**Size joined this rail's vertical-only set, and left again hours later.** The
+rule is *strip a cut where something on the page could have shown it and now
+can't*, and both moves are that rule: it went in when the size step made Size a
+control gated on a settled vertical, and came out when the step became the style
+buttons and Size stopped being a control here at all. Leaving it in would have
+been worse than either — dropped outside a vertical, orphaned inside one.
+`"journey-gated"` is where Size *is* vertical-only, that rail giving it a row.
+
+### The second step becomes buttons — *Shop by style* (2026-09-09)
+
+On request: *"we don't need sizes, we show style filters as buttons, and that
+opens the filter panel with that specific style."*
+
+The block's second step was five size tiles answering one facet in place. It is
+now one button per style filter — **Fit · Neck Type · Sleeve Type · Pattern ·
+Closure Type** — each opening the Filters sheet on that row's own panel. A
+guided block earns its space by being the shortest way into the filters a buyer
+would otherwise hunt for, and five doors beat one answer.
+
+**The buttons are the rail's rows**, from `styleRows(preset)`, not a list in the
+component. That is what makes it **five and not six**: Size has no row on
+`"journey"`, so a Size button would have opened the sheet on Price Range. The
+ask and the rail agreed on this by themselves.
+
+**`initialRail` on `FilterScreen`** is how a button names its panel — read once,
+as the initial state, because the screen unmounts when the sheet closes and a
+pinned row would fight the buyer's own taps on the rail. `PlpScreen` clears it
+when the Filter chip opens the sheet and when the sheet closes, so the chip
+still lands on Price Range. An unknown id is harmless: the rail lookup already
+falls back, for the separate case of a row vanishing under the cursor.
+
+**Grey boxes for now.** Art per style filter is wanted and has not been drawn,
+so each button carries a 34px `#d9d9d9` square — the same placeholder `ThumbRow`
+shows for a missing image — sized to the picture that is coming, so dropping the
+real one in is a `src` and not a re-layout.
+
+**Two across, picture beside label**, the gender tiles' shape one step smaller,
+so the block's two rows read as one family. Not the sizes' five-across grid:
+`Closure Type` needs ~70px of label where `2XL` needed 24, and a picture to its
+left puts three across well past the 326px the card has. Five buttons over three
+rows, the last alone at half width.
 
 **Size is deliberately uncounted by the Filters badge**, and reached by
 `clearsAlso` instead — the rule the offer chips already set. A lit control on the

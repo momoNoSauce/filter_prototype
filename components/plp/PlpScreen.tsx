@@ -15,6 +15,7 @@ import {
   FILTER_VERTICALS,
   dropOrphanedSelections,
   getRailFacetIds,
+  styleRows,
   singleValuedFacets,
   settledVertical,
   type PlpVariant,
@@ -460,6 +461,24 @@ export function PlpScreen({
   const guidedPv = controls?.guidedPv ?? false;
 
   /**
+   * The style filters the guided block offers as buttons, and the rail row each
+   * one opens. Off the rail rather than a list here, so a button can never
+   * claim a panel the rail doesn't have — Size is the case that matters, having
+   * no row on `"journey"`.
+   */
+  const styleFilters = useMemo(
+    () => (guidedPv ? styleRows(railPreset) : []),
+    [guidedPv, railPreset],
+  );
+
+  /**
+   * Which rail row the Filters sheet should open on, or `null` for its first.
+   * Set by a style button and cleared when the sheet closes, so the Filter chip
+   * still opens on Price Range the way it always did.
+   */
+  const [filtersRail, setFiltersRail] = useState<string | null>(null);
+
+  /**
    * A gender tile in the guided block — **replaces** the category cut rather
    * than adding to it, and clears it when the tile already stood alone.
    *
@@ -569,17 +588,17 @@ export function PlpScreen({
         [
           ...chips.map((chip) => chip.facetId),
           /*
-           * Size, when the guided block is drawing it. It is a control on the
-           * listing exactly as a chip is, and it has no row on this rail — so
-           * without this, *Clear Filters* would close the sheet on a lit size
-           * tile and announce `All filters cleared` over it. Same reason as the
-           * offer chips above, arriving from a different surface.
+           * Size was here from 2026-09-09, while the guided block drew size
+           * tiles: a lit control on the listing that the rail had no row for,
+           * so *Clear Filters* had to reach it or announce `All filters
+           * cleared` over it. The tiles became the style buttons the same day —
+           * which select nothing, they open panels — so there is no size
+           * control left to strand and the entry went with them.
            */
-          ...(guidedPv ? [SIZE_FACET_ID] : []),
         ].filter((id) => !railFacetIds.has(id)),
       ),
     ],
-    [chips, railFacetIds, guidedPv],
+    [chips, railFacetIds],
   );
   // Counts exactly what the Filters screen owns — which, since Category
   // rejoined the rail, is every facet in both variants. Nothing is reported
@@ -694,7 +713,12 @@ export function PlpScreen({
               sortActive={sortActive}
               filterCount={filterCount}
               onSort={() => setOverlay("sort")}
-              onFilters={() => setOverlay("filters")}
+              onFilters={() => {
+                // The chip opens on the rail's first row, never on whatever a
+                // style button last named.
+                setFiltersRail(null);
+                setOverlay("filters");
+              }}
               showSort={!sortInFilters}
               chipH={chipH}
             >
@@ -746,7 +770,11 @@ export function PlpScreen({
             selections={selections}
             settled={settled}
             onPickVertical={pickVertical}
-            onToggleSize={(sizeId) => toggleChip(SIZE_FACET_ID, sizeId)}
+            styles={styleFilters}
+            onOpenStyle={(railId) => {
+              setFiltersRail(railId);
+              setOverlay("filters");
+            }}
           />
         )}
 
@@ -815,7 +843,12 @@ export function PlpScreen({
             sortActive={sortActive}
             filterCount={filterCount}
             onSort={() => setOverlay("sort")}
-            onFilters={() => setOverlay("filters")}
+            onFilters={() => {
+                // The chip opens on the rail's first row, never on whatever a
+                // style button last named.
+                setFiltersRail(null);
+                setOverlay("filters");
+              }}
           />
         </div>
       )}
@@ -874,7 +907,10 @@ export function PlpScreen({
         <SortSheet
           value={sort}
           onChange={(next) => commit(selections, next)}
-          onClose={() => setOverlay(null)}
+          onClose={() => {
+            setFiltersRail(null);
+            setOverlay(null);
+          }}
         />
       )}
 
@@ -889,6 +925,10 @@ export function PlpScreen({
           // screen's own value otherwise.
           sort={sortInFilters ? sort : undefined}
           railPreset={railPreset}
+          // Which row it opens on. `null` for the Filter chip, which lands on
+          // the rail's first row; a style button in the guided block names its
+          // own, which is the whole point of the button.
+          initialRail={filtersRail}
           clearsAlso={clearsAlso}
           asSheet={controls?.filterSheet ?? false}
           rangeInputs={controls?.rangeInputs ?? false}

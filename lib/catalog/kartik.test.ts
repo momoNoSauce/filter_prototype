@@ -232,21 +232,26 @@ describe("the orphan guard no longer erases the cut that narrowed scope", () => 
     expect(dropOrphanedSelections(widened, undefined, settled)).toEqual({});
 
     /*
-     * **Both rails drop Size here now** (2026-09-09), where `"journey"` used to
-     * keep it: that route asked for a global Size on 2026-09-07, dropped the
-     * row on 09-08, and on 09-09 got the guided block back — whose *choose
-     * size* step is drawn only inside a settled vertical. A control that comes
-     * and goes with the vertical orphans its cut with the vertical.
+     * **Neither Kartik rail drops Size** — one rule, read the same way twice:
+     * strip a cut only where something on the page could have shown it.
      *
-     * `"journey-flat"` is the one that still keeps it, and for the opposite
-     * reason: `/userjourney` has no Size control in *any* state, so `?size=m`
-     * stays the accepted hand-written case rather than something a tap can
-     * strand.
+     * `"journey-flat"` (`/userjourney`) has no Size control in any state.
+     * `"journey"` (`/pvfilters`) had one for a few hours of 2026-09-09, while
+     * its guided block drew size tiles, and this asserted `{}` then; the tiles
+     * became style buttons that open Fit, Neck Type, Sleeve Type, Pattern and
+     * Closure Type — and not Size, that rail having no Size row to open — so
+     * there is nothing to strand again.
+     *
+     * `"journey-gated"` (`/pvfilters2`) is the one that drops it, because that
+     * rail gives Size a row of its own. The garment attribute goes on all
+     * three.
      */
-    expect(dropOrphanedSelections(widened, undefined, settled, "journey")).toEqual({});
-    expect(dropOrphanedSelections(widened, undefined, settled, "journey-flat")).toEqual({
-      size: ["m"],
-    });
+    for (const preset of ["journey", "journey-flat"] as const) {
+      expect(dropOrphanedSelections(widened, undefined, settled, preset)).toEqual({
+        size: ["m"],
+      });
+    }
+    expect(dropOrphanedSelections(widened, undefined, settled, "journey-gated")).toEqual({});
   });
 
   it("round-trips a shared link whose Gender cut settles the vertical", () => {

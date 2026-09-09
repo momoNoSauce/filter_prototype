@@ -1036,24 +1036,24 @@ const FLAT_RAILS: ReadonlySet<RailPreset> = new Set<RailPreset>(["journey-flat"]
 const PV_FACET_IDS_BY_PRESET: Record<RailPreset, Set<string>> = {
   default: PV_FACET_IDS,
   /*
-   * The five garment attributes, **plus Size** since 2026-09-09.
+   * The five garment attributes. **Size went in and came out again** on
+   * 2026-09-09, and the round trip is the rule working rather than wobbling:
+   * strip a cut where something on the page could have shown it and now can't.
    *
-   * Size has no row on this rail and did not need to be here while nothing
-   * could select it: a hand-written `?size=m` was the documented accepted case,
-   * and on 2026-09-07 this route had asked for Size to survive without a
-   * vertical, which is what split this map per preset in the first place.
+   * It went in when `/pvfilters`' guided block grew a *CHOOSE SIZE* step, drawn
+   * only inside a settled vertical — a Size cut outliving the vertical outlived
+   * its only control. It came out hours later when that step became the **style
+   * buttons**, which open Fit, Neck Type, Sleeve Type, Pattern and Closure Type
+   * and deliberately not Size, this rail having no Size row for a button to
+   * open. With no Size control in any state there is nothing to strand, so
+   * `?size=m` is the accepted hand-written case `?fabric=cotton` and
+   * `?colour=coral` already are here — and leaving it in would have been worse
+   * than either: dropped outside a vertical, orphaned inside one.
    *
-   * `/pvfilters`' guided block changed the premise. *CHOOSE SIZE* is a real
-   * control now, and it is drawn **only once a vertical is settled** — so a Size
-   * cut that outlives the vertical outlives the only thing that can show or undo
-   * it. That is the orphan trap, and the fix is to say so here rather than to
-   * teach the block to clean up after itself.
-   *
-   * A–D reach the same answer through the row itself: Size is `vertical: true`
-   * on `RAIL_ORDER`, so `pvFacetIds` finds it. This rail has to name it by hand
-   * because the control isn't a rail row.
+   * `"journey-gated"` is where Size *is* vertical-only, because that rail gives
+   * it a row.
    */
-  journey: new Set([...pvFacetIds(JOURNEY_RAIL_ORDER), SIZE_FACET_ID]),
+  journey: pvFacetIds(JOURNEY_RAIL_ORDER),
   // The same five garment attributes — but on a flat rail they are orphaned in
   // *every* state, not just outside a vertical, because no state puts a row
   // back. `dropOrphanedSelections` is where that difference is applied.
@@ -1114,6 +1114,24 @@ export function singleValuedFacets(products: Product[]): Set<string> {
     if (seen.size <= 1) dead.add(id);
   }
   return dead;
+}
+
+/**
+ * A rail's **style rows** — its `vertical: true` entries, in rail order.
+ *
+ * `/pvfilters`' guided block draws a button per row of these and opens the
+ * Filters sheet on the one you tap (2026-09-09). Derived rather than listed, so
+ * the buttons are the same set the rail unlocks and cannot drift from it.
+ *
+ * On `"journey"` that is **Fit · Neck Type · Sleeve Type · Pattern · Closure
+ * Type** — five, not six: Size has no row on that rail, which is exactly why
+ * the block's own Size step was dropped when these buttons replaced it. A
+ * button whose panel does not exist would open on Price Range.
+ */
+export function styleRows(preset: RailPreset): RailEntry[] {
+  return RAILS[preset]
+    .filter((row) => row.vertical)
+    .map(({ id, label, facetIds }) => ({ id, label, facetIds }));
 }
 
 /** Nothing is scoped down — the default for every caller that can't say. */
