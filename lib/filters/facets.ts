@@ -916,51 +916,57 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
 ];
 
 /**
- * **The gated rail** — `JOURNEY_RAIL_ORDER` with its five `vertical: true` rows
- * collapsed into one row that is *always* on the rail (2026-09-09, on request).
+ * **The gated rail** — `JOURNEY_RAIL_ORDER` with a **Fashion Trends** row
+ * standing in for the vertical block until a vertical is settled (2026-09-09).
  *
  * The problem it answers: a row that isn't there teaches nobody. On the other
  * two Kartik rails the garment attributes simply don't exist until a vertical
  * settles, so a buyer who never ticks a category never learns there was
- * anything to tick *for*. Here **Garment Details** sits on the rail from the
- * first render, dimmed, and its panel spends the locked state naming what is
- * behind it and offering the categories to unlock it — the picker is *in* the
- * panel, so it is one tap rather than an instruction to go elsewhere.
+ * anything to tick *for*. Here a row sits on the rail from the first render
+ * naming them, and its panel offers the categories that unlock it — the picker
+ * is *in* the panel, so it is one tap rather than an instruction to go
+ * elsewhere.
  *
- * **Size rides in with them.** It is the most vertical-specific facet there is
- * — M in menswear is not M in womenswear, which is why it is `vertical: true`
- * on A–D's rail — and it has had no row on any Kartik rail since 2026-09-08.
- * Putting it in this row gives `/pvfilters2` a Size control for the first time
- * and closes the gap logged when that route dropped `guidedPv`.
+ * **It is a placeholder, and it swaps out.** The row shows only while the block
+ * does not (`gated`, the mirror of `vertical: true`), so ticking a category
+ * makes it disappear and puts **all six filters on the rail as their own rows**
+ * — asked for explicitly, and the honest shape: a stand-in should not outlive
+ * the thing it stood in for. The rail goes 8 rows to 13, and the sheet 590 to
+ * 640 with it.
  *
- * **Derived, not retyped.** The order, the labels and every other row come from
- * `JOURNEY_RAIL_ORDER` itself, so a row added there lands on both rails and the
- * two can't drift. The collapse happens where the first `vertical: true` row
- * sat, which is where the block has always appeared: above the three offer
- * magnitudes and below Category.
+ * **Size gets a row of its own**, which no Kartik rail has carried since
+ * 2026-09-08. It is the most vertical-specific facet there is — M in menswear
+ * is not M in womenswear, which is why it is `vertical: true` on A–D's rail —
+ * and it leads the block here for the same reason it leads the locked panel's
+ * chips: it is the one a buyer came for.
  *
- * One steady consequence: this rail is **8 rows in every state** on Kartik's
- * scope, where `"journey"` is 7 and 12. The sheet is a steady 590 with it, so
- * nothing resizes under a buyer standing in the panel — which matters more here
- * than elsewhere, because the tap that unlocks the row happens *inside* it.
+ * **Derived, not retyped.** Every other row, and the block's own order, come
+ * from `JOURNEY_RAIL_ORDER`, so a row added there lands on both rails and the
+ * two can't drift. Both the placeholder and the Size row go in where the block
+ * has always appeared: below Category, above the three offer magnitudes.
  */
-const GARMENT_RAIL_ID = "garment";
+const FASHION_RAIL_ID = "fashion";
 
 const JOURNEY_GATED_RAIL_ORDER: typeof RAIL_ORDER = (() => {
   const at = JOURNEY_RAIL_ORDER.findIndex((row) => row.vertical);
   const blocked = JOURNEY_RAIL_ORDER.filter((row) => row.vertical);
-  const rest = JOURNEY_RAIL_ORDER.filter((row) => !row.vertical);
+  const size: (typeof RAIL_ORDER)[number] = {
+    id: SIZE_FACET_ID,
+    label: "Size",
+    facetIds: [SIZE_FACET_ID],
+    vertical: true,
+  };
   return [
-    ...rest.slice(0, at),
+    ...JOURNEY_RAIL_ORDER.slice(0, at),
     {
-      id: GARMENT_RAIL_ID,
-      label: "Garment Details",
-      // Size first: it is the one a buyer came for, and the panel heads each
-      // facet in this order.
+      id: FASHION_RAIL_ID,
+      label: "Fashion Trends",
+      // The same six the block hands over, in the order they arrive as rows.
       facetIds: [SIZE_FACET_ID, ...blocked.flatMap((row) => row.facetIds)],
       gated: true,
     },
-    ...rest.slice(at),
+    size,
+    ...JOURNEY_RAIL_ORDER.slice(at),
   ];
 })();
 
@@ -1144,6 +1150,14 @@ export function getRail(
       (row) =>
         !(locked && row.only === "filter") &&
         !(row.vertical && !showVertical) &&
+        /*
+         * **The mirror of `vertical`**, and deliberately read off
+         * `showVertical` rather than `genderRedundant` like `notVertical` two
+         * lines down. `notVertical` answers "is Gender redundant"; this answers
+         * "is the block showing", and a placeholder for the block has to leave
+         * exactly when the block arrives or the rail carries both.
+         */
+        !(row.gated && showVertical) &&
         !(row.notVertical && genderRedundant) &&
         // `every`, not `some`: a row carrying several facets is only dead when
         // scope has silenced all of them.

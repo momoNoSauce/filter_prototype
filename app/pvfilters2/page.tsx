@@ -56,19 +56,18 @@ export default function Page() {
        *   only report of it.
        * - `priceChip: false` — Price Range stays a rail facet, so the bands are
        *   still reachable in the panel and nothing is orphaned.
-       * - `rail: "journey-gated"` (2026-09-09) — `JOURNEY_RAIL_ORDER` with its
-       *   five garment attribute rows collapsed into **one row that is always
-       *   there**, *Garment Details*, dimmed until a vertical settles. The other
-       *   two Kartik rails simply remove those rows, so a buyer who never ticks
-       *   a category never learns there was anything to tick *for*; this one
-       *   keeps the row, names what is behind it and offers the categories
-       *   inside its own panel, so unlocking is a tap rather than an
-       *   instruction. **Size rides in with them**, which gives this route a
-       *   Size control for the first time and closes the gap logged when it
-       *   dropped `guidedPv`. The rail is a steady 8 rows and the sheet a steady
-       *   590 in both states — deliberate, because the tap that unlocks the row
-       *   happens inside the panel and a sheet resizing under the finger is
-       *   worse here than anywhere. Order below is otherwise: Price ·
+       * - `rail: "journey-gated"` (2026-09-09) — `JOURNEY_RAIL_ORDER` with a
+       *   **Fashion Trends** row standing where the vertical block goes. The
+       *   other two Kartik rails simply remove those rows, so a buyer who never
+       *   ticks a category never learns there was anything to tick *for*; this
+       *   one keeps a row there, names what is behind it in six padlocked chips
+       *   and offers the categories inside its own panel, so unlocking is a tap
+       *   rather than an instruction. **The placeholder then leaves** and Size ·
+       *   Fit · Neck Type · Sleeve Type · Pattern · Closure Type arrive as rows
+       *   of their own — 8 rows to 13, sheet 590 → 640, panel landing on
+       *   Category. **Size has a row here and on no other Kartik rail**, which
+       *   closes the gap logged when this route dropped `guidedPv`. Order below
+       *   is otherwise: Price ·
        *   Price · Margin · MOQ · Category · Brands · Seller · Seller City,
        *   Garment Details, then the three offer magnitudes at the foot.
        *   Gender, Delivery Time and More Filters have no row, so the central cut

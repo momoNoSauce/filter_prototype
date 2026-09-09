@@ -669,24 +669,51 @@ vertical-specific facet there is — the reason it is `vertical: true` on A–D'
 rail — so a row that exists to hold vertical-specific filters is where it
 belongs.
 
-**Steady 8 rows and 590px in both states**, and unlike `"journey-flat"` the
-reason is not that there is nothing to add. The tap that unlocks the row happens
-**inside its own panel**, so a sheet that grew on that tap would resize under
-the finger that made it. This is the one rail where a fixed height is a feature
-rather than a side effect.
+**The array is derived, not retyped.** Every other row, and the block's own
+order, come from `JOURNEY_RAIL_ORDER`, so a row added there lands on both rails.
+`PV_FACET_IDS_BY_PRESET` reads the placeholder's own `facetIds` rather than
+`pvFacetIds` — the six still orphan when the vertical goes, because the row that
+holds them locks.
 
-**The row stays pressable while dimmed.** Disabling it would hide the panel that
-explains the lock, which is the only thing on the screen doing the teaching. No
-lock glyph either: there is no Figma export for one and the rule here is never
-to draw an asset — the dim plus the panel does the work.
+#### Four corrections on the first render (same day)
 
-**The array is derived, not retyped.** The collapse happens where the first
-`vertical: true` row sat, and every other row comes from `JOURNEY_RAIL_ORDER`
-itself, so a row added there lands on both rails. `PV_FACET_IDS_BY_PRESET` reads
-the gated row's own `facetIds` rather than `pvFacetIds`, which looks for
-`vertical: true` rows and this rail deliberately has none — the contents still
-orphan when the vertical goes, because the panel locks even though the row
-stays.
+The build above went up as *Garment Details*, dimmed, permanently on the rail.
+All four notes back were right.
+
+1. **It looked disabled.** Dimming the rail label was meant to say
+   *unavailable*; it said *broken*. It is the row you are meant to press, and
+   the panel behind it is an invitation. The row is now drawn like every other.
+2. **The name.** *Garment Details* → **Fashion Trends**. What is behind the lock
+   is a reason to tap, and the name should say so.
+3. **The chips looked disabled too** — grey is the wrong word for a reward.
+   `primary-subtle` ground, `primary` text, and a padlock on each: the lock is
+   the only part that should say *not yet*. The padlock is an inline SVG, no
+   lock ever having been drawn for this file; the rule is never to redraw an
+   asset that *exists*, and `FindItFast`'s check is the same case.
+4. **The placeholder must leave.** It stayed on the rail after unlocking, beside
+   the panel it had opened. A stand-in should not outlive the thing it stood in
+   for — so `gated` became the mirror of `vertical: true`, read off
+   `showVertical` rather than `genderRedundant`, and ticking a category swaps
+   the row for **Size · Fit · Neck Type · Sleeve Type · Pattern · Closure Type**
+   as six rows of their own.
+
+Two consequences of the fourth, both settled on the ask:
+
+**The sheet grows, 590 → 640**, the rail going 8 rows to 13. A fixed 640 was the
+alternative — nothing would move on the tap, at the cost of 50px of listing from
+the start. Growth won: it is what `/pvfilters` already does when a vertical
+settles, `FilterScreen` transitions the height, and there really are more rows
+now. (The earlier build's steady height was a virtue of a placeholder that never
+left; it went with it.)
+
+**The open panel lands on Category.** The row under the cursor vanishes, so the
+panel has to go somewhere, and the first row — Price Range — would read as the
+screen resetting under the tap. Category is where the buyer just acted, with
+their pick ticked. It is done in `FilterScreen`'s rail fallback rather than a
+`setActiveRail` in the toggle handler, so the swap and the landing happen in the
+same render as the tap with no ordering to get wrong. The rail's highlight moved
+to `rail.id` from `activeRail` for the same reason — they differ for exactly
+this render, and the rail must light the panel that is open.
 
 ### `/pvfilters` gets the guided block — *Find It Fast* (2026-09-09)
 

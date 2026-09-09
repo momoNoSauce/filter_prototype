@@ -119,18 +119,30 @@ the clone, on request), so the two are the real comparison: both reveal the
 garment attributes once a vertical settles, `/pvfilters` on the listing in *Find
 It Fast* and `/pvfilters2` inside the Filters sheet.
 
-**`/pvfilters2` reveals them through a gated rail row** — `rail:
-"journey-gated"`, the same afternoon. `JOURNEY_RAIL_ORDER`'s five `vertical:
-true` rows collapse into one **Garment Details** row that never leaves the rail:
-dimmed until a vertical settles, and its panel spends the locked state naming
-what is behind it (six dimmed chips) and offering the three categories as
-`ThumbRow`s, so unlocking is a tap *inside the panel* rather than an instruction
-to go elsewhere. A row that isn't there teaches nobody, which is the whole
-argument. **Size rides in with it** and is that route's only Size control — no
-Kartik rail has carried a Size row since 2026-09-08. The rail is a steady **8
-rows and 590** in both states, deliberately: the unlocking tap happens inside
-the panel, so a sheet that grew on it would resize under the finger. The array
-is *derived* from `JOURNEY_RAIL_ORDER`, so a row added there lands on both.
+**`/pvfilters2` reveals them through a placeholder rail row** — `rail:
+"journey-gated"`, the same afternoon. A **Fashion Trends** row sits where the
+vertical block goes, and its panel spends the locked state naming what is behind
+it (six `primary-subtle` chips, each with a padlock) and offering the three
+categories as `ThumbRow`s, so unlocking is a tap *inside the panel* rather than
+an instruction to go elsewhere. A row that isn't there teaches nobody, which is
+the whole argument.
+
+Three rules on it, each a correction from the first render:
+
+- **It is drawn like any other row.** It shipped dimmed and read as *disabled*,
+  which is the one thing it is not — it is the row you are meant to press.
+- **It leaves when the real rows arrive.** `gated` is the mirror of `vertical:
+  true` and is read off `showVertical`, so ticking a category swaps the
+  placeholder for **Size · Fit · Neck Type · Sleeve Type · Pattern · Closure
+  Type** as rows of their own: 8 rows to 13, and the sheet 590 → 640 with them.
+  A stand-in must not outlive the thing it stood in for.
+- **Unlocking lands on Category**, not the first row — `FilterScreen`'s rail
+  fallback, so the swap and the landing happen in one render. The rail lights
+  `rail.id`, not `activeRail`, or nothing would be highlighted after the swap.
+
+**Size has a row here and nowhere else on a Kartik rail** since 2026-09-08. The
+array is *derived* from `JOURNEY_RAIL_ORDER`, so a row added there lands on
+both.
 **Three Kartik listings now spell out their own
 props over the one `PlpScreen`, and that is deliberate**: sharing them behind a
 component was tried and reversed the same morning, so don't "fix" the

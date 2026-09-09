@@ -279,13 +279,17 @@ describe("the sheet presentation's shorter fold", () => {
     expect(sheetHeightPct(rowsOn("journey"))).toBe(SHEET_MAX_PCT);
   });
 
-  it("holds the gated rail's sheet at one height too, and for a better reason", () => {
+  it("grows the gated rail's sheet when the placeholder becomes six rows", () => {
     /*
-     * `/pvfilters2`, 2026-09-09. `"journey-flat"` stops the sheet moving by
-     * having nothing to add; this rail stops it by adding the row up front. The
-     * reason matters more here: the tap that unlocks *Garment Details* happens
-     * **inside its own panel**, so a sheet that grew on that tap would resize
-     * under the finger that made it.
+     * `/pvfilters2`, 2026-09-09. The *Fashion Trends* placeholder swaps for the
+     * six rows it stood in for, so the rail goes 8 → 13 and the sheet 590 → the
+     * capped 640 with it.
+     *
+     * A fixed height was the alternative and was put to the ask: the tap that
+     * unlocks happens **inside the row's own panel**, so the sheet moves under
+     * the finger that moved it. Let it grow, as `/pvfilters` already does when a
+     * vertical settles — `FilterScreen` transitions the height, so it reads as
+     * the rows arriving rather than as a jump.
      */
     const singles = singleValuedFacets(getKartikCatalog());
     const rowsOn = (settled: string | null) =>
@@ -293,9 +297,11 @@ describe("the sheet presentation's shorter fold", () => {
         .length;
 
     expect(rowsOn(null)).toBe(8);
-    expect(rowsOn("womens-t-shirts")).toBe(8);
-    expect(sheetHeightPct(8)).toBe(sheetHeightPct(rowsOn("womens-t-shirts")));
     expect(Math.round((sheetHeightPct(8) / 100) * FRAME_H)).toBe(590);
+
+    expect(rowsOn("womens-t-shirts")).toBe(13);
+    expect(sheetHeightPct(rowsOn("womens-t-shirts"))).toBe(SHEET_MAX_PCT);
+    expect(Math.round((sheetHeightPct(13) / 100) * FRAME_H)).toBe(640);
   });
 
   it("earns a field sooner in a sheet that shrank with its rail", () => {

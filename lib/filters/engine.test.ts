@@ -1230,51 +1230,72 @@ describe("variants C and D — the page is the vertical", () => {
     });
   });
 
-  it("keeps the gated row on the rail in both states, and fills it on settle", () => {
+  it("swaps the gated row for the rows it stood in for", () => {
     /*
-     * `/pvfilters2`, 2026-09-09. The other two Kartik rails *remove* the
-     * garment attributes until a vertical settles, so a buyer who never ticks a
-     * category never learns there was anything to tick for. This one collapses
-     * them into one row that never leaves the rail and locks its panel instead.
+     * `/pvfilters2`, 2026-09-09. The other two Kartik rails *remove* the garment
+     * attributes until a vertical settles, so a buyer who never ticks a category
+     * never learns there was anything to tick for. This one puts a **Fashion
+     * Trends** placeholder there instead — and the placeholder leaves the moment
+     * the real rows arrive, which is the correction that came back on the first
+     * render: a stand-in should not outlive the thing it stood in for.
      */
     const singles = singleValuedFacets(getKartikCatalog());
     const gated = (category?: string[], settled: string | null = null) =>
       getRail(category, FILTER_VERTICALS, settled, "journey-gated", singles);
 
-    const EIGHT = [
+    expect(gated().map((r) => r.label)).toEqual([
       "Price Range",
       "Margin on MRP",
       "MOQ",
       "Category",
-      "Garment Details",
+      "Fashion Trends",
       "Cashback",
       "Seller Offer",
       "SOLV Target Scheme",
-    ];
+    ]);
 
-    // Same eight rows, in the same order, settled or not — which is the whole
-    // difference from `"journey"`'s 7-then-12.
-    expect(gated().map((r) => r.label)).toEqual(EIGHT);
-    expect(gated(["womens-t-shirts"], "womens-t-shirts").map((r) => r.label)).toEqual(EIGHT);
+    // Settled: the placeholder is gone and all six are rows of their own, in
+    // the place it held — Size leading, then `JOURNEY_RAIL_ORDER`'s own order.
+    expect(gated(["womens-t-shirts"], "womens-t-shirts").map((r) => r.label)).toEqual([
+      "Price Range",
+      "Margin on MRP",
+      "MOQ",
+      "Category",
+      "Size",
+      "Fit",
+      "Neck Type",
+      "Sleeve Type",
+      "Pattern",
+      "Closure Type",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
+    ]);
 
-    // It sits where the block always sat: after Category, before the three
-    // offer magnitudes. Derived from `JOURNEY_RAIL_ORDER`, not retyped, so this
-    // is really asserting the derivation put it back in the right place.
-    const row = gated().find((r) => r.gated)!;
-    expect(row.label).toBe("Garment Details");
-    expect(row.facetIds).toEqual(["size", "fit", "neck", "sleeve", "pattern", "closure"]);
-
-    // Size is in it, which is what gives this route a Size control at all —
-    // no Kartik rail has carried a Size row since 2026-09-08.
-    expect(getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey-gated", singles))
-      .toContain("size");
-    expect(getRailFacetIds(undefined, FILTER_VERTICALS, null, "journey", singles))
-      .not.toContain("size");
-
-    // `gated` is the only row carrying the flag, and no row on this rail is
-    // `vertical` any more — the collapse consumed all five.
+    // Exactly one of the two states carries the placeholder — never both, which
+    // is what reading it off `showVertical` rather than `genderRedundant` buys.
     expect(gated().filter((r) => r.gated)).toHaveLength(1);
-    expect(gated().filter((r) => r.gated === undefined)).toHaveLength(7);
+    expect(gated(["womens-t-shirts"], "womens-t-shirts").filter((r) => r.gated)).toHaveLength(0);
+
+    // Its facetIds are the six it hands over, so Clear Filters reaches them
+    // while it is standing in for them.
+    expect(gated().find((r) => r.gated)!.facetIds).toEqual([
+      "size",
+      "fit",
+      "neck",
+      "sleeve",
+      "pattern",
+      "closure",
+    ]);
+
+    // Size has a row here and on no other Kartik rail — this route's only Size
+    // control since 2026-09-08.
+    const facets = (settled: string | null, preset: "journey" | "journey-gated") =>
+      getRailFacetIds(settled ? [settled] : undefined, FILTER_VERTICALS, settled, preset, singles);
+    expect(facets("womens-t-shirts", "journey-gated")).toContain("size");
+    expect(facets("womens-t-shirts", "journey")).not.toContain("size");
+    // And while locked too, through the placeholder.
+    expect(facets(null, "journey-gated")).toContain("size");
   });
 
   it("still orphans the gated row's facets when the vertical goes", () => {

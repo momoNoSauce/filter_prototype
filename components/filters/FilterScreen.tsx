@@ -45,6 +45,28 @@ import { OptionRow, RangeInputs, SortRow, ThumbRow } from "./OptionRows";
 const CATEGORY_FACET_ID = "category";
 
 /**
+ * The padlock on a locked chip. **Inline, not a `public/figma/` export**: no
+ * lock was ever drawn for this file, and the rule is never to redraw an asset
+ * that *exists* — `FindItFast`'s selected-tile check is the same case and the
+ * same answer. `currentColor`, so it takes the chip's primary from the class
+ * list rather than hard-coding the hex a token already names.
+ */
+function Padlock() {
+  return (
+    <svg viewBox="0 0 12 12" aria-hidden className="size-[11px] shrink-0">
+      <path
+        d="M3.6 5.2V3.9a2.4 2.4 0 0 1 4.8 0v1.3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <rect x="2.4" y="5.2" width="7.2" height="5.4" rx="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+/**
  * The rail id of the Sort By row — `/userjourney` only, and deliberately not a
  * facet id: Sort is one value where every facet is a set, it is not in
  * `FACETS`, and nothing may look it up in `FACET_BY_ID`. The `__` marks it as
@@ -331,10 +353,26 @@ export function FilterScreen({
           : onDiscard,
     });
 
-  // The block can vanish under the cursor — tick a second vertical while
-  // standing on Neck Type and that row is gone. Falling back to the first row
-  // beats rendering an empty panel.
-  const rail = RAIL.find((r) => r.id === activeRail) ?? RAIL[0];
+  /*
+   * The row under the cursor can vanish — tick a second vertical while standing
+   * on Neck Type and that row is gone. Falling back beats rendering an empty
+   * panel, and *where* it falls back is worth a line:
+   *
+   * **A gated row that unlocks lands on Category** (2026-09-09, on the ask).
+   * Ticking a category inside *Fashion Trends* is what makes that row disappear
+   * — the six filters it stood in for arrive as rows of their own — and landing
+   * on Price Range, the first row, would read as the screen resetting under the
+   * tap. Category is where the buyer just acted, with their pick ticked, so the
+   * screen answers rather than restarts.
+   *
+   * Declarative rather than a `setActiveRail` in the toggle handler: the swap
+   * and the landing then happen in the same render as the tap, and there is no
+   * order to get wrong between two pieces of state.
+   */
+  const rail =
+    RAIL.find((r) => r.id === activeRail) ??
+    RAIL.find((r) => r.id === CATEGORY_FACET_ID) ??
+    RAIL[0];
   /**
    * Whether the open panel is Sort's rather than a facet's. `facetIds: []`
    * means the facet path below produces an empty list on its own, so this
@@ -594,7 +632,10 @@ export function FilterScreen({
         */}
         <div className="no-scrollbar w-[140px] shrink-0 overflow-y-auto pb-[16px]">
           {RAIL.map((entry, index) => {
-            const active = entry.id === activeRail;
+            // `rail.id`, not `activeRail`: when a row vanishes the two differ
+            // for a render, and the rail must light the panel that is open —
+            // otherwise unlocking Fashion Trends leaves nothing highlighted.
+            const active = entry.id === rail.id;
             /*
              * The rail's applied cue. For a facet row it is the number of
              * ticked options; for Sort it is whether the value has left the
@@ -615,17 +656,14 @@ export function FilterScreen({
                 ? Number(draftSort !== DEFAULT_SORT)
                 : entry.facetIds.reduce((sum, id) => sum + (draft[id]?.length ?? 0), 0);
             /*
-             * A gated row before its vertical is settled. It stays pressable —
-             * the panel behind it is the thing that explains the lock, so
-             * disabling the row would hide the explanation — but it is dimmed,
-             * so the rail says *unavailable*, not *broken*, before the buyer
-             * opens it.
-             *
-             * No lock glyph: there is no Figma export for one, and the rule
-             * here is never to draw an asset. The dim plus the panel does the
-             * work, and the panel is where the work belongs.
+             * **A gated row is drawn like any other** (2026-09-09, corrected on
+             * the render). It shipped dimmed, on the reasoning that the rail
+             * should say *unavailable* before the buyer opens it — and it read
+             * as *disabled*, which is the one thing it is not: it is the row
+             * you are meant to press, and the panel behind it is an invitation.
+             * Nothing here distinguishes it. The lock lives in the panel, on
+             * the chips, where it can say what it is locking.
              */
-            const dim = Boolean(entry.gated) && settled === null && !active;
             return (
               <button
                 key={entry.id}
@@ -641,11 +679,7 @@ export function FilterScreen({
               >
                 <span
                   className={`min-w-0 flex-1 text-[15px] ${
-                    active
-                      ? "font-bold text-primary"
-                      : dim
-                        ? "font-medium text-[#a0a0a0]"
-                        : "font-medium text-[#323232]"
+                    active ? "font-bold text-primary" : "font-medium text-[#323232]"
                   }`}
                 >
                   {entry.label}
@@ -758,14 +792,25 @@ export function FilterScreen({
             into an offer; a bare "select a category" says a rule and leaves the
             payoff to the imagination.
 
-            The six names are **dimmed chips, not dimmed rows**. Rows were the
-            first build and read better in isolation — the panel looked exactly
-            like the one it becomes — but six at the real 44px pitch is 264px of
-            a 410px panel, and it pushed the category picker below the fold. The
-            tap that unlocks the row is the whole point of the screen; a preview
-            that hides it has cost more than it bought. Chips wrap into two
-            lines, keep all three categories in view, and still name every
-            filter.
+            The six names are **chips, not rows**. Rows were the first build and
+            read better in isolation — the panel looked exactly like the one it
+            becomes — but six at the real 44px pitch is 264px of a 410px panel,
+            and it pushed the category picker below the fold. The tap that
+            unlocks the row is the whole point of the screen; a preview that
+            hides it has cost more than it bought. Chips wrap into two lines,
+            keep all three categories in view, and still name every filter.
+
+            **Primary, with a padlock each — not grey** (2026-09-09, corrected
+            on the render). Grey chips read as *disabled*, which is the wrong
+            word for something being offered to you: these are the reward, and
+            the lock is the only part that should say "not yet". So
+            `primary-subtle` ground with `primary` text, and the padlock in
+            primary beside each name.
+
+            The padlock is an inline SVG, not a `public/figma/` export, because
+            no lock was ever drawn for this file. The rule it sits under is
+            *never redraw an asset that exists* — the check on `/pvfilters`'
+            selected tile is the same case and the same answer.
 
             `aria-hidden`, because they are a preview and a screen reader
             announcing six controls that don't work is worse than silence — the
@@ -781,14 +826,15 @@ export function FilterScreen({
           {locked && (
             <div className="flex w-full flex-col">
               <p className="px-[14px] pt-[6px] pb-[10px] text-[15px] font-bold text-heading">
-                {panelPreview.length} garment filters, locked
+                {panelPreview.length} fashion filters, locked
               </p>
               <div aria-hidden className="flex flex-wrap gap-[6px] px-[14px] pb-[14px]">
                 {panelPreview.map((label) => (
                   <span
                     key={label}
-                    className="rounded-[6px] bg-rail px-[8px] py-[5px] text-[13px] text-[#a0a0a0]"
+                    className="flex items-center gap-[4px] rounded-[6px] bg-primary-subtle px-[8px] py-[5px] text-[13px] font-medium text-primary"
                   >
+                    <Padlock />
                     {label}
                   </span>
                 ))}
