@@ -114,8 +114,14 @@ flat rail a hand-written `?fit=slim` is dropped in every state.
 
 **`/pvfilters2`** (2026-09-09) is a clone of `/pvfilters`, made **independent
 from the start** — a second cut at the PV filtering, tried beside the first
-rather than on top of it. Byte-identical today; that is a fact about this
-afternoon, not an invariant. **Three Kartik listings now spell out their own
+rather than on top of it. It **does not pass `guidedPv`** (dropped hours after
+the clone, on request), so the two are the real comparison: both reveal the
+garment attributes once a vertical settles, `/pvfilters` on the listing in *Find
+It Fast* and `/pvfilters2` behind the Filters button. One consequence —
+**`/pvfilters2` has no Size control at all**, the journey rail having carried no
+Size row since 2026-09-08 and the block having been the only other way in, so
+`?size=` there is the accepted hand-written case `?fabric=` already is.
+**Three Kartik listings now spell out their own
 props over the one `PlpScreen`, and that is deliberate**: sharing them behind a
 component was tried and reversed the same morning, so don't "fix" the
 duplication. What stays shared is `PlpScreen`, `ProductDetail` and

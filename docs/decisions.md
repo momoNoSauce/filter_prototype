@@ -611,11 +611,26 @@ already are. What each route owns is its prop block, exactly as `/` and
 detail route passes `homeHref` explicitly because `ProductDetail` still defaults
 it to `/userjourney`.
 
-Verified at 360px: `/pvfilters2` and `/pvfilters` render byte-identical PNGs, as
-do their two detail screens; the Find It Fast block commits
-`?category=womens-t-shirts&size=m`, a card opens
-`/pvfilters2/product/k-0371`, Home returns to `/pvfilters2`, and a main-catalog
+Verified at 360px on the day it was made: `/pvfilters2` and `/pvfilters`
+rendered byte-identical PNGs, as did their two detail screens; a card opened
+`/pvfilters2/product/k-0371`, Home returned to `/pvfilters2`, and a main-catalog
 id 404s.
+
+**It diverged hours later** — *remove find it fast from /pvfilters2* — by
+dropping `guidedPv`, which is the first thing the separate prop blocks were for.
+That turns the pair into the comparison a second route was made for: both still
+reveal the five garment attributes once a vertical settles, both being
+`rail: "journey"` rather than the journey's flat one, but `/pvfilters` surfaces
+the choice on the listing and `/pvfilters2` leaves it behind the Filters button.
+
+**One consequence, flagged rather than fixed: `/pvfilters2` has no Size control
+at all.** The journey rail has carried no Size row since 2026-09-08, and the
+block was the only other way to reach one. So `?size=m` there is the accepted
+hand-written case `?fabric=cotton` already is on that rail — no click can
+produce it, and outside a settled vertical `dropOrphanedSelections` strips it,
+Size being in this rail's vertical-only set since the block arrived. If this
+variant should offer sizes, the answer is a Size row on a rail of its own, not
+`guidedPv` back.
 
 ### `/pvfilters` gets the guided block — *Find It Fast* (2026-09-09)
 

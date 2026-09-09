@@ -22,11 +22,14 @@ import { KARTIK, getKartikCatalog } from "@/lib/catalog/kartik";
  * surface, parameterised, and something this route wants of it that `/pvfilters`
  * does not is a prop with a default, never a second copy.
  *
- * The prop block below is `/pvfilters`' exactly, so the two render byte for
- * byte today — a fact about this afternoon, not an invariant. Each setting is
- * annotated with *what* it does and one line of *why*; the long history behind
- * them — which stakeholder call, what it reversed, what it cost — lives in
- * `docs/decisions.md`, and is not repeated here precisely so the three files
+ * The prop block below started as `/pvfilters`' exactly and **diverged the same
+ * afternoon**: no `guidedPv`, so the *Find It Fast* block is not drawn here. The
+ * two routes now put the same behaviour in two places — both reveal the garment
+ * attributes once a vertical settles, one on the listing and one behind the
+ * Filters button — which is the comparison a second route was for. Each setting
+ * is annotated with *what* it does and one line of *why*; the long history
+ * behind them — which stakeholder call, what it reversed, what it cost — lives
+ * in `docs/decisions.md`, and is not repeated here precisely so the three files
  * have no shared prose to drift.
  */
 export default function Page() {
@@ -71,17 +74,24 @@ export default function Page() {
        *   other, both being values on one facet; an inverted range is refused
        *   with a toast rather than filtered, and the boxes commit on blur, never
        *   per keystroke.
-       * - `guidedPv: true` — the **Find It Fast** block at the head of the
-       *   listing (2026-09-09), from two screengrabs of a competitor's search
-       *   results: *choose gender* as three pictures, and once one is picked a
-       *   *choose size* step unfolds under it. The one opt-*in* field in this
-       *   object, because it adds a surface no other route has rather than
-       *   switching one off. It is this route's whole point — the "settling a
-       *   vertical reveals more filters" behaviour that came off `/userjourney`
-       *   the same morning, made visible on the listing instead of waiting
-       *   behind the Filters button. See `FindItFast`; and note that the size
-       *   step is gated on the *same* settled vertical the rail is, so the
-       *   block and the sheet unfold in one tap.
+       * - ~~`guidedPv`~~ — **deliberately absent** (2026-09-09, hours after the
+       *   clone, on request: *remove find it fast from /pvfilters2*). It is the
+       *   one opt-*in* field on `controls`, so saying nothing is how a route
+       *   goes without, and this is the first divergence from `/pvfilters`.
+       *
+       *   That makes the pair a real comparison rather than two copies: both
+       *   still reveal the five garment attributes once a vertical settles —
+       *   `rail: "journey"`, not the journey's flat one — but `/pvfilters`
+       *   surfaces the choice **on the listing** in `FindItFast`, and this route
+       *   leaves it **behind the Filters button** where it has always been.
+       *
+       *   **One thing it takes with it: Size has no control here at all.** The
+       *   journey rail has carried no Size row since 2026-09-08, and the block
+       *   was the only other place to reach one. So `?size=m` on this route is
+       *   the accepted hand-written case `?fabric=cotton` already is — no click
+       *   can produce it, and outside a settled vertical `dropOrphanedSelections`
+       *   strips it anyway. If this variant ought to offer sizes, the answer is
+       *   a Size row on a rail of its own, not `guidedPv` back.
        *
        * Not `locked` mode, which C and D use — that would take Category off the
        * rail, and Category is the cut this listing turns on.
@@ -92,7 +102,6 @@ export default function Page() {
         rail: "journey",
         filterSheet: true,
         rangeInputs: true,
-        guidedPv: true,
       }}
       /*
        * Both point here, and both must: the home button keeps a session inside
