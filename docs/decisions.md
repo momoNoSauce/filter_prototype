@@ -745,6 +745,22 @@ answering with a moving target would be perverse. Under
 that query is read in `TickerLabel` rather than left to the CSS, because CSS can
 only slow the travel, not stop the words changing.
 
+*The lap ends on an instruction* — **Enable Style Filters**, in primary,
+pulsing. Six nouns have shown the buyer what is in there; this is the only step
+that says what to do about it, so it comes last and asks. Two animations on one
+element: the entrance runs once and the pulse takes over as it finishes, opacity
+only — a scaling label in a 140px column beside seven still rows reads as a
+glitch. It wraps to two lines, which `SOLV Target Scheme` two rows up already
+does, and the 60px row takes both without moving; `truncate` came off the ticker
+for it, clipping the one step that asks for a tap being the wrong thing to cut.
+
+**The locked panel's copy went up a step** (same day, on the render: the heading
+read as small). 17px bold over a 15px second line, where it was 15 over 14, and
+the padlock 11 → 14 with it. The 15px bold that `FACET_HEADING_H` measures is
+for a *group* heading inside a stacked panel, sized to sit level with the option
+rows it labels; this is the screen's only message and has to lead the 15px
+`ThumbRow`s under it.
+
 **The chips went with it.** Once the rail row reads the names out, spelling them
 again above the picker is the same information twice in one glance — and it cost
 the categories most of the fold. The locked panel is now a padlocked heading

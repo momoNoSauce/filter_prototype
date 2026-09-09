@@ -320,6 +320,32 @@ input {
 }
 
 /*
+ * The last stop on that ticker — *Enable Style Filters*, the one word in the
+ * loop that is an instruction rather than a name. It arrives the same way and
+ * then breathes, so a buyer who has watched the six go past has something
+ * asking to be tapped rather than a seventh noun.
+ *
+ * Two animations on one element: the entrance runs once, the pulse starts as it
+ * finishes and repeats for the rest of the step. Opacity only — the rail row is
+ * a fixed 60px beside seven still ones, and a scaling label in that column
+ * reads as a glitch.
+ */
+@keyframes ticker-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.animate-ticker-cta {
+  animation:
+    ticker-in 240ms cubic-bezier(0.05, 0.7, 0.1, 1) both,
+    ticker-pulse 900ms 240ms ease-in-out infinite;
+}
+
+/*
  * Toast: rise and fade in, hold, fade out. One animation covers the whole
  * lifetime and `onAnimationEnd` unmounts it, so the duration is declared here
  * only — a setTimeout alongside would be a second copy free to drift.
@@ -374,9 +400,13 @@ input {
   .animate-screen-out,
   /* The ticker's *travel*. Whether it advances at all is decided in the
      component, which reads the same query and simply never starts the timer —
-     so a reduced-motion reader gets the row's own name and nothing moving. */
+     so a reduced-motion reader gets the row's own name and nothing moving, and
+     never reaches the pulsing last stop either. */
   .animate-ticker-in {
     animation-duration: 1ms;
+  }
+  .animate-ticker-cta {
+    animation: none;
   }
   .animate-toast {
     animation-name: toast-fade;

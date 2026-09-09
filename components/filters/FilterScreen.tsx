@@ -56,16 +56,22 @@ const TICKER_MS = 1800;
 
 /**
  * The rail label for a **locked `Style Filters` row** — a horizontal ticker
- * reading the row's name and then the filters behind it, once each:
+ * reading the row's name, then the filters behind it, then the ask:
  *
  *     Style Filters → Size → Fit → Neck Type → Sleeve Type → Pattern →
- *     Closure Type → Style Filters → …
+ *     Closure Type → *Enable Style Filters* → Style Filters → …
  *
  * **One list, not the name between every word.** It shipped alternating — name,
  * filter, name, filter — on the reasoning that the row had to stay findable by
  * name; in practice the name came back so often it read as a stutter, and the
  * six filters, which are the interesting part, only had half the time. The name
  * still leads every lap, which is enough to identify the row.
+ *
+ * **The lap ends on an instruction.** Six nouns have shown the buyer what is in
+ * there; *Enable Style Filters* is the only step that says what to do about it,
+ * so it arrives last, in primary, and pulses. It wraps to two lines in the
+ * 140px rail column, which `SOLV Target Scheme` two rows up already does — the
+ * row is a fixed 60px and takes both without moving.
  *
  * One word at a time, each arriving and stopping, rather than a continuous
  * marquee — a word that stops moving is a word you can read, and the rail
@@ -79,10 +85,14 @@ const TICKER_MS = 1800;
  * changing.
  */
 function TickerLabel({ label, words }: { label: string; words: string[] }) {
-  // Name first, then each filter once. Starting on the name is also what makes
-  // the first paint and the server agree.
-  const sequence = useMemo(() => [label, ...words], [label, words]);
+  // Name first, then each filter once, then the ask. Starting on the name is
+  // also what makes the first paint and the server agree.
+  const sequence = useMemo(
+    () => [label, ...words, `Enable ${label}`],
+    [label, words],
+  );
   const [step, setStep] = useState(0);
+  const isCta = step === sequence.length - 1;
 
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
@@ -94,9 +104,15 @@ function TickerLabel({ label, words }: { label: string; words: string[] }) {
   }, [sequence.length]);
 
   return (
-    // `key` restarts the keyframe on every word. The row is a fixed 60px and
-    // this span is one line, so nothing reflows as the words change width.
-    <span key={step} className="animate-ticker-in block truncate">
+    // `key` restarts the keyframe on every word. No `truncate`: the last step is
+    // two words longer than the column and wraps, which the 60px row absorbs —
+    // clipping the one step that asks for a tap would be the wrong thing to cut.
+    <span
+      key={step}
+      className={`block leading-[18px] ${
+        isCta ? "animate-ticker-cta text-primary" : "animate-ticker-in"
+      }`}
+    >
       {sequence[step]}
     </span>
   );
@@ -104,7 +120,7 @@ function TickerLabel({ label, words }: { label: string; words: string[] }) {
 
 function Padlock() {
   return (
-    <svg viewBox="0 0 12 12" aria-hidden className="size-[11px] shrink-0">
+    <svg viewBox="0 0 12 12" aria-hidden className="size-[14px] shrink-0">
       <path
         d="M3.6 5.2V3.9a2.4 2.4 0 0 1 4.8 0v1.3"
         fill="none"
@@ -867,13 +883,25 @@ export function FilterScreen({
           */}
           {locked && (
             <div className="flex w-full flex-col">
-              <p className="flex items-center gap-[6px] px-[14px] pt-[6px] text-[15px] font-bold text-heading">
+              {/*
+                **17 over 15, not 15 over 14** (2026-09-09, on the render: the
+                heading read as small). This is the screen's own message, not a
+                group heading inside a stacked panel — those are the 15px bold
+                that `FACET_HEADING_H` measures, sized to sit *level* with the
+                option rows they label. A line that is the only thing on the
+                panel has to lead the 15px `ThumbRow`s below it, so it goes a
+                step up and the second line meets the rows at 15.
+
+                The padlock follows to 14px: at 11 it was set to the old 15px
+                heading and now reads as a speck beside 17px bold.
+              */}
+              <p className="flex items-center gap-[7px] px-[14px] pt-[6px] text-[17px] font-bold text-heading">
                 <span className="text-primary">
                   <Padlock />
                 </span>
                 {panelPreview.length} style filters locked
               </p>
-              <p className="px-[14px] pt-[4px] pb-[12px] text-[14px] text-muted">
+              <p className="px-[14px] pt-[5px] pb-[14px] text-[15px] text-muted">
                 Pick a category to see them
               </p>
               {unlockOptions.map((option) => (
