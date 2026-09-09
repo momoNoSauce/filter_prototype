@@ -70,10 +70,20 @@ separate from the 1,070 and invisible to A–D.
 product-vertical filtering can be worked on without touching a route
 stakeholders have been handed. One route, no redirect — `/pvfilters` *is* the
 listing, the way `/c` and `/d` are — plus its own
-`/pvfilters/product/[productId]`. It shares every prop through
-**`KartikStorefront`**, parameterised by `basePath` alone, the way `VerticalPlp`
-is shared by C and D: **put a deliberate divergence in a prop there, never in a
-second copy of the config.** Today the two renders are byte-identical.
+`/pvfilters/product/[productId]`.
+
+**The two are deliberately separate, and must stay so.** They shared a
+`KartikStorefront` component for an hour of 2026-09-09; it was reversed the same
+day because `/userjourney` is about to have things *removed* from it, and a
+shared config would have carried every deletion across. Each route spells out
+its own props over `PlpScreen`, which is what `/` and `/b/results` already do —
+**the thing that is never copied is `PlpScreen` itself**, not the prop block.
+Don't re-share them, and don't "fix" the duplication. Today the two still render
+byte-identical, which is a fact about this week and not a rule.
+
+`ProductDetail` **is** still shared by both, plus B and D. Something the journey
+needs *off* that screen is a prop with a default, the way `cartBadge` is — not a
+fork.
 
 Its listing departs from the documented control layout, via **one prop** —
 `controls` on `PlpScreen` (`verticalChips`, `priceChip`, `sortInFilters`,
@@ -209,7 +219,6 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 | `lib/filters/urlState.ts` | State mirrored to the query string; local state stays the source of truth |
 | `components/plp/PlpScreen.tsx` | **The** PLP — all six paths, parameterised, never copied |
 | `components/plp/VerticalPlp.tsx` | The C/D listing configuration, shared by their four routes |
-| `components/journey/KartikStorefront.tsx` | The Kartik listing configuration, shared by `/userjourney` and `/pvfilters` |
 | `components/filters/FilterScreen.tsx` | Rail + panel, draft/commit |
 | `components/journey/ProductDetail.tsx` | **The** detail screen — journey, `/pvfilters`, B and D |
 

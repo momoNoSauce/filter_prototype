@@ -273,14 +273,29 @@ been handed.
 /pvfilters/product/[productId]  the detail screen
 ```
 
-**The configuration is shared, not copied.** `components/journey/KartikStorefront.tsx`
-now holds every prop the listing passes to `PlpScreen` — the top chips, the
-`controls` object, the app bar, the list padding — and both routes render it
-with a `basePath`. This is exactly `VerticalPlp`, which C and D have shared
-since they were built, and the reason is the same: those props are a dozen
-recorded decisions, and two pages restating them drift the first time one is
-edited. **A deliberate divergence goes in a prop on `KartikStorefront`**, named
-and dated, the way `controls` carries this listing's departures from A–D.
+**The two configurations are separate — reversed within the hour, same day.**
+
+The clone first shared a `components/journey/KartikStorefront.tsx` with the
+journey, both routes rendering it with a `basePath`, on the `VerticalPlp`
+precedent: C and D have shared their config since they were built, because those
+two are *meant* to stay identical but for control placement. That reasoning does
+not transfer. The word came back that `/userjourney` is about to have things
+**removed** from it, and these two are meant to diverge — under a shared config
+every deletion on the journey would have silently landed on `/pvfilters`, which
+is the one thing the clone exists to prevent. `KartikStorefront` is deleted and
+each route spells out its own props.
+
+**This is not a licence to copy screens.** The unit that must never be
+duplicated is `PlpScreen` — the engine, the rail, the sheets, the draft/commit,
+400 lines of filter state — and both routes still render the one of those. What
+each route owns is a prop block, which is already how `/` and `/b/results` work.
+The distinction to hold: *shared behaviour, separate configuration.*
+
+`ProductDetail` stays shared, by both of these and by B and D. It is a screen,
+not a prop block, and it is parameterised the way `PlpScreen` is. Something the
+journey needs taken *off* it is a prop with a default that leaves the other three
+untouched — the pattern `cartBadge` already sets, which has no default precisely
+so B and D show no badge.
 
 **One route, no redirect**, where `/userjourney` is an entry that redirects to
 `/userjourney/seller/kartik`. That hop is historical — it is where the journey's
@@ -293,11 +308,13 @@ the loop closed: the home button and the cards both stay under `/pvfilters`.
 passes its own explicitly — left off, a card opened here would put the buyer
 back in the journey.
 
-Verified at 360px: `/pvfilters` and `/userjourney` render byte-identical PNGs,
-as do the two detail screens; Filters opens the seven-row sheet, *Category →
-Women's T-Shirts* commits `?category=womens-t-shirts` and badges the chip `1`,
-a card opens `/pvfilters/product/k-0371`, Home returns to `/pvfilters`, and a
-main-catalog id 404s.
+Verified at 360px, and again after the un-sharing: `/pvfilters` and
+`/userjourney` render byte-identical PNGs, as do the two detail screens; Filters
+opens the seven-row sheet, *Category → Women's T-Shirts* commits
+`?category=womens-t-shirts` and badges the chip `1`, a card opens
+`/pvfilters/product/k-0371`, Home returns to `/pvfilters`, and a main-catalog id
+404s. **Byte-identical is a fact about today, not an invariant** — the whole
+point of the split is that it stops being true.
 
 **Source is four screengrabs of the live app, not Figma** — at 1080×2400, exactly
 3× the design, so values were read off the raw pixels. They live in `userflow/`
