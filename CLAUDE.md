@@ -66,6 +66,15 @@ there, with no caller, and putting it back is one `return` in
 `app/userjourney/page.tsx`. Its catalog (`lib/catalog/kartik.ts`, 540 tees) is
 separate from the 1,070 and invisible to A–D.
 
+**`/pvfilters`** (2026-09-09) is a **clone of that listing on its own path**, so
+product-vertical filtering can be worked on without touching a route
+stakeholders have been handed. One route, no redirect — `/pvfilters` *is* the
+listing, the way `/c` and `/d` are — plus its own
+`/pvfilters/product/[productId]`. It shares every prop through
+**`KartikStorefront`**, parameterised by `basePath` alone, the way `VerticalPlp`
+is shared by C and D: **put a deliberate divergence in a prop there, never in a
+second copy of the config.** Today the two renders are byte-identical.
+
 Its listing departs from the documented control layout, via **one prop** —
 `controls` on `PlpScreen` (`verticalChips`, `priceChip`, `sortInFilters`,
 `rail`, `filterSheet`, `rangeInputs`), each field defaulting to the documented
@@ -172,7 +181,7 @@ offer is. **The chips stay binary** — they ask *is there one*, the rows ask
 `All filters cleared` over a lit chip. `hasOffer` and `offers` are that case on
 the journey: the merged *Offers* row holds the magnitudes, not the names.
 
-Detail routes are `{base}/product/[productId]` for all five paths, dynamic
+Detail routes are `{base}/product/[productId]` for all six paths, dynamic
 rather than pre-rendered.
 
 **Each variant is a closed loop** — hand someone `/b` and the journey stays in
@@ -198,9 +207,11 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 | `lib/filters/contextChips.ts` | Which chips the strip carries, given the selections |
 | `lib/filters/panelFit.ts` | Whether a panel overflows the fold, and so earns a search field — and how tall the bottom sheet is, from its rail |
 | `lib/filters/urlState.ts` | State mirrored to the query string; local state stays the source of truth |
-| `components/plp/PlpScreen.tsx` | **The** PLP — all five paths, parameterised, never copied |
+| `components/plp/PlpScreen.tsx` | **The** PLP — all six paths, parameterised, never copied |
+| `components/plp/VerticalPlp.tsx` | The C/D listing configuration, shared by their four routes |
+| `components/journey/KartikStorefront.tsx` | The Kartik listing configuration, shared by `/userjourney` and `/pvfilters` |
 | `components/filters/FilterScreen.tsx` | Rail + panel, draft/commit |
-| `components/journey/ProductDetail.tsx` | **The** detail screen — journey, B and D |
+| `components/journey/ProductDetail.tsx` | **The** detail screen — journey, `/pvfilters`, B and D |
 
 **23 facets** behind 13 rail rows — 18 inside a vertical, 17 in C and D, 8 on
 the journey and 13 inside a vertical there. Adding a facet is one entry in

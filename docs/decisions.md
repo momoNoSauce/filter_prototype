@@ -262,6 +262,43 @@ is the only build of the banner beat and it was measured off a screengrab at 3×
 restoring it is one `return <JourneyHome />` in `app/userjourney/page.tsx`,
 where deleting it would mean re-measuring. Its docblock says so.
 
+### `/pvfilters` — the listing cloned onto its own path (2026-09-09)
+
+On request. A second route serving the same Kartik listing, so product-vertical
+filtering can be worked on without touching a route stakeholders have already
+been handed.
+
+```
+/pvfilters                      the listing itself — no redirect
+/pvfilters/product/[productId]  the detail screen
+```
+
+**The configuration is shared, not copied.** `components/journey/KartikStorefront.tsx`
+now holds every prop the listing passes to `PlpScreen` — the top chips, the
+`controls` object, the app bar, the list padding — and both routes render it
+with a `basePath`. This is exactly `VerticalPlp`, which C and D have shared
+since they were built, and the reason is the same: those props are a dozen
+recorded decisions, and two pages restating them drift the first time one is
+edited. **A deliberate divergence goes in a prop on `KartikStorefront`**, named
+and dated, the way `controls` carries this listing's departures from A–D.
+
+**One route, no redirect**, where `/userjourney` is an entry that redirects to
+`/userjourney/seller/kartik`. That hop is historical — it is where the journey's
+home screen was — and cloning it would carry the history without the reason.
+`/c` and `/d` land straight on their listing for the same reason.
+
+**`basePath` drives both `homeHref` and `productBasePath`**, which is what keeps
+the loop closed: the home button and the cards both stay under `/pvfilters`.
+`ProductDetail` defaults `homeHref` to `/userjourney`, so the detail route
+passes its own explicitly — left off, a card opened here would put the buyer
+back in the journey.
+
+Verified at 360px: `/pvfilters` and `/userjourney` render byte-identical PNGs,
+as do the two detail screens; Filters opens the seven-row sheet, *Category →
+Women's T-Shirts* commits `?category=womens-t-shirts` and badges the chip `1`,
+a card opens `/pvfilters/product/k-0371`, Home returns to `/pvfilters`, and a
+main-catalog id 404s.
+
 **Source is four screengrabs of the live app, not Figma** — at 1080×2400, exactly
 3× the design, so values were read off the raw pixels. They live in `userflow/`
 (untracked). Where the screengrab and Figma disagree here, the screengrab wins,
@@ -508,8 +545,8 @@ same app. It is parameterised, not copied: `homeHref` keeps each variant a
 closed loop, and `cartBadge` has **no default**, so the journey's `3` (its
 screengrab's) stays the journey's and B and D show no badge.
 
-Routes are `{base}/product/[productId]` for **all five paths** — `""` (A), `/b`,
-`/c`, `/d`, `/userjourney` — and the cards link there through
+Routes are `{base}/product/[productId]` for **all six paths** — `""` (A), `/b`,
+`/c`, `/d`, `/userjourney`, `/pvfilters` — and the cards link there through
 **`productBasePath`**, a string on `PlpScreen`. A builder function was the first
 try and the build rejects it outright: these pages are Server Components and
 `PlpScreen` is a Client one, so a function prop cannot cross the boundary. **`""`
