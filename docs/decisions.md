@@ -681,7 +681,13 @@ All four notes back were right.
 
 1. **It looked disabled.** Dimming the rail label was meant to say
    *unavailable*; it said *broken*. It is the row you are meant to press, and
-   the panel behind it is an invitation. The row is now drawn like every other.
+   the panel behind it is an invitation. The dim went, and the row later took a
+   **`primary-subtle` tint** while closed (asked for the same day) — the palette
+   has one light blue, the one a ticked Category row and `FindItFast`'s card
+   already use, and it makes the row read as offered rather than as greyed among
+   the `#f4f4f4` rest. Only while closed: the rail's language is that the open
+   row goes white and merges with the panel beside it, which is what says which
+   panel you are looking at, and this is the row that most needs saying.
 2. **The name.** *Garment Details* → **Fashion Trends**. What is behind the lock
    is a reason to tap, and the name should say so.
 3. **The chips looked disabled too** — grey is the wrong word for a reward.

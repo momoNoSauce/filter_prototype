@@ -741,10 +741,24 @@ export function FilterScreen({
                   setActiveRail(entry.id);
                   setQuery("");
                 }}
+                /*
+                 * **A locked row is tinted** (2026-09-09, on request):
+                 * `primary-subtle`, the same light blue the Category rows take
+                 * when ticked and `FindItFast`'s card sits on — the palette
+                 * already has one light blue and this is it.
+                 *
+                 * Only while it is *closed*. The rail's own language is that
+                 * the open row goes white and merges with the panel beside it,
+                 * which is what tells you which panel you are looking at; a
+                 * tint that survived the tap would break that for the one row
+                 * most in need of the connection.
+                 */
                 className={`flex h-[60px] w-full cursor-pointer items-center gap-[6px] pr-[8px] pl-[14px] text-left ${
                   active
                     ? "bg-white"
-                    : "border-r border-[#dedede] bg-[#f4f4f4]"
+                    : `border-r border-[#dedede] ${
+                        entry.gated ? "bg-primary-subtle" : "bg-[#f4f4f4]"
+                      }`
                 } ${index > 0 ? "border-t border-[#dedede]" : ""}`}
               >
                 <span
