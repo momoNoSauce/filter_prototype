@@ -70,7 +70,7 @@ export default function Page() {
        *   other, both being values on one facet; an inverted range is refused
        *   with a toast rather than filtered, and the boxes commit on blur, never
        *   per keystroke.
-       * - `guidedPv: true` — the **Get It Right** block at the head of the
+       * - `guidedPv: true` — the **Find It Fast** block at the head of the
        *   listing (2026-09-09), from two screengrabs of a competitor's search
        *   results: *choose gender* as three pictures, and once one is picked a
        *   *choose size* step unfolds under it. The one opt-*in* field in this
@@ -78,7 +78,7 @@ export default function Page() {
        *   switching one off. It is this route's whole point — the "settling a
        *   vertical reveals more filters" behaviour that came off `/userjourney`
        *   the same morning, made visible on the listing instead of waiting
-       *   behind the Filters button. See `GetItRight`; and note that the size
+       *   behind the Filters button. See `FindItFast`; and note that the size
        *   step is gated on the *same* settled vertical the rail is, so the
        *   block and the sheet unfold in one tap.
        *

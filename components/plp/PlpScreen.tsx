@@ -27,7 +27,7 @@ import { SIZE_FACET_ID } from "@/lib/filters/activeVariant";
 import { ProductCard } from "./ProductCard";
 import { BottomActionBar, PILL_GAP, PILL_H } from "./BottomActionBar";
 import { TopChipBar } from "./TopChipBar";
-import { GetItRight } from "./GetItRight";
+import { FindItFast } from "./FindItFast";
 import { CHIP_H_SHORT, CHIP_H_TALL, ChipStrip, ContextChips } from "./ContextChips";
 import { contextChips } from "@/lib/filters/contextChips";
 import type { CountedOption } from "@/lib/filters/engine";
@@ -236,9 +236,9 @@ export type PlpControls = {
    */
   rangeInputs?: boolean;
   /**
-   * The guided *Get It Right* block at the head of the listing — choose a
+   * The guided *Find It Fast* block at the head of the listing — choose a
    * gender, then choose a size. `true` on `/pvfilters` (2026-09-09), built from
-   * two screengrabs of a competitor's search results. See `GetItRight`.
+   * two screengrabs of a competitor's search results. See `FindItFast`.
    *
    * **The one field here that is opt-*in***, where the rest are opt-outs. The
    * others switch off a behaviour every route documents; this adds a surface no
@@ -741,7 +741,7 @@ export function PlpScreen({
             the cards, as the reference has it — so it scrolls away with the
             listing rather than holding a third of the frame for good. */}
         {guidedPv && (
-          <GetItRight
+          <FindItFast
             products={products}
             selections={selections}
             settled={settled}

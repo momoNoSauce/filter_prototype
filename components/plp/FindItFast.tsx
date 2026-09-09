@@ -10,7 +10,7 @@ import { CATEGORIES, GENDER_LABEL } from "@/lib/catalog/seed";
 const CATEGORY_FACET_ID = "category";
 
 /**
- * **Get It Right** — the guided two-step filter at the head of `/pvfilters`
+ * **Find It Fast** — the guided two-step filter at the head of `/pvfilters`
  * (2026-09-09), built from two screengrabs of a competitor's search results
  * rather than from Figma.
  *
@@ -59,7 +59,7 @@ const CATEGORY_FACET_ID = "category";
  * the active pack moves with the cut. `facetOptionsWithCounts` does that; this
  * component must not shortcut it.
  */
-export function GetItRight({
+export function FindItFast({
   products,
   selections,
   settled,
@@ -121,10 +121,28 @@ export function GetItRight({
     // No bottom margin: the scroller is a flex column with its own gap, and a
     // margin on top of it made the space under this block half again the space
     // between two cards.
-    <div className="w-full shrink-0 rounded-[12px] bg-primary-subtle px-[8px] pt-[10px] pb-[12px]">
-      {/* The reference's tab, in primary. Caps and tracked, as drawn. */}
-      <span className="inline-flex h-[20px] items-center rounded-[4px] bg-primary px-[8px] text-[11px] font-bold tracking-[0.6px] text-white">
-        GET IT RIGHT!
+    //
+    // **No top padding either** (2026-09-09, on the render): the tab is flush
+    // with the card's top edge, as the reference has it, so the padding that
+    // used to sit above it is the tab's own business now.
+    <div className="w-full shrink-0 rounded-[12px] bg-primary-subtle px-[8px] pb-[10px]">
+      {/*
+        The reference's tab, in primary. Caps and tracked, as drawn.
+
+        **Attached to the top edge, and rounded on the bottom two corners only.**
+        It shipped inset 10px with all four rounded, which read as a chip that
+        happened to be near the top; a tab hangs off the edge it belongs to, and
+        square top corners are what make it look joined rather than nearly
+        touching. It keeps the 8px left inset, which is the card's own padding.
+      */}
+      {/*
+        `flex w-fit`, not `inline-flex`. An inline box sits on a text baseline
+        and the line's strut left 4px of card above it — invisible as a rule,
+        obvious on a tab whose whole job is to touch the edge. A block-level
+        flex box has no strut, so `w-fit` keeps it hugging its label.
+      */}
+      <span className="flex h-[20px] w-fit items-center rounded-b-[6px] bg-primary px-[8px] text-[11px] font-bold tracking-[0.6px] text-white">
+        FIND IT FAST
       </span>
 
       <Step label="Choose gender" />
@@ -140,15 +158,22 @@ export function GetItRight({
               // corner as the reference draws it. The border is on the tile in
               // both states and merely changes colour, so nothing shifts on tap
               // — the same rule `ThumbRow` follows.
-              // 34px picture and 5px of gap and padding, not the 38/6/6 this
-              // shipped with: three tiles across 326px leave the label ~50px,
-              // and `Women` in 14px Roboto bold is 52 — it truncated to `Wom…`
-              // on the very first render. 13px over 34px buys 8px and clears it.
-              className={`relative flex h-[50px] min-w-0 flex-1 cursor-pointer items-center gap-[5px] rounded-[8px] border bg-white px-[5px] ${
+              /*
+               * **46 high around a 38px picture** — 4px of air top and bottom,
+               * against the 8px a 50px tile left around a 34px one, which read
+               * as a picture floating in a box. Asked for on the render.
+               *
+               * The label survives the picture growing because it is 13px, not
+               * the 14 this shipped with: three tiles across 326px of card
+               * leave `Women` 50px here, and 13px Roboto bold needs ~43. At 14
+               * over a 38px picture it truncated to `Wom…`, which is how the
+               * size was found in the first place.
+               */
+              className={`relative flex h-[46px] min-w-0 flex-1 cursor-pointer items-center gap-[5px] rounded-[8px] border bg-white px-[5px] ${
                 selected ? "border-primary" : "border-hairline"
               }`}
             >
-              <span className="size-[34px] shrink-0 overflow-hidden rounded-[6px] bg-[#d9d9d9]">
+              <span className="size-[38px] shrink-0 overflow-hidden rounded-[6px] bg-[#d9d9d9]">
                 {option.image && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img alt="" loading="lazy" className="size-full object-cover" src={option.image} />
@@ -179,7 +204,7 @@ export function GetItRight({
         <>
           {/* Full-bleed across the card, so it reads as dividing the two steps
               rather than as a rule inside one of them. */}
-          <div className="mt-[12px] -mx-[8px] h-px bg-primary/15" />
+          <div className="mt-[10px] -mx-[8px] h-px bg-primary/15" />
           <Step label="Choose size" />
           {/*
             **A five-column grid, not a wrapping flex row.** Wrapping was the
@@ -224,7 +249,9 @@ export function GetItRight({
  */
 function Step({ label }: { label: string }) {
   return (
-    <p className="mt-[10px] mb-[8px] text-[12px] font-medium tracking-[0.6px] text-muted uppercase">
+    // 8 above and 6 below, tightened from 10/8 on the same note: the block is
+    // three bands of controls and the air between them was reading as four.
+    <p className="mt-[8px] mb-[6px] text-[12px] font-medium tracking-[0.6px] text-muted uppercase">
       {label}
     </p>
   );

@@ -581,11 +581,16 @@ Only the journey's men's tees still fall back to the Figma shirt — see
 *`/userjourney`*.
 
 
-### `/pvfilters` gets the guided block — *Get It Right* (2026-09-09)
+### `/pvfilters` gets the guided block — *Find It Fast* (2026-09-09)
 
 Built from two screengrabs of a competitor's search results, supplied as the
 spec: a card at the head of the listing with **CHOOSE GENDER** as three pictures
 and, once one is picked, a **CHOOSE SIZE** step unfolding beneath it.
+
+**The tab reads *FIND IT FAST*** — ours, not the reference's *GET IT RIGHT!*,
+renamed on the first render along with the component and its file. A component
+named after copy the screen no longer shows is the drift this repo keeps one
+name per thing to avoid.
 
 The mirror image of the morning's other change. `/userjourney` had "settling a
 vertical reveals more filters" removed for launch; here it is the whole point,

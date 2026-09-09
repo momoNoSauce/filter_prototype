@@ -112,7 +112,7 @@ callers; a disagreement there is the orphan trap, which is why
 `dropOrphanedSelections` stopped branching on `byCategory` the same day. On a
 flat rail a hand-written `?fit=slim` is dropped in every state.
 
-**`/pvfilters` puts that growth on the listing instead** — the **Get It Right**
+**`/pvfilters` puts that growth on the listing instead** — the **Find It Fast**
 block (`controls.guidedPv`, 2026-09-09, from two screengrabs of a competitor's
 search results, drawn in our tokens): *choose gender* as three pictures, and
 picking one unfolds *choose size* beneath it. The tiles select **`category`**,
@@ -248,7 +248,7 @@ No backend. Deterministic seeded catalog + pure filter engine, all client-side.
 | `lib/filters/urlState.ts` | State mirrored to the query string; local state stays the source of truth |
 | `components/plp/PlpScreen.tsx` | **The** PLP — all six paths, parameterised, never copied |
 | `components/plp/VerticalPlp.tsx` | The C/D listing configuration, shared by their four routes |
-| `components/plp/GetItRight.tsx` | `/pvfilters`' guided *choose gender → choose size* block |
+| `components/plp/FindItFast.tsx` | `/pvfilters`' guided *choose gender → choose size* block |
 | `components/filters/FilterScreen.tsx` | Rail + panel, draft/commit |
 | `components/journey/ProductDetail.tsx` | **The** detail screen — journey, `/pvfilters`, B and D |
 
