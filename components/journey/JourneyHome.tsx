@@ -25,6 +25,12 @@ import { MicFab } from "@/components/ui/MicFab";
  * *with* its background rather than keyed out, which also keeps the blue bar's
  * orange accents — the logo's arc and the bell's dot — exactly as drawn. Nothing
  * here is redrawn.
+ *
+ * **No caller since 2026-09-09**, when `/userjourney` was asked to open on the
+ * storefront and became a redirect to it. Kept rather than deleted, the way
+ * `TileGrid` is: the banner is the journey's documented first beat and this is
+ * the only build of it, so restoring the beat is one `return <JourneyHome />`
+ * in `app/userjourney/page.tsx` rather than a re-measure off the screengrab.
  */
 export function JourneyHome() {
   return (

@@ -58,9 +58,13 @@ suggestion. `shirt` matches all 1,070 products, so the scope is identical to the
 `/seller/[sellerId]` and `/c/seller/[s]/[cat]` still exist and still work.
 
 **`/userjourney`** is outside the 2×2 — one buyer's named flow, built 1:1 from
-screengrabs of the live app rather than from Figma. Home → *Kartik exporters*
-banner → storefront → filter → detail. Its catalog (`lib/catalog/kartik.ts`,
-540 tees) is separate from the 1,070 and invisible to A–D.
+screengrabs of the live app rather than from Figma. It **opens on the
+storefront** (2026-09-09): `/userjourney` is a `redirect` to
+`/userjourney/seller/kartik`, so the flow is listing → filter → detail. The home
+beat is gone from the route but not from the tree — `JourneyHome` is still
+there, with no caller, and putting it back is one `return` in
+`app/userjourney/page.tsx`. Its catalog (`lib/catalog/kartik.ts`, 540 tees) is
+separate from the 1,070 and invisible to A–D.
 
 Its listing departs from the documented control layout, via **one prop** —
 `controls` on `PlpScreen` (`verticalChips`, `priceChip`, `sortInFilters`,

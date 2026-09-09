@@ -231,13 +231,36 @@ end rather than testing a control placement. A garment seller in Imphal wants
 trendy women's tees their catchment doesn't carry.
 
 ```
-/userjourney                      home — banner only
+/userjourney                      redirect → the storefront
 /userjourney/seller/kartik        Kartik Exporters' storefront
 /userjourney/product/[productId]  the detail screen
 ```
 
-Home → tap the **Kartik exporters** banner → storefront → *Gender → Women* →
-*Newest Products* → S/M/L → tap a card → detail.
+Storefront → *Category → Women's T-Shirts* → *Newest Products* → S/M/L → tap a
+card → detail.
+
+### `/userjourney` opens on the storefront (2026-09-09)
+
+On request. It used to open on the journey's home screen, whose only live
+element was the *Kartik exporters* banner; the link now lands on the listing, so
+the demo starts on the thing the prototype exists to show.
+
+**A `redirect`, not a second render of the storefront.** `PlpScreen`'s journey
+configuration is long and route-specific, and rendering it from two paths is
+precisely the drift that keeps this repo on one PLP. The price is a hop and a
+URL that changes under the visitor — accepted, since the URL it changes to names
+what is actually on screen. `next.config` redirects were the alternative and
+lose the place to write this down.
+
+**Nothing needed rewiring.** `PlpScreen`'s `homeHref` and `ProductDetail`'s both
+point at `/userjourney`, so the home button now bounces through the redirect
+back to the listing. The loop stays closed: a session handed this link still
+cannot leave the journey.
+
+**`JourneyHome` stays in the tree with no caller**, the way `TileGrid` does. It
+is the only build of the banner beat and it was measured off a screengrab at 3×;
+restoring it is one `return <JourneyHome />` in `app/userjourney/page.tsx`,
+where deleting it would mean re-measuring. Its docblock says so.
 
 **Source is four screengrabs of the live app, not Figma** — at 1080×2400, exactly
 3× the design, so values were read off the raw pixels. They live in `userflow/`
