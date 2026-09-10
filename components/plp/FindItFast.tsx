@@ -190,9 +190,15 @@ export function FindItFast({
                * **`w-fit`, not `flex-1`** (2026-09-10): the tile is as wide as
                * its name, which is what lets the full category labels in. It
                * was three fixed thirds while the labels were single gender
-               * words; *Men's Casual T-Shirts* needs ~135px where *Men* needed
-               * 30, and clamping it to `Men's Casu…` in a 103px third is the
-               * exact truncation `ThumbRow` exists to fix.
+               * words; *Men's Casual T-Shirts* needs ~135px on one line where
+               * *Men* needed 30, and clamping it to `Men's Casu…` in a 103px
+               * third is the exact truncation `ThumbRow` exists to fix.
+               *
+               * **The name then went to two lines**, same day, on the report
+               * that one tile per row left the card half empty. Wrapping takes
+               * the widest tile from ~200px to ~135, which fits two on the
+               * first row — the same trade `ThumbRow` makes in the Filters
+               * panel, and for the same reason.
                */
               className={`relative flex h-[46px] w-fit cursor-pointer items-center gap-[6px] rounded-[8px] border bg-white px-[5px] ${
                 selected ? "border-primary" : "border-hairline"
@@ -204,8 +210,18 @@ export function FindItFast({
                   <img alt="" loading="lazy" className="size-full object-cover" src={option.image} />
                 )}
               </span>
+              {/*
+                **Two lines at 16, capped at 92px wide.** The cap is what forces
+                the break — without it a flex child sizes to its longest word
+                run and `Men's Casual T-Shirts` stays on one line. 92 is the
+                widest that still breaks `Men's Casual` / `T-Shirts` rather than
+                `Men's` / `Casual` / `T-Shirts`, which `line-clamp-2` would cut.
+
+                Two 16px lines is 32 inside the 46px tile the 38px picture
+                already sets, so the row height does not move.
+              */}
               <span
-                className={`pr-[3px] text-left text-[13px] font-bold whitespace-nowrap ${
+                className={`line-clamp-2 max-w-[92px] pr-[3px] text-left text-[13px] leading-[16px] font-bold ${
                   selected ? "text-primary" : "text-heading"
                 }`}
               >

@@ -817,10 +817,19 @@ vertical, and it was already untrue to anyone reading `?category=`. It is
 panel's own rows show.
 
 **The full names cost the fixed row of three.** *Men's Casual T-Shirts* needs
-~135px of label where *Men* needed 30, and clamping it into a 103px third gives
-`Men's Casu…` — the exact truncation `ThumbRow` was built to fix. The tiles wrap
-and size to their content, like the style buttons below them, which at 360px is
-one per row.
+~135px of label on one line where *Men* needed 30, and clamping it into a 103px
+third gives `Men's Casu…` — the exact truncation `ThumbRow` was built to fix.
+The tiles wrap and size to their content, like the style buttons below them.
+
+**On one line that was one tile per row**, which left the card half empty and
+was reported the same day. The name now wraps to **two lines capped at 92px**,
+which is what forces the break — a flex child otherwise sizes to its longest
+word run and stays on one line — and 92 is the widest that still breaks
+*Men's Casual* / *T-Shirts* rather than three lines `line-clamp-2` would cut.
+All three hit the cap, so the tiles come out a uniform 148px and sit two to a
+row. Two 16px lines is 32 inside the 46px the 38px picture already sets, so the
+row height does not move. The same trade `ThumbRow` makes in the Filters
+panel.
 
 **Three things it got wrong on the first render, all found by looking at it:**
 
