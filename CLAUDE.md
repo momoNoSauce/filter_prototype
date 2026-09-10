@@ -57,161 +57,137 @@ suggestion. `shirt` matches all 1,070 products, so the scope is identical to the
 `/seller/[sellerId]` route it replaced — every count and test still holds.
 `/seller/[sellerId]` and `/c/seller/[s]/[cat]` still exist and still work.
 
-**`/userjourney`** is outside the 2×2 — one buyer's named flow, built 1:1 from
-screengrabs of the live app rather than from Figma. It **opens on the
-storefront** (2026-09-09): `/userjourney` is a `redirect` to
-`/userjourney/seller/kartik`, so the flow is listing → filter → detail. The home
-beat is gone from the route but not from the tree — `JourneyHome` is still
-there, with no caller, and putting it back is one `return` in
-`app/userjourney/page.tsx`. Its catalog (`lib/catalog/kartik.ts`, 540 tees) is
-separate from the 1,070 and invisible to A–D.
+### The three Kartik listings
 
-**`/pvfilters`** (2026-09-09) is a **clone of that listing on its own path**, so
-product-vertical filtering can be worked on without touching a route
-stakeholders have been handed. One route, no redirect — `/pvfilters` *is* the
-listing, the way `/c` and `/d` are — plus its own
-`/pvfilters/product/[productId]`.
+All three serve `lib/catalog/kartik.ts` — 540 tees, separate from the 1,070 and
+invisible to A–D — through the one `PlpScreen`. They are **outside the 2×2**:
+built 1:1 from screengrabs of the live app rather than from Figma.
 
-**The two are deliberately separate, and must stay so.** They shared a
-`KartikStorefront` component for an hour of 2026-09-09; it was reversed the same
-day because `/userjourney` is about to have things *removed* from it, and a
-shared config would have carried every deletion across. Each route spells out
-its own props over `PlpScreen`, which is what `/` and `/b/results` already do —
-**the thing that is never copied is `PlpScreen` itself**, not the prop block.
-Don't re-share them, and don't "fix" the duplication. Today the two still render
-byte-identical, which is a fact about this week and not a rule.
+| | Route | PV filters |
+|---|---|---|
+| **`/userjourney`** | redirect → `/userjourney/seller/kartik` | none — flat rail, the launch build |
+| **`/pvfilters`** | the listing itself | *Find It Fast* block on the listing |
+| **`/pvfilters2`** | the listing itself | *Style Filters* row in the Filters sheet |
 
-`ProductDetail` **is** still shared by both, plus B and D. Something the journey
-needs *off* that screen is a prop with a default, the way `cartBadge` is — not a
-fork.
+**Each spells out its own props, and that is deliberate.** They shared a
+`KartikStorefront` for an hour of 2026-09-09 and it was reversed the same day:
+routes made in order to diverge do not go behind a shared config. **Don't
+re-share them and don't "fix" the duplication** — the thing that is never copied
+is `PlpScreen`, not the prop block, which is how `/` and `/b/results` already
+work. `PlpScreen`, `ProductDetail` and `FindItFast` stay shared; something one
+route wants of those that another doesn't is a prop with a default, the way
+`cartBadge` and `guidedPv` are.
 
-Its listing departs from the documented control layout, via **one prop** —
-`controls` on `PlpScreen` (`verticalChips`, `priceChip`, `sortInFilters`,
-`rail`, `filterSheet`, `rangeInputs`), each field defaulting to the documented
-behaviour so a route opts *out*, never in. Today that leaves the strip as
-`Sort` and `Filter` plus the four offer chips; that rail in this route's own
-order (`JOURNEY_RAIL_ORDER`), three rows dropped (Gender, Delivery Time, More
-Filters), so its cut is **Category → Women's T-Shirts**, not Gender → Women;
-Filters as a bottom sheet; and the three numeric range facets with a typed
-min/max above their bands. A–D pass nothing, and neither does the journey for
+`/userjourney`'s home beat is gone from the route but not the tree —
+`JourneyHome` has no caller, and putting it back is one `return`. Each listing
+has its own `product/[productId]`, and each passes `homeHref` explicitly:
+`ProductDetail` defaults it to `/userjourney`, so a route that forgets leaks
+into the journey.
+
+**The departures from the documented layout all live in one prop** — `controls`
+on `PlpScreen` (`verticalChips`, `priceChip`, `sortInFilters`, `rail`,
+`filterSheet`, `rangeInputs`, `guidedPv`). Every field but `guidedPv` defaults
+to the documented behaviour, so a route opts *out*; `guidedPv` adds a surface no
+other route has, so it opts *in*. **Put a new per-route departure in that object
+rather than adding a prop each.** All three pass `verticalChips: false`,
+`priceChip: false`, `filterSheet: true`, `rangeInputs: true`, and none passes
 `sortInFilters` — Sort went back to the strip on 2026-09-03 after six days
-inside Filters. Put new per-route departures in that object rather than adding
-a prop each; the reasoning is in `docs/decisions.md`.
+inside Filters. That leaves the strip as `Sort` and `Filter` plus the four offer
+chips, and makes the central cut **Category → Women's T-Shirts**, not Gender →
+Women.
 
-**`/userjourney` shows no vertical block at all** (2026-09-09, on request —
-*this is what we are launching now*). Its `controls.rail` is
-**`"journey-flat"`**, which is `JOURNEY_RAIL_ORDER` with the five garment
-attribute rows switched off in *every* state: settling a vertical no longer adds
-rows, and the bottom sheet no longer grows with them. A flat **7 rows and 530**
-on Kartik's scope whatever the buyer ticks. **`/pvfilters` keeps `"journey"`**
-and still goes 7 → 12 and 530 → 640 — that route is where product-vertical
-filtering carries on, and the split is why the two listings were un-shared.
-`FLAT_RAILS` is the one switch, hung off the preset because `getRail` and
-`dropOrphanedSelections` must agree about it and are reached by different
-callers; a disagreement there is the orphan trap, which is why
-`dropOrphanedSelections` stopped branching on `byCategory` the same day. On a
-flat rail a hand-written `?fit=slim` is dropped in every state.
+**Three rail presets over one array.** All are `JOURNEY_RAIL_ORDER`; what
+differs is what happens to its `vertical: true` block when a vertical settles.
 
-**`/pvfilters2`** (2026-09-09) is a clone of `/pvfilters`, made **independent
-from the start** — a second cut at the PV filtering, tried beside the first
-rather than on top of it. It **does not pass `guidedPv`** (dropped hours after
-the clone, on request), so the two are the real comparison: both reveal the
-garment attributes once a vertical settles, `/pvfilters` on the listing in *Find
-It Fast* and `/pvfilters2` inside the Filters sheet.
+| Preset | Route | Block behaviour | Rows |
+|---|---|---|---|
+| `"journey"` | `/pvfilters` | rows appear after Category | 7 → 13 |
+| `"journey-flat"` | `/userjourney` | never appears (`FLAT_RAILS`) | 7 always |
+| `"journey-gated"` | `/pvfilters2` | *Style Filters* placeholder at the foot swaps for them | 8 → 13 |
 
-**`/pvfilters2` reveals them through a placeholder rail row** — `rail:
-"journey-gated"`, the same afternoon. A **Style Filters** row sits at the **foot
-of the rail**, and its panel spends the locked state saying how many are behind
-it and offering the three categories as `ThumbRow`s, so unlocking is a tap
-*inside the panel* rather than an instruction to go elsewhere. A row that isn't
-there teaches nobody, which is the whole argument.
+`FLAT_RAILS` and `gated` are hung off the **preset**, not `controls`, because
+`getRail` and `dropOrphanedSelections` must agree about them and are reached by
+different callers — a disagreement there is the orphan trap. That is also why
+`dropOrphanedSelections` stopped branching on `byCategory`: the early return was
+only ever right because a settled category always turned the rows *on*.
 
-Four rules on it, each a correction from an earlier render:
+**Size is the facet to watch across the three.** It is `vertical: true` on
+`JOURNEY_RAIL_ORDER`, so `/pvfilters` and `/pvfilters2` both give it a row once
+a vertical settles and both orphan a Size cut when the vertical goes.
+**`"journey-flat"` excludes it by hand** — `/userjourney` has no Size control in
+any state, so `?size=m` still applies there as `?fabric=cotton` does. The rule
+underneath all three: *strip a cut where something on the page could have shown
+it and now can't.*
 
-- **It is drawn like every other row.** It shipped dimmed and read as
-  unavailable, which is the one thing it is not; it then spent a day tinted
-  `primary-subtle` so it would stand out, and that was reversed too — the
-  ticker is doing that work, and a second fill in a column of eight made the
-  rail read as two lists.
+#### `/pvfilters` — the Find It Fast block
+
+`controls.guidedPv`, from two screengrabs of a competitor's search results,
+drawn in our tokens. **Choose category** as picture tiles, and picking one
+unfolds **choose style**: a button per style filter, each opening the Filters
+sheet on that row's own panel (`initialRail` on `FilterScreen`, cleared when the
+Filter chip opens the sheet and when it closes).
+
+- **The tiles select `category`** — heading and labels say so, since
+  2026-09-10. Category is on the rail, so the badge, the panel and Clear Filters
+  reach it for free; Gender has no row here and driving it would strand a
+  filter. The names wrap to two lines capped at 92px, which is what forces the
+  break and keeps two tiles to a row.
+- **The buttons come from `styleRows(preset)`**, so they are the rail's own rows
+  and can never claim a panel that isn't there. They wrap and size to their
+  labels. **A button with ticks behind it** takes `border-primary`, a primary
+  label and icon, and the count in the app's 18px filled circle — the buttons
+  open panels rather than selecting, so this is the listing's only report of a
+  style cut.
+- **Each step is counted against the steps *above* it, never below.** Size
+  zeroed the Boys tile outright once, and a step must not delete its own parent.
+- **Picking a different vertical clears the size cut**, said by hand in
+  `pickVertical`: switching never un-settles the vertical, so the orphan guard
+  sees nothing to drop.
+- **The art is in `public/style/`** — supplied, not a Figma export, which is why
+  it is not in `public/figma/` — and goes through `MaskIcon`, each file being
+  one `currentColor` path. `STYLE_FACET_ICONS` maps facet id → file, and **a
+  facet not in it keeps the grey box** (Pattern today), so a new icon is one
+  file and one line.
+- **`guidedPv` must never be set beside `"journey-flat"`**, which has no style
+  rows for the buttons to open.
+
+#### `/pvfilters2` — the Style Filters row
+
+A row that isn't there teaches nobody, so this one keeps a placeholder at the
+foot of the rail naming what is behind it.
+
+- **Filled like every other row, outlined in `primary` while closed.** The open
+  row goes white and merges with its panel, which is what says which panel you
+  are looking at.
 - **Its label tickers while locked** — `Style Filters → Size → Fit → Neck Type →
-  Sleeve Type → Pattern → Closure Type → `**`Enable Style Filters`** and round
-  again, a word every 1.8s. **One list, name first**: it shipped alternating
-  name-and-filter and that read as a stutter. The lap **ends on the ask**, in
-  primary and pulsing — six nouns say what is in there and one line says what to
-  do about it. One word at a time, each arriving and stopping; it **stops when
-  the row is open**, and never starts under `prefers-reduced-motion` (checked in
-  `TickerLabel`, not left to the CSS, which can only slow travel and not stop
-  words changing).
-- **It leaves when the real rows arrive.** `gated` is the mirror of `vertical:
-  true` and is read off `showVertical`, so ticking a category swaps the
-  placeholder for **Size · Fit · Neck Type · Sleeve Type · Pattern · Closure
-  Type** — **immediately after Category** (2026-09-10), where
-  `JOURNEY_RAIL_ORDER` already puts the block, so the unlocked rail is exactly
-  `"journey"`'s. 8 rows to 13, sheet 590 → 640. The array is therefore the
-  journey rail plus one appended row; both sat at the foot for a day, and
-  Category is the better anchor because unlocking already lands the panel
-  there.
-- **Unlocking lands on Category**, not the first row — `FilterScreen`'s rail
-  fallback, so the swap and the landing happen in one render. The rail lights
-  `rail.id`, not `activeRail`, or nothing would be highlighted after the swap.
+  Sleeve Type → Pattern → Closure Type → `**`Enable Style Filters`**, a word
+  every 1.8s, the last in primary and pulsing. One word at a time, arriving and
+  stopping. It **stops when the row is open** and **never starts under
+  `prefers-reduced-motion`** — checked in `TickerLabel`, not left to the CSS,
+  which can only slow travel and not stop words changing.
+- **Its panel, locked, is a padlocked count, one line, and the three categories
+  as `ThumbRow`s** — the picker is *in* the panel, so unlocking is a tap and not
+  an instruction, and the draft means it fills under the finger.
+- **It leaves when the real rows arrive**, `gated` being the mirror of
+  `vertical: true`. The array is `JOURNEY_RAIL_ORDER` plus one appended row, so
+  the unlocked rail is exactly `/pvfilters`'.
+- **Unlocking lands on Category**, via `FilterScreen`'s rail fallback, so the
+  swap and the landing happen in one render. The rail lights **`rail.id`, not
+  `activeRail`** — they differ for exactly that render.
 
-**Size has a row here and nowhere else on a Kartik rail** since 2026-09-08. The
-array is *derived* from `JOURNEY_RAIL_ORDER`, so a row added there lands on
-both.
-**Three Kartik listings now spell out their own
-props over the one `PlpScreen`, and that is deliberate**: sharing them behind a
-component was tried and reversed the same morning, so don't "fix" the
-duplication. What stays shared is `PlpScreen`, `ProductDetail` and
-`FindItFast` — screens and surfaces, parameterised; something one route wants of
-them that another doesn't is a prop with a default.
 
-**`/pvfilters` puts that growth on the listing instead** — the **Find It Fast**
-block (`controls.guidedPv`, 2026-09-09, from two screengrabs of a competitor's
-search results, drawn in our tokens): *choose category* as pictures, and
-picking one unfolds **shop by style** beneath it: a button per style filter —
-Size · Fit · Neck Type · Sleeve Type · Pattern · Closure Type — each opening the
-Filters sheet **on that row's own panel** (`initialRail` on `FilterScreen`).
-The buttons come from `styleRows(preset)`, so they are the rail's own rows and
-can never claim a panel that isn't there — which is why **Size got its row back
-on `JOURNEY_RAIL_ORDER`** (2026-09-10) rather than the button being hard-coded.
-They **wrap and are sized to their labels**, not a fixed grid: two columns gave
-`Fit` the same width as `Closure Type` and cost three rows of white. The art is
-in **`public/style/`** — supplied, not exported from Figma, which is why it is
-not in `public/figma/` — and goes through `MaskIcon`, each file being one
-`currentColor` path. `STYLE_FACET_ICONS` maps facet id → file; **a facet not in
-it keeps the grey box**, which is Pattern today, so a new icon is one file and
-one line.
+**`JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price Range · Margin
+on MRP · MOQ · Category · Brands · Seller · Seller City, then the block — **Size
+· Fit · Neck Type · Sleeve Type · Pattern · Closure Type** — then **Cashback ·
+Seller Offer · SOLV Target Scheme at the foot**. Fabric and Colour have no row
+here (2026-09-07 / 09-08).
 
-The tiles are **`category`** — heading *Choose category*, labels
-`CATEGORIES[].label`. They read *CHOOSE GENDER · Men · Women · Boys* off the
-reference until 2026-09-10; category → gender being 1:1 here made that true but
-not honest, and it would stop being true at the second women's vertical. The
-full names cost the fixed row of three, so the tiles wrap and size to content
-like the style buttons. Two rules the block must keep: each step is counted
-against the steps *above* it and never below (Size zeroed the Boys tile
-outright, back when the second step was sizes); and picking a different vertical
-**clears the size cut**, sizes being vertical-specific. `guidedPv` is the **one opt-in** field on `controls` —
-it adds a surface rather than switching one off — and it must never be set
-beside `"journey-flat"`, which would draw a step nothing can unfold.
-
-**Both rails come from `JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price
-Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City, then the
-five garment attributes, then **Cashback · Seller Offer · SOLV Target Scheme at
-the foot**. Fabric has no row here, and neither do Size or Colour since
-2026-09-08. Three of those rows carry
-`hideIfSingle` — **Brands, Seller and Seller City hide when the page
-scope holds one value of them**, which Kartik's does (one brand, one seller, one
-city), so that array yields **7 rows outside a vertical and 12 inside one**. It
-is measured off the page's products (`singleValuedFacets`), never off the
-selections: a row that came and went as boxes were ticked is the churn the
-2026-08-19 reorder exists to stop. **Colour is off this rail** (2026-09-08). **Size came back on 2026-09-10**,
-`vertical: true` and leading the block, so `/pvfilters`' style buttons and
-`/pvfilters2`'s *Style Filters* both have a Size panel to open — and both orphan
-a Size cut when the vertical goes, as A–D do. **`/userjourney` is the exception
-and stays one**: `"journey-flat"` shows no vertical row in any state, and its
-vertical-only set drops Size **by hand** so `?size=m` keeps applying there, the
-way `?fabric=cotton` does. That per-preset split is why `dropOrphanedSelections`
-and `parseSelections` take the rail preset at all.
+Three rows carry `hideIfSingle` — **Brands, Seller and Seller City hide when the
+page scope holds one value of them**, which Kartik's does (one brand, one
+seller, one city), so the array yields **7 rows outside a vertical and 13
+inside one**. Measured off the page's products (`singleValuedFacets`), never off
+the selections: a row that came and went as boxes were ticked is the churn the
+2026-08-19 reorder exists to stop.
 
 **The three offer magnitudes are a row each, last on the rail** — they spent a
 few hours of 2026-09-07 merged behind one *All Offers* row (a rail row may carry

@@ -757,18 +757,34 @@ export function FilterScreen({
                   setQuery("");
                 }}
                 /*
-                 * **Every row takes the same fill**, the gated one included.
-                 * It carried a `primary-subtle` tint for a day of 2026-09-09,
-                 * asked for so it would not read as greyed out; that was
-                 * reversed on 09-10 — the label's ticker is doing that work,
-                 * and a second colour in a column of eight identical rows made
-                 * the rail look like two lists rather than one.
+                 * **Every row takes the same fill**, the gated one included. It
+                 * carried a `primary-subtle` tint for a day of 2026-09-09,
+                 * asked for so it would not read as greyed out; reversed on
+                 * 09-10 — a second colour in a column of eight identical rows
+                 * made the rail look like two lists rather than one.
+                 *
+                 * **It is outlined instead** (2026-09-10, on the ask to mark it
+                 * as different): the same `primary` the fill was, spent on a
+                 * 1px border rather than 60×140 of ground. It reads as one cell
+                 * picked out of a column instead of a second kind of row, which
+                 * is what the fill got wrong.
+                 *
+                 * Closed only. The rail's language is that the open row goes
+                 * white and merges with the panel beside it — that is what says
+                 * which panel you are looking at — and an outline that survived
+                 * the tap would draw a line between the two. Its own `border`
+                 * replaces the shared `border-t`, or the row above would give
+                 * it a grey top edge inside a blue box.
                  */
                 className={`flex h-[60px] w-full cursor-pointer items-center gap-[6px] pr-[8px] pl-[14px] text-left ${
                   active
                     ? "bg-white"
-                    : "border-r border-[#dedede] bg-[#f4f4f4]"
-                } ${index > 0 ? "border-t border-[#dedede]" : ""}`}
+                    : entry.gated
+                      ? "border border-primary bg-[#f4f4f4]"
+                      : `border-r border-[#dedede] bg-[#f4f4f4]${
+                          index > 0 ? " border-t" : ""
+                        }`
+                } ${active && index > 0 ? "border-t border-[#dedede]" : ""}`}
               >
                 <span
                   className={`min-w-0 flex-1 text-[15px] ${

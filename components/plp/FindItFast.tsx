@@ -107,8 +107,11 @@ export function FindItFast({
   /**
    * The style filters to offer once a vertical is settled — `styleRows` for the
    * page's rail, so the buttons and the rail agree about what exists.
+   *
+   * `facetIds` comes with them so a button can count its own applied ticks: a
+   * rail row may carry several facets, and the badge has to add them up.
    */
-  styles: { id: string; label: string }[];
+  styles: { id: string; label: string; facetIds: string[] }[];
   /** Tap one: opens the Filters sheet with that rail row already showing. */
   onOpenStyle: (railId: string) => void;
 }) {
@@ -247,7 +250,7 @@ export function FindItFast({
           {/* Full-bleed across the card, so it reads as dividing the two steps
               rather than as a rule inside one of them. */}
           <div className="mt-[10px] -mx-[8px] h-px bg-primary/15" />
-          <Step label="Shop by style" />
+          <Step label="Choose style" />
           {/*
             **A wrapping row of buttons sized to their own labels**, not a
             fixed-column grid.
@@ -264,11 +267,36 @@ export function FindItFast({
             there.
           */}
           <div className="flex flex-wrap gap-[8px]">
-            {styles.map((style) => (
+            {styles.map((style) => {
+              /*
+               * **How many of this filter are applied** (2026-09-10, on the
+               * report that a button gave no sign of it). The buttons open
+               * panels rather than selecting anything, so nothing about tapping
+               * one changes its own state — but the facet behind it can be full
+               * of ticks made in the sheet, and a row of identical white
+               * buttons said nothing about that. The listing's only other
+               * report of it was the Filters badge, which sums the whole rail.
+               *
+               * Counted off the facets the row carries, not off the row, so a
+               * style row holding two facets would still add up.
+               */
+              const applied = style.facetIds.reduce(
+                (sum, id) => sum + (selections[id]?.length ?? 0),
+                0,
+              );
+              return (
               <button
                 key={style.id}
                 onClick={() => onOpenStyle(style.id)}
-                className="flex h-[46px] w-fit cursor-pointer items-center gap-[6px] rounded-[8px] border border-hairline bg-white px-[5px] text-left"
+                /*
+                 * Applied takes `border-primary` and a primary label — the same
+                 * two marks a picked category tile takes, and a selected
+                 * `ThumbRow` in the panel. The border is on the button in both
+                 * states and only changes colour, so nothing shifts.
+                 */
+                className={`flex h-[46px] w-fit cursor-pointer items-center gap-[6px] rounded-[8px] border bg-white px-[5px] text-left ${
+                  applied > 0 ? "border-primary" : "border-hairline"
+                }`}
               >
                 {/*
                   The icon, or the grey box it replaced where there isn't one
@@ -278,7 +306,10 @@ export function FindItFast({
                 {STYLE_FACET_ICONS[style.id] ? (
                   <MaskIcon
                     src={STYLE_FACET_ICONS[style.id]}
-                    color="var(--color-heading)"
+                    // The art is one `currentColor` path, so the mask takes the
+                    // state with the label rather than sitting neutral beside a
+                    // blue word.
+                    color={applied > 0 ? "var(--color-primary)" : "var(--color-heading)"}
                     className="size-[34px] shrink-0"
                   />
                 ) : (
@@ -286,11 +317,27 @@ export function FindItFast({
                 )}
                 {/* No `flex-1` and no `truncate`: the button is as wide as its
                     label, which is the whole point of the wrap. */}
-                <span className="pr-[3px] text-[13px] font-bold whitespace-nowrap text-heading">
+                <span
+                  className={`pr-[3px] text-[13px] font-bold whitespace-nowrap ${
+                    applied > 0 ? "text-primary" : "text-heading"
+                  }`}
+                >
                   {style.label}
                 </span>
+                {/*
+                  The count, in the app's one counter: the filled primary circle
+                  the rail rows and the Filters chip both use, at their 18px.
+                  `min-w` with padding rather than a fixed square, so two digits
+                  make a pill of the same height instead of overflowing.
+                */}
+                {applied > 0 && (
+                  <span className="mr-[2px] flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary px-[4px] text-[11px] font-medium text-white">
+                    {applied}
+                  </span>
+                )}
               </button>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
