@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-09-08
+Last updated: 2026-09-10
 
 > **Four docs, one job each.** `CLAUDE.md` — the rules, and the only one loaded
 > into every session, so keep it short. `plan.md` — the architecture.
@@ -996,6 +996,93 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 (`Price/pc (low → high)`); the active treatment is untouched — bold, primary,
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
+
+### 2026-09-10 — the guided block grows up, and Style Filters settles
+
+Four notes back on `/pvfilters`, all right.
+
+**The first step said *gender* and selected `category`.** *CHOOSE GENDER · Men ·
+Women · Boys* came off the reference screengrab; category → gender is 1:1 in
+this catalog, so it was true without being honest, and it stops being true at
+the second women's vertical. It is *Choose category* with `CATEGORIES[].label`
+now. The full names cost the fixed row of three — *Men's Casual T-Shirts* needs
+~135px on one line — so the tiles wrap and the name runs to two lines capped at
+92px. The cap is the interesting bit: a flex child sizes to its longest word run
+and stays on one line without one. All three hit it, so the tiles come out a
+uniform 148px, two to a row.
+
+**The second step became buttons.** Five size tiles answering one facet in place
+are now a button per style filter, each opening the Filters sheet on that row's
+panel via a new `initialRail`. They come from `styleRows(preset)` — the rail's
+own rows — so a button can never claim a panel that isn't there, which is why it
+was five on the 09-09 build (no Size row on `"journey"`) and six once Size got
+its row back the next morning. Two fixed columns gave `Fit` the same width as
+`Closure Type`, so they wrap and size to their labels; a button with ticks
+behind it takes `border-primary`, a primary label and icon, and the count in the
+app's 18px filled circle, that being the listing's only report of a style cut.
+
+**Five icons landed**, supplied rather than exported from Figma, so they live in
+`public/style/` and not `public/figma/`. One `currentColor` path each, hence
+`MaskIcon`. `STYLE_FACET_ICONS` maps facet id → file and a facet absent from it
+keeps the grey box — **Pattern is that case, and is the one thing still
+outstanding here**.
+
+**Style Filters on `/pvfilters2` lost its last decoration.** The row had been
+dimmed (read as *unavailable*, the one thing it is not), then tinted
+`primary-subtle` (a second colour in a column of eight made the rail read as two
+lists), then outlined `primary` (a box round one row fought the rail's grid of
+shared hairlines). It is drawn like every other row now with a `primary` label,
+and the weight still tracks `active`. The unlocked rows also moved from the foot
+to immediately after Category, which makes the unlocked rail exactly
+`/pvfilters`' and turns `JOURNEY_GATED_RAIL_ORDER` into an append rather than a
+three-way slice.
+
+**Both md files were re-cut** the same day. They had grown by insertion over two
+days and read as a play-by-play — `docs/decisions.md` had the journey's own body
+pushed below three unrelated subsections, reading as if it belonged to
+`/pvfilters`. One run per route now, with the correction narratives folded into
+each settled account plus a *what was tried and reversed* table, and `CLAUDE.md`
+rewritten rules-first with two tables. Two stale facts fell out: the journey
+rail is 13 rows inside a vertical, not 12, and Size is back on it.
+
+### 2026-09-09 — three Kartik listings, and three ways to reveal a PV filter
+
+The day the one journey listing became three, each answering the same question
+differently.
+
+**`/userjourney` opens on the storefront** — the entry is a `redirect` to
+`/userjourney/seller/kartik`, so the demo starts on the thing the prototype is
+about rather than on a screen whose only live element was one banner.
+`JourneyHome` stays in the tree with no caller, the way `TileGrid` does.
+
+**`/pvfilters` was cloned off it**, and the clone spent an hour behind a shared
+`KartikStorefront` before that was reversed: routes made in order to diverge do
+not go behind a shared config, however identical they look on the day.
+**`/pvfilters2` was cloned off `/pvfilters` the same afternoon and made separate
+from the start** — the lesson, learned twice.
+
+**Then they diverged, which was the point.**
+
+- **`/userjourney` dropped the vertical block** (*"this is what we are launching
+  now"*). `rail: "journey-flat"`: settling a vertical adds no rows and the sheet
+  stops growing. It opened a real trap — `dropOrphanedSelections` began
+  `if (byCategory) return id === "gender"`, an early return correct only because
+  a settled category always turned the attribute rows *on*. On a flat rail it
+  doesn't, and `?fit=slim` would have survived with nothing to show or undo it.
+  Two independent clauses now.
+- **`/pvfilters` put the reveal on the listing** — the *Find It Fast* block,
+  built from two competitor screengrabs and drawn in our tokens.
+- **`/pvfilters2` put it in the sheet** — a *Style Filters* row that never leaves
+  the rail, tickers the names of what is behind it, and offers the categories
+  inside its own locked panel, because a row that isn't there teaches nobody.
+
+**Size moved through the vertical-only set three times in two days**, and every
+move is one rule: *strip a cut where something on the page could have shown it
+and now can't.* In when the guided block grew a size step; out when that step
+became style buttons and the rail had no Size row for one to open; in again when
+the row returned. `"journey-flat"` excludes it by hand, `/userjourney` having no
+Size control in any state.
+
 
 ### 2026-09-08 — the Sort sheet's order, and a margin that names its base
 
@@ -2731,6 +2818,21 @@ became a column of rows on 2026-09-03. Same files, same box, 44px instead of
 - **Brands** — still grey `#d9d9d9` placeholders, and more conspicuous at row size than they were at tile size. Real logos couldn't be sourced: Clearbit's logo API is retired, and Wikipedia/Wikimedia returned unrelated files for 7 of 8 brands. Brand-supplied assets are the right input, and avoid the trademark question of scraping logos. On `/userjourney` there is no Brands panel at all since 2026-09-07 — the row hides itself on a one-brand storefront, which is what closed open question 4a; it used to draw an empty panel, every product there being a *Zenifit* and Zenifit not one of `BRANDS`' ten.
 
 ## Open questions for the designer
+
+-1. **An icon for Pattern** (2026-09-10). Five of the six style filters on
+   `/pvfilters` have line art — Size, Fit, Neck, Sleeve, Closure, supplied and
+   sitting in `public/style/`. Pattern keeps the `#d9d9d9` placeholder at
+   exactly the icon's 34px, so the buttons don't move when it arrives:
+   `STYLE_FACET_ICONS` falls back on any facet absent from it, which makes the
+   sixth icon one file and one line.
+
+-1a. **The style buttons are held at the smaller size.** They went to 52px
+   around a 40px icon with a 15px label — 15 being the app's control-label size,
+   which the rail rows, `OptionRow` and `ThumbRow` all use — and were reverted
+   to 46/34/13 on the word *skip the size bump for now*. Worth revisiting once
+   Pattern's icon lands and the row can be judged whole. The gender— now
+   category — tiles above them are a separate question: they are content-width
+   over two lines, so growing the type costs a row rather than a truncation.
 
 0. **Three things fell out of the new category list** (2026-08-12), none blocking:
    - **Apostrophes are inconsistent** — "Men's" and "Women's" are plural possessives, but "Girl's" and "Boy's" are singular. Set verbatim as supplied rather than silently corrected; say the word and they become "Girls'" / "Boys'".

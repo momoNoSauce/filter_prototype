@@ -54,6 +54,48 @@ Each variant is a **closed loop** — hand someone `/b` and the entire journey s
 
 ---
 
+## The four variants
+
+Four variants over one catalog, crossing **control placement** against **starting scope**. A and B walk Home → **search `shirt`** → PLP → filter and sort; C and D drop straight inside a product vertical.
+
+| | Home | PLP | Controls |
+|---|---|---|---|
+| **Variant A** | `/` | `/results?q=shirt` | Filters · Sort in a floating pill above the foot (Figma `697:2658`) |
+| **Variant B** | `/b` | `/b/results?q=shirt` | The same two as chips under the app bar (Figma `644:4011`), no pill |
+| **Variant C** | — | `/c` | The pill, already inside one vertical |
+| **Variant D** | — | `/d` | Top chips, already inside one vertical |
+
+**A and B are reached by searching, not by a seller card** (2026-08-25): Home →
+the search bar → type `shirt` → tap a suggestion. Tapping one storefront never
+explained why the listing spans seven categories and eight sellers. The scope
+did not move — `shirt` matches all 1,070 products, every category being a Shirt
+or a T-Shirt — so every count, test and demo step below still holds.
+`/seller/[sellerId]` still exists and still works; removing it is the next step.
+
+**The rails are identical.** Category rejoined A's rail on 2026-08-19, so where Sort and Filters sit is the whole of the difference.
+
+There is also **`/userjourney`** (2026-08-20), which is not part of the 2×2: a
+single named flow through one storefront, built 1:1 from screengrabs of the live
+app. See decision 28. Its controls have moved twice: onto the floating pill on
+**2026-08-25** on UXR, and **back onto top chips on 2026-08-28** on the
+stakeholder review, which returns the route to what its screengrabs show. A and
+C keep the pill, so the A/B is still a comparison of placement alone.
+
+Card, catalog, engine and sheets are shared — one `PlpScreen` with a `variant` prop, one `HomeScreen` with a `basePath` prop. Only the controls differ, so any preference between them is about control placement and nothing else.
+
+Separate routes rather than a query flag: each variant gets its own shareable link, neither inherits the other's state, and no switcher UI intrudes on a screen being judged.
+
+Each variant is a **closed loop** — hand someone `/b` and the entire journey stays in B. `HomeScreen`'s seller cards and `AppBar`'s home button both route through the variant's base path rather than hardcoding `/`.
+
+---
+
+**Three more listings sit outside that 2×2**, all on Kartik's separate 540-tee
+catalog and all built from screengrabs rather than Figma: `/userjourney` (the
+launch build — no PV filters), `/pvfilters` (the reveal on the listing) and
+`/pvfilters2` (the reveal in the Filters sheet). They share `PlpScreen`,
+`ProductDetail` and `FindItFast`; **each spells out its own prop block**, which
+was tried the other way and reversed. See `CLAUDE.md`.
+
 ## Design source
 
 Figma `Filter-and-Sort` — `hdArN93DmnLu5JDB46SOwd`, section `651:4873`. Everything was pulled via the Figma MCP (`get_design_context`), not eyeballed from screenshots.
@@ -106,7 +148,9 @@ Sizes are the one thing that lives on the **pack** rather than the product, and 
 
 ### Facet registry — `lib/filters/facets.ts`
 
-**Twenty-three facets behind thirteen rail entries**, rising to eighteen inside a single product vertical — the attribute block joins and Gender leaves — the same in A, B, C and D, and seventeen in C and D, where Category goes too. `/userjourney` runs its own order and its own subset (`JOURNEY_RAIL_ORDER`), re-ordered on **2026-09-07**: Price Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City, then the five garment attributes, then **Cashback · Seller Offer · SOLV Target Scheme at the foot**. **Seven rows there, twelve inside a vertical** — Gender, Delivery Time, More Filters, Fabric and (2026-09-08) Size and Colour are dropped outright; Brands, Seller and Seller City carry `hideIfSingle` and hide themselves on a storefront holding one brand, one seller and one city, which Kartik's is; Size was global there for a day before leaving with Colour, which is why the orphan guard is per rail preset. The three offer magnitudes spent a few hours of that day merged behind one *All Offers* row and were split back out on request, moved to the end; being last in the array they are last in both states, the attribute block being `vertical: true` and arriving above them. `getRail` takes a `RailPreset` name to choose between the two orders, plus the set of facets scope has silenced (`singleValuedFacets`), asked of the page's products rather than of the selections so a row can't come and go as boxes are ticked. Each facet declares `valuesOf(product, sizes?) → string[]`, so range buckets, multi-valued delivery windows and plain checkboxes all flow through one code path. Adding a facet is one array entry. `sizes` is the current Size selection and the only selection any facet may see — Price and Margin need it because they read the pack the card is showing; every other facet ignores it.
+**Twenty-three facets behind thirteen rail entries**, rising to eighteen inside a single product vertical — the attribute block joins and Gender leaves — the same in A, B, C and D, and seventeen in C and D, where Category goes too. The three Kartik listings run their own order, `JOURNEY_RAIL_ORDER`, re-ordered on **2026-09-07**: Price Range · Margin on MRP · MOQ · Category · Brands · Seller · Seller City, then the garment block — Size · Fit · Neck Type · Sleeve Type · Pattern · Closure Type — then **Cashback · Seller Offer · SOLV Target Scheme at the foot**. **Seven rows outside a vertical, thirteen inside one**; Gender, Delivery Time, More Filters, Fabric and (2026-09-08) Colour are dropped outright, and Brands, Seller and Seller City carry `hideIfSingle` and hide themselves on a storefront holding one brand, one seller and one city, which Kartik's is.
+
+**Three presets sit over that one array** (2026-09-09/10), differing only in what the block does when a vertical settles: `"journey"` shows it (`/pvfilters`, 7 → 13); `"journey-flat"` never does, via `FLAT_RAILS` (`/userjourney`, 7 always); `"journey-gated"` puts a *Style Filters* placeholder at the foot that swaps for it (`/pvfilters2`, 8 → 13, the array being `JOURNEY_RAIL_ORDER` plus one appended row). Both switches hang off the **preset** rather than a `controls` flag, because `getRail` and `dropOrphanedSelections` must agree about them and are reached by different callers — a disagreement there is the orphan trap, and it was introduced and caught twice. Size's membership of each preset's vertical-only set follows the same single rule: *strip a cut where something on the page could have shown it and now can't* — so `"journey-flat"` excludes it by hand, `/userjourney` having no Size control in any state. The three offer magnitudes spent a few hours of that day merged behind one *All Offers* row and were split back out on request, moved to the end; being last in the array they are last in both states, the attribute block being `vertical: true` and arriving above them. `getRail` takes a `RailPreset` name to choose between the two orders, plus the set of facets scope has silenced (`singleValuedFacets`), asked of the page's products rather than of the selections so a row can't come and go as boxes are ticked. Each facet declares `valuesOf(product, sizes?) → string[]`, so range buckets, multi-valued delivery windows and plain checkboxes all flow through one code path. Adding a facet is one array entry. `sizes` is the current Size selection and the only selection any facet may see — Price and Margin need it because they read the pack the card is showing; every other facet ignores it.
 
 `FACETS` is everything the engine knows about; `getRail()` is what the Filters screen displays. It takes no variant since 2026-08-19: Category left A's bottom bar and rejoined the rail, so both variants show the same thirteen rows, headed by Category then Gender — and the same eighteen inside one vertical, where Gender drops out and the attribute block joins at the end.
 
@@ -117,6 +161,10 @@ Sizes are the one thing that lives on the **pack** rather than the product, and 
 Pack Type was removed as a filter on 2026-08-19 — a deliberate departure from Figma's rail. It left `FACETS` too, not just the rail, since a facet with no control would survive Clear Filters uncounted; the product field stays, because the seed draws it mid-sequence and it still decides whether a pack is one size or a spread.
 
 Panels: Category and Brands are a **column of 60px rows** since 2026-09-03 — a 44px picture, then the name and its count wrapped to two lines (`ThumbRow`), and **no checkbox since 2026-09-08**: the row is a box inset 8px on every side that fills `primary/subtle` with a 1px `primary` border and a bold primary label when selected, and stays multi-select. Its footprint is 68px — the 60px box plus its vertical margin. They were the Figma tile grid until then, three across a 240px panel, which left the name ~72px and made *Men's Casual Shirts* and *Men's Casual T-Shirts* both truncate to `Men's Casu…`; `TileGrid` is retained with no caller; Colour is a checkbox row with a 16px colour dot; a rail row with anything applied carries **the number in an 18px blue circle** (since 2026-09-03 — it was a 6px dot, which said nothing about how many), which is what took the rail from the frame's 120px to 140; Price Range, Margin on MRP, MOQ and — on `/userjourney` since 2026-09-03 — the three offer magnitudes (Cashback ₹, Seller Offer %, SOLV Target Scheme ₹) are checkbox rows over preset buckets, all six from one table (`RANGE_FACETS`); on `/userjourney` **all six** carry a typed **min/max** above those bands — Price from 2026-08-28, Margin and MOQ from 2026-09-03, the three offer magnitudes from 2026-09-03 too — differing only in the number they compare and the unit beside the box (₹ leading, `%` and `pc` trailing). Per facet the two controls are mutually exclusive and each disables the other. The offer three lost their boxes for a few hours of 2026-09-07, while their rows were merged into one panel that had nowhere to put three pairs of them, and took them back on request when the rows split apart again; `typed: false` in the table is the mechanism, with no user today. No slider anywhere: it would add a control the design system doesn't have. A panel that stacks several facets heads each at **15px bold on `heading`** with a hairline rule above every group but the first — today only A–D's *Offers* row, the type having been raised on 2026-09-07 from a 13px muted grey reported as not prominent. A lone panel is never headed: the rail row names it in primary two columns to the left. The three offer panels each carried the offer's name and chip art for an hour that day, while the three were merged behind one row and a heading was all that told the groups apart. Everything else is the designed checkbox row.
+
+### The guided block — `components/plp/FindItFast.tsx`
+
+`/pvfilters` only, behind `controls.guidedPv` — the one **opt-in** field on that object, the rest switching a documented behaviour off. A card at the head of the listing: *choose category* as picture tiles, and picking one unfolds *choose style*, a button per style filter that opens the Filters sheet on that row's own panel (`initialRail` on `FilterScreen`, cleared when the Filter chip opens the sheet and when it closes). The buttons come from `styleRows(preset)` — the rail's own `vertical: true` rows — so a button can never claim a panel that isn't there; their art is in `public/style/` through `MaskIcon`, mapped by `STYLE_FACET_ICONS`, and a facet absent from that map keeps a grey placeholder. Two rules the block must keep: each step is counted against the steps *above* it and never below, and picking a different vertical clears the size cut, sizes being vertical-specific.
 
 ### State — `lib/filters/urlState.ts`
 
