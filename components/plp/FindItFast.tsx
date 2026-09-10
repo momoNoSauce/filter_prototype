@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { type Selections, facetOptionsWithCounts } from "@/lib/filters/engine";
 import { SIZE_FACET_ID } from "@/lib/filters/activeVariant";
-import { CATEGORIES, GENDER_LABEL } from "@/lib/catalog/seed";
 import { STYLE_FACET_ICONS } from "@/lib/filters/styleIcons";
 import { MaskIcon } from "@/components/ui/MaskIcon";
 
@@ -16,10 +15,10 @@ const CATEGORY_FACET_ID = "category";
  * (2026-09-09), built from two screengrabs of a competitor's search results
  * rather than from Figma.
  *
- * *Choose gender* as three pictures, and once one is picked a second step
- * unfolds under it: *choose size*. It is the same pair of facets the Filters
- * sheet carries, lifted onto the listing where a buyer will meet them without
- * opening anything — the guided path, against the sheet's exhaustive one.
+ * *Choose category* as three pictures, and once one is picked a second step
+ * unfolds under it: *shop by style*. They are the same facets the Filters sheet
+ * carries, lifted onto the listing where a buyer will meet them without opening
+ * anything — the guided path, against the sheet's exhaustive one.
  *
  * **This is the route's whole reason to exist.** `/userjourney` had the
  * "settling a vertical reveals more filters" behaviour removed the same morning
@@ -28,24 +27,27 @@ const CATEGORY_FACET_ID = "category";
  *
  * ---
  *
- * **The tiles select `category`, not `gender`**, though the heading says what
- * the reference's says.
+ * **The tiles are Category, and now say so** (corrected 2026-09-10).
  *
- * Category → gender is 1:1 in this catalog (all seven categories name their
- * audience), and Kartik's three tee verticals *are* Men's, Women's and Boy's —
- * so tapping *Women* and tapping *Women's T-Shirts* narrow to the same 191
- * products. Two things make Category the right one to drive:
+ * They always selected `category`; the heading read *CHOOSE GENDER* and the
+ * labels were *Men · Women · Boys*, both copied off the reference screengrab.
+ * The excuse was that category → gender is 1:1 here, so tapping *Women* and
+ * tapping *Women's T-Shirts* narrow to the same 191 products — but a control
+ * named after a facet it does not touch stops being true the moment the catalog
+ * gains a second women's vertical, and it was already untrue to anyone reading
+ * the URL. The heading is *Choose category* and the labels are
+ * `CATEGORIES[].label`, which is also what the Filters panel's own rows show.
+ *
+ * Category is the right facet to drive, which was never in doubt:
  *
  * - **It is on the rail.** The Filters badge counts it, the Filters panel shows
  *   it ticked, and Clear Filters reaches it — all for free. Gender has no row
  *   on this rail, so driving it would strand a filter the sheet couldn't undo.
- * - **It is what settles the vertical**, which is what unfolds the size step.
+ * - **It is what settles the vertical**, which is what unfolds the second step.
  *   A Gender cut settles one too, but through a longer inference; the shorter
  *   statement of the same intent is the category itself.
  *
- * The label is the gender word because that is what the reference draws, and
- * because *Men* reads better than *Men's Casual T-Shirts* in a 98px tile. The
- * picture is the category's own, the one the Filters panel's rows use.
+ * The full names cost the single row of three — see the tile's own note.
  *
  * ---
  *
@@ -110,11 +112,6 @@ export function FindItFast({
   /** Tap one: opens the Filters sheet with that rail row already showing. */
   onOpenStyle: (railId: string) => void;
 }) {
-  const genderOf = useMemo(
-    () => new Map(CATEGORIES.map((c) => [c.id, GENDER_LABEL[c.gender]])),
-    [],
-  );
-
   /*
    * **Counted against everything except the step below it.**
    *
@@ -170,8 +167,10 @@ export function FindItFast({
         FIND IT FAST
       </span>
 
-      <Step label="Choose gender" />
-      <div className="flex gap-[8px]">
+      <Step label="Choose category" />
+      {/* Wrapping and content-width, like the style buttons below — see the
+          tile's note for why it stopped being a fixed row of three. */}
+      <div className="flex flex-wrap gap-[8px]">
         {verticals.map((option) => {
           const selected = chosen.includes(option.id);
           return (
@@ -188,13 +187,14 @@ export function FindItFast({
                * against the 8px a 50px tile left around a 34px one, which read
                * as a picture floating in a box. Asked for on the render.
                *
-               * The label survives the picture growing because it is 13px, not
-               * the 14 this shipped with: three tiles across 326px of card
-               * leave `Women` 50px here, and 13px Roboto bold needs ~43. At 14
-               * over a 38px picture it truncated to `Wom…`, which is how the
-               * size was found in the first place.
+               * **`w-fit`, not `flex-1`** (2026-09-10): the tile is as wide as
+               * its name, which is what lets the full category labels in. It
+               * was three fixed thirds while the labels were single gender
+               * words; *Men's Casual T-Shirts* needs ~135px where *Men* needed
+               * 30, and clamping it to `Men's Casu…` in a 103px third is the
+               * exact truncation `ThumbRow` exists to fix.
                */
-              className={`relative flex h-[46px] min-w-0 flex-1 cursor-pointer items-center gap-[5px] rounded-[8px] border bg-white px-[5px] ${
+              className={`relative flex h-[46px] w-fit cursor-pointer items-center gap-[6px] rounded-[8px] border bg-white px-[5px] ${
                 selected ? "border-primary" : "border-hairline"
               }`}
             >
@@ -205,11 +205,11 @@ export function FindItFast({
                 )}
               </span>
               <span
-                className={`min-w-0 flex-1 truncate text-left text-[13px] font-bold ${
+                className={`pr-[3px] text-left text-[13px] font-bold whitespace-nowrap ${
                   selected ? "text-primary" : "text-heading"
                 }`}
               >
-                {genderOf.get(option.id) ?? option.label}
+                {option.label}
               </span>
               {selected && <Check />}
             </button>

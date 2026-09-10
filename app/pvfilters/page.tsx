@@ -72,7 +72,7 @@ export default function Page() {
        *   per keystroke.
        * - `guidedPv: true` — the **Find It Fast** block at the head of the
        *   listing (2026-09-09), from two screengrabs of a competitor's search
-       *   results: *choose gender* as three pictures, and once one is picked a
+       *   results: *choose category* as pictures, and once one is picked a
        *   *shop by style* step unfolds under it — a button per style filter,
        *   each opening the Filters sheet on that row's panel. (It was *choose
        *   size* for a few hours the same day.) The one opt-*in* field in this

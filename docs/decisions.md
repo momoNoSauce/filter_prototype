@@ -801,14 +801,26 @@ purple tab and the pink ground, and a selected tile takes the same
 already use. Two palettes in one prototype is the drift the token rule exists to
 stop, and none of this is a Figma export to be preserved. Confirmed on the ask.
 
-**The tiles select `category`, not `gender`**, though the heading says what the
-reference's says. Category → gender is 1:1 here and Kartik's three verticals
-*are* Men's, Women's and Boy's, so the two narrow identically — and Category is
-on the rail, which means the Filters badge counts it, the panel shows it ticked
-and Clear Filters reaches it, all for free. Gender has no row on this rail, so
-driving it would have stranded a filter the sheet couldn't undo. The label is
-the gender word because *Men* reads better than *Men's Casual T-Shirts* in a
-98px tile.
+**The tiles select `category`, not `gender`.** Category → gender is 1:1 here and
+Kartik's three verticals *are* Men's, Women's and Boy's, so the two narrow
+identically — and Category is on the rail, which means the Filters badge counts
+it, the panel shows it ticked and Clear Filters reaches it, all for free. Gender
+has no row on this rail, so driving it would have stranded a filter the sheet
+couldn't undo.
+
+**The heading and labels said *gender* anyway, and that was wrong** — corrected
+2026-09-10. *CHOOSE GENDER · Men · Women · Boys* came straight off the reference
+screengrab, and the 1:1 mapping made it true without making it honest: a control
+named after a facet it does not touch stops being true at the second women's
+vertical, and it was already untrue to anyone reading `?category=`. It is
+*Choose category* with `CATEGORIES[].label` now, the same names the Filters
+panel's own rows show.
+
+**The full names cost the fixed row of three.** *Men's Casual T-Shirts* needs
+~135px of label where *Men* needed 30, and clamping it into a 103px third gives
+`Men's Casu…` — the exact truncation `ThumbRow` was built to fix. The tiles wrap
+and size to their content, like the style buttons below them, which at 360px is
+one per row.
 
 **Three things it got wrong on the first render, all found by looking at it:**
 

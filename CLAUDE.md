@@ -167,7 +167,7 @@ them that another doesn't is a prop with a default.
 
 **`/pvfilters` puts that growth on the listing instead** — the **Find It Fast**
 block (`controls.guidedPv`, 2026-09-09, from two screengrabs of a competitor's
-search results, drawn in our tokens): *choose gender* as three pictures, and
+search results, drawn in our tokens): *choose category* as pictures, and
 picking one unfolds **shop by style** beneath it: a button per style filter —
 Size · Fit · Neck Type · Sleeve Type · Pattern · Closure Type — each opening the
 Filters sheet **on that row's own panel** (`initialRail` on `FilterScreen`).
@@ -182,12 +182,15 @@ not in `public/figma/` — and goes through `MaskIcon`, each file being one
 it keeps the grey box**, which is Pattern today, so a new icon is one file and
 one line.
 
-The gender tiles select **`category`**, not `gender` — 1:1 in this catalog, and
-Category is on the rail, so the badge, the panel and Clear Filters all reach it
-for free. Two rules it must keep: each step is counted against the steps *above*
-it and never below (Size zeroed the Boys tile outright, back when the second
-step was sizes); and picking a different vertical **clears the size cut**, sizes
-being vertical-specific. `guidedPv` is the **one opt-in** field on `controls` —
+The tiles are **`category`** — heading *Choose category*, labels
+`CATEGORIES[].label`. They read *CHOOSE GENDER · Men · Women · Boys* off the
+reference until 2026-09-10; category → gender being 1:1 here made that true but
+not honest, and it would stop being true at the second women's vertical. The
+full names cost the fixed row of three, so the tiles wrap and size to content
+like the style buttons. Two rules the block must keep: each step is counted
+against the steps *above* it and never below (Size zeroed the Boys tile
+outright, back when the second step was sizes); and picking a different vertical
+**clears the size cut**, sizes being vertical-specific. `guidedPv` is the **one opt-in** field on `controls` —
 it adds a surface rather than switching one off — and it must never be set
 beside `"journey-flat"`, which would draw a step nothing can unfold.
 
