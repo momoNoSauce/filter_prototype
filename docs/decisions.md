@@ -880,10 +880,19 @@ when the Filter chip opens the sheet and when the sheet closes, so the chip
 still lands on Price Range. An unknown id is harmless: the rail lookup already
 falls back, for the separate case of a row vanishing under the cursor.
 
-**Grey boxes for now.** Art per style filter is wanted and has not been drawn,
-so each button carries a 34px `#d9d9d9` square — the same placeholder `ThumbRow`
-shows for a missing image — sized to the picture that is coming, so dropping the
-real one in is a `src` and not a re-layout.
+**The art landed on 2026-09-10**, five line icons — Size, Fit, Neck, Sleeve,
+Closure — supplied rather than exported from Figma. They live in
+`public/style/`, beside `public/categories/` and deliberately **not** in
+`public/figma/`, which is for exact Figma exports and is worth keeping that
+way. Each is one `currentColor` path on a 2048 viewBox, so they go through
+`MaskIcon`: an `<img>` resolves `currentColor` against the file's own context,
+not the button's.
+
+**Pattern has no icon and keeps its grey box** — the 34px `#d9d9d9` square all
+six carried before, at exactly the icon's size, so the buttons do not move as
+the set fills in. `STYLE_FACET_ICONS` is the whole mechanism: a facet absent
+from it falls back, so the sixth icon is one file in `public/style/` and one
+line in that map.
 
 **Two across, picture beside label**, the gender tiles' shape one step smaller,
 so the block's two rows read as one family. Not the sizes' five-across grid:

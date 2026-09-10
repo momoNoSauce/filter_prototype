@@ -5,6 +5,8 @@ import type { Product } from "@/lib/catalog/types";
 import { type Selections, facetOptionsWithCounts } from "@/lib/filters/engine";
 import { SIZE_FACET_ID } from "@/lib/filters/activeVariant";
 import { CATEGORIES, GENDER_LABEL } from "@/lib/catalog/seed";
+import { STYLE_FACET_ICONS } from "@/lib/filters/styleIcons";
+import { MaskIcon } from "@/components/ui/MaskIcon";
 
 /** The category facet's id — the thing a tile actually selects. See below. */
 const CATEGORY_FACET_ID = "category";
@@ -70,10 +72,16 @@ const CATEGORY_FACET_ID = "category";
  * `styleRows`, which reads the rail, so the buttons cannot claim a panel that
  * is not there.
  *
- * **The pictures are grey boxes**, `#d9d9d9`, the same placeholder `ThumbRow`
- * shows while an image loads or is missing. Art per style filter is wanted and
- * has not been drawn; the box holds its space at the right size so dropping the
- * real thing in is a `src`, not a re-layout.
+ * **The pictures are line art**, supplied 2026-09-10 and living in
+ * `public/style/` — not `public/figma/`, which is for exact Figma exports and
+ * these are not. They go through `MaskIcon` rather than an `<img>`: each is one
+ * `currentColor` path, which an `<img>` resolves against the file's own context
+ * and not the button's.
+ *
+ * **A facet with no icon keeps the grey box** it had before them — `#d9d9d9`,
+ * the placeholder `ThumbRow` shows for a missing image, at exactly the icon's
+ * size so the row does not move when one arrives. Pattern is that case today.
+ * See `STYLE_FACET_ICONS`.
  */
 export function FindItFast({
   products,
@@ -247,12 +255,19 @@ export function FindItFast({
                 className="flex h-[46px] w-fit cursor-pointer items-center gap-[6px] rounded-[8px] border border-hairline bg-white px-[5px] text-left"
               >
                 {/*
-                  **A grey box until the art lands.** `#d9d9d9` is the same
-                  placeholder `ThumbRow` shows for an image that is missing or
-                  still loading, and it is sized to the picture that is coming,
-                  so dropping the real one in is a `src` and not a re-layout.
+                  The icon, or the grey box it replaced where there isn't one
+                  yet — same 34px either way, so the buttons stay the same size
+                  as the set fills in.
                 */}
-                <span className="size-[34px] shrink-0 rounded-[6px] bg-[#d9d9d9]" />
+                {STYLE_FACET_ICONS[style.id] ? (
+                  <MaskIcon
+                    src={STYLE_FACET_ICONS[style.id]}
+                    color="var(--color-heading)"
+                    className="size-[34px] shrink-0"
+                  />
+                ) : (
+                  <span className="size-[34px] shrink-0 rounded-[6px] bg-[#d9d9d9]" />
+                )}
                 {/* No `flex-1` and no `truncate`: the button is as wide as its
                     label, which is the whole point of the wrap. */}
                 <span className="pr-[3px] text-[13px] font-bold whitespace-nowrap text-heading">

@@ -175,7 +175,12 @@ The buttons come from `styleRows(preset)`, so they are the rail's own rows and
 can never claim a panel that isn't there — which is why **Size got its row back
 on `JOURNEY_RAIL_ORDER`** (2026-09-10) rather than the button being hard-coded.
 They **wrap and are sized to their labels**, not a fixed grid: two columns gave
-`Fit` the same width as `Closure Type` and cost three rows of white.
+`Fit` the same width as `Closure Type` and cost three rows of white. The art is
+in **`public/style/`** — supplied, not exported from Figma, which is why it is
+not in `public/figma/` — and goes through `MaskIcon`, each file being one
+`currentColor` path. `STYLE_FACET_ICONS` maps facet id → file; **a facet not in
+it keeps the grey box**, which is Pattern today, so a new icon is one file and
+one line.
 
 The gender tiles select **`category`**, not `gender` — 1:1 in this catalog, and
 Category is on the rail, so the badge, the panel and Clear Filters all reach it
