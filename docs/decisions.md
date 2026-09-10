@@ -873,18 +873,6 @@ rows and the short ones sat in a pool of white. `flex-wrap` with `w-fit` packs
 `Size` and `Fit` beside a long one and lets the block end where its content
 does.
 
-**They went up a step once the icons landed** (2026-09-10): 52px around a 40px
-icon with the label at **15**, from 46/34/13. 15px is the app's control-label
-size — the rail rows, `OptionRow` and `ThumbRow` are all set to it — so the
-buttons now match the panel they open instead of undercutting it. It costs a
-little packing, two per row rather than three, but the rows are still content
-width and not a grid.
-
-**The gender tiles above stay at 13/38.** They are three across a 326px card,
-which fixes their width, and 14px truncated `Women` there once already —
-growing them means giving up the single row, which is a bigger change than the
-type.
-
 **`initialRail` on `FilterScreen`** is how a button names its panel — read once,
 as the initial state, because the screen unmounts when the sheet closes and a
 pinned row would fight the buyer's own taps on the rail. `PlpScreen` clears it

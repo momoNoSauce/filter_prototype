@@ -80,7 +80,7 @@ const CATEGORY_FACET_ID = "category";
  *
  * **A facet with no icon keeps the grey box** it had before them — `#d9d9d9`,
  * the placeholder `ThumbRow` shows for a missing image, at exactly the icon's
- * 40px so the row does not move when one arrives. Pattern is that case today.
+ * size so the row does not move when one arrives. Pattern is that case today.
  * See `STYLE_FACET_ICONS`.
  */
 export function FindItFast({
@@ -252,32 +252,25 @@ export function FindItFast({
               <button
                 key={style.id}
                 onClick={() => onOpenStyle(style.id)}
-                // **52 around a 40px icon, label at 15** (2026-09-10, on the
-                // render: both read small). 15px is the app's control-label
-                // size — the rail rows, `OptionRow` and `ThumbRow` are all set
-                // to it — so the buttons now match the panel they open rather
-                // than undercutting it. The gender tiles above stay at 13/38:
-                // they are three across a 326px card, which fixes their width,
-                // and 14px truncated `Women` there once already.
-                className="flex h-[52px] w-fit cursor-pointer items-center gap-[8px] rounded-[8px] border border-hairline bg-white px-[7px] text-left"
+                className="flex h-[46px] w-fit cursor-pointer items-center gap-[6px] rounded-[8px] border border-hairline bg-white px-[5px] text-left"
               >
                 {/*
                   The icon, or the grey box it replaced where there isn't one
-                  yet — same 40px either way, so the buttons stay the same size
+                  yet — same 34px either way, so the buttons stay the same size
                   as the set fills in.
                 */}
                 {STYLE_FACET_ICONS[style.id] ? (
                   <MaskIcon
                     src={STYLE_FACET_ICONS[style.id]}
                     color="var(--color-heading)"
-                    className="size-[40px] shrink-0"
+                    className="size-[34px] shrink-0"
                   />
                 ) : (
-                  <span className="size-[40px] shrink-0 rounded-[6px] bg-[#d9d9d9]" />
+                  <span className="size-[34px] shrink-0 rounded-[6px] bg-[#d9d9d9]" />
                 )}
                 {/* No `flex-1` and no `truncate`: the button is as wide as its
                     label, which is the whole point of the wrap. */}
-                <span className="pr-[3px] text-[15px] font-bold whitespace-nowrap text-heading">
+                <span className="pr-[3px] text-[13px] font-bold whitespace-nowrap text-heading">
                   {style.label}
                 </span>
               </button>
