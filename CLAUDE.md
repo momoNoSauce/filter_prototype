@@ -156,9 +156,10 @@ Filter chip opens the sheet and when it closes).
 A row that isn't there teaches nobody, so this one keeps a placeholder at the
 foot of the rail naming what is behind it.
 
-- **Filled like every other row, outlined in `primary` while closed.** The open
-  row goes white and merges with its panel, which is what says which panel you
-  are looking at.
+- **Drawn like every other row, with a `primary` label.** The blue text is the
+  whole marker: the dim, the `primary-subtle` fill and the outline were each
+  tried and each came off. Colour alone keeps the rail one grid and one fill;
+  the weight still tracks `active`, as every row's does.
 - **Its label tickers while locked** — `Style Filters → Size → Fit → Neck Type →
   Sleeve Type → Pattern → Closure Type → `**`Enable Style Filters`**, a word
   every 1.8s, the last in primary and pulsing. One word at a time, arriving and

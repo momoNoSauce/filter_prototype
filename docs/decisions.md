@@ -849,13 +849,16 @@ nothing at all.
 
 **The answer: `rail: "journey-gated"`.** A **Style Filters** row sits at the
 foot of the rail from the first render, standing in for the vertical block and
-**outlined in `primary`** while closed — the same colour the fill briefly was,
-spent on a 1px border rather than 60×140 of ground, so it reads as one cell
-picked out of a column rather than a second kind of row. Closed only: the rail's
-language is that the open row goes white and merges with the panel beside it,
-and an outline surviving the tap would draw a line between the two. Its own
-border replaces the shared `border-t`, or the row above gives it a grey top edge
-inside a blue box. Its panel, locked, is three things in this order — and
+marked by **a `primary` label and nothing else** — same fill, same borders as
+its seven neighbours. The weight still tracks `active`, as every row's does, so
+the marker does not swallow that state.
+
+Four heavier markers were tried first and each came off: dimmed (read as
+*unavailable*, the one thing it is not), a `primary-subtle` fill (a second
+colour in a column of eight made the rail read as two lists), and a `primary`
+outline (a box round one row of eight is a heavier claim than the row needs, and
+it fought the rail's own grid of shared hairlines). The label was the answer
+each time; it just took three goes to be the only thing left. Its panel, locked, is three things in this order — and
 the order is the argument:
 
 1. **What you get** — a padlocked `6 style filters locked`. Naming the payoff
@@ -931,7 +934,7 @@ re-proposes one:
 | Tried | Reversed to | Why |
 |---|---|---|
 | Row dimmed on the rail | Drawn like every other row | Dimming said *broken* where it meant *unavailable*; it is the row you are meant to press |
-| Row tinted `primary-subtle` | Same `#f4f4f4`, **outlined `primary`** | A second fill in a column of eight made the rail read as two lists; 1px of the same colour marks the row without recolouring it |
+| Row tinted `primary-subtle`, then outlined `primary` | Neither — **a `primary` label** and the rail's own fill and borders | A second fill made the rail read as two lists; a box round one row of eight fought the grid of shared hairlines |
 | Named *Garment Details*, then *Fashion Trends* | **Style Filters** | What is behind the lock is a reason to tap, and the name should say so |
 | Panel previewed the six as dimmed rows, then padlocked chips | Neither — a count and a padlock on one heading | Rows cost 264px of a 410px panel and pushed the picker below the fold; chips fixed that, then the ticker made them the same information twice |
 | Placeholder and its rows both at the foot | Placeholder at the foot, rows after Category | Unlocking lands the panel on Category, so the rows should appear under the row being looked at |

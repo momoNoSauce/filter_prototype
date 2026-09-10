@@ -763,32 +763,33 @@ export function FilterScreen({
                  * 09-10 — a second colour in a column of eight identical rows
                  * made the rail look like two lists rather than one.
                  *
-                 * **It is outlined instead** (2026-09-10, on the ask to mark it
-                 * as different): the same `primary` the fill was, spent on a
-                 * 1px border rather than 60×140 of ground. It reads as one cell
-                 * picked out of a column instead of a second kind of row, which
-                 * is what the fill got wrong.
-                 *
-                 * Closed only. The rail's language is that the open row goes
-                 * white and merges with the panel beside it — that is what says
-                 * which panel you are looking at — and an outline that survived
-                 * the tap would draw a line between the two. Its own `border`
-                 * replaces the shared `border-t`, or the row above would give
-                 * it a grey top edge inside a blue box.
+                 * **Its borders are the same too**, since 2026-09-10. It spent
+                 * an afternoon outlined in `primary` — the fill's replacement,
+                 * 1px instead of 60×140 of ground — and that went the same way:
+                 * **the blue label is the whole marker now**. A box drawn round
+                 * one row of eight is a heavier claim than the row needs, and
+                 * it fought the rail's own grid of shared hairlines.
                  */
                 className={`flex h-[60px] w-full cursor-pointer items-center gap-[6px] pr-[8px] pl-[14px] text-left ${
                   active
                     ? "bg-white"
-                    : entry.gated
-                      ? "border border-primary bg-[#f4f4f4]"
-                      : `border-r border-[#dedede] bg-[#f4f4f4]${
-                          index > 0 ? " border-t" : ""
-                        }`
-                } ${active && index > 0 ? "border-t border-[#dedede]" : ""}`}
+                    : "border-r border-[#dedede] bg-[#f4f4f4]"
+                } ${index > 0 ? "border-t border-[#dedede]" : ""}`}
               >
+                {/*
+                  **A gated row's label is always primary** (2026-09-10) — the
+                  one mark left on it, after the dim, the tint and the outline
+                  all came off. Colour alone, so the rail keeps one grid and one
+                  fill; the weight still tracks `active`, as every row's does,
+                  which is what stops the marker from swallowing that state.
+                */}
                 <span
                   className={`min-w-0 flex-1 text-[15px] ${
-                    active ? "font-bold text-primary" : "font-medium text-[#323232]"
+                    active
+                      ? "font-bold text-primary"
+                      : entry.gated
+                        ? "font-medium text-primary"
+                        : "font-medium text-[#323232]"
                   }`}
                 >
                   {/* A locked row tickers; open, it answers with its name. */}
