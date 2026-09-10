@@ -64,12 +64,14 @@ export default function Page() {
        *   through its own label, and offers the categories inside its panel, so
        *   unlocking is a tap rather than an instruction. **The placeholder then
        *   leaves** and Size · Fit · Neck Type · Sleeve Type · Pattern · Closure
-       *   Type take its slot at the foot — 8 rows to 13, sheet 590 → 640, panel
-       *   landing on Category. **Size has a row here and on no other Kartik
-       *   rail**, which closes the gap logged when this route dropped
-       *   `guidedPv`. Order below is otherwise: Price ·
-       *   Price · Margin · MOQ · Category · Brands · Seller · Seller City, the
-       *   three offer magnitudes, then Style Filters — or the six it becomes.
+       *   Type arrive **immediately after Category** (2026-09-10) — 8 rows to
+       *   13, sheet 590 → 640, panel landing on Category with the new rows
+       *   directly under it. The unlocked rail is then exactly `/pvfilters`',
+       *   this array being the journey rail plus the one appended placeholder.
+       *   The order is otherwise the journey rail's: Price · Margin · MOQ ·
+       *   Category · Brands · Seller · Seller City · the block · the three
+       *   offer magnitudes — with Style Filters appended after all of them
+       *   while it is standing in for the block.
        *   Gender, Delivery Time and More Filters have no row, so the central cut
        *   is **Category → Women's T-Shirts**, which is what settles the vertical
        *   and puts Size on the rail. Brands, Seller and Seller City are
