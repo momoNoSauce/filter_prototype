@@ -1297,10 +1297,12 @@ describe("variants C and D — the page is the vertical", () => {
      * moment the real rows arrive: a stand-in should not outlive the thing it
      * stood in for.
      *
-     * **Both live at the foot of the rail**, which is this rail's one departure
-     * from `JOURNEY_RAIL_ORDER`'s order — that puts the block above the three
-     * offer magnitudes. Asked for, and the reason is the swap: the six should
-     * arrive where the row you tapped stood, not somewhere you were not looking.
+     * **The placeholder is last; the rows it unlocks are not** (2026-09-10).
+     * It sits at the foot as asked, and the six arrive immediately after
+     * Category, where `JOURNEY_RAIL_ORDER` has always put the block. Both were
+     * at the foot for a day; Category is the better anchor because unlocking
+     * already lands the panel there, so the rows appear directly under the row
+     * the buyer is looking at.
      */
     const singles = singleValuedFacets(getKartikCatalog());
     const gated = (category?: string[], settled: string | null = null) =>
@@ -1317,23 +1319,30 @@ describe("variants C and D — the page is the vertical", () => {
       "Style Filters",
     ]);
 
-    // Settled: the placeholder is gone and all six are rows of their own, in
-    // the slot it held — Size leading, then `JOURNEY_RAIL_ORDER`'s own order.
-    expect(gated(["womens-t-shirts"], "womens-t-shirts").map((r) => r.label)).toEqual([
+    // Settled: the placeholder is gone and all six are rows of their own,
+    // immediately after Category — and the rail is now exactly `"journey"`'s,
+    // which is what appending rather than re-slicing bought.
+    const settledLabels = gated(["womens-t-shirts"], "womens-t-shirts").map((r) => r.label);
+    expect(settledLabels).toEqual([
       "Price Range",
       "Margin on MRP",
       "MOQ",
       "Category",
-      "Cashback",
-      "Seller Offer",
-      "SOLV Target Scheme",
       "Size",
       "Fit",
       "Neck Type",
       "Sleeve Type",
       "Pattern",
       "Closure Type",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
     ]);
+    expect(settledLabels).toEqual(
+      getRail(["womens-t-shirts"], FILTER_VERTICALS, "womens-t-shirts", "journey", singles).map(
+        (r) => r.label,
+      ),
+    );
 
     // Exactly one of the two states carries the placeholder — never both, which
     // is what reading it off `showVertical` rather than `genderRedundant` buys.

@@ -724,12 +724,15 @@ this render, and the rail must light the panel that is open.
 
 **The name again**: *Fashion Trends* → **Style Filters**.
 
-**It moved to the foot of the rail**, last of the eight — and the six that
-replace it take that same slot, below the three offer magnitudes. This is the
-gated rail's one departure from `JOURNEY_RAIL_ORDER`'s order, which puts the
-block above the offers. The reason is the swap: the rail should read as the row
-you tapped expanding where it stood, not as rows appearing somewhere you were
-not looking.
+**It moved to the foot of the rail**, last of the eight, and stays there.
+
+The six that replace it went to the foot with it for a day and **moved back
+under Category on 2026-09-10**, on request. Category is the better anchor:
+unlocking already lands the panel on Category, so the rows now appear directly
+below the row the buyer is looking at, and the unlocked rail is exactly
+`"journey"`'s again rather than a re-ordering of it. The array is now the
+journey rail plus one appended row — an append where it had been a three-way
+slice, which is the shape telling you the departure is gone.
 
 **The label tickers while the row is locked** — `Style Filters → Size → Fit →
 Neck Type → Sleeve Type → Pattern → Closure Type →` and round again, a word

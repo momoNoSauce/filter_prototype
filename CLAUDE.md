@@ -147,9 +147,12 @@ Four rules on it, each a correction from an earlier render:
 - **It leaves when the real rows arrive.** `gated` is the mirror of `vertical:
   true` and is read off `showVertical`, so ticking a category swaps the
   placeholder for **Size · Fit · Neck Type · Sleeve Type · Pattern · Closure
-  Type** — which take that same slot at the foot, below the offer rows. 8 rows
-  to 13, sheet 590 → 640. This is the rail's one departure from
-  `JOURNEY_RAIL_ORDER`'s order, which puts the block above the offers.
+  Type** — **immediately after Category** (2026-09-10), where
+  `JOURNEY_RAIL_ORDER` already puts the block, so the unlocked rail is exactly
+  `"journey"`'s. 8 rows to 13, sheet 590 → 640. The array is therefore the
+  journey rail plus one appended row; both sat at the foot for a day, and
+  Category is the better anchor because unlocking already lands the panel
+  there.
 - **Unlocking lands on Category**, not the first row — `FilterScreen`'s rail
   fallback, so the swap and the landing happen in one render. The rail lights
   `rail.id`, not `activeRail`, or nothing would be highlighted after the swap.

@@ -947,13 +947,17 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
  * the thing it stood in for. The rail goes 8 rows to 13, and the sheet 590 to
  * 640 with it.
  *
- * **Both live at the foot of the rail** (asked for: *keep it at the last of the
- * initial filter list*). The placeholder is the last of the eight, and the six
- * that replace it take that same slot below the three offer magnitudes — so the
- * rail reads as the row you tapped expanding where it stood, rather than rows
- * appearing somewhere you were not looking. This is the one place the gated rail
- * departs from `JOURNEY_RAIL_ORDER`'s order, which puts the block above the
- * offers.
+ * **The placeholder is last; the rows it unlocks are not** (2026-09-10). It
+ * sits at the foot of the eight, as asked — *keep it at the last of the initial
+ * filter list* — and the six arrive **immediately after Category**, where
+ * `JOURNEY_RAIL_ORDER` has always put the block and where `/pvfilters` shows
+ * them.
+ *
+ * Both were at the foot for a day, on the reasoning that the rail should read
+ * as the row you tapped expanding where it stood. Category turned out to be the
+ * better anchor: unlocking already lands the panel on Category, so the rows now
+ * appear directly under the row the buyer is looking at — and the gated rail
+ * stops departing from the journey order, which it did only for this.
  *
  * **Size gets a row of its own**, which no Kartik rail has carried since
  * 2026-09-08. It is the most vertical-specific facet there is — M in menswear
@@ -968,24 +972,27 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
  */
 export const STYLE_RAIL_ID = "style";
 
-const JOURNEY_GATED_RAIL_ORDER: typeof RAIL_ORDER = (() => {
-  // Size leads it, `JOURNEY_RAIL_ORDER` having put it at the head of the block
-  // on 2026-09-10. This built its own Size row until then, the journey rail
-  // having none; deriving the whole block is what keeps the two in step.
-  const block = JOURNEY_RAIL_ORDER.filter((row) => row.vertical);
-  return [
-    ...JOURNEY_RAIL_ORDER.filter((row) => !row.vertical),
-    {
-      id: STYLE_RAIL_ID,
-      label: "Style Filters",
-      // The same six the block hands over, in the order they arrive as rows —
-      // which is also the order the locked panel's ticker reads them in.
-      facetIds: block.flatMap((row) => row.facetIds),
-      gated: true,
-    },
-    ...block,
-  ];
-})();
+const JOURNEY_GATED_RAIL_ORDER: typeof RAIL_ORDER = [
+  /*
+   * **The journey rail, untouched, plus one row on the end.** Since the block
+   * belongs where `JOURNEY_RAIL_ORDER` already has it — after Category — and
+   * the placeholder belongs last, the whole thing is an append. It was a
+   * three-way slice while the two shared a slot at the foot.
+   *
+   * `getRail` filters in array order and the two are mutually exclusive
+   * (`gated` is the mirror of `vertical: true`), so locked reads
+   * `…offers · Style Filters` and unlocked reads `Category · the six · offers`.
+   */
+  ...JOURNEY_RAIL_ORDER,
+  {
+    id: STYLE_RAIL_ID,
+    label: "Style Filters",
+    // The block's own facets, in rail order — which is also the order the
+    // locked row's ticker reads them in.
+    facetIds: JOURNEY_RAIL_ORDER.filter((row) => row.vertical).flatMap((row) => row.facetIds),
+    gated: true,
+  },
+];
 
 /**
  * Which rail a screen shows. `"default"` is A–D and every route that says
