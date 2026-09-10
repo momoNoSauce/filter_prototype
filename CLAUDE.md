@@ -128,13 +128,11 @@ there teaches nobody, which is the whole argument.
 
 Four rules on it, each a correction from an earlier render:
 
-- **It is not drawn as disabled.** It shipped dimmed and read as unavailable,
-  which is the one thing it is not — it is the row you are meant to press. It
-  now carries a **`primary-subtle` tint** while closed, the same light blue a
-  ticked Category row takes, so it stands out among the `#f4f4f4` rows as
-  something offered rather than something greyed. Only while closed: the rail's
-  open row goes white and merges with its panel, and that connection matters
-  most on this row.
+- **It is drawn like every other row.** It shipped dimmed and read as
+  unavailable, which is the one thing it is not; it then spent a day tinted
+  `primary-subtle` so it would stand out, and that was reversed too — the
+  ticker is doing that work, and a second fill in a column of eight made the
+  rail read as two lists.
 - **Its label tickers while locked** — `Style Filters → Size → Fit → Neck Type →
   Sleeve Type → Pattern → Closure Type → `**`Enable Style Filters`** and round
   again, a word every 1.8s. **One list, name first**: it shipped alternating
