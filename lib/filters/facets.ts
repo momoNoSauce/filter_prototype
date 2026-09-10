@@ -868,13 +868,26 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
     hideIfSingle: true,
   },
   /*
-   * Size and Colour had rows here until 2026-09-08, when both were dropped on
-   * request — Size global (it was vertical-only on A–D's rail and this route
-   * had asked for it always), Colour beside it. Both keep their `FACETS` entry
-   * for A–D; the only way to reach either here is a hand-written `?size=m`,
-   * which no click can produce and which the empty state's own Clear Filters
-   * resolves — the same accepted case as `?fabric=cotton`.
+   * **Size is back** (2026-09-10, on request), `vertical: true` and leading the
+   * block — the shape it has on A–D's rail, and for A–D's reason: M in
+   * menswear is not M in womenswear, so the row means something only once one
+   * vertical is in scope.
+   *
+   * It had no row here between 2026-09-08 and now. `/pvfilters`' guided block
+   * answered sizes in place for a few hours on 09-09 and then handed its second
+   * step to the style buttons, which open rail rows — leaving that route with
+   * no way to reach a size at all, which is what this reverses. The button and
+   * the row arrive together because `styleRows` reads the rail: no row, no
+   * button.
+   *
+   * **`/userjourney` is untouched by it.** `"journey-flat"` shows no
+   * `vertical: true` row in any state, so the row is invisible there — and its
+   * vertical-only *set* excludes Size by hand, so a hand-written `?size=m`
+   * still applies on that route exactly as `?fabric=cotton` does.
+   *
+   * Colour stays dropped.
    */
+  { id: "size", label: "Size", facetIds: ["size"], vertical: true },
   // Fabric had a row here until 2026-09-07 (second pass), when it was dropped
   // on request. It stays in `FACETS` for A–D, which still carry the row; the
   // only way to reach it here is a hand-written `?fabric=cotton`, the same
@@ -956,15 +969,10 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
 export const STYLE_RAIL_ID = "style";
 
 const JOURNEY_GATED_RAIL_ORDER: typeof RAIL_ORDER = (() => {
-  const size: (typeof RAIL_ORDER)[number] = {
-    id: SIZE_FACET_ID,
-    label: "Size",
-    facetIds: [SIZE_FACET_ID],
-    vertical: true,
-  };
-  // Size leads the block, here and in the panel's own order: it is the one a
-  // buyer came for.
-  const block = [size, ...JOURNEY_RAIL_ORDER.filter((row) => row.vertical)];
+  // Size leads it, `JOURNEY_RAIL_ORDER` having put it at the head of the block
+  // on 2026-09-10. This built its own Size row until then, the journey rail
+  // having none; deriving the whole block is what keeps the two in step.
+  const block = JOURNEY_RAIL_ORDER.filter((row) => row.vertical);
   return [
     ...JOURNEY_RAIL_ORDER.filter((row) => !row.vertical),
     {
@@ -1036,34 +1044,36 @@ const FLAT_RAILS: ReadonlySet<RailPreset> = new Set<RailPreset>(["journey-flat"]
 const PV_FACET_IDS_BY_PRESET: Record<RailPreset, Set<string>> = {
   default: PV_FACET_IDS,
   /*
-   * The five garment attributes. **Size went in and came out again** on
-   * 2026-09-09, and the round trip is the rule working rather than wobbling:
-   * strip a cut where something on the page could have shown it and now can't.
+   * The garment attributes, **Size among them** — read straight off the rail
+   * since it got its row back on 2026-09-10.
    *
-   * It went in when `/pvfilters`' guided block grew a *CHOOSE SIZE* step, drawn
-   * only inside a settled vertical — a Size cut outliving the vertical outlived
-   * its only control. It came out hours later when that step became the **style
-   * buttons**, which open Fit, Neck Type, Sleeve Type, Pattern and Closure Type
-   * and deliberately not Size, this rail having no Size row for a button to
-   * open. With no Size control in any state there is nothing to strand, so
-   * `?size=m` is the accepted hand-written case `?fabric=cotton` and
-   * `?colour=coral` already are here — and leaving it in would have been worse
-   * than either: dropped outside a vertical, orphaned inside one.
-   *
-   * `"journey-gated"` is where Size *is* vertical-only, because that rail gives
-   * it a row.
+   * Size has been in and out of this set three times in two days, and every
+   * move is the same rule rather than a wobble: *strip a cut where something on
+   * the page could have shown it and now can't.* In when the guided block grew
+   * a size step; out hours later when that step became style buttons that open
+   * rail rows and this rail had no Size row for one to open; in again now that
+   * it does, which is what put the sixth button there. The set follows the
+   * control, and the control follows the rail — which is why this is
+   * `pvFacetIds` and not a list.
    */
   journey: pvFacetIds(JOURNEY_RAIL_ORDER),
-  // The same five garment attributes — but on a flat rail they are orphaned in
-  // *every* state, not just outside a vertical, because no state puts a row
-  // back. `dropOrphanedSelections` is where that difference is applied.
-  //
-  // **Size is deliberately not here.** `/userjourney` has no Size control in
-  // any state, so `?size=m` stays the accepted hand-written case it has been
-  // since 2026-09-08 — unreachable by clicking, and cleared by the empty
-  // state's own Clear Filters, which commits every selection rather than the
-  // rail's.
-  "journey-flat": pvFacetIds(JOURNEY_RAIL_ORDER),
+  /*
+   * The garment attributes — but on a flat rail they are orphaned in *every*
+   * state, not just outside a vertical, because no state puts a row back.
+   * `dropOrphanedSelections` is where that difference is applied.
+   *
+   * **Size is excluded by hand**, and now has to be: it rejoined
+   * `JOURNEY_RAIL_ORDER` on 2026-09-10 for the other two rails, and
+   * `pvFacetIds` would sweep it up. `/userjourney` still has no Size control in
+   * any state, so `?size=m` stays the accepted hand-written case it has been
+   * since 2026-09-08 — unreachable by clicking, and cleared by the empty
+   * state's own Clear Filters, which commits every selection rather than the
+   * rail's. Dropping it instead would be defensible; it is simply not what this
+   * route does with `?fabric=cotton` or `?colour=coral` either.
+   */
+  "journey-flat": new Set(
+    [...pvFacetIds(JOURNEY_RAIL_ORDER)].filter((id) => id !== SIZE_FACET_ID),
+  ),
   /*
    * The same six the gated row carries. The row itself never leaves the rail,
    * but its *contents* do — the panel shows the locked state outside a vertical

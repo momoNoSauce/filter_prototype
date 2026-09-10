@@ -232,26 +232,21 @@ describe("the orphan guard no longer erases the cut that narrowed scope", () => 
     expect(dropOrphanedSelections(widened, undefined, settled)).toEqual({});
 
     /*
-     * **Neither Kartik rail drops Size** — one rule, read the same way twice:
-     * strip a cut only where something on the page could have shown it.
+     * **`"journey-flat"` alone keeps Size** — one rule read three ways: strip a
+     * cut only where something on the page could have shown it.
      *
-     * `"journey-flat"` (`/userjourney`) has no Size control in any state.
-     * `"journey"` (`/pvfilters`) had one for a few hours of 2026-09-09, while
-     * its guided block drew size tiles, and this asserted `{}` then; the tiles
-     * became style buttons that open Fit, Neck Type, Sleeve Type, Pattern and
-     * Closure Type — and not Size, that rail having no Size row to open — so
-     * there is nothing to strand again.
-     *
-     * `"journey-gated"` (`/pvfilters2`) is the one that drops it, because that
-     * rail gives Size a row of its own. The garment attribute goes on all
-     * three.
+     * `/userjourney` has no Size control in any state, so nothing is stranded.
+     * `/pvfilters` and `/pvfilters2` both give Size a row once a vertical
+     * settles — the guided block's Size button on one, *Style Filters* on the
+     * other — so a cut left behind when the buyer widens is orphaned there.
+     * The garment attribute goes on all three.
      */
-    for (const preset of ["journey", "journey-flat"] as const) {
-      expect(dropOrphanedSelections(widened, undefined, settled, preset)).toEqual({
-        size: ["m"],
-      });
+    expect(dropOrphanedSelections(widened, undefined, settled, "journey-flat")).toEqual({
+      size: ["m"],
+    });
+    for (const preset of ["journey", "journey-gated"] as const) {
+      expect(dropOrphanedSelections(widened, undefined, settled, preset)).toEqual({});
     }
-    expect(dropOrphanedSelections(widened, undefined, settled, "journey-gated")).toEqual({});
   });
 
   it("round-trips a shared link whose Gender cut settles the vertical", () => {

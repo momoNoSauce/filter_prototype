@@ -225,20 +225,26 @@ export function FindItFast({
           <div className="mt-[10px] -mx-[8px] h-px bg-primary/15" />
           <Step label="Shop by style" />
           {/*
-            **Two across, picture beside label** — the gender tiles' shape, one
-            step smaller, so the two rows of this block read as one family.
+            **A wrapping row of buttons sized to their own labels**, not a
+            fixed-column grid.
 
-            Not the five-across grid the sizes had: `Closure Type` and `Sleeve
-            Type` need ~70px of label where `2XL` needed 24, and a picture to
-            the left of that puts three across well past the 326px the card has.
-            Five buttons over three rows, the last alone at half width.
+            Two columns was the first build and it wasted the card: every button
+            took half the width whether it said `Fit` or `Closure Type`, so six
+            filters cost three rows and the short ones sat in a pool of white.
+            Reported on the render. `flex-wrap` with `w-fit` buttons packs
+            `Size` and `Fit` beside a long one and lets the block end where its
+            content does.
+
+            Wrapping rather than scrolling, as the sizes were: a horizontal
+            scroller hides options past the edge with nothing to say they are
+            there.
           */}
-          <div className="grid grid-cols-2 gap-[8px]">
+          <div className="flex flex-wrap gap-[8px]">
             {styles.map((style) => (
               <button
                 key={style.id}
                 onClick={() => onOpenStyle(style.id)}
-                className="flex h-[46px] min-w-0 cursor-pointer items-center gap-[6px] rounded-[8px] border border-hairline bg-white px-[5px] text-left"
+                className="flex h-[46px] w-fit cursor-pointer items-center gap-[6px] rounded-[8px] border border-hairline bg-white px-[5px] text-left"
               >
                 {/*
                   **A grey box until the art lands.** `#d9d9d9` is the same
@@ -247,7 +253,9 @@ export function FindItFast({
                   so dropping the real one in is a `src` and not a re-layout.
                 */}
                 <span className="size-[34px] shrink-0 rounded-[6px] bg-[#d9d9d9]" />
-                <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-heading">
+                {/* No `flex-1` and no `truncate`: the button is as wide as its
+                    label, which is the whole point of the wrap. */}
+                <span className="pr-[3px] text-[13px] font-bold whitespace-nowrap text-heading">
                   {style.label}
                 </span>
               </button>

@@ -850,9 +850,25 @@ guided block earns its space by being the shortest way into the filters a buyer
 would otherwise hunt for, and five doors beat one answer.
 
 **The buttons are the rail's rows**, from `styleRows(preset)`, not a list in the
-component. That is what makes it **five and not six**: Size has no row on
-`"journey"`, so a Size button would have opened the sheet on Price Range. The
-ask and the rail agreed on this by themselves.
+component — so a button can never claim a panel that is not there. It made the
+step **five** on the day: Size had no row on `"journey"`, so no Size button was
+drawn, which matched the ask.
+
+**Size came back the next morning** (2026-09-10, on request), as a
+`vertical: true` row leading the block on `JOURNEY_RAIL_ORDER`. The row and the
+button arrive together by construction — that is the point of reading
+`styleRows`. It also un-simplifies `JOURNEY_GATED_RAIL_ORDER`, which had been
+prepending a Size row of its own and now derives the whole block; and it puts
+Size back in `"journey"`'s vertical-only set, third move in two days and the
+same rule each time. `"journey-flat"` excludes Size **by hand** to keep
+`/userjourney` exactly as it was — that route has no Size control in any state,
+so `?size=m` still applies there as `?fabric=cotton` does.
+
+**The buttons wrap and are sized to their labels** (same request). Two fixed
+columns gave `Fit` the same width as `Closure Type`, so six filters cost three
+rows and the short ones sat in a pool of white. `flex-wrap` with `w-fit` packs
+`Size` and `Fit` beside a long one and lets the block end where its content
+does.
 
 **`initialRail` on `FilterScreen`** is how a button names its panel — read once,
 as the initial state, because the screen unmounts when the sheet closes and a

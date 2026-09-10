@@ -168,12 +168,13 @@ them that another doesn't is a prop with a default.
 block (`controls.guidedPv`, 2026-09-09, from two screengrabs of a competitor's
 search results, drawn in our tokens): *choose gender* as three pictures, and
 picking one unfolds **shop by style** beneath it: a button per style filter —
-Fit · Neck Type · Sleeve Type · Pattern · Closure Type — each opening the
+Size · Fit · Neck Type · Sleeve Type · Pattern · Closure Type — each opening the
 Filters sheet **on that row's own panel** (`initialRail` on `FilterScreen`).
 The buttons come from `styleRows(preset)`, so they are the rail's own rows and
-can never claim a panel that isn't there; **Size is not among them** on this
-rail, which is why the *choose size* step it replaced went rather than becoming
-a sixth button.
+can never claim a panel that isn't there — which is why **Size got its row back
+on `JOURNEY_RAIL_ORDER`** (2026-09-10) rather than the button being hard-coded.
+They **wrap and are sized to their labels**, not a fixed grid: two columns gave
+`Fit` the same width as `Closure Type` and cost three rows of white.
 
 The gender tiles select **`category`**, not `gender` — 1:1 in this catalog, and
 Category is on the rail, so the badge, the panel and Clear Filters all reach it
@@ -194,10 +195,14 @@ scope holds one value of them**, which Kartik's does (one brand, one seller, one
 city), so that array yields **7 rows outside a vertical and 12 inside one**. It
 is measured off the page's products (`singleValuedFacets`), never off the
 selections: a row that came and went as boxes were ticked is the churn the
-2026-08-19 reorder exists to stop. **Size and Colour are off this rail** (2026-09-08); Size was global
-here for a day, which is why `dropOrphanedSelections` and `parseSelections` take
-the rail preset — A–D orphan a Size cut when the vertical goes and this rail has
-no Size row to orphan one for.
+2026-08-19 reorder exists to stop. **Colour is off this rail** (2026-09-08). **Size came back on 2026-09-10**,
+`vertical: true` and leading the block, so `/pvfilters`' style buttons and
+`/pvfilters2`'s *Style Filters* both have a Size panel to open — and both orphan
+a Size cut when the vertical goes, as A–D do. **`/userjourney` is the exception
+and stays one**: `"journey-flat"` shows no vertical row in any state, and its
+vertical-only set drops Size **by hand** so `?size=m` keeps applying there, the
+way `?fabric=cotton` does. That per-preset split is why `dropOrphanedSelections`
+and `parseSelections` take the rail preset at all.
 
 **The three offer magnitudes are a row each, last on the rail** — they spent a
 few hours of 2026-09-07 merged behind one *All Offers* row (a rail row may carry

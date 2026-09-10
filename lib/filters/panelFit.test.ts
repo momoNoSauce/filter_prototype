@@ -274,8 +274,9 @@ describe("the sheet presentation's shorter fold", () => {
     expect(sheetHeightPct(rowsOn("journey-flat"))).toBe(sheetHeightPct(7));
     expect(Math.round((sheetHeightPct(7) / 100) * FRAME_H)).toBe(530);
 
-    // The rail it came from, for contrast: twelve rows, over the cap, 640.
-    expect(rowsOn("journey")).toBe(12);
+    // The rail it came from, for contrast: thirteen rows since Size rejoined
+    // the block on 2026-09-10, well over the cap either way.
+    expect(rowsOn("journey")).toBe(13);
     expect(sheetHeightPct(rowsOn("journey"))).toBe(SHEET_MAX_PCT);
   });
 
