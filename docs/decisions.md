@@ -916,7 +916,23 @@ label, so they are told apart by id.
 goes exactly when the block comes, and ticking a category swaps it for **Size ·
 Fit · Neck Type · Sleeve Type · Pattern · Closure Type** — immediately after
 Category, where `JOURNEY_RAIL_ORDER` already puts them, so the unlocked rail is
-exactly `/pvfilters`'. A stand-in should not outlive the thing it stood in for.
+`/pvfilters`' rows — in `/pvfilters`' order until 2026-09-24, when Category
+moved to second-last (below). A stand-in should not outlive the thing it stood
+in for.
+
+**Category is second-last, and unlocking scrolls it to the top** (2026-09-24, on
+request: *"rn the cashback, seller offers are going down"*). With Category
+fourth, the six arriving under it pushed the offer magnitudes down six rows.
+Now locked reads `…offers · Category · More Filters`, the six land after
+Category at the foot, and the rail scrolls up towards Category — smooth, the
+rows above it seen to travel up, instant under reduced motion. It fires on the
+locked → unlocked transition from either panel, never on open. **It goes as
+far as the rail goes and no further.** Category and the six are 420px against a
+~530px rail (more on tall phones), so Category can't reach the very top without
+empty rail under Closure Type. A spacer did exactly that for an hour and came
+off on the render — *"there is space left at the bottom … that I don't want"* —
+so the rail now lands on its last row with Category as high as the rows under
+it allow: ~95px down at 360×800, the top on a phone too short for the seven.
 
 Two consequences, both settled on the ask:
 
@@ -938,8 +954,8 @@ It is the most vertical-specific facet there is — the reason it is
 `vertical: true` on A–D's rail — so a row holding vertical-specific filters is
 where it belongs.
 
-**The array is derived, not retyped**: `JOURNEY_RAIL_ORDER` plus one appended
-row, so anything added to the journey rail lands here too.
+**The array is derived, not retyped**: `JOURNEY_RAIL_ORDER` re-cut — its rows
+less Category and the block, then Category, the block and the placeholder — so anything added to the journey rail lands here too.
 `PV_FACET_IDS_BY_PRESET` reads the placeholder's own `facetIds` rather than
 `pvFacetIds` — the six still orphan when the vertical goes, because the row that
 holds them locks.
@@ -958,6 +974,8 @@ the go-ahead. Recorded so nobody re-proposes one:
 | Label tickered through the six to a pulsing *Enable Style Filters* | A still label (2026-09-24) | On the go-ahead: *remove animation and the likes* — all of it, not a slower or shorter ticker |
 | Panel previewed the six as dimmed rows, then padlocked chips | Neither — a count on one heading, padlocked until the lock moved to the rail | Rows cost 264px of a 410px panel and pushed the picker below the fold; chips fixed that, then the ticker made them the same information twice. The ticker has since gone too, which leaves the six unnamed while locked — open |
 | Placeholder and its rows both at the foot | Placeholder at the foot, rows after Category | Unlocking lands the panel on Category, so the rows should appear under the row being looked at |
+| Category fourth, the six after it pushing the offers down | Category second-last, the six after it at the foot, the rail scrolling up towards Category (2026-09-24) | On request: *rn the cashback, seller offers are going down* |
+| A spacer under the six so Category could scroll to the very top | Scroll to the rail's end and stop; Category ~95px down | On the render: *space left at the bottom … that I don't want* |
 
 
 ## Design source — always pull from Figma, never eyeball

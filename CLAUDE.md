@@ -177,8 +177,17 @@ foot of the rail saying there is more behind it.
   still reads `6 style filters locked`, and since the ticker went **nothing
   names the six until a category is picked** — an open question, not a bug.
 - **It leaves when the real rows arrive**, `gated` being the mirror of
-  `vertical: true`. The array is `JOURNEY_RAIL_ORDER` plus one appended row, so
-  the unlocked rail is exactly `/pvfilters`'.
+  `vertical: true`. The array is `JOURNEY_RAIL_ORDER` re-cut (2026-09-24):
+  Category second-last above *More Filters*, the six after it at the foot, so
+  locked reads `…offers · Category · More Filters` and nothing above Category
+  moves on unlock. `/pvfilters`' rows, not its order.
+- **Unlocking scrolls the rail up towards Category**, smooth (instant under
+  reduced motion), from either the locked panel or the Category row — fired by
+  the locked → unlocked *transition*, never on open. **As far as the rail goes
+  and no further**: Category and the six are 420px against a ~530px rail, so it
+  lands on the last row with Category ~95px down. A spacer that let Category
+  reach the very top came off the same day — *no space left at the bottom*.
+  Don't add empty rail to buy scroll room.
 - **Unlocking lands on Category**, via `FilterScreen`'s rail fallback, so the
   swap and the landing happen in one render. The rail lights **`rail.id`, not
   `activeRail`** — they differ for exactly that render.

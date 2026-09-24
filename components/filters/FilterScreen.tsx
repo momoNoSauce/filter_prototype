@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
 import {
@@ -324,6 +324,52 @@ export function FilterScreen({
    * the rows, in the same update that adds them.
    */
   const sheetPct = sheetHeightPct(RAIL.length);
+
+  /*
+   * **Unlocking scrolls the rail up towards Category** (2026-09-24,
+   * `/pvfilters2`, on request: *the list scrolls up to show category as the
+   * first and the items above it moving up the scroll*).
+   *
+   * Category sits second-last on the gated rail, just above *More Filters*, so
+   * the six rows that unlock arrive below it — at the foot, and mostly below
+   * the fold. The scroll brings them into view, and the rows above Category
+   * travel up out of it rather than being pushed down.
+   *
+   * **As far as the rail goes, and no further** (the same day, on the render:
+   * *there is space left at the bottom … that I don't want*). Category and the
+   * six are seven rows, 420px, against a rail of ~530px at 360×800 and more on
+   * bigger phones, so Category can't reach the very top without empty rail
+   * under Closure Type — a spacer did that for an hour and came off. The target
+   * is still Category's own offset, which the browser clamps to the end of the
+   * rail: on a tall phone the rail lands on its last row with Category as high
+   * as the rows under it allow, and on one too short for the seven, Category
+   * goes to the top and no further.
+   *
+   * Fired by the **transition**, not the state — the render that loses the
+   * placeholder — so a sheet that opens already unlocked starts at the top like
+   * any other. Both ways into the unlock, the locked panel's picker and the
+   * Category row's own panel, are the same transition, so both scroll.
+   */
+  const gatedOnRail = RAIL.some((r) => r.gated);
+  const wasGated = useRef(gatedOnRail);
+  const railRef = useRef<HTMLDivElement>(null);
+  const categoryRowRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const unlocked = wasGated.current && !gatedOnRail;
+    wasGated.current = gatedOnRail;
+    const railEl = railRef.current;
+    const row = categoryRowRef.current;
+    if (!unlocked || !railEl || !row) return;
+    // Measured rather than counted in rows, so a row that ever wraps taller
+    // can't leave the target short.
+    const top =
+      row.getBoundingClientRect().top - railEl.getBoundingClientRect().top + railEl.scrollTop;
+    // The travel is the point — the rows above are seen to go up — so it is
+    // smooth, except under reduced motion, where it simply lands.
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    railEl.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
+  }, [gatedOnRail]);
 
   const [activeRail, setActiveRail] = useState(initialRail ?? RAIL[0].id);
   const [query, setQuery] = useState("");
@@ -650,7 +696,7 @@ export function FilterScreen({
           two lines at 111, where a rail past ~145 would push it to a third and
           bring back the truncation those rows were built to fix.
         */}
-        <div className="no-scrollbar w-[140px] shrink-0 overflow-y-auto pb-[16px]">
+        <div ref={railRef} className="no-scrollbar w-[140px] shrink-0 overflow-y-auto pb-[16px]">
           {RAIL.map((entry, index) => {
             // `rail.id`, not `activeRail`: when a row vanishes the two differ
             // for a render, and the rail must light the panel that is open —
@@ -687,6 +733,7 @@ export function FilterScreen({
             return (
               <button
                 key={entry.id}
+                ref={entry.id === CATEGORY_FACET_ID ? categoryRowRef : undefined}
                 onClick={() => {
                   setActiveRail(entry.id);
                   setQuery("");

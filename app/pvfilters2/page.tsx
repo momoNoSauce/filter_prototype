@@ -66,10 +66,11 @@ export default function Page() {
        *   inside its panel, so
        *   unlocking is a tap rather than an instruction. **The placeholder then
        *   leaves** and Size · Fit · Neck Type · Sleeve Type · Pattern · Closure
-       *   Type arrive **immediately after Category** (2026-09-10) — 8 rows to
-       *   13, sheet 590 → 640, panel landing on Category with the new rows
-       *   directly under it. The unlocked rail is then exactly `/pvfilters`',
-       *   this array being the journey rail plus the one appended placeholder.
+       *   Type arrive **immediately after Category** — 8 rows to 13, sheet
+       *   590 → 640, panel landing on Category with the new rows directly under
+       *   it. Since 2026-09-24 Category sits second-last, just above More
+       *   Filters, so the six arrive at the foot and the rail scrolls up
+       *   towards Category; the unlocked rail holds `/pvfilters`' rows, not its order.
        *   The order is otherwise the journey rail's: Price · Margin · MOQ ·
        *   Category · Brands · Seller · Seller City · the block · the three
        *   offer magnitudes — with More Filters appended after all of them

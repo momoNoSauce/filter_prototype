@@ -948,17 +948,20 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
  * the thing it stood in for. The rail goes 8 rows to 13, and the sheet 590 to
  * 640 with it.
  *
- * **The placeholder is last; the rows it unlocks are not** (2026-09-10). It
- * sits at the foot of the eight, as asked — *keep it at the last of the initial
- * filter list* — and the six arrive **immediately after Category**, where
- * `JOURNEY_RAIL_ORDER` has always put the block and where `/pvfilters` shows
- * them.
+ * **Category is second-last, just above the placeholder** (2026-09-24, on
+ * request), and the six arrive **immediately after Category** — so at the foot.
+ * Until then Category was fourth, where `JOURNEY_RAIL_ORDER` has it, and the six
+ * arriving under it pushed the three offer magnitudes down six rows: *"rn the
+ * cashback, seller offers are going down"*. Now nothing above Category moves
+ * when the rail unlocks — the six land below it, and `FilterScreen` scrolls the
+ * rail up towards Category, as far as it goes, the rows above it travelling up
+ * out of view.
  *
- * Both were at the foot for a day, on the reasoning that the rail should read
- * as the row you tapped expanding where it stood. Category turned out to be the
- * better anchor: unlocking already lands the panel on Category, so the rows now
- * appear directly under the row the buyer is looking at — and the gated rail
- * stops departing from the journey order, which it did only for this.
+ * Category has been the anchor since 2026-09-10, when the placeholder and its
+ * rows stopped sharing the foot: unlocking lands the panel on Category, so the
+ * rows appear directly under the row the buyer is looking at. The unlocked rail
+ * holds `/pvfilters`' rows but no longer in its order — the gated rail departs
+ * from the journey order again, by exactly this move.
  *
  * **Size gets a row of its own**, which no Kartik rail has carried since
  * 2026-09-08. It is the most vertical-specific facet there is — M in menswear
@@ -966,25 +969,27 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
  * and it leads the block here for the same reason it leads the locked panel's
  * chips: it is the one a buyer came for.
  *
- * **Derived, not retyped.** Every other row, and the block's own order, come
- * from `JOURNEY_RAIL_ORDER`, so a row added there lands on both rails and the
- * two can't drift. Both the placeholder and the Size row go in where the block
- * has always appeared: below Category, above the three offer magnitudes.
+ * **Derived, not retyped.** Every row, and the block's own order, come from
+ * `JOURNEY_RAIL_ORDER`, so a row added there lands on both rails and the two
+ * can't drift — above Category, unless it belongs to the block.
  */
 export const STYLE_RAIL_ID = "style";
 
 const JOURNEY_GATED_RAIL_ORDER: typeof RAIL_ORDER = [
   /*
-   * **The journey rail, untouched, plus one row on the end.** Since the block
-   * belongs where `JOURNEY_RAIL_ORDER` already has it — after Category — and
-   * the placeholder belongs last, the whole thing is an append. It was a
-   * three-way slice while the two shared a slot at the foot.
+   * **The journey rail re-cut, not retyped** (2026-09-24): its rows in their
+   * own order, less Category and the block; then Category; then the block;
+   * then the placeholder. It was the journey rail plus one appended row from
+   * 2026-09-10 until Category moved to the foot.
    *
-   * `getRail` filters in array order and the two are mutually exclusive
-   * (`gated` is the mirror of `vertical: true`), so locked reads
-   * `…offers · More Filters` and unlocked reads `Category · the six · offers`.
+   * `getRail` filters in array order and the placeholder and the block are
+   * mutually exclusive (`gated` is the mirror of `vertical: true`), so locked
+   * reads `…offers · Category · More Filters` and unlocked reads
+   * `…offers · Category · the six`.
    */
-  ...JOURNEY_RAIL_ORDER,
+  ...JOURNEY_RAIL_ORDER.filter((row) => row.id !== "category" && !row.vertical),
+  JOURNEY_RAIL_ORDER.find((row) => row.id === "category")!,
+  ...JOURNEY_RAIL_ORDER.filter((row) => row.vertical),
   {
     id: STYLE_RAIL_ID,
     /*

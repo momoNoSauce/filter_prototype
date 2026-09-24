@@ -1047,6 +1047,18 @@ pixel to give back what the leading took from the outer edges. Measured: the
 heading's glyphs sit at the same 277–297 as before, the space under the second
 line is 16px against 16.5, and the categories below move up 7px.
 
+**Category moved to second-last, and unlocking scrolls it to the top** —
+*"rn the cashback, seller offers are going down"*. Locked now reads Price ·
+Margin · MOQ · Cashback · Seller Offer · SOLV Target Scheme · Category · More
+Filters; the six arrive after Category at the foot, so nothing above it moves,
+and the rail smooth-scrolls up towards Category from either panel. It first
+shipped with a spacer under the six so Category could reach the very top, and
+that came off within the hour — *"there is space left at the bottom … that I
+don't want"*: the rail now scrolls as far as it goes and stops on its last row.
+Measured at 360×800 on both paths: scrollTop 265 of a 265 max, Category 95px
+from the rail's top, 16px from Closure Type to the rail's foot — its standing
+bottom padding; no console errors. 151 tests green, typecheck and lint clean.
+
 ### 2026-09-10 — the guided block grows up, and Style Filters settles
 
 Four notes back on `/pvfilters`, all right.

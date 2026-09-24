@@ -1297,36 +1297,38 @@ describe("variants C and D — the page is the vertical", () => {
      * moment the real rows arrive: a stand-in should not outlive the thing it
      * stood in for.
      *
-     * **The placeholder is last; the rows it unlocks are not** (2026-09-10).
-     * It sits at the foot as asked, and the six arrive immediately after
-     * Category, where `JOURNEY_RAIL_ORDER` has always put the block. Both were
-     * at the foot for a day; Category is the better anchor because unlocking
-     * already lands the panel there, so the rows appear directly under the row
-     * the buyer is looking at.
+     * **Category is second-last, just above the placeholder** (2026-09-24),
+     * and the six arrive immediately after it — so at the foot, and nothing
+     * above Category moves when the rail unlocks. Until then Category was
+     * fourth and the six pushed the offer magnitudes down: *"rn the cashback,
+     * seller offers are going down"*.
      */
     const singles = singleValuedFacets(getKartikCatalog());
     const gated = (category?: string[], settled: string | null = null) =>
       getRail(category, FILTER_VERTICALS, settled, "journey-gated", singles);
 
-    expect(gated().map((r) => r.label)).toEqual([
+    const lockedLabels = gated().map((r) => r.label);
+    expect(lockedLabels).toEqual([
       "Price Range",
       "Margin on MRP",
       "MOQ",
-      "Category",
       "Cashback",
       "Seller Offer",
       "SOLV Target Scheme",
+      "Category",
       "More Filters",
     ]);
 
     // Settled: the placeholder is gone and all six are rows of their own,
-    // immediately after Category — and the rail is now exactly `"journey"`'s,
-    // which is what appending rather than re-slicing bought.
+    // immediately after Category, at the foot.
     const settledLabels = gated(["womens-t-shirts"], "womens-t-shirts").map((r) => r.label);
     expect(settledLabels).toEqual([
       "Price Range",
       "Margin on MRP",
       "MOQ",
+      "Cashback",
+      "Seller Offer",
+      "SOLV Target Scheme",
       "Category",
       "Size",
       "Fit",
@@ -1334,15 +1336,24 @@ describe("variants C and D — the page is the vertical", () => {
       "Sleeve Type",
       "Pattern",
       "Closure Type",
-      "Cashback",
-      "Seller Offer",
-      "SOLV Target Scheme",
     ]);
-    expect(settledLabels).toEqual(
-      getRail(["womens-t-shirts"], FILTER_VERTICALS, "womens-t-shirts", "journey", singles).map(
-        (r) => r.label,
-      ),
-    );
+
+    // The unlock only ever adds below Category: every row above it is where it
+    // was, which is what lets the rail scroll them up rather than push them down.
+    const aboveCategory = (labels: string[]) => labels.slice(0, labels.indexOf("Category") + 1);
+    expect(aboveCategory(settledLabels)).toEqual(aboveCategory(lockedLabels));
+
+    // `/pvfilters`' rows, in a different order — the re-cut moved rows, it did
+    // not add or drop any.
+    const journeyLabels = getRail(
+      ["womens-t-shirts"],
+      FILTER_VERTICALS,
+      "womens-t-shirts",
+      "journey",
+      singles,
+    ).map((r) => r.label);
+    expect([...settledLabels].sort()).toEqual([...journeyLabels].sort());
+    expect(settledLabels).not.toEqual(journeyLabels);
 
     // Exactly one of the two states carries the placeholder — never both, which
     // is what reading it off `showVertical` rather than `genderRedundant` buys.
