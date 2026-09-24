@@ -158,19 +158,22 @@ Filter chip opens the sheet and when it closes).
 A row that isn't there teaches nobody, so this one keeps a placeholder at the
 foot of the rail saying there is more behind it.
 
-- **Drawn like every other row, with a `primary` label.** The blue text is the
-  whole marker: the dim, the `primary-subtle` fill and the outline were each
-  tried and each came off. Colour alone keeps the rail one grid and one fill;
-  the weight still tracks `active`, as every row's does.
+- **Drawn exactly like every other row, label colour included — a padlock
+  after the label is the whole marker** (2026-09-24, on request). The dim, the
+  `primary-subtle` fill, the outline and a `primary` label were each tried and
+  each came off. The lock is `currentColor`, so it goes grey closed and primary
+  open with the label, and no count ever shares its line: the row shows only
+  outside a vertical, where its six are orphaned.
 - **Its label is a plain `More Filters` and nothing on it moves** (2026-09-24,
   on the go-ahead: *just say More Filters*). It was *Style Filters*, tickering
   through the six filters behind it to a pulsing *Enable Style Filters*; the
   ticker, its keyframes and `TickerLabel` are gone. **Don't put motion back on
   the row without asking.** It shares its words with A–D's `more` row (the
   `tags` catch-all) but not its id — no rail carries both.
-- **Its panel, locked, is a padlocked count, one line, and the three categories
-  as `ThumbRow`s** — the picker is *in* the panel, so unlocking is a tap and not
-  an instruction, and the draft means it fills under the finger. The heading
+- **Its panel, locked, is a count, one line, and the three categories as
+  `ThumbRow`s** — no padlock on the heading since the lock moved to the rail
+  row. The picker is *in* the panel, so unlocking is a tap and not an
+  instruction, and the draft means it fills under the finger. The heading
   still reads `6 style filters locked`, and since the ticker went **nothing
   names the six until a category is picked** — an open question, not a bug.
 - **It leaves when the real rows arrive**, `gated` being the mirror of

@@ -997,7 +997,7 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
 
-### 2026-09-24 — `/pvfilters2` gets the go-ahead, and its row becomes a plain More Filters
+### 2026-09-24 — `/pvfilters2` gets the go-ahead, and its row becomes a plain More Filters with a lock
 
 **`/pvfilters2` is the route going forward.** The first note with the go-ahead:
 *"remove animation and the likes from more filters, just say More Filters on the
@@ -1006,9 +1006,9 @@ tin"*.
 **The Style Filters row is now *More Filters*, and holds still.** The ticker —
 the row's name, the six filters behind it, then a pulsing *Enable Style
 Filters*, a word every 1.8s — is gone along with its component (`TickerLabel`)
-and its two keyframes (`ticker-in`, `ticker-pulse`). The primary label stays,
-never having been motion, and its weight still tracks `active`. The panel, the
-unlock and the landing on Category are untouched.
+and its two keyframes (`ticker-in`, `ticker-pulse`). The primary label survived
+that note, never having been motion. The panel, the unlock and the landing on
+Category are untouched.
 
 Two loose ends fall out of it, logged as open questions rather than fixed on a
 guess: **nothing names the six while the row is locked** — the ticker was the
@@ -1021,6 +1021,22 @@ Verified at 360px: the closed row reads `More Filters` at every sample across
 *Women's T-Shirts* in the locked panel swaps it for the six after Category, 8
 rows to 13, landing on Category. No console errors. 151 tests green, build,
 typecheck and lint clean.
+
+**Then the colour and the lock, on the next note** — *"more filter's color is
+not like other filters"*, *"add the lock icon after 'More Filters' in the
+rail"*, and remove the one inside. The label is set like its neighbours now,
+`#323232` at 500 closed and bold primary open, and the padlock moved off the
+panel heading onto the row: 14px, 6px after the text and centred on it, in the
+label's own colour, so it goes grey and primary with it. It is the row's only
+marker — the fifth, after the dim, the tint, the outline and the blue label.
+No count ever shares its line, the row showing only where its six are orphaned.
+The heading keeps the word *locked*, its only mention of the lock now.
+
+Measured at 360px against Cashback beside it: both `rgb(50, 50, 50)` at 500
+closed; open, `rgb(0, 79, 250)` at 700 with the lock the same; one line and a
+60px row in both states, 25px of air right of the lock; no svg left in the
+heading; unlocking takes the row and its lock off the rail. 151 tests green,
+build, typecheck and lint clean.
 
 ### 2026-09-10 — the guided block grows up, and Style Filters settles
 

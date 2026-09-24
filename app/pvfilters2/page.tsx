@@ -61,8 +61,9 @@ export default function Page() {
        *   (*Style Filters* until the 2026-09-24 go-ahead, when its ticker came
        *   off too). The other two Kartik rails simply remove those rows, so a
        *   buyer who never ticks a category never learns there was anything to
-       *   tick *for*; this one keeps a row there, in a primary label that holds
-       *   still, and offers the categories inside its panel, so
+       *   tick *for*; this one keeps a row there — a still label in the rail's
+       *   own colour, with a padlock after it — and offers the categories
+       *   inside its panel, so
        *   unlocking is a tap rather than an instruction. **The placeholder then
        *   leaves** and Size · Fit · Neck Type · Sleeve Type · Pattern · Closure
        *   Type arrive **immediately after Category** (2026-09-10) — 8 rows to

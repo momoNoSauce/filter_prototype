@@ -45,11 +45,13 @@ import { OptionRow, RangeInputs, SortRow, ThumbRow } from "./OptionRows";
 const CATEGORY_FACET_ID = "category";
 
 /**
- * The padlock on a locked chip. **Inline, not a `public/figma/` export**: no
+ * The padlock after a locked rail row's label — `/pvfilters2`'s *More Filters*,
+ * since 2026-09-24. It sat on the locked panel's heading before that, and on
+ * the chips the heading replaced. **Inline, not a `public/figma/` export**: no
  * lock was ever drawn for this file, and the rule is never to redraw an asset
  * that *exists* — `FindItFast`'s selected-tile check is the same case and the
- * same answer. `currentColor`, so it takes the chip's primary from the class
- * list rather than hard-coding the hex a token already names.
+ * same answer. `currentColor`, so it takes the label's colour — grey closed,
+ * primary open — rather than hard-coding a hex of its own.
  */
 function Padlock() {
   return (
@@ -679,8 +681,8 @@ export function FilterScreen({
              * should say *unavailable* before the buyer opens it — and it read
              * as *disabled*, which is the one thing it is not: it is the row
              * you are meant to press, and the panel behind it is an invitation.
-             * Nothing here distinguishes it. The lock lives in the panel, on
-             * the chips, where it can say what it is locking.
+             * One thing distinguishes it, since 2026-09-24: **the padlock after
+             * its label**, moved up from the locked panel's heading on request.
              */
             return (
               <button
@@ -698,10 +700,10 @@ export function FilterScreen({
                  *
                  * **Its borders are the same too**, since 2026-09-10. It spent
                  * an afternoon outlined in `primary` — the fill's replacement,
-                 * 1px instead of 60×140 of ground — and that went the same way:
-                 * **the blue label is the whole marker now**. A box drawn round
-                 * one row of eight is a heavier claim than the row needs, and
-                 * it fought the rail's own grid of shared hairlines.
+                 * 1px instead of 60×140 of ground — and that went the same way.
+                 * A box drawn round one row of eight is a heavier claim than
+                 * the row needs, and it fought the rail's own grid of shared
+                 * hairlines.
                  */
                 className={`flex h-[60px] w-full cursor-pointer items-center gap-[6px] pr-[8px] pl-[14px] text-left ${
                   active
@@ -710,27 +712,40 @@ export function FilterScreen({
                 } ${index > 0 ? "border-t border-[#dedede]" : ""}`}
               >
                 {/*
-                  **A gated row's label is always primary** (2026-09-10) — the
-                  one mark left on it, after the dim, the tint and the outline
-                  all came off. Colour alone, so the rail keeps one grid and one
-                  fill; the weight still tracks `active`, as every row's does,
-                  which is what stops the marker from swallowing that state.
+                  **A gated row's label is coloured like every row's**
+                  (2026-09-24, on request: its colour *is not like other
+                  filters*). It was always primary from 2026-09-10, the one mark
+                  left after the dim, the tint and the outline came off. **The
+                  padlock after it is the mark now**, asked for in the same
+                  note, and it takes the label's colour — so closed it is grey
+                  like its neighbours, and open it goes bold primary exactly as
+                  they do.
 
                   **And it holds still** (2026-09-24, on the go-ahead: *just say
                   More Filters*). It used to ticker through the six filters
                   behind it and end on a pulsing *Enable Style Filters*; now it
-                  is the row's own name, set the way every row's is.
+                  is the row's own name.
+
+                  No count ever shares the line with the lock: the row shows
+                  only outside a vertical, where its six facets are orphaned,
+                  so `applied` is always 0 on it.
                 */}
                 <span
                   className={`min-w-0 flex-1 text-[15px] ${
-                    active
-                      ? "font-bold text-primary"
-                      : entry.gated
-                        ? "font-medium text-primary"
-                        : "font-medium text-[#323232]"
+                    active ? "font-bold text-primary" : "font-medium text-[#323232]"
                   }`}
                 >
-                  {entry.label}
+                  {entry.gated ? (
+                    // A flex line, so the 14px lock centres on the text rather
+                    // than sitting on its baseline. `More Filters` and the lock
+                    // fit the 118px a badgeless label has, bold as well.
+                    <span className="flex items-center gap-[6px]">
+                      {entry.label}
+                      <Padlock />
+                    </span>
+                  ) : (
+                    entry.label
+                  )}
                 </span>
                 {applied > 0 &&
                   (entry.id === SORT_RAIL_ID ? (
@@ -841,7 +856,8 @@ export function FilterScreen({
             imagination.
 
             **The six names are not here.** They spent an afternoon as
-            padlocked chips and the padlock survives them, on the heading. The
+            padlocked chips, and the padlock outlived them on the heading until
+            2026-09-24, when it moved to the rail row, after the label. The
             chips came off because the rail row's ticker read the names out, so
             spelling them again above the picker was the same information twice
             in one glance, and it cost the categories most of the fold. **The
@@ -864,13 +880,11 @@ export function FilterScreen({
                 panel has to lead the 15px `ThumbRow`s below it, so it goes a
                 step up and the second line meets the rows at 15.
 
-                The padlock follows to 14px: at 11 it was set to the old 15px
-                heading and now reads as a speck beside 17px bold.
+                **No padlock here since 2026-09-24** — it moved to the rail row,
+                after *More Filters*, on request. The word *locked* is now the
+                panel's only mention of the lock.
               */}
-              <p className="flex items-center gap-[7px] px-[14px] pt-[6px] text-[17px] font-bold text-heading">
-                <span className="text-primary">
-                  <Padlock />
-                </span>
+              <p className="px-[14px] pt-[6px] text-[17px] font-bold text-heading">
                 {panelPreview.length} style filters locked
               </p>
               <p className="px-[14px] pt-[5px] pb-[14px] text-[15px] text-muted">

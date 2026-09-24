@@ -850,19 +850,25 @@ nothing at all.
 **The answer: `rail: "journey-gated"`.** A **More Filters** row — *Style
 Filters* until 2026-09-24 — sits at the
 foot of the rail from the first render, standing in for the vertical block and
-marked by **a `primary` label and nothing else** — same fill, same borders as
-its seven neighbours. The weight still tracks `active`, as every row's does, so
-the marker does not swallow that state.
+marked by **a padlock after its label and nothing else** (2026-09-24) — same
+fill, same borders and the same label colour as its seven neighbours, going
+bold primary when open exactly as they do. The lock takes the label's colour,
+and no count ever shares its line: the row shows only outside a vertical, where
+its six are orphaned.
 
-Four heavier markers were tried first and each came off: dimmed (read as
-*unavailable*, the one thing it is not), a `primary-subtle` fill (a second
-colour in a column of eight made the rail read as two lists), and a `primary`
-outline (a box round one row of eight is a heavier claim than the row needs, and
-it fought the rail's own grid of shared hairlines). The label was the answer
-each time; it just took three goes to be the only thing left. Its panel, locked, is three things in this order — and
-the order is the argument:
+Four markers came before it and each came off: dimmed (read as *unavailable*,
+the one thing it is not), a `primary-subtle` fill (a second colour in a column
+of eight made the rail read as two lists), a `primary` outline (a box round one
+row of eight is a heavier claim than the row needs, and it fought the rail's own
+grid of shared hairlines), and then the `primary` label alone, which outlived
+the other three by two weeks. It went on 2026-09-24, on request — *"more
+filter's color is not like other filters"* — and the same note moved the
+padlock off the panel heading and onto the row: *"add the lock icon after 'More
+Filters' in the rail"*, and remove it from inside. Its panel, locked, is three
+things in this order — and the order is the argument:
 
-1. **What you get** — a padlocked `6 style filters locked`. Naming the payoff
+1. **What you get** — `6 style filters locked`, padlocked until the lock moved
+   to the rail row on 2026-09-24. Naming the payoff
    first is what turns a dead row into an offer; a bare *select a category*
    states a rule and leaves the payoff to the imagination.
 2. **The rule** — `Pick a category to see them`.
@@ -891,9 +897,8 @@ blind:
 
 All of it came off together — `TickerLabel`, `ticker-in`, `ticker-pulse` —
 rather than being slowed or trimmed: the ask was for the row to say what it is,
-and a row that says what it is holds still. **The blue label stays.** It was
-never motion, and it is the one marker left after the dim, the tint and the
-outline came off.
+and a row that says what it is holds still. The blue label survived that note,
+never having been motion, and went on the next one — see above.
 
 **What that costs: nothing names the six while the row is locked.** The ticker
 was the only place they appeared — the panel's padlocked chips had come off on
@@ -941,16 +946,17 @@ holds them locks.
 
 #### What was tried and reversed
 
-Five rounds in two days, each on a note back, each right — and a sixth with the
-go-ahead. Recorded so nobody re-proposes one:
+Five rounds in two days, each on a note back, each right — and two more with
+the go-ahead. Recorded so nobody re-proposes one:
 
 | Tried | Reversed to | Why |
 |---|---|---|
 | Row dimmed on the rail | Drawn like every other row | Dimming said *broken* where it meant *unavailable*; it is the row you are meant to press |
 | Row tinted `primary-subtle`, then outlined `primary` | Neither — **a `primary` label** and the rail's own fill and borders | A second fill made the rail read as two lists; a box round one row of eight fought the grid of shared hairlines |
+| Label in `primary`, padlock on the panel heading | The rail's own label colour, **a padlock after the label**, none in the panel (2026-09-24) | On request: its colour *is not like other filters*, and the lock goes *after More Filters in the rail* |
 | Named *Garment Details*, then *Fashion Trends*, then *Style Filters* | **More Filters** (2026-09-24) | *Style Filters* argued that what is behind the lock is a reason to tap; the go-ahead asked for the row to say plainly what it is |
 | Label tickered through the six to a pulsing *Enable Style Filters* | A still label (2026-09-24) | On the go-ahead: *remove animation and the likes* — all of it, not a slower or shorter ticker |
-| Panel previewed the six as dimmed rows, then padlocked chips | Neither — a count and a padlock on one heading | Rows cost 264px of a 410px panel and pushed the picker below the fold; chips fixed that, then the ticker made them the same information twice. The ticker has since gone too, which leaves the six unnamed while locked — open |
+| Panel previewed the six as dimmed rows, then padlocked chips | Neither — a count on one heading, padlocked until the lock moved to the rail | Rows cost 264px of a 410px panel and pushed the picker below the fold; chips fixed that, then the ticker made them the same information twice. The ticker has since gone too, which leaves the six unnamed while locked — open |
 | Placeholder and its rows both at the foot | Placeholder at the foot, rows after Category | Unlocking lands the panel on Category, so the rows should appear under the row being looked at |
 
 
