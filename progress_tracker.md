@@ -1038,6 +1038,15 @@ closed; open, `rgb(0, 79, 250)` at 700 with the lock the same; one line and a
 heading; unlocking takes the row and its lock off the rail. 151 tests green,
 build, typecheck and lint clean.
 
+**And the locked panel's two lines were pulled together** — *the vertical
+padding between the two lines is too much*. Both inherited the body's 1.5
+line-height, leaving 10.5px between `6 style filters locked` and `Pick a
+category to see them`. They are 17/22 and 15/20 now, the second line's leading
+being `ThumbRow`'s own, which takes the gap to 4px; `pt` and `pb` each went up a
+pixel to give back what the leading took from the outer edges. Measured: the
+heading's glyphs sit at the same 277–297 as before, the space under the second
+line is 16px against 16.5, and the categories below move up 7px.
+
 ### 2026-09-10 — the guided block grows up, and Style Filters settles
 
 Four notes back on `/pvfilters`, all right.

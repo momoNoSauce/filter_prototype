@@ -883,11 +883,19 @@ export function FilterScreen({
                 **No padlock here since 2026-09-24** — it moved to the rail row,
                 after *More Filters*, on request. The word *locked* is now the
                 panel's only mention of the lock.
+
+                **Set tight, 22 over 20** (2026-09-24, on the render: the gap
+                between the two lines *looks off*). Both inherited the body's
+                1.5, which left 10.5px between their glyphs — two lines of
+                one message set like two messages. Explicit leading takes it to
+                4, the second line's 20 being `ThumbRow`'s own. `pt` 6 → 7 and
+                `pb` 14 → 15 give back what the leading took from the outer
+                edges, so the heading sits where it did and only the gap moved.
               */}
-              <p className="px-[14px] pt-[6px] text-[17px] font-bold text-heading">
+              <p className="px-[14px] pt-[7px] text-[17px] leading-[22px] font-bold text-heading">
                 {panelPreview.length} style filters locked
               </p>
-              <p className="px-[14px] pt-[5px] pb-[14px] text-[15px] text-muted">
+              <p className="px-[14px] pt-[2px] pb-[15px] text-[15px] leading-[20px] text-muted">
                 Pick a category to see them
               </p>
               {unlockOptions.map((option) => (
