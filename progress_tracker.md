@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-09-10
+Last updated: 2026-09-24
 
 > **Four docs, one job each.** `CLAUDE.md` — the rules, and the only one loaded
 > into every session, so keep it short. `plan.md` — the architecture.
@@ -996,6 +996,31 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 (`Price/pc (low → high)`); the active treatment is untouched — bold, primary,
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
+
+### 2026-09-24 — `/pvfilters2` gets the go-ahead, and its row becomes a plain More Filters
+
+**`/pvfilters2` is the route going forward.** The first note with the go-ahead:
+*"remove animation and the likes from more filters, just say More Filters on the
+tin"*.
+
+**The Style Filters row is now *More Filters*, and holds still.** The ticker —
+the row's name, the six filters behind it, then a pulsing *Enable Style
+Filters*, a word every 1.8s — is gone along with its component (`TickerLabel`)
+and its two keyframes (`ticker-in`, `ticker-pulse`). The primary label stays,
+never having been motion, and its weight still tracks `active`. The panel, the
+unlock and the landing on Category are untouched.
+
+Two loose ends fall out of it, logged as open questions rather than fixed on a
+guess: **nothing names the six while the row is locked** — the ticker was the
+only place they appeared — and the panel heading still says `6 style filters
+locked`. The label is also shared with A–D's `more` row, the `tags` catch-all;
+no rail carries both and nothing looks a row up by label.
+
+Verified at 360px: the closed row reads `More Filters` at every sample across
+4s, `animation-name: none`, primary at weight 500, and 700 when open; ticking
+*Women's T-Shirts* in the locked panel swaps it for the six after Category, 8
+rows to 13, landing on Category. No console errors. 151 tests green, build,
+typecheck and lint clean.
 
 ### 2026-09-10 — the guided block grows up, and Style Filters settles
 
@@ -2818,6 +2843,15 @@ became a column of rows on 2026-09-03. Same files, same box, 44px instead of
 - **Brands** — still grey `#d9d9d9` placeholders, and more conspicuous at row size than they were at tile size. Real logos couldn't be sourced: Clearbit's logo API is retired, and Wikipedia/Wikimedia returned unrelated files for 7 of 8 brands. Brand-supplied assets are the right input, and avoid the trademark question of scraping logos. On `/userjourney` there is no Brands panel at all since 2026-09-07 — the row hides itself on a one-brand storefront, which is what closed open question 4a; it used to draw an empty panel, every product there being a *Zenifit* and Zenifit not one of `BRANDS`' ten.
 
 ## Open questions for the designer
+
+-2. **What the locked *More Filters* panel says** (2026-09-24). Two loose ends
+   from taking the ticker off. The six — Size, Fit, Neck Type, Sleeve Type,
+   Pattern, Closure Type — are **named nowhere until a category is picked**,
+   the ticker having been the only place they appeared. And the heading still
+   reads `6 style filters locked` under a row called *More Filters*. Each is a
+   line of copy once called — `6 more filters locked`, say, or the six named in
+   muted text under the heading, which costs two or three lines of the fold
+   where the padlocked chips cost most of it.
 
 -1. **An icon for Pattern** (2026-09-10). Five of the six style filters on
    `/pvfilters` have line art — Size, Fit, Neck, Sleeve, Closure, supplied and

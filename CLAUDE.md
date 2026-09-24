@@ -67,7 +67,7 @@ built 1:1 from screengrabs of the live app rather than from Figma.
 |---|---|---|
 | **`/userjourney`** | redirect → `/userjourney/seller/kartik` | none — flat rail, the launch build |
 | **`/pvfilters`** | the listing itself | *Find It Fast* block on the listing |
-| **`/pvfilters2`** | the listing itself | *Style Filters* row in the Filters sheet |
+| **`/pvfilters2`** | the listing itself | *More Filters* row in the Filters sheet — **the go-ahead, 2026-09-24** |
 
 **Each spells out its own props, and that is deliberate.** They shared a
 `KartikStorefront` for an hour of 2026-09-09 and it was reversed the same day:
@@ -103,7 +103,7 @@ differs is what happens to its `vertical: true` block when a vertical settles.
 |---|---|---|---|
 | `"journey"` | `/pvfilters` | rows appear after Category | 7 → 13 |
 | `"journey-flat"` | `/userjourney` | never appears (`FLAT_RAILS`) | 7 always |
-| `"journey-gated"` | `/pvfilters2` | *Style Filters* placeholder at the foot swaps for them | 8 → 13 |
+| `"journey-gated"` | `/pvfilters2` | *More Filters* placeholder at the foot swaps for them | 8 → 13 |
 
 `FLAT_RAILS` and `gated` are hung off the **preset**, not `controls`, because
 `getRail` and `dropOrphanedSelections` must agree about them and are reached by
@@ -151,24 +151,28 @@ Filter chip opens the sheet and when it closes).
 - **`guidedPv` must never be set beside `"journey-flat"`**, which has no style
   rows for the buttons to open.
 
-#### `/pvfilters2` — the Style Filters row
+#### `/pvfilters2` — the More Filters row
+
+**The go-ahead landed on 2026-09-24** — this is the route being taken forward.
 
 A row that isn't there teaches nobody, so this one keeps a placeholder at the
-foot of the rail naming what is behind it.
+foot of the rail saying there is more behind it.
 
 - **Drawn like every other row, with a `primary` label.** The blue text is the
   whole marker: the dim, the `primary-subtle` fill and the outline were each
   tried and each came off. Colour alone keeps the rail one grid and one fill;
   the weight still tracks `active`, as every row's does.
-- **Its label tickers while locked** — `Style Filters → Size → Fit → Neck Type →
-  Sleeve Type → Pattern → Closure Type → `**`Enable Style Filters`**, a word
-  every 1.8s, the last in primary and pulsing. One word at a time, arriving and
-  stopping. It **stops when the row is open** and **never starts under
-  `prefers-reduced-motion`** — checked in `TickerLabel`, not left to the CSS,
-  which can only slow travel and not stop words changing.
+- **Its label is a plain `More Filters` and nothing on it moves** (2026-09-24,
+  on the go-ahead: *just say More Filters*). It was *Style Filters*, tickering
+  through the six filters behind it to a pulsing *Enable Style Filters*; the
+  ticker, its keyframes and `TickerLabel` are gone. **Don't put motion back on
+  the row without asking.** It shares its words with A–D's `more` row (the
+  `tags` catch-all) but not its id — no rail carries both.
 - **Its panel, locked, is a padlocked count, one line, and the three categories
   as `ThumbRow`s** — the picker is *in* the panel, so unlocking is a tap and not
-  an instruction, and the draft means it fills under the finger.
+  an instruction, and the draft means it fills under the finger. The heading
+  still reads `6 style filters locked`, and since the ticker went **nothing
+  names the six until a category is picked** — an open question, not a bug.
 - **It leaves when the real rows arrive**, `gated` being the mirror of
   `vertical: true`. The array is `JOURNEY_RAIL_ORDER` plus one appended row, so
   the unlocked rail is exactly `/pvfilters`'.

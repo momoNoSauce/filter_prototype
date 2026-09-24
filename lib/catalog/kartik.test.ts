@@ -237,7 +237,7 @@ describe("the orphan guard no longer erases the cut that narrowed scope", () => 
      *
      * `/userjourney` has no Size control in any state, so nothing is stranded.
      * `/pvfilters` and `/pvfilters2` both give Size a row once a vertical
-     * settles — the guided block's Size button on one, *Style Filters* on the
+     * settles — the guided block's Size button on one, *More Filters* on the
      * other — so a cut left behind when the buyer widens is orphaned there.
      * The garment attribute goes on all three.
      */

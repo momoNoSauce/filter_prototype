@@ -1217,7 +1217,7 @@ describe("variants C and D — the page is the vertical", () => {
      *
      * - A–D: a vertical-only Size **row**, so `?size=m` with no vertical goes.
      * - `/pvfilters` and `/pvfilters2`: a Size row once a vertical settles —
-     *   the guided block's Size button on one, *Style Filters* on the other —
+     *   the guided block's Size button on one, *More Filters* on the other —
      *   so an unsettled link goes there too.
      * - `/userjourney`: no Size control in any state, so nothing was stranded
      *   and the link survives, as it has since the row came off on 2026-09-08.
@@ -1292,7 +1292,7 @@ describe("variants C and D — the page is the vertical", () => {
     /*
      * `/pvfilters2`, 2026-09-09. The other two Kartik rails *remove* the garment
      * attributes until a vertical settles, so a buyer who never ticks a category
-     * never learns there was anything to tick for. This one puts a **Style
+     * never learns there was anything to tick for. This one puts a **More
      * Filters** placeholder there instead — and the placeholder leaves the
      * moment the real rows arrive: a stand-in should not outlive the thing it
      * stood in for.
@@ -1316,7 +1316,7 @@ describe("variants C and D — the page is the vertical", () => {
       "Cashback",
       "Seller Offer",
       "SOLV Target Scheme",
-      "Style Filters",
+      "More Filters",
     ]);
 
     // Settled: the placeholder is gone and all six are rows of their own,
@@ -1349,9 +1349,8 @@ describe("variants C and D — the page is the vertical", () => {
     expect(gated().filter((r) => r.gated)).toHaveLength(1);
     expect(gated(["womens-t-shirts"], "womens-t-shirts").filter((r) => r.gated)).toHaveLength(0);
 
-    // Its facetIds are the six it hands over, so Clear Filters reaches them
-    // while it is standing in for them — and they are also what the rail row's
-    // ticker reads out, in this order.
+    // Its facetIds are the six it hands over, in rail order, so Clear Filters
+    // reaches them while it is standing in for them.
     expect(gated().find((r) => r.gated)!.facetIds).toEqual([
       "size",
       "fit",
@@ -1596,7 +1595,7 @@ describe("variants C and D — the page is the vertical", () => {
      *
      * - `"journey"` and `"journey-gated"` orphan a Size cut like A–D: both give
      *   Size a row once a vertical settles, one through the guided block's Size
-     *   button and one through *Style Filters*.
+     *   button and one through *More Filters*.
      * - `"journey-flat"` keeps it: `/userjourney` has no Size control in any
      *   state, so `?size=m` is a hand-written URL nothing can strand, and the
      *   empty state's Clear Filters resolves it. Its set excludes Size by hand,

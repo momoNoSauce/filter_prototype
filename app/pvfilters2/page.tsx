@@ -57,11 +57,12 @@ export default function Page() {
        * - `priceChip: false` — Price Range stays a rail facet, so the bands are
        *   still reachable in the panel and nothing is orphaned.
        * - `rail: "journey-gated"` (2026-09-09) — `JOURNEY_RAIL_ORDER` with a
-       *   **Style Filters** row at the foot standing in for the vertical block.
-       *   The other two Kartik rails simply remove those rows, so a buyer who
-       *   never ticks a category never learns there was anything to tick *for*;
-       *   this one keeps a row there, tickers the names of what is behind it
-       *   through its own label, and offers the categories inside its panel, so
+       *   **More Filters** row at the foot standing in for the vertical block
+       *   (*Style Filters* until the 2026-09-24 go-ahead, when its ticker came
+       *   off too). The other two Kartik rails simply remove those rows, so a
+       *   buyer who never ticks a category never learns there was anything to
+       *   tick *for*; this one keeps a row there, in a primary label that holds
+       *   still, and offers the categories inside its panel, so
        *   unlocking is a tap rather than an instruction. **The placeholder then
        *   leaves** and Size · Fit · Neck Type · Sleeve Type · Pattern · Closure
        *   Type arrive **immediately after Category** (2026-09-10) — 8 rows to
@@ -70,9 +71,10 @@ export default function Page() {
        *   this array being the journey rail plus the one appended placeholder.
        *   The order is otherwise the journey rail's: Price · Margin · MOQ ·
        *   Category · Brands · Seller · Seller City · the block · the three
-       *   offer magnitudes — with Style Filters appended after all of them
+       *   offer magnitudes — with More Filters appended after all of them
        *   while it is standing in for the block.
-       *   Gender, Delivery Time and More Filters have no row, so the central cut
+       *   Gender, Delivery Time and A–D's own *More Filters* — the `tags`
+       *   catch-all, a different row from this one — have no row, so the central cut
        *   is **Category → Women's T-Shirts**, which is what settles the vertical
        *   and puts Size on the rail. Brands, Seller and Seller City are
        *   `hideIfSingle` and Kartik's scope holds one of each, so the rail is

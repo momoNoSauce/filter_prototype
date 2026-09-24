@@ -929,16 +929,17 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
 ];
 
 /**
- * **The gated rail** — `JOURNEY_RAIL_ORDER` with a **Style Filters** row
- * standing in for the vertical block until a vertical is settled (2026-09-09).
+ * **The gated rail** — `JOURNEY_RAIL_ORDER` with a **More Filters** row
+ * standing in for the vertical block until a vertical is settled (2026-09-09;
+ * named *Style Filters* until the go-ahead on 2026-09-24).
  *
  * The problem it answers: a row that isn't there teaches nobody. On the other
  * two Kartik rails the garment attributes simply don't exist until a vertical
  * settles, so a buyer who never ticks a category never learns there was
  * anything to tick *for*. Here a row sits on the rail from the first render
- * naming them, and its panel offers the categories that unlock it — the picker
- * is *in* the panel, so it is one tap rather than an instruction to go
- * elsewhere.
+ * saying there is more, and its panel offers the categories that unlock it —
+ * the picker is *in* the panel, so it is one tap rather than an instruction to
+ * go elsewhere.
  *
  * **It is a placeholder, and it swaps out.** The row shows only while the block
  * does not (`gated`, the mirror of `vertical: true`), so ticking a category
@@ -981,14 +982,22 @@ const JOURNEY_GATED_RAIL_ORDER: typeof RAIL_ORDER = [
    *
    * `getRail` filters in array order and the two are mutually exclusive
    * (`gated` is the mirror of `vertical: true`), so locked reads
-   * `…offers · Style Filters` and unlocked reads `Category · the six · offers`.
+   * `…offers · More Filters` and unlocked reads `Category · the six · offers`.
    */
   ...JOURNEY_RAIL_ORDER,
   {
     id: STYLE_RAIL_ID,
-    label: "Style Filters",
-    // The block's own facets, in rail order — which is also the order the
-    // locked row's ticker reads them in.
+    /*
+     * Plain words, on the go-ahead (2026-09-24): *just say More Filters*. It was
+     * *Style Filters*, with a label that tickered through the six below.
+     *
+     * **Not A–D's More Filters.** Same words, different row: that one is
+     * `more`, the `tags` catch-all at the foot of `RAIL_ORDER`, which no Kartik
+     * rail carries — so no rail shows both, and nothing looks a row up by its
+     * label. Tell them apart by id.
+     */
+    label: "More Filters",
+    // The block's own facets, in rail order.
     facetIds: JOURNEY_RAIL_ORDER.filter((row) => row.vertical).flatMap((row) => row.facetIds),
     gated: true,
   },

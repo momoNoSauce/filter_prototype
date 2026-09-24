@@ -836,7 +836,7 @@ all** — the journey rail has carried no Size row since 2026-09-08 and the bloc
 was the only other way to reach one. The note said the answer was a Size row on
 a rail of its own, not `guidedPv` back. That is what the gated rail below is.
 
-### The gated rail — Style Filters (2026-09-09, settled 09-10)
+### The gated rail — More Filters (2026-09-09, settled 09-10, go-ahead 09-24)
 
 On the question *"how do we make it obvious that you need to select a PV to show
 specific attribute filters?"*
@@ -847,7 +847,8 @@ settles. A buyer who never ticks a category never learns there was anything to
 tick *for* — the filters are not hidden behind a rule, they are hidden behind
 nothing at all.
 
-**The answer: `rail: "journey-gated"`.** A **Style Filters** row sits at the
+**The answer: `rail: "journey-gated"`.** A **More Filters** row — *Style
+Filters* until 2026-09-24 — sits at the
 foot of the rail from the first render, standing in for the vertical block and
 marked by **a `primary` label and nothing else** — same fill, same borders as
 its seven neighbours. The weight still tracks `active`, as every row's does, so
@@ -871,27 +872,39 @@ the order is the argument:
    instruction; and because the whole screen runs off the draft, the row fills
    under the finger rather than on `Show N results`.
 
-**The label tickers while the row is locked** — `Style Filters → Size → Fit →
-Neck Type → Sleeve Type → Pattern → Closure Type → `**`Enable Style Filters`**
-and round again, a word every 1.8s. Four things about it:
+**The label is a plain `More Filters`, and nothing on the row moves**
+(2026-09-24, with the go-ahead for this route: *"remove animation and the likes
+from more filters, just say More Filters on the tin"*). Until then it was
+*Style Filters*, and while locked it tickered — `Style Filters → Size → Fit →
+Neck Type → Sleeve Type → Pattern → Closure Type → `**`Enable Style Filters`**,
+a word every 1.8s. What that ticker had settled, kept so it is not re-proposed
+blind:
 
 - *One list, the name leading each lap.* Alternating name-and-filter read as a
-  stutter and gave the six filters — the interesting part — only half the time.
-- *One word at a time, arriving and stopping, not a marquee.* A word that stops
-  moving is a word you can read, and a 140px rail column is barely a marquee's
-  runway. The travel is 8px with the fade doing the work, for the same reason.
-- *It stops when the row is open.* Tapping it is the buyer asking what it is;
-  answering with a moving target would be perverse. Under
-  `prefers-reduced-motion` it never starts, which leaves the same still name —
-  read in `TickerLabel`, not left to the CSS, which can only slow the travel and
-  not stop the words changing.
-- *The lap ends on an instruction*, in primary and pulsing. Six nouns show what
-  is in there; one line says what to do about it. Two animations on one element
-  — the entrance runs once, the pulse takes over as it finishes — and opacity
-  only, a scaling label beside seven still rows reading as a glitch. It wraps to
-  two lines, which `SOLV Target Scheme` two rows up already does, so `truncate`
-  came off the ticker: clipping the one step that asks for a tap is the wrong
-  thing to cut.
+  stutter and gave the six filters only half the time.
+- *One word at a time, arriving and stopping, not a marquee* — 8px of travel
+  with the fade doing the work; a 140px column is barely a marquee's runway.
+- *It stopped when the row was open*, and never started under
+  `prefers-reduced-motion` — read in `TickerLabel`, because the CSS could only
+  slow the travel, not stop the words changing.
+- *The lap ended on an instruction*, in primary and pulsing, opacity only.
+
+All of it came off together — `TickerLabel`, `ticker-in`, `ticker-pulse` —
+rather than being slowed or trimmed: the ask was for the row to say what it is,
+and a row that says what it is holds still. **The blue label stays.** It was
+never motion, and it is the one marker left after the dim, the tint and the
+outline came off.
+
+**What that costs: nothing names the six while the row is locked.** The ticker
+was the only place they appeared — the panel's padlocked chips had come off on
+the argument that the ticker already read them out — so a buyer now meets
+*Size, Fit, Neck Type…* only once a category is picked, and the panel heading
+still says `6 style filters locked` under a row called *More Filters*. Both are
+logged as open questions for the designer rather than fixed on a guess.
+
+It also puts one label on two rows: A–D's `more` row, the `tags` catch-all, is
+called *More Filters* too. No rail carries both and nothing looks a row up by
+label, so they are told apart by id.
 
 **The placeholder leaves when the real rows arrive.** `gated` is the mirror of
 `vertical: true`, read off `showVertical` rather than `genderRedundant` so it
@@ -928,15 +941,16 @@ holds them locks.
 
 #### What was tried and reversed
 
-Five rounds in two days, each on a note back, each right. Recorded so nobody
-re-proposes one:
+Five rounds in two days, each on a note back, each right — and a sixth with the
+go-ahead. Recorded so nobody re-proposes one:
 
 | Tried | Reversed to | Why |
 |---|---|---|
 | Row dimmed on the rail | Drawn like every other row | Dimming said *broken* where it meant *unavailable*; it is the row you are meant to press |
 | Row tinted `primary-subtle`, then outlined `primary` | Neither — **a `primary` label** and the rail's own fill and borders | A second fill made the rail read as two lists; a box round one row of eight fought the grid of shared hairlines |
-| Named *Garment Details*, then *Fashion Trends* | **Style Filters** | What is behind the lock is a reason to tap, and the name should say so |
-| Panel previewed the six as dimmed rows, then padlocked chips | Neither — a count and a padlock on one heading | Rows cost 264px of a 410px panel and pushed the picker below the fold; chips fixed that, then the ticker made them the same information twice |
+| Named *Garment Details*, then *Fashion Trends*, then *Style Filters* | **More Filters** (2026-09-24) | *Style Filters* argued that what is behind the lock is a reason to tap; the go-ahead asked for the row to say plainly what it is |
+| Label tickered through the six to a pulsing *Enable Style Filters* | A still label (2026-09-24) | On the go-ahead: *remove animation and the likes* — all of it, not a slower or shorter ticker |
+| Panel previewed the six as dimmed rows, then padlocked chips | Neither — a count and a padlock on one heading | Rows cost 264px of a 410px panel and pushed the picker below the fold; chips fixed that, then the ticker made them the same information twice. The ticker has since gone too, which leaves the six unnamed while locked — open |
 | Placeholder and its rows both at the foot | Placeholder at the foot, rows after Category | Unlocking lands the panel on Category, so the rows should appear under the row being looked at |
 
 

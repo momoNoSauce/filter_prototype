@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
 import {
@@ -51,73 +51,6 @@ const CATEGORY_FACET_ID = "category";
  * same answer. `currentColor`, so it takes the chip's primary from the class
  * list rather than hard-coding the hex a token already names.
  */
-/** How long each word holds before the next slides in. */
-const TICKER_MS = 1800;
-
-/**
- * The rail label for a **locked `Style Filters` row** — a horizontal ticker
- * reading the row's name, then the filters behind it, then the ask:
- *
- *     Style Filters → Size → Fit → Neck Type → Sleeve Type → Pattern →
- *     Closure Type → *Enable Style Filters* → Style Filters → …
- *
- * **One list, not the name between every word.** It shipped alternating — name,
- * filter, name, filter — on the reasoning that the row had to stay findable by
- * name; in practice the name came back so often it read as a stutter, and the
- * six filters, which are the interesting part, only had half the time. The name
- * still leads every lap, which is enough to identify the row.
- *
- * **The lap ends on an instruction.** Six nouns have shown the buyer what is in
- * there; *Enable Style Filters* is the only step that says what to do about it,
- * so it arrives last, in primary, and pulses. It wraps to two lines in the
- * 140px rail column, which `SOLV Target Scheme` two rows up already does — the
- * row is a fixed 60px and takes both without moving.
- *
- * One word at a time, each arriving and stopping, rather than a continuous
- * marquee — a word that stops moving is a word you can read, and the rail
- * column is 140px, which is barely a marquee's worth of runway.
- *
- * **It stops when the row is open.** Tapping it is the buyer asking what it is;
- * answering with a moving target would be perverse, so `running` goes false and
- * the name stands still. It also never starts under `prefers-reduced-motion`,
- * which leaves the same still name — the query is read here rather than left to
- * the CSS, because the CSS can only slow the travel and not stop the words
- * changing.
- */
-function TickerLabel({ label, words }: { label: string; words: string[] }) {
-  // Name first, then each filter once, then the ask. Starting on the name is
-  // also what makes the first paint and the server agree.
-  const sequence = useMemo(
-    () => [label, ...words, `Enable ${label}`],
-    [label, words],
-  );
-  const [step, setStep] = useState(0);
-  const isCta = step === sequence.length - 1;
-
-  useEffect(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(
-      () => setStep((n) => (n + 1) % sequence.length),
-      TICKER_MS,
-    );
-    return () => window.clearInterval(id);
-  }, [sequence.length]);
-
-  return (
-    // `key` restarts the keyframe on every word. No `truncate`: the last step is
-    // two words longer than the column and wraps, which the 60px row absorbs —
-    // clipping the one step that asks for a tap would be the wrong thing to cut.
-    <span
-      key={step}
-      className={`block leading-[18px] ${
-        isCta ? "animate-ticker-cta text-primary" : "animate-ticker-in"
-      }`}
-    >
-      {sequence[step]}
-    </span>
-  );
-}
-
 function Padlock() {
   return (
     <svg viewBox="0 0 12 12" aria-hidden className="size-[14px] shrink-0">
@@ -441,7 +374,7 @@ export function FilterScreen({
    * panel, and *where* it falls back is worth a line:
    *
    * **A gated row that unlocks lands on Category** (2026-09-09, on the ask).
-   * Ticking a category inside *Fashion Trends* is what makes that row disappear
+   * Ticking a category inside *More Filters* is what makes that row disappear
    * — the six filters it stood in for arrive as rows of their own — and landing
    * on Price Range, the first row, would read as the screen resetting under the
    * tap. Category is where the buyer just acted, with their pick ticked, so the
@@ -529,8 +462,8 @@ export function FilterScreen({
    * and then the very same lists are what get rendered.
    */
   /**
-   * **A gated row with no vertical settled** — `/pvfilters2`'s *Garment
-   * Details* (2026-09-09). The row stays on the rail in both states; this is
+   * **A gated row with no vertical settled** — `/pvfilters2`'s *More
+   * Filters* (2026-09-09). The row stays on the rail in both states; this is
    * what decides which panel it opens.
    *
    * Read off the *draft*, like everything else on this screen, so ticking a
@@ -557,10 +490,10 @@ export function FilterScreen({
     : [];
 
   /**
-   * What is behind the lock. Only its **length** is read now — the panel counts
-   * them and the rail row's ticker reads the names — but it stays derived from
-   * the row rather than hard-coded, so adding a seventh filter to the block
-   * changes the heading without anyone remembering to.
+   * What is behind the lock. Only its **length** is read — the panel counts
+   * them — but it stays derived from the row rather than hard-coded, so adding
+   * a seventh filter to the block changes the heading without anyone
+   * remembering to.
    */
   const panelPreview = locked ? rail.facetIds : [];
 
@@ -719,7 +652,7 @@ export function FilterScreen({
           {RAIL.map((entry, index) => {
             // `rail.id`, not `activeRail`: when a row vanishes the two differ
             // for a render, and the rail must light the panel that is open —
-            // otherwise unlocking Fashion Trends leaves nothing highlighted.
+            // otherwise unlocking More Filters leaves nothing highlighted.
             const active = entry.id === rail.id;
             /*
              * The rail's applied cue. For a facet row it is the number of
@@ -782,6 +715,11 @@ export function FilterScreen({
                   all came off. Colour alone, so the rail keeps one grid and one
                   fill; the weight still tracks `active`, as every row's does,
                   which is what stops the marker from swallowing that state.
+
+                  **And it holds still** (2026-09-24, on the go-ahead: *just say
+                  More Filters*). It used to ticker through the six filters
+                  behind it and end on a pulsing *Enable Style Filters*; now it
+                  is the row's own name, set the way every row's is.
                 */}
                 <span
                   className={`min-w-0 flex-1 text-[15px] ${
@@ -792,15 +730,7 @@ export function FilterScreen({
                         : "font-medium text-[#323232]"
                   }`}
                 >
-                  {/* A locked row tickers; open, it answers with its name. */}
-                  {entry.gated && !active ? (
-                    <TickerLabel
-                      label={entry.label}
-                      words={entry.facetIds.map((id) => FACET_BY_ID.get(id)!.label)}
-                    />
-                  ) : (
-                    entry.label
-                  )}
+                  {entry.label}
                 </span>
                 {applied > 0 &&
                   (entry.id === SORT_RAIL_ID ? (
@@ -901,7 +831,7 @@ export function FilterScreen({
           )}
 
           {/*
-            **The locked panel** — `/pvfilters2`'s *Style Filters* before a
+            **The locked panel** — `/pvfilters2`'s *More Filters* before a
             vertical is settled (2026-09-09).
 
             Two lines and the picker, in that order: what you get and how many,
@@ -910,11 +840,13 @@ export function FilterScreen({
             *select a category* states a rule and leaves the payoff to the
             imagination.
 
-            **The six names are gone from here.** They spent an afternoon as
-            padlocked chips and the padlock survives them, on the heading — the
-            rail row's ticker now reads the names out one at a time, so spelling
-            them again above the picker was the same information twice in one
-            glance, and it cost the categories most of the fold.
+            **The six names are not here.** They spent an afternoon as
+            padlocked chips and the padlock survives them, on the heading. The
+            chips came off because the rail row's ticker read the names out, so
+            spelling them again above the picker was the same information twice
+            in one glance, and it cost the categories most of the fold. **The
+            ticker came off too** (2026-09-24), so nothing names the six until a
+            category is picked — known, and left for the designer to call.
 
             The categories are the real `ThumbRow`s with live counts and the
             same `toggle` as the Category row up the rail, so ticking here is
