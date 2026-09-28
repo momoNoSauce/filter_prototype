@@ -32,6 +32,17 @@ deprecated in Next 16 and renamed. Same behaviour, different file and export.
 
 ## The commit email is load-bearing for deploys
 
+**Since 2026-09-28 the project is `momonosauce/filter-prototype`**, on
+momoNoSauce's own hobby account and connected to GitHub, so a push to `main`
+deploys. The team project the rest of this section describes was removed. The
+rule is simpler now: **only the owner's commits build**, so the repo commits as
+`320892459+momoNoSauce@users.noreply.github.com` — the noreply address that
+could not be matched below resolves fine on the new project (`374ccc4`, 32s).
+A commit under `m23ldx002@iitj.ac.in` is cheeseKracker's and is blocked with
+*"the commit author doesn't have permission to create deployments for this
+project"* — which is how `6e8459e` sat that day. What follows is the history
+under the old team, kept for the reading-a-block method, which still holds.
+
 `vercel --prod` reads the **HEAD commit's author email** and refuses to build
 when it can't match it to a GitHub account:
 
@@ -90,7 +101,7 @@ indistinguishable from a slow one. Ask the API, which says it outright:
 ```bash
 TOKEN=$(python3 -c "import json;print(json.load(open('$HOME/Library/Application Support/com.vercel.cli/auth.json'))['token'])")
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.vercel.com/v13/deployments/<dpl_id>?teamId=team_7RaExFdsAbYFb54kXtQVYw3h" \
+  "https://api.vercel.com/v13/deployments/<deployment-host>" \
   | python3 -m json.tool | grep -iE "readyState|Reason|block"
 ```
 
@@ -976,6 +987,8 @@ the go-ahead. Recorded so nobody re-proposes one:
 | Placeholder and its rows both at the foot | Placeholder at the foot, rows after Category | Unlocking lands the panel on Category, so the rows should appear under the row being looked at |
 | Category fourth, the six after it pushing the offers down | Category second-last, the six after it at the foot, the rail scrolling up towards Category (2026-09-24) | On request: *rn the cashback, seller offers are going down* |
 | A spacer under the six so Category could scroll to the very top | Scroll to the rail's end and stop; Category ~95px down | On the render: *space left at the bottom … that I don't want* |
+| Unlocked, nothing marked where the six began | A **`More Filters` strip** above Size (2026-09-28) | On request, with a mock: once a category is picked, a separator should say *those are more filters* |
+| That strip as a light caption on the rail's own fill, then inverted white on `#323232` | The mock's 36px strip, 13px bold `#323232`, on `#cfcfcf` | The caption was *not visually distinct*; the inversion *too much*; the mock's `#dedede` was then asked a little darker |
 
 
 ## Design source — always pull from Figma, never eyeball

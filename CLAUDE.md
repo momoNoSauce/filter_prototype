@@ -436,7 +436,8 @@ quietly going public. Set the env var *before* deploying. The file is
 **The project is `momonosauce/filter-prototype`, Git-connected** (moved
 2026-09-28 from the removed `bitihotra-karaks-projects` one). **A push to `main`
 deploys**; nothing else is needed. Live at
-`https://filter-prototype-momonosauce.vercel.app`. A stale `.vercel/project.json`
+`https://filter-prototype-sandy.vercel.app` (`-momonosauce` is the same
+deployment's second alias). A stale `.vercel/project.json`
 still pointing at the old team is the thing to distrust — `vercel project ls`
 answers which project is real.
 

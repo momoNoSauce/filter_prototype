@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Last updated: 2026-09-24
+Last updated: 2026-09-28
 
 > **Four docs, one job each.** `CLAUDE.md` — the rules, and the only one loaded
 > into every session, so keep it short. `plan.md` — the architecture.
@@ -9,34 +9,33 @@ Last updated: 2026-09-24
 > The deepest reasoning is in the code comments; a rule changed there must be
 > changed in `CLAUDE.md` too.
 
-Live: **https://filterprototype.vercel.app** — **password-protected** since
-2026-08-14. **Leave the username blank** and enter the password; only the password is checked. It lives in the `SITE_PASSWORD` env var on Vercel
-(`npx vercel env ls --scope bitihotra-karaks-projects` to see it is set; `env
-rm` then `env add` to change it, then redeploy — env changes only reach the
-site on the next deploy). Redeploy with
-`npx vercel --prod --scope bitihotra-karaks-projects`. **The `--scope` is not
-optional** — the project belongs to the team, so a bare `vercel --prod` fails
-with `Not authorized` even when `vercel whoami` reports you logged in, which
-reads as an expired session and isn't one.
-Source: **https://github.com/momoNoSauce/filter_prototype** (private).
-Transferred from `cheeseKracker` on 2026-08-25; the old path still redirects, so
-an existing clone keeps working, but new links should use the one above.
-`cheeseKracker` was kept on as a collaborator with **push but not admin**, which
-is what lets this machine go on pushing without re-authenticating `gh`.
+Live: **https://filter-prototype-sandy.vercel.app** — **password-protected**.
+**Leave the username blank** and enter the password; only the password is
+checked. It lives in the `SITE_PASSWORD` env var on Vercel (`npx vercel env ls
+--scope momonosauce` to see it is set; `env rm` then `env add` to change it —
+env changes only reach the site on the next deploy).
+`filter-prototype-momonosauce.vercel.app` is the same deployment under Vercel's
+second automatic alias; share the `-sandy` one.
 
-**Commit attribution needed fixing separately**, and would have gone unnoticed:
-the repo moved but `user.email` was still `m23ldx002@iitj.ac.in`, which is
-verified on `cheeseKracker`. A GitHub email belongs to exactly one account, so
-every commit went on crediting the old one under the new owner's repo. This repo
-now commits as `momoNoSauce` via that account's noreply address; the machine's
-global config is deliberately untouched, so other projects keep their identity.
+**The Vercel project is `momonosauce/filter-prototype`** (hobby) since
+2026-09-28. The old one under the `bitihotra-karaks-projects` team was removed,
+and with it the `--scope bitihotra-karaks-projects` rule.
+Source: **https://github.com/momoNoSauce/filter_prototype** (private).
+Transferred from `cheeseKracker` on 2026-08-25; the old path still redirects.
+`gh`'s active account on this machine is `momoNoSauce`, and `gh auth setup-git`
+makes git push as it.
+
+**This repo commits as `momoNoSauce`** — `user.email` is
+`320892459+momoNoSauce@users.noreply.github.com`, set per-repo so the machine's
+global config and other projects are untouched. **It has to be**: a hobby
+project only builds its owner's commits, and one under `m23ldx002@iitj.ac.in`
+(cheeseKracker's) pushes cleanly and then sits `Blocked` on Vercel.
 Local: `npm run dev` → http://localhost:3000.
 
-> **GitHub and Vercel are not connected.** `vercel --prod` uploads straight from
-> the local folder; a `git push` deploys nothing and a deploy commits nothing.
-> Both have to be run. Connecting the repo at
-> `vercel.com/bitihotra-karaks-projects/filter_prototype/settings/git` collapses
-> this to one step — browser-only, the CLI can't do it.
+> **GitHub and Vercel are connected** since 2026-09-28: a push to `main`
+> deploys, and nothing else is needed. A stale `.vercel/project.json` pointing
+> at the old team is the thing to distrust — `npx vercel project ls` says which
+> project is real.
 
 > **The password gate never fires on localhost.** `proxy.ts` keys off `VERCEL`,
 > which the platform sets and your machine does not, so `npm run dev` — and a
@@ -996,6 +995,37 @@ Verified at 360px: the row sets on one line, as does the longest label beside it
 (`Price/pc (low → high)`); the active treatment is untouched — bold, primary,
 glyph tinted, check — and tapping it still applies, closes, and leaves the URL
 bare, Popularity being omitted from the query by design.
+
+### 2026-09-28 — a More Filters separator, and the move to momonosauce's Vercel
+
+**Once a category unlocks the six on `/pvfilters2`, a `More Filters` strip heads
+them**, between Category and Size — on request: *once a category is selected …
+there should be a separator to show those are more filters*, with a mock. The
+group keeps its name after the placeholder row that named it has gone. It is a
+caption, not a row: never tappable, never the open panel. `/pvfilters2` only;
+`/pvfilters` grows the same six with no caption.
+
+Carried as an optional `heading` on the first block row of
+`JOURNEY_GATED_RAIL_ORDER` and passed through `getRail`, so no other rail sees
+it. Drawn after four rounds in one sitting:
+
+| Tried | Result |
+|---|---|
+| 28px, the rail's own `#f4f4f4`, 11px grey uppercase caption | *not visually distinct* |
+| The mock: 36px, `#dedede`, 13px bold `#323232` | kept |
+| Inverted: white on `#323232` | *too much* — rolled back |
+| The mock one step darker, **`#cfcfcf`** | **shipped** |
+
+**The first push sat `Blocked` on Vercel** — *the commit author doesn't have
+permission to create deployments for this project*. The project had moved to
+momonosauce's hobby account, which only builds the owner's commits, and the
+repo was still committing as `m23ldx002@iitj.ac.in`, cheeseKracker's address.
+Re-set to momoNoSauce's noreply address, the next push (`374ccc4`) built in 32s.
+That is the noreply address that could not be matched on 2026-08-25; on the new
+project it resolves. The deploy notes in `CLAUDE.md`, `plan.md` and
+`docs/decisions.md` were rewritten to match.
+
+Verified at 360px locked and unlocked; 151 tests, lint and typecheck green.
 
 ### 2026-09-24 — `/pvfilters2` gets the go-ahead, and its row becomes a plain More Filters with a lock
 

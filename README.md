@@ -2,7 +2,7 @@
 
 A runnable prototype of SOLV's B2B commerce app, built to demonstrate **filter and sort**, which the product doesn't have today. The designs existed in Figma but nothing was clickable, so filter behaviour couldn't be evaluated. This makes it real: 1,070 seeded products behind a working faceted-search engine and the designed UI.
 
-**Live:** https://filterprototype.vercel.app — **password-protected**. Leave the
+**Live:** https://filter-prototype-sandy.vercel.app — **password-protected**. Leave the
 username blank; the password is the `SITE_PASSWORD` env var on Vercel and is
 never in the repo. Localhost is never gated — `proxy.ts` keys off `VERCEL`.
 
@@ -51,34 +51,27 @@ Four files, one job each, and they are the source of truth rather than something
 Source: **https://github.com/momoNoSauce/filter_prototype** (private, transferred
 from `cheeseKracker` on 2026-08-25 — the old path still redirects).
 
-GitHub and Vercel are **not connected**, so a push deploys nothing and a deploy commits nothing. Both have to be run:
+The Vercel project is **`momonosauce/filter-prototype`**, connected to GitHub, so
+**a push to `main` deploys** — nothing else to run:
 
 ```bash
 git push origin main
-npx vercel --prod --scope bitihotra-karaks-projects
 ```
 
-**The `--scope` is not optional** — the project belongs to the team, so a bare
-`vercel --prod` fails with `Not authorized` even when `vercel whoami` says you
-are logged in, which reads as an expired session and isn't one.
+### Only momoNoSauce's commits build
 
-Connecting the repo in the Vercel project's Git settings would collapse this to one step; it's browser-only.
-
-### If a deploy hangs with no output, it is blocked, not slow
-
-Vercel reads the **HEAD commit's author email** and refuses to build when that
-address isn't on the Vercel team. Nothing in the CLI says so: `vercel ls` reports
-`UNKNOWN` with no duration, `inspect` shows `Builds: . [0ms]`, `inspect --logs`
-prints nothing, and the deployment URL answers 302 like a healthy one — that is
-the password gate replying, not the app. Only the dashboard, or the API, carries
-the sentence:
+It is a hobby project, which builds only its owner's commits. This repo's
+`git config user.email` is momoNoSauce's noreply address,
+`320892459+momoNoSauce@users.noreply.github.com`; a commit under any other
+address pushes fine and then sits `Blocked` on Vercel. The CLI doesn't say why —
+`vercel ls` shows `Blocked` and no duration — so ask the API, which carries the
+sentence:
 
 ```bash
 TOKEN=$(python3 -c "import json;print(json.load(open('$HOME/Library/Application Support/com.vercel.cli/auth.json'))['token'])")
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.vercel.com/v13/deployments/<dpl_id>?teamId=team_7RaExFdsAbYFb54kXtQVYw3h" \
+  "https://api.vercel.com/v13/deployments/<deployment-host>" \
   | python3 -m json.tool | grep -iE "readyState|Reason|block"
 ```
 
-`git config user.email` must stay `m23ldx002@iitj.ac.in` until an address on the
-`momoNoSauce` account is added to the Vercel team. See `CLAUDE.md`.
+See `CLAUDE.md`.
