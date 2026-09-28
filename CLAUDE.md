@@ -188,6 +188,13 @@ foot of the rail saying there is more behind it.
   lands on the last row with Category ~95px down. A spacer that let Category
   reach the very top came off the same day — *no space left at the bottom*.
   Don't add empty rail to buy scroll room.
+- **Once unlocked, a `More Filters` strip heads the six** (2026-09-28) —
+  `heading` on the first of them in `JOURNEY_GATED_RAIL_ORDER`, passed through
+  `getRail`. A separator, not a row: never tappable, never the open panel.
+  **Drawn as the user's mock drew it** — 36px, 13px bold `#323232`, on `#cfcfcf` (a step darker than the mock's `#dedede`, on request).
+  Bracketed on both sides the same day: a lighter caption on the
+  rail's own fill was *not visually distinct*, and white on `#323232` was *too
+  much*. `/pvfilters2` only.
 - **Unlocking lands on Category**, via `FilterScreen`'s rail fallback, so the
   swap and the landing happen in one render. The rail lights **`rail.id`, not
   `activeRail`** — they differ for exactly that render.

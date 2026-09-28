@@ -566,6 +566,14 @@ export interface RailEntry {
    * screen needs it per row and the rail is the only thing that knows.
    */
   gated?: boolean;
+  /**
+   * **A caption drawn above this row** on the rail — not a row, not tappable,
+   * never the open panel. `/pvfilters2` only (2026-09-28, on request): once a
+   * category unlocks the six, `More Filters` heads them, so the rows the
+   * placeholder promised are still named as that group after it leaves.
+   * Carried out of `getRail` like `gated`.
+   */
+  heading?: string;
 }
 
 /**
@@ -989,7 +997,11 @@ const JOURNEY_GATED_RAIL_ORDER: typeof RAIL_ORDER = [
    */
   ...JOURNEY_RAIL_ORDER.filter((row) => row.id !== "category" && !row.vertical),
   JOURNEY_RAIL_ORDER.find((row) => row.id === "category")!,
-  ...JOURNEY_RAIL_ORDER.filter((row) => row.vertical),
+  // The first of the six carries the placeholder's own words as a caption, so
+  // the group keeps its name once the row that named it has gone.
+  ...JOURNEY_RAIL_ORDER.filter((row) => row.vertical).map((row, i) =>
+    i === 0 ? { ...row, heading: "More Filters" } : row,
+  ),
   {
     id: STYLE_RAIL_ID,
     /*
@@ -1223,7 +1235,7 @@ export function getRail(
     )
     // `gated` comes through: a locked row is on the rail in both states and the
     // Filters screen has to know which one it is in.
-    .map(({ id, label, facetIds, gated }) => ({ id, label, facetIds, gated }));
+    .map(({ id, label, facetIds, gated, heading }) => ({ id, label, facetIds, gated, heading }));
 }
 
 /**

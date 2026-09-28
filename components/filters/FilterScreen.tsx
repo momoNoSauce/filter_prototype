@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog/types";
 import { ActionFooter } from "@/components/ui/ActionFooter";
 import {
@@ -731,86 +731,107 @@ export function FilterScreen({
              * its label**, moved up from the locked panel's heading on request.
              */
             return (
-              <button
-                key={entry.id}
-                ref={entry.id === CATEGORY_FACET_ID ? categoryRowRef : undefined}
-                onClick={() => {
-                  setActiveRail(entry.id);
-                  setQuery("");
-                }}
-                /*
-                 * **Every row takes the same fill**, the gated one included. It
-                 * carried a `primary-subtle` tint for a day of 2026-09-09,
-                 * asked for so it would not read as greyed out; reversed on
-                 * 09-10 — a second colour in a column of eight identical rows
-                 * made the rail look like two lists rather than one.
-                 *
-                 * **Its borders are the same too**, since 2026-09-10. It spent
-                 * an afternoon outlined in `primary` — the fill's replacement,
-                 * 1px instead of 60×140 of ground — and that went the same way.
-                 * A box drawn round one row of eight is a heavier claim than
-                 * the row needs, and it fought the rail's own grid of shared
-                 * hairlines.
-                 */
-                className={`flex h-[60px] w-full cursor-pointer items-center gap-[6px] pr-[8px] pl-[14px] text-left ${
-                  active
-                    ? "bg-white"
-                    : "border-r border-[#dedede] bg-[#f4f4f4]"
-                } ${index > 0 ? "border-t border-[#dedede]" : ""}`}
-              >
+              <Fragment key={entry.id}>
                 {/*
-                  **A gated row's label is coloured like every row's**
-                  (2026-09-24, on request: its colour *is not like other
-                  filters*). It was always primary from 2026-09-10, the one mark
-                  left after the dim, the tint and the outline came off. **The
-                  padlock after it is the mark now**, asked for in the same
-                  note, and it takes the label's colour — so closed it is grey
-                  like its neighbours, and open it goes bold primary exactly as
-                  they do.
+                  **A caption, not a row** (2026-09-28, `/pvfilters2`, on request:
+                  once a category is picked there should be a separator showing
+                  those are more filters). It heads the six the placeholder
+                  unlocked, in the placeholder's own words.
 
-                  **And it holds still** (2026-09-24, on the go-ahead: *just say
-                  More Filters*). It used to ticker through the six filters
-                  behind it and end on a pulsing *Enable Style Filters*; now it
-                  is the row's own name.
-
-                  No count ever shares the line with the lock: the row shows
-                  only outside a vertical, where its six facets are orphaned,
-                  so `applied` is always 0 on it.
+                  **Drawn as the mock drew it** (2026-09-28): a 36px strip,
+                  13px bold text in the rows' own `#323232`. The fill is
+                  `#cfcfcf`, a step darker than the mock's `#dedede`, on request. A lighter caption on the rail's own
+                  fill went first and was sent back as *not visually distinct*;
+                  an inverted strip (white on `#323232`) went after and was
+                  *too much*. A separator has to read as a break, and no more.
+                  Not a button and never the open panel, so it carries the
+                  inactive rows' right border to keep the rail's edge unbroken.
                 */}
-                <span
-                  className={`min-w-0 flex-1 text-[15px] ${
-                    active ? "font-bold text-primary" : "font-medium text-[#323232]"
-                  }`}
+                {entry.heading && (
+                  <div className="flex h-[36px] items-center border-t border-r border-[#dedede] bg-[#cfcfcf] pl-[12px] text-[13px] font-bold text-[#323232]">
+                    {entry.heading}
+                  </div>
+                )}
+                <button
+                  ref={entry.id === CATEGORY_FACET_ID ? categoryRowRef : undefined}
+                  onClick={() => {
+                    setActiveRail(entry.id);
+                    setQuery("");
+                  }}
+                  /*
+                   * **Every row takes the same fill**, the gated one included. It
+                   * carried a `primary-subtle` tint for a day of 2026-09-09,
+                   * asked for so it would not read as greyed out; reversed on
+                   * 09-10 — a second colour in a column of eight identical rows
+                   * made the rail look like two lists rather than one.
+                   *
+                   * **Its borders are the same too**, since 2026-09-10. It spent
+                   * an afternoon outlined in `primary` — the fill's replacement,
+                   * 1px instead of 60×140 of ground — and that went the same way.
+                   * A box drawn round one row of eight is a heavier claim than
+                   * the row needs, and it fought the rail's own grid of shared
+                   * hairlines.
+                   */
+                  className={`flex h-[60px] w-full cursor-pointer items-center gap-[6px] pr-[8px] pl-[14px] text-left ${
+                    active
+                      ? "bg-white"
+                      : "border-r border-[#dedede] bg-[#f4f4f4]"
+                  } ${index > 0 ? "border-t border-[#dedede]" : ""}`}
                 >
-                  {entry.gated ? (
-                    // A flex line, so the 14px lock centres on the text rather
-                    // than sitting on its baseline. `More Filters` and the lock
-                    // fit the 118px a badgeless label has, bold as well.
-                    <span className="flex items-center gap-[6px]">
-                      {entry.label}
-                      <Padlock />
-                    </span>
-                  ) : (
-                    entry.label
-                  )}
-                </span>
-                {applied > 0 &&
-                  (entry.id === SORT_RAIL_ID ? (
-                    <span className="size-[6px] shrink-0 rounded-full bg-primary" />
-                  ) : (
-                    /*
-                     * 18px, so it reads at arm's length where the 6px dot did
-                     * not — this app's buyer is a kirana retailer on a
-                     * mid-range Android. `min-w` with 4px of padding rather
-                     * than a fixed square: Colour can reach twenty ticks, and a
-                     * two-digit number turns the circle into a pill of the same
-                     * height instead of overflowing it.
-                     */
-                    <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary px-[4px] text-[11px] font-medium text-white">
-                      {applied}
-                    </span>
-                  ))}
-              </button>
+                  {/*
+                    **A gated row's label is coloured like every row's**
+                    (2026-09-24, on request: its colour *is not like other
+                    filters*). It was always primary from 2026-09-10, the one mark
+                    left after the dim, the tint and the outline came off. **The
+                    padlock after it is the mark now**, asked for in the same
+                    note, and it takes the label's colour — so closed it is grey
+                    like its neighbours, and open it goes bold primary exactly as
+                    they do.
+
+                    **And it holds still** (2026-09-24, on the go-ahead: *just say
+                    More Filters*). It used to ticker through the six filters
+                    behind it and end on a pulsing *Enable Style Filters*; now it
+                    is the row's own name.
+
+                    No count ever shares the line with the lock: the row shows
+                    only outside a vertical, where its six facets are orphaned,
+                    so `applied` is always 0 on it.
+                  */}
+                  <span
+                    className={`min-w-0 flex-1 text-[15px] ${
+                      active ? "font-bold text-primary" : "font-medium text-[#323232]"
+                    }`}
+                  >
+                    {entry.gated ? (
+                      // A flex line, so the 14px lock centres on the text rather
+                      // than sitting on its baseline. `More Filters` and the lock
+                      // fit the 118px a badgeless label has, bold as well.
+                      <span className="flex items-center gap-[6px]">
+                        {entry.label}
+                        <Padlock />
+                      </span>
+                    ) : (
+                      entry.label
+                    )}
+                  </span>
+                  {applied > 0 &&
+                    (entry.id === SORT_RAIL_ID ? (
+                      <span className="size-[6px] shrink-0 rounded-full bg-primary" />
+                    ) : (
+                      /*
+                       * 18px, so it reads at arm's length where the 6px dot did
+                       * not — this app's buyer is a kirana retailer on a
+                       * mid-range Android. `min-w` with 4px of padding rather
+                       * than a fixed square: Colour can reach twenty ticks, and a
+                       * two-digit number turns the circle into a pill of the same
+                       * height instead of overflowing it.
+                       */
+                      <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary px-[4px] text-[11px] font-medium text-white">
+                        {applied}
+                      </span>
+                    ))}
+                </button>
+              </Fragment>
             );
           })}
         </div>
