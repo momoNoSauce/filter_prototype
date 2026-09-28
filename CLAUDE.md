@@ -433,20 +433,26 @@ closed**, so a deployment with no `SITE_PASSWORD` serves 503 rather than
 quietly going public. Set the env var *before* deploying. The file is
 `proxy.ts`, not `middleware.ts` — renamed in Next 16.
 
-**Deploys need `--scope bitihotra-karaks-projects`.** A bare `vercel --prod`
-fails with `Not authorized` and reads like an expired session.
+**The project is `momonosauce/filter-prototype`, Git-connected** (moved
+2026-09-28 from the removed `bitihotra-karaks-projects` one). **A push to `main`
+deploys**; nothing else is needed. Live at
+`https://filter-prototype-momonosauce.vercel.app`. A stale `.vercel/project.json`
+still pointing at the old team is the thing to distrust — `vercel project ls`
+answers which project is real.
 
-**A hung deploy with no output is a block, not slowness.** `vercel --prod` reads
-the HEAD commit's **author email** and refuses to build when it can't match it
-to a Vercel-team-authorised GitHub account. Nothing in the CLI says so —
-`vercel ls` reports `UNKNOWN`, `inspect --logs` prints nothing, and the URL
-answers 302 because that is the password gate replying. Check the dashboard, or
-ask the API for `readyStateReason`:
+**Commits must be authored by momoNoSauce or the build is blocked.** It is a
+hobby project, so only the owner's commits deploy. The repo's `git config
+user.email` is momoNoSauce's no-reply address,
+`320892459+momoNoSauce@users.noreply.github.com`; the machine's other GitHub
+account, cheeseKracker, owns `m23ldx002@iitj.ac.in`, and a commit under that
+email pushes fine and then sits `Blocked` on Vercel. Nothing in the CLI says
+so — `vercel ls` reports `Blocked` with no duration — so ask the API for
+`readyStateReason`:
 
 ```bash
 TOKEN=$(python3 -c "import json;print(json.load(open('$HOME/Library/Application Support/com.vercel.cli/auth.json'))['token'])")
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.vercel.com/v13/deployments/<dpl_id>?teamId=team_7RaExFdsAbYFb54kXtQVYw3h" \
+  "https://api.vercel.com/v13/deployments/<deployment-host>" \
   | python3 -m json.tool | grep -iE "readyState|Reason|block"
 ```
 
