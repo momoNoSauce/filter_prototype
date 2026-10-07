@@ -2,479 +2,184 @@
 
 # SOLV — Filter & Sort Prototype
 
-A Next.js prototype of SOLV's B2B commerce app, built to demonstrate **filter
-and sort**, which the real product lacks. Designs existed in Figma but weren't
-clickable. This makes them work against a seeded catalog so stakeholders can try
-real filter permutations.
+A Next.js 16 / React 19 / Tailwind v4 prototype of filter and sort for SOLV's
+B2B commerce app. There's no backend: a seeded catalog and a pure filter engine
+run entirely client-side.
 
-## Where the words are
+- `README.md` covers setup, routes and demo scripts.
+- `docs/architecture.md` explains how the engine, facets, rails and catalog work.
+- `docs/backlog.md` lists open UX issues and design questions.
 
-This file is loaded into every session, so it carries **rules and traps only**.
-The reasoning behind them lives in two places, both read on demand:
-
-- **The code comment beside the thing** — these files run 30–77% comment, and
-  that copy is the one that cannot drift from what it describes. Read the file
-  before reading either doc.
-- **`docs/decisions.md`** — the long-form decision record: every call, why it
-  was made, and what was rejected. Consult it before reversing anything here.
-
-`plan.md` is the architecture narrative; `progress_tracker.md` is the
-chronology, the UX backlog and the open questions for the designer.
-
-**When you change a rule, change it in the code comment and here.** Every
-contradiction this repo has grown came from updating one and not the other.
+**When you change behaviour, update the code comment beside it and this file.**
 
 ## Commands
 
 ```bash
 npm run dev      # http://localhost:3000
-npm test         # vitest — filter engine, seed, kartik catalog, panel fit
-npm run build    # production build; also typechecks
-npx eslint .     # lint — from the repo root, never a subdirectory
+npm test         # vitest
+npm run build    # production build + typecheck
+npx eslint .     # lint — always from the repo root
 ```
 
 ## Routes
 
-Four variants over one catalog, crossing **control placement** against
-**starting scope**. Identical card, catalog, engine, rail and sheets — *only the
-controls differ*, which is the whole point of the A/B. Don't let them drift
-apart in any other respect.
+| Route | Catalog | `variant` | Rail preset | Notes |
+|---|---|---|---|---|
+| `/`, `/results?q=shirt` | main 1,070 | `bottom-bar` | `default` | Variant A — floating pill |
+| `/b`, `/b/results?q=shirt` | main | `top-chips` | `default` | Variant B — chips under app bar |
+| `/c` | one vertical | `bottom-bar` | `default` | Variant C (`VerticalPlp`) |
+| `/d` | one vertical | `top-chips` | `default` | Variant D (`VerticalPlp`) |
+| `/userjourney` → `/userjourney/seller/kartik` | Kartik 540 | `top-chips` | `journey-flat` | No style filters |
+| `/pvfilters` | Kartik | `top-chips` | `journey` | `guidedPv: true` — Find It Fast block |
+| `/pvfilters2` | Kartik | `top-chips` | `journey-gated` | More Filters gate — **the version going forward** |
 
-| | Home | PLP | Controls |
-|---|---|---|---|
-| **A** | `/` | `/results?q=shirt` | Filters · Sort in a floating pill (Figma `697:2658`) |
-| **B** | `/b` | `/b/results?q=shirt` | The same two as chips under the app bar (`644:4011`) |
-| **C** | — | `/c` | The pill, already inside one vertical |
-| **D** | — | `/d` | Top chips, already inside one vertical |
+Also: `/seller/[sellerId]`, `/b/seller/[sellerId]`,
+`/c|d/seller/[sellerId]/[categoryId]`, `/search`, `/b/search`, and
+`{base}/product/[productId]` for every listing.
 
-**`Filter` leads and `Sort` follows** (2026-09-03), in the chip bar and in the
-pill alike, where both frames draw the reverse. One order across the 2×2 on
-purpose: these variants exist to compare *placement*, so a second difference
-has no business in them.
+### Route rules
 
-A and B are reached by **searching**: Home → search bar → type `shirt` → tap a
-suggestion. `shirt` matches all 1,070 products, so the scope is identical to the
-`/seller/[sellerId]` route it replaced — every count and test still holds.
-`/seller/[sellerId]` and `/c/seller/[s]/[cat]` still exist and still work.
-
-### The three Kartik listings
-
-All three serve `lib/catalog/kartik.ts` — 540 tees, separate from the 1,070 and
-invisible to A–D — through the one `PlpScreen`. They are **outside the 2×2**:
-built 1:1 from screengrabs of the live app rather than from Figma.
-
-| | Route | PV filters |
-|---|---|---|
-| **`/userjourney`** | redirect → `/userjourney/seller/kartik` | none — flat rail, the launch build |
-| **`/pvfilters`** | the listing itself | *Find It Fast* block on the listing |
-| **`/pvfilters2`** | the listing itself | *More Filters* row in the Filters sheet — **the go-ahead, 2026-09-24** |
-
-**Each spells out its own props, and that is deliberate.** They shared a
-`KartikStorefront` for an hour of 2026-09-09 and it was reversed the same day:
-routes made in order to diverge do not go behind a shared config. **Don't
-re-share them and don't "fix" the duplication** — the thing that is never copied
-is `PlpScreen`, not the prop block, which is how `/` and `/b/results` already
-work. `PlpScreen`, `ProductDetail` and `FindItFast` stay shared; something one
-route wants of those that another doesn't is a prop with a default, the way
-`cartBadge` and `guidedPv` are.
-
-`/userjourney`'s home beat is gone from the route but not the tree —
-`JourneyHome` has no caller, and putting it back is one `return`. Each listing
-has its own `product/[productId]`, and each passes `homeHref` explicitly:
-`ProductDetail` defaults it to `/userjourney`, so a route that forgets leaks
-into the journey.
-
-**The departures from the documented layout all live in one prop** — `controls`
-on `PlpScreen` (`verticalChips`, `priceChip`, `sortInFilters`, `rail`,
-`filterSheet`, `rangeInputs`, `guidedPv`). Every field but `guidedPv` defaults
-to the documented behaviour, so a route opts *out*; `guidedPv` adds a surface no
-other route has, so it opts *in*. **Put a new per-route departure in that object
-rather than adding a prop each.** All three pass `verticalChips: false`,
-`priceChip: false`, `filterSheet: true`, `rangeInputs: true`, and none passes
-`sortInFilters` — Sort went back to the strip on 2026-09-03 after six days
-inside Filters. That leaves the strip as `Sort` and `Filter` plus the four offer
-chips, and makes the central cut **Category → Women's T-Shirts**, not Gender →
-Women.
-
-**Three rail presets over one array.** All are `JOURNEY_RAIL_ORDER`; what
-differs is what happens to its `vertical: true` block when a vertical settles.
-
-| Preset | Route | Block behaviour | Rows |
-|---|---|---|---|
-| `"journey"` | `/pvfilters` | rows appear after Category | 7 → 13 |
-| `"journey-flat"` | `/userjourney` | never appears (`FLAT_RAILS`) | 7 always |
-| `"journey-gated"` | `/pvfilters2` | *More Filters* placeholder at the foot swaps for them | 8 → 13 |
-
-`FLAT_RAILS` and `gated` are hung off the **preset**, not `controls`, because
-`getRail` and `dropOrphanedSelections` must agree about them and are reached by
-different callers — a disagreement there is the orphan trap. That is also why
-`dropOrphanedSelections` stopped branching on `byCategory`: the early return was
-only ever right because a settled category always turned the rows *on*.
-
-**Size is the facet to watch across the three.** It is `vertical: true` on
-`JOURNEY_RAIL_ORDER`, so `/pvfilters` and `/pvfilters2` both give it a row once
-a vertical settles and both orphan a Size cut when the vertical goes.
-**`"journey-flat"` excludes it by hand** — `/userjourney` has no Size control in
-any state, so `?size=m` still applies there as `?fabric=cotton` does. The rule
-underneath all three: *strip a cut where something on the page could have shown
-it and now can't.*
-
-#### `/pvfilters` — the Find It Fast block
-
-`controls.guidedPv`, from two screengrabs of a competitor's search results,
-drawn in our tokens. **Choose category** as picture tiles, and picking one
-unfolds **choose style**: a button per style filter, each opening the Filters
-sheet on that row's own panel (`initialRail` on `FilterScreen`, cleared when the
-Filter chip opens the sheet and when it closes).
-
-- **The tiles select `category`** — heading and labels say so, since
-  2026-09-10. Category is on the rail, so the badge, the panel and Clear Filters
-  reach it for free; Gender has no row here and driving it would strand a
-  filter. The names wrap to two lines capped at 92px, which is what forces the
-  break and keeps two tiles to a row.
-- **The buttons come from `styleRows(preset)`**, so they are the rail's own rows
-  and can never claim a panel that isn't there. They wrap and size to their
-  labels. **A button with ticks behind it** takes `border-primary`, a primary
-  label and icon, and the count in the app's 18px filled circle — the buttons
-  open panels rather than selecting, so this is the listing's only report of a
-  style cut.
-- **Each step is counted against the steps *above* it, never below.** Size
-  zeroed the Boys tile outright once, and a step must not delete its own parent.
-- **Picking a different vertical clears the size cut**, said by hand in
-  `pickVertical`: switching never un-settles the vertical, so the orphan guard
-  sees nothing to drop.
-- **The art is in `public/style/`** — supplied, not a Figma export, which is why
-  it is not in `public/figma/` — and goes through `MaskIcon`, each file being
-  one `currentColor` path. `STYLE_FACET_ICONS` maps facet id → file, and **a
-  facet not in it keeps the grey box** (Pattern today), so a new icon is one
-  file and one line.
-- **`guidedPv` must never be set beside `"journey-flat"`**, which has no style
+- **A–D differ only in control placement and starting scope.** They share the
+  card, catalog, engine, rail and sheets. Filter comes before Sort in both the
+  pill and the chip bar.
+- **Each route tree is a closed loop.** Keep `PlpScreen`'s `variant`,
+  `HomeScreen`'s `basePath` and `AppBar`'s `homeHref` in step when you add a
+  route. `productBasePath` is `""` for A, so test it with `!== undefined`.
+- **Each Kartik route spells out its own `PlpScreen` props.** Don't extract a
+  shared config. `PlpScreen`, `ProductDetail` and `FindItFast` stay shared;
+  per-route differences are props with defaults.
+- **Every Kartik route passes `homeHref`** to its detail page. `ProductDetail`
+  defaults to `/userjourney`.
+- **Per-route layout switches go in `PlpScreen`'s `controls` prop.** Don't add
+  a new top-level prop for one. Defaults: `verticalChips: true`,
+  `priceChip: true`, `rail: "default"`, and `sortInFilters`, `filterSheet`,
+  `rangeInputs`, `guidedPv` all `false`. A–D pass no `controls`. All three
+  Kartik routes set `verticalChips: false`, `priceChip: false`,
+  `filterSheet: true` and `rangeInputs: true`.
+- **Never set `guidedPv` together with `journey-flat`.** That rail has no style
   rows for the buttons to open.
 
-#### `/pvfilters2` — the More Filters row
+## Rails (`lib/filters/facets.ts`)
 
-**The go-ahead landed on 2026-09-24** — this is the route being taken forward.
+`getRail(category, preset, silenced)` returns the rows the Filters screen shows.
 
-A row that isn't there teaches nobody, so this one keeps a placeholder at the
-foot of the rail saying there is more behind it.
+| Preset | Order | Outside a vertical | Inside one |
+|---|---|---|---|
+| `default` (A–D) | `RAIL_ORDER` | 13 rows | 18 (17 in C/D, no Category) |
+| `journey` | `JOURNEY_RAIL_ORDER` | 7 | 13 — style rows appear after Category |
+| `journey-flat` | `JOURNEY_RAIL_ORDER` | 7 | 7 — listed in `FLAT_RAILS` |
+| `journey-gated` | `JOURNEY_GATED_RAIL_ORDER` | 8 — ends with a locked More Filters row | 13 — six style rows replace it under a heading |
 
-- **Drawn exactly like every other row, label colour included — a padlock
-  after the label is the whole marker** (2026-09-24, on request). The dim, the
-  `primary-subtle` fill, the outline and a `primary` label were each tried and
-  each came off. The lock is `currentColor`, so it goes grey closed and primary
-  open with the label, and no count ever shares its line: the row shows only
-  outside a vertical, where its six are orphaned.
-- **Its label is a plain `More Filters` and nothing on it moves** (2026-09-24,
-  on the go-ahead: *just say More Filters*). It was *Style Filters*, tickering
-  through the six filters behind it to a pulsing *Enable Style Filters*; the
-  ticker, its keyframes and `TickerLabel` are gone. **Don't put motion back on
-  the row without asking.** It shares its words with A–D's `more` row (the
-  `tags` catch-all) but not its id — no rail carries both.
-- **Its panel, locked, is a count, one line, and the three categories as
-  `ThumbRow`s** — no padlock on the heading since the lock moved to the rail
-  row. The picker is *in* the panel, so unlocking is a tap and not an
-  instruction, and the draft means it fills under the finger. The heading
-  still reads `6 style filters locked`, and since the ticker went **nothing
-  names the six until a category is picked** — an open question, not a bug.
-- **It leaves when the real rows arrive**, `gated` being the mirror of
-  `vertical: true`. The array is `JOURNEY_RAIL_ORDER` re-cut (2026-09-24):
-  Category second-last above *More Filters*, the six after it at the foot, so
-  locked reads `…offers · Category · More Filters` and nothing above Category
-  moves on unlock. `/pvfilters`' rows, not its order.
-- **Unlocking scrolls the rail up towards Category**, smooth (instant under
-  reduced motion), from either the locked panel or the Category row — fired by
-  the locked → unlocked *transition*, never on open. **As far as the rail goes
-  and no further**: Category and the six are 420px against a ~530px rail, so it
-  lands on the last row with Category ~95px down. A spacer that let Category
-  reach the very top came off the same day — *no space left at the bottom*.
-  Don't add empty rail to buy scroll room.
-- **Once unlocked, a `More Filters` strip heads the six** (2026-09-28) —
-  `heading` on the first of them in `JOURNEY_GATED_RAIL_ORDER`, passed through
-  `getRail`. A separator, not a row: never tappable, never the open panel.
-  **Drawn as the user's mock drew it** — 36px, 13px bold `#323232`, on `#cfcfcf` (a step darker than the mock's `#dedede`, on request).
-  Bracketed on both sides the same day: a lighter caption on the
-  rail's own fill was *not visually distinct*, and white on `#323232` was *too
-  much*. `/pvfilters2` only.
-- **Unlocking lands on Category**, via `FilterScreen`'s rail fallback, so the
-  swap and the landing happen in one render. The rail lights **`rail.id`, not
-  `activeRail`** — they differ for exactly that render.
+- `JOURNEY_RAIL_ORDER`: Price Range · Margin on MRP · MOQ · Category · Brands ·
+  Seller · Seller City · [Size · Fit · Neck Type · Sleeve Type · Pattern ·
+  Closure Type] · Cashback · Seller Offer · SOLV Target Scheme. Bracketed rows
+  are `vertical: true`.
+- `JOURNEY_GATED_RAIL_ORDER`: the same rows with Category moved below the three
+  offers. The style rows follow it. The first style row carries
+  `heading: "More Filters"`, rendered as a non-tappable 36px strip (13px bold
+  `#323232` on `#cfcfcf`). A `gated: true` row labelled More Filters (id
+  `style`) shows only while locked.
+- On `/pvfilters2`, unlocking opens the Category panel and smooth-scrolls the
+  rail towards it, with no scroll animation under reduced motion. The rail
+  highlights `rail.id`, not `activeRail`. Don't add empty rail space to buy
+  scroll room.
+- **The locked More Filters row** looks like any other row and has a padlock
+  after its label. It doesn't animate. Its panel shows a count line and the
+  three categories as `ThumbRow`s.
+- Brands, Seller and Seller City have `hideIfSingle`. They hide when the page's
+  products hold only one value (`singleValuedFacets`), which is always the case
+  on Kartik.
+- `FLAT_RAILS` and `gated` belong to the **preset**, not to `controls`. Both
+  `getRail` and `dropOrphanedSelections` read them.
 
+## Invariants — don't break these
 
-**`JOURNEY_RAIL_ORDER`, re-ordered 2026-09-07 on request**: Price Range · Margin
-on MRP · MOQ · Category · Brands · Seller · Seller City, then the block — **Size
-· Fit · Neck Type · Sleeve Type · Pattern · Closure Type** — then **Cashback ·
-Seller Offer · SOLV Target Scheme at the foot**. Fabric and Colour have no row
-here (2026-09-07 / 09-08).
-
-Three rows carry `hideIfSingle` — **Brands, Seller and Seller City hide when the
-page scope holds one value of them**, which Kartik's does (one brand, one
-seller, one city), so the array yields **7 rows outside a vertical and 13
-inside one**. Measured off the page's products (`singleValuedFacets`), never off
-the selections: a row that came and went as boxes were ticked is the churn the
-2026-08-19 reorder exists to stop.
-
-**The three offer magnitudes are a row each, last on the rail** — they spent a
-few hours of 2026-09-07 merged behind one *All Offers* row (a rail row may carry
-several facets, and the panel heads each with its facet label, which was that
-request's own sketch) and the ask reversed the same day: three types of offer,
-three rows, at the foot. Last in the array, so they are last in **both** states
-— the five garment attributes are `vertical: true` and arrive above them.
-**They carry the typed min/max again** — dropped that morning with the merge,
-which had nowhere to put three pairs of boxes, and asked back hours after the
-split: the same control Price, Margin and MOQ carry, from the same table, with
-the same exclusivity and the same refusal toast.
-
-**Only a panel that stacks several facets is headed** — today just A–D's Offers
-row (`hasOffer` + `offers`). The heading is 15px bold on `heading` with a
-hairline rule above each group but the first, raised on 2026-09-07 from 13px
-bold `#767676`, which set two sizes *below* the rows it labelled;
-**`FACET_HEADING_H` is 43, measured**. A **lone panel is never headed**,
-including an offer's: the rail row already names it in primary two columns to
-the left, so a heading repeats it. The three offer panels carried the offer's
-name and its chip art for an hour that day, while all three were merged and a
-heading was the only thing telling the groups apart. The art stays in
-`lib/filters/offerIcons.ts` — the chip strip is its only caller again, and it is
-where a panel that wants it back should take it from.
-
-Its Filters screen is a **bottom sheet** rather than full-bleed, so the listing
-stays visible behind it. **Its height follows the rail** (`sheetHeightPct`),
-capped at 80% of the frame and floored at 440: seven rows gives 530, and the
-five attribute rows grow it to the capped 640 — a fixed 80% left ~110px of white
-under a short rail. **On `/userjourney` that growth is gone** since the rail went
-flat, so its sheet is 530 in every state; `/pvfilters` still climbs. That
-shortens the panel, so `needsSearch` takes a viewport argument, computed from
-the height actually rendered (`sheetPanelViewport`) — 530 at the cap against
-the full-bleed 690, giving 11 rows / 9 thumbnail rows / 13 tiles instead of
-14 / 12 / 19, and less again in a shrunken sheet. **A panel of nothing but
-bands never earns a field** however tall it runs: the field searches labels,
-and the merged Offers panel's 720px of `₹200 – ₹400` is a vocabulary you read
-rather than hunt through. A–D are untouched.
-
-Its **typed ranges** are **all six band facets** — Price Range, Margin on MRP,
-MOQ, Cashback, Seller Offer and SOLV Target Scheme (`?price=150-450`,
-`?margin=60-`, `?moq=5-12`, `?cashback=100-200`, `?sellerOffer=10-`) — a min/max
-above each one's bands.
-Per facet the two controls are exclusive, and each disables the other: both are
-values on one facet, where they would otherwise OR into a wider result. An
-inverted range is refused rather than filtered, with a toast on blur naming
-that facet. **The boxes commit on blur, never per keystroke** (2026-09-07) —
-committing each digit applied `9-`, `90-`, `900-` and moved the count before the
-second box was touched, which made the designed refusal state unreachable. Every band facet is built from **one table** (`RANGE_FACETS` in
-`facets.ts`) differing only in the number it compares and, in the UI, the unit
-beside the box — ₹ before the number, `%` and `pc` after. `typed: false` there
-is a facet with bands and no boxes; **nothing sets it today**, and it is kept
-because the three offer magnitudes flipped twice on 2026-09-07 — off with the
-merge that gave them one shared panel, back on when the rows split again. The
-boxes cost the facet
-registry two optional hooks: **`matches`** overrides the default set-membership
-test, and **`accepts`** widens `parseSelections`'s id validation. **A facet
-that overrides `matches` needs `accepts` too** — without it the selection works
-in-session and vanishes on reload, and a facet with **neither** must have no
-control that can produce a range. `parseTypedRange` gates on the first
-character before its regex, because `matches` runs per product per value — the
-720-walk engine test is the thing that notices.
-
-**The offer magnitudes are journey-only, and the data is why.** Cashback,
-`sellerOfferPct` and `targetScheme` are drawn in `lib/catalog/kartik.ts` — the
-main catalog names its offers without pricing them, and A–D's card prints a
-cashback ribbon whenever it is handed an amount, so figures there would change
-four signed-off variants. The merged *Offers* row is therefore in
-`JOURNEY_RAIL_ORDER` only; on A–D all three of its groups would be empty, and
-A–D's own Offers row stacks `hasOffer` and `offers` — the offer *names* — as it
-always did. The two
-new properties take **a fourth PRNG stream** (`offerRand`) so none of Kartik's
-540 counts move, and both are drawn unconditionally and kept only where the
-offer is. **The chips stay binary** — they ask *is there one*, the rows ask
-*how big*, on different facets, so the two AND.
-
-**A facet dropped from one rail may still have a chip.** `clearsAlso` on
-`FilterScreen` is how Clear Filters still reaches it — otherwise the toast says
-`All filters cleared` over a lit chip. `hasOffer` and `offers` are that case on
-the journey: the merged *Offers* row holds the magnitudes, not the names.
-
-Detail routes are `{base}/product/[productId]` for all seven paths, dynamic
-rather than pre-rendered.
-
-**Each variant is a closed loop** — hand someone `/b` and the journey stays in
-B. Three props enforce it and all three must be kept in step when adding a
-route: `PlpScreen`'s `variant`, `HomeScreen`'s `basePath`, `AppBar`'s
-`homeHref`. **`""` and `undefined` are different answers** for
-`productBasePath` — A's base path is genuinely empty, so it is tested with
-`!== undefined` or A's cards silently stop navigating.
-
-## Architecture
-
-No backend. Deterministic seeded catalog + pure filter engine, all client-side.
-
-| Module | Job |
-|---|---|
-| `lib/catalog/seed.ts` | 1,070 products from a fixed-seed PRNG |
-| `lib/catalog/scope.ts` | Vertical-scoped product sets for C and D |
-| `lib/catalog/kartik.ts` | The journey's separate 540, four PRNG streams, and the only products carrying offer magnitudes |
-| `lib/catalog/productImage.ts` | `gender × kind × colour` → generated art, Figma renders as fallback |
-| `lib/filters/engine.ts` | `applyFilters` (OR within a facet, AND across), `facetOptionsWithCounts`, `sortProducts`, `clearSelections` |
-| `lib/filters/facets.ts` | The facet registry, `RAIL_ORDER`, `RANGE_FACETS`, `VerticalMode`, `settledVertical`, `singleValuedFacets`, `dropOrphanedSelections` |
-| `lib/filters/activeVariant.ts` | Which pack a card is talking about — sizes live on the pack |
-| `lib/filters/contextChips.ts` | Which chips the strip carries, given the selections |
-| `lib/filters/panelFit.ts` | Whether a panel overflows the fold, and so earns a search field — and how tall the bottom sheet is, from its rail |
-| `lib/filters/urlState.ts` | State mirrored to the query string; local state stays the source of truth |
-| `components/plp/PlpScreen.tsx` | **The** PLP — all seven paths, parameterised, never copied |
-| `components/plp/VerticalPlp.tsx` | The C/D listing configuration, shared by their four routes |
-| `components/plp/FindItFast.tsx` | `/pvfilters`' guided *choose gender → choose size* block |
-| `components/filters/FilterScreen.tsx` | Rail + panel, draft/commit |
-| `components/journey/ProductDetail.tsx` | **The** detail screen — journey, `/pvfilters`, B and D |
-
-**23 facets** behind 13 rail rows — 18 inside a vertical, 17 in C and D, 8 on
-the journey's rail and 13 inside a vertical on `/pvfilters`, which is the only
-route that still opens that block. Adding a facet is one entry in
-`FACETS`; a facet with bands is one entry in `RANGE_FACETS` plus a
-`rangeFacet()` line, and `typed: false` there is a facet with bands and no
-boxes — which is what keeps all six of those identical. Each
-declares `valuesOf(product, sizes?) → string[]`, so thumbnail rows, checkbox
-lists, range buckets and multi-valued delivery windows share one code path.
-
-**Category and Brands are a column of rows**, not the frame's tile grid, since
-2026-09-03 — `panel: "thumb"` and `ThumbRow`: a 44px picture, then the name and
-count wrapped to two lines. **No checkbox since 2026-09-08** — the row itself
-fills `primary/subtle` with a 1px `primary` border and its label in primary
-bold, still multi-select. **The box is inset 8px on every side** — 8 between
-two boxes as well, so the air around one reads even — with 8px of padding
-inside it, and the border sits on the row in both states, merely transparent
-when unselected, so nothing shifts on tap. Flex margins don't collapse, so a
-row's footprint is a flat **68px** and that is `THUMB_ROW_H`. Three tiles across a 240px panel gave the
-name ~72px, and one truncated line made *Men's Casual Shirts* and *Men's Casual
-T-Shirts* both read `Men's Casu…`. `TileGrid` is still there with no caller.
-
-## Rules that must not be broken
-
-**Counting.** `facetOptionsWithCounts` counts a facet's options against **every
-other facet's selections, never its own** — counting a facet against itself
-zeroes every unselected option the moment you tick one. Options at zero are
-hidden; anything *selected* stays visible at zero, so a selection can never
-become impossible to undo. Covered by tests; don't "simplify" it.
-
-**Size is counted by applying each option, not by tallying it** — and each
-option is applied *alone* (`{...selections, size: [option]}`), never unioned
-with the current selection. It is the one facet whose values move with another
-facet's selections, because the active pack moves. Three tests hold this.
-
-**The seed must not depend on the JS engine.** A shuffle takes a draw count
-fixed by the array's length, never by a comparator's answers.
-`Array.prototype.sort` with a random comparator is **banned outright** — it once
-consumed 6, 7 or 8 draws depending on the engine, so Vercel's Node 24 built a
-different catalog from dev's Node 26 and every test passed on the machine that
-wrote them. `seed.test.ts` pins the draw count per call.
-
-**Any new per-product property needs its own PRNG stream.** Extra draws on the
-main stream re-roll every product after them and invalidate every documented
-count. `sizeRand` and `attrRand` are the precedent. Likewise, don't *delete* a
-mid-sequence draw: `shippingFee` and `packType` are still drawn and simply
-unread for exactly this reason, and the retired GOLD offer carries
-`retired: true` rather than leaving the array.
-
-**Category → gender is 1:1.** All seven categories name their audience, so
-`CATEGORIES[].gender` is a single value the seed reads. Don't flatten the
-weights to a uniform distribution and don't reintroduce a `genders[]` array.
-`plural` is the gender-free noun for titles — a test asserts no possessive ever
-reaches one.
-
-**A filter with no control to show or undo it is the trap.** It survives Clear
-Filters and goes uncounted. `dropOrphanedSelections` runs wherever selections
-change, and any facet removed from the rail must leave `FACETS` too.
-
-**Never redraw an asset.** All icons are exact Figma exports in `public/figma/`.
-Monochrome icons that need to change colour go through
-`components/ui/MaskIcon.tsx` — an `<img>` can't be tinted.
-
-**Designs are 360px wide; never stretch a Figma dimension to fit.**
-`DeviceFrame` renders edge-to-edge below 480px and drops the untouched 360×800
-app into a phone mockup above it. A fixed width that is exact at 360 strands
-dead space on a 390 or 430px phone — this has bitten the Filters panel, the tile
-grid and the search field.
-
-**Use the tokens.** `app/globals.css` `@theme`, named after the Figma variables.
-The design's `#014FFA`, `#0a57ff` and `rgba(21,95,255,0.2)` are all slips for
-`primary` / `primary/subtle`.
+- **Counting:** `facetOptionsWithCounts` counts a facet against every *other*
+  facet's selections, never its own. Options at zero are hidden; selected
+  options stay visible at zero. Tests cover this.
+- **Size is counted by applying each option alone** (`{...selections, size:
+  [option]}`), never as a union with the current selection.
+- **No orphan filters.** Every selection must have a visible control. Run
+  `dropOrphanedSelections` wherever selections change, and remove a facet from
+  `FACETS` when you remove it from every rail. Use `clearsAlso` on
+  `FilterScreen` for a facet that has a chip but no rail row.
+- **Typed min/max ranges** (`rangeInputs`) commit on blur, never per keystroke.
+  Typed boxes and bands are mutually exclusive per facet. An inverted range is
+  refused, with a toast. A facet that overrides `matches` must also override
+  `accepts`.
+- **Determinism:** the catalogs come from fixed-seed PRNGs, and counts must
+  match between server and client and across Node versions.
+  - Shuffle with Fisher–Yates, using `length - 1` draws. **Never** use
+    `Array.prototype.sort` with a random comparator.
+  - Give every new per-product property its own PRNG stream (`sizeRand`,
+    `attrRand` and Kartik's `offerRand` are examples).
+  - Never delete a mid-sequence draw. Leave it drawn and unread, or mark it
+    `retired: true`.
+  - `seed.test.ts` pins the draw count. `kartik.test.ts` pins the main catalog
+    at 1,070 / Girls 108 / Men 584.
+- **Category → gender is 1:1** (`CATEGORIES[].gender`). Titles use `plural`, the
+  gender-free noun.
+- **Offer magnitudes exist only on Kartik** (Cashback ₹, Seller Offer %, SOLV
+  Target Scheme ₹). Don't add them to the main catalog.
 
 ## Design source
 
 Figma file `hdArN93DmnLu5JDB46SOwd` (`Filter-and-Sort`), section `651:4873`.
-Use the Figma MCP `get_design_context` (load the `figma-design-to-code`
-guidance first). **Always pull; never eyeball.**
+Pull specs with the Figma MCP `get_design_context`; never eyeball them.
 
 | Node | Screen |
 |---|---|
 | `628:1620` | Home |
 | `638:2718` | PLP base |
 | `638:3659` | Filters screen (rail + panel) |
-| `638:3696` | Tile grid — superseded 2026-09-03 by a row per option (`ThumbRow`) |
+| `638:3696` | Tile grid — replaced by `ThumbRow` rows |
 | `644:4435` / `644:4470` | Sort By / Gender sheets |
-| `644:4011` | Sort/Filter chip bar — B, D and the journey; drawn Sort-first, built Filter-first |
+| `644:4011` | Sort/Filter chip bar (built Filter-first) |
 | `644:4000` | Filters → Seller |
-| `674:4904` | The product-vertical chip |
-| `688:1687` | `SortbyIcon` — the five Sort sheet glyphs |
-| `697:2658` | The floating pill — A and C's controls |
+| `674:4904` | Product-vertical chip |
+| `688:1687` | `SortbyIcon` — Sort sheet glyphs |
+| `697:2658` | Floating pill (A and C) |
 
-Fonts are mixed on purpose: Roboto throughout, **Inter** for button labels.
+- The Kartik routes are built from live-app screengrabs (1080×2400, 3× the
+  design). Where a screengrab and Figma disagree, follow the screengrab.
+- Designs are 360px wide. Never stretch a Figma dimension. `DeviceFrame` renders
+  full-width below 480px and in a 360×800 phone mockup above it.
+- Use the `@theme` tokens in `app/globals.css`. Map `#014FFA`, `#0a57ff` and
+  `rgba(21,95,255,0.2)` to `primary` / `primary/subtle`.
+- Fonts: Roboto throughout, Inter for button labels.
+- Icons are exact Figma exports in `public/figma/`. Never redraw them. Tint
+  monochrome icons with `components/ui/MaskIcon.tsx`.
+- Style-filter icons live in `public/style/`, mapped in
+  `lib/filters/styleIcons.ts`. A facet missing from the map gets a grey
+  placeholder.
+- `design/` (reference PNGs) is gitignored. `public/figma/` and
+  `public/categories/` are tracked.
 
-**Where a live-app screengrab and Figma disagree, the screengrab wins** — that
-is settled for the product card, the price/margin block and the whole
-`/userjourney` route. `design/` holds reference PNGs and is **gitignored**;
-`public/figma/` and `public/categories/` are tracked because the app serves
-them.
+## Deploy
 
-## Deployment traps
+- Vercel project `momonosauce/filter-prototype`, Git-connected. **A push to
+  `main` deploys.**
+- Live at https://filter-prototype-sandy.vercel.app. Basic Auth uses the
+  `SITE_PASSWORD` env var (username ignored).
+- `proxy.ts` (Next 16's replacement for `middleware.ts`) gates every request
+  when `VERCEL` is set, and returns 503 if `SITE_PASSWORD` is missing. Set the
+  env var before deploying.
+- **Only commits authored by momoNoSauce build.** Commits from any other
+  author show `Blocked` in Vercel. Set the identity per repo:
 
-**The deployment is password-gated; localhost is not.** `proxy.ts` puts HTTP
-Basic Auth over every request — pages, `_next` chunks and `public/` alike. Two
-properties to preserve: it **keys off `VERCEL`**, not `NODE_ENV`, so `npm run
-dev` and a local `next build && next start` never prompt; and it **fails
-closed**, so a deployment with no `SITE_PASSWORD` serves 503 rather than
-quietly going public. Set the env var *before* deploying. The file is
-`proxy.ts`, not `middleware.ts` — renamed in Next 16.
-
-**The project is `momonosauce/filter-prototype`, Git-connected** (moved
-2026-09-28 from the removed `bitihotra-karaks-projects` one). **A push to `main`
-deploys**; nothing else is needed. Live at
-`https://filter-prototype-sandy.vercel.app` (`-momonosauce` is the same
-deployment's second alias). A stale `.vercel/project.json`
-still pointing at the old team is the thing to distrust — `vercel project ls`
-answers which project is real.
-
-**Commits must be authored by momoNoSauce or the build is blocked.** It is a
-hobby project, so only the owner's commits deploy. The repo's `git config
-user.email` is momoNoSauce's no-reply address,
-`320892459+momoNoSauce@users.noreply.github.com`; the machine's other GitHub
-account, cheeseKracker, owns `m23ldx002@iitj.ac.in`, and a commit under that
-email pushes fine and then sits `Blocked` on Vercel. Nothing in the CLI says
-so — `vercel ls` reports `Blocked` with no duration — so ask the API for
-`readyStateReason`:
-
-```bash
-TOKEN=$(python3 -c "import json;print(json.load(open('$HOME/Library/Application Support/com.vercel.cli/auth.json'))['token'])")
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.vercel.com/v13/deployments/<deployment-host>" \
-  | python3 -m json.tool | grep -iE "readyState|Reason|block"
-```
-
-There are **two different blocks** and conflating them cost an hour — see
-`docs/decisions.md`. `git config user.email` is the first thing to check if the
-identity has changed recently.
+  ```bash
+  git config user.name  momoNoSauce
+  git config user.email 320892459+momoNoSauce@users.noreply.github.com
+  ```
 
 ## Working style
 
-- **Verify visually before claiming something works.** Playwright is not a
-  dependency — install ad hoc (`npm install --no-save playwright`), screenshot
-  at 360px with `deviceScaleFactor: 2–3`, then uninstall. Hide the dev overlay
-  first; it intercepts clicks:
-  ```js
-  await page.addStyleTag({ content: 'nextjs-portal{display:none !important}' });
-  ```
-- **Re-measure rather than eyeball** anything derived from a screengrab. Sources
-  are 1080×2400, exactly 3× the design.
-- Badged buttons change their accessible name (`Filters` → `3 Filters`), so use
-  regex selectors.
-- Run `npx eslint .` from the repo root. `.claude/**` is in `globalIgnores`
-  because Claude Code's worktrees there are full checkouts of this repo.
-- Port 3000 may be another worktree's dev server — check before trusting a
-  screenshot.
+- **Check visually before reporting a change as working.** Install Playwright
+  ad hoc (`npm install --no-save playwright`), screenshot at 360px with
+  `deviceScaleFactor` 2–3, then uninstall. Hide the dev overlay first:
+  `page.addStyleTag({ content: 'nextjs-portal{display:none !important}' })`.
+- A badge changes a button's accessible name (`Filters` → `3 Filters`), so match
+  it with a regex.
+- `.claude/**` is in ESLint's `globalIgnores`.
+- Port 3000 may belong to another worktree's dev server. Check before trusting
+  a screenshot.

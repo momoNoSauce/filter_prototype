@@ -27,10 +27,7 @@ import { KARTIK, getKartikCatalog } from "@/lib/catalog/kartik";
  * two routes now put the same behaviour in two places — both reveal the garment
  * attributes once a vertical settles, one on the listing and one behind the
  * Filters button — which is the comparison a second route was for. Each setting
- * is annotated with *what* it does and one line of *why*; the long history
- * behind them — which stakeholder call, what it reversed, what it cost — lives
- * in `docs/decisions.md`, and is not repeated here precisely so the three files
- * have no shared prose to drift.
+ * is annotated with what it does.
  */
 export default function Page() {
   return (

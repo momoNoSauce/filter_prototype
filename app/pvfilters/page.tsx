@@ -23,10 +23,7 @@ import { KARTIK, getKartikCatalog } from "@/lib/catalog/kartik";
  * twice since**, both on 2026-09-09: the journey took `rail: "journey-flat"` and
  * stopped growing on a settled vertical, and this route took `guidedPv` and put
  * that growth on the listing where a buyer can see it. Each setting is annotated
- * with *what* it does and one line of *why*; the long history behind the ones
- * inherited from the journey — which stakeholder call, what it reversed, what it
- * cost — lives in `docs/decisions.md`, and is not repeated here precisely so the
- * two files have no shared prose to drift.
+ * with what it does.
  */
 export default function Page() {
   return (

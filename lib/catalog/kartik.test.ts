@@ -37,7 +37,7 @@ describe("Kartik Exporters' catalog", () => {
 
   it("leaves the main catalog untouched", () => {
     // The whole reason Kartik generates on its own PRNG streams. If this fails,
-    // every count in plan.md and progress_tracker.md has moved.
+    // every count in docs/architecture.md has moved.
     const main = getCatalog();
     expect(main).toHaveLength(1070);
     expect(applyFilters(main, { gender: ["girls"] })).toHaveLength(108);

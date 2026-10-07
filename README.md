@@ -1,77 +1,104 @@
 # SOLV — Filter & Sort Prototype
 
-A runnable prototype of SOLV's B2B commerce app, built to demonstrate **filter and sort**, which the product doesn't have today. The designs existed in Figma but nothing was clickable, so filter behaviour couldn't be evaluated. This makes it real: 1,070 seeded products behind a working faceted-search engine and the designed UI.
+A clickable Next.js prototype of filter and sort for SOLV's B2B commerce app. It
+runs the Figma designs against a seeded catalog of 1,070 products, plus a
+separate 540-product storefront catalog, using a client-side filter engine.
 
-**Live:** https://filter-prototype-sandy.vercel.app — **password-protected**. Leave the
-username blank; the password is the `SITE_PASSWORD` env var on Vercel and is
-never in the repo. Localhost is never gated — `proxy.ts` keys off `VERCEL`.
+## Run it
 
 ```bash
 npm install
 npm run dev      # http://localhost:3000
-npm test         # filter engine unit tests
-npm run build    # production build; also typechecks
-npx eslint .     # lint (from the repo root)
+npm test         # vitest — engine, seed, Kartik catalog, panel fit
+npm run build    # production build + typecheck
+npx eslint .     # lint, from the repo root
 ```
 
-## The four variants, and the journey
+No environment variables are needed locally.
 
-Four variants over one catalog. A and B walk Home → **search for `shirt`** → PLP → filter and sort; C and D drop you straight inside a product vertical.
+## Routes
 
-| | Home | PLP | Controls |
-|---|---|---|---|
-| **Variant A** | `/` | `/results?q=shirt` | Filters · Sort in a floating pill at the bottom |
-| **Variant B** | `/b` | `/b/results?q=shirt` | The same two as chips at the top, no bottom bar |
-| **Variant C** | — | `/c` | The same pill, already inside one vertical |
-| **Variant D** | — | `/d` | Top chips, already inside one vertical |
+### The 2×2 — main catalog (1,070 products)
 
-A and B start across every category; C and D start *inside* one, so there is no Category control at all. Together they make a 2×2 of that against control placement. `/c` and `/d` are the listing itself — other seller/vertical pairs are at `/c/seller/[sellerId]/[categoryId]`.
+| Variant | Home | Listing | Controls | Starts |
+|---|---|---|---|---|
+| **A** | `/` | `/results?q=shirt` | Filter · Sort in a floating pill at the bottom | All categories |
+| **B** | `/b` | `/b/results?q=shirt` | Filter · Sort as chips under the app bar | All categories |
+| **C** | — | `/c` | Floating pill | Inside one category |
+| **D** | — | `/d` | Top chips | Inside one category |
 
-**`/userjourney` is a fifth route and outside the 2×2** — one buyer's named flow (Home → *Kartik exporters* banner → storefront → filter → detail), built 1:1 from screengrabs of the live app rather than from Figma, over its own catalog of 540 tees. It is where controls get tried first: the Filters bottom sheet, the typed min/max on Price, Margin and MOQ, the offer magnitudes behind one *Offers* panel, and its own rail order — commercial numbers first, and Brands, Seller and Seller City hidden because the storefront is one of each — all live there and not in A–D.
+- A and B: Home → tap the search bar → type `shirt` → tap a suggestion.
+- C and D open straight on a listing. Other seller/category pairs are at
+  `/c/seller/[sellerId]/[categoryId]` and `/d/seller/[sellerId]/[categoryId]`.
+- `/seller/[sellerId]` and `/b/seller/[sellerId]` are seller listings.
+- Each variant stays in its own route tree: links from `/b` stay under `/b`.
 
-Card, catalog, engine and sheets are shared — one `PlpScreen` throughout — so within a row of the 2×2 a preference is about control placement, and within a column it is about starting scope. Switch by editing the URL. A and B are closed loops: hand someone `/b` and the whole journey stays in B.
+### Kartik storefront — separate catalog (540 tees)
 
-## Where the documentation lives
+| Route | What it shows |
+|---|---|
+| `/userjourney` | Redirects to `/userjourney/seller/kartik`. Filters sheet with a flat rail: 7 rows, no style filters. |
+| `/pvfilters` | Same listing plus a **Find It Fast** block: choose a category, then style buttons that open the matching filter panel. |
+| `/pvfilters2` | Same listing. The Filters sheet ends with a locked **More Filters** row. Picking a category unlocks six style filters under a "More Filters" heading. **This is the version going forward.** |
 
-Four files, one job each, and they are the source of truth rather than something to re-derive. The deepest reasoning is in the code comments beside the thing they describe — these files run 30–77% comment, and that copy is the one that can't drift from what it documents.
+Every listing has a product detail page at `{base}/product/[productId]`.
 
-- **`CLAUDE.md`** / **`AGENTS.md`** — rules and traps only, loaded into every AI session: the Figma node map, the route table, and what must not be broken.
-- **`plan.md`** — the architecture narrative: the filter engine's load-bearing rules, the catalog's shape, the panels.
-- **`docs/decisions.md`** — the long-form record: every call, why it was made, and what was rejected. Read before reversing anything.
-- **`progress_tracker.md`** — the chronology, what's been verified, the UX backlog, and the open questions for the designer.
+## Demo scripts
 
-## Two things to know before changing anything
+**Variant A — filter and sort**
 
-**Designs come from Figma, never from eyeballing.** File `hdArN93DmnLu5JDB46SOwd`, pulled through the Figma MCP. `CLAUDE.md` maps every screen to its node. Guessing at a spec that has a frame wastes a round trip — and the frames disagree with intuition more often than not.
+1. `/` → search bar → type `shirt` → tap the first suggestion → 1,070 results.
+2. Filters → Category → tick *Men's Casual Shirts* and *Men's Casual T-Shirts*
+   → footer reads *Show 416 results* → apply. The Filter control shows **2**.
+3. Filters → Seller → tick *Grasim Fabrics* and *Gagan Garments Ltd.* → apply →
+   202 results.
+4. Sort → *Highest Margin on MRP* → the order changes and Sort shows a dot.
+5. Filters → **Clear Filters** → back to 1,070, URL cleared, toast
+   `All filters cleared`.
 
-**Determinism is load-bearing.** The catalog comes from a fixed-seed PRNG, so facet counts must be identical between reloads and between server and client. A change that makes generation non-deterministic breaks hydration and makes the demo look broken.
+The URL tracks every step and the back button unwinds it.
 
-## Deploying
+**Variant B — facet pruning:** Filters → Gender → *Girls* → Category → only
+*Girl's T-Shirts* (108) remains.
 
-Source: **https://github.com/momoNoSauce/filter_prototype** (private, transferred
-from `cheeseKracker` on 2026-08-25 — the old path still redirects).
+**Brand pruning (any variant):** Category → *Boy's Casual T-Shirts* (107) →
+Filters → Brands → two brands remain: Killer and Monte Carlo.
 
-The Vercel project is **`momonosauce/filter-prototype`**, connected to GitHub, so
-**a push to `main` deploys** — nothing else to run:
+**`/pvfilters2` — gated style filters**
 
-```bash
-git push origin main
+1. Open Filters. The rail reads Price Range · Margin on MRP · MOQ · Cashback ·
+   Seller Offer · SOLV Target Scheme · Category · More Filters 🔒.
+2. Tap **More Filters** and pick a category in its panel. The rail scrolls up
+   and Size, Fit, Neck Type, Sleeve Type, Pattern and Closure Type appear under
+   a grey "More Filters" heading.
+
+## Project layout
+
+```
+app/          routes (one folder per variant / storefront)
+components/   PlpScreen, FilterScreen, sheets, cards, UI primitives
+lib/catalog/  seeded catalogs (seed.ts, kartik.ts), product images, search
+lib/filters/  filter engine, facet registry, rails, URL state, panel fit
+public/       Figma exports, category photos, product art, style icons
+proxy.ts      password gate for the Vercel deployment
 ```
 
-### Only momoNoSauce's commits build
+## Docs
 
-It is a hobby project, which builds only its owner's commits. This repo's
-`git config user.email` is momoNoSauce's noreply address,
-`320892459+momoNoSauce@users.noreply.github.com`; a commit under any other
-address pushes fine and then sits `Blocked` on Vercel. The CLI doesn't say why —
-`vercel ls` shows `Blocked` and no duration — so ask the API, which carries the
-sentence:
+| File | Contents |
+|---|---|
+| `CLAUDE.md` | Rules for working in this repo: routes, invariants, design source, deploy |
+| `docs/architecture.md` | How the engine, facets, rails, catalog and state work |
+| `docs/backlog.md` | Open UX issues and open design questions |
 
-```bash
-TOKEN=$(python3 -c "import json;print(json.load(open('$HOME/Library/Application Support/com.vercel.cli/auth.json'))['token'])")
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.vercel.com/v13/deployments/<deployment-host>" \
-  | python3 -m json.tool | grep -iE "readyState|Reason|block"
-```
+## Deploy
 
-See `CLAUDE.md`.
+- Vercel project `momonosauce/filter-prototype`, connected to this repo.
+  **A push to `main` deploys.**
+- Live at https://filter-prototype-sandy.vercel.app. It's password-protected:
+  leave the username blank and enter the password from the `SITE_PASSWORD`
+  Vercel env var.
+- `proxy.ts` applies HTTP Basic Auth only when `VERCEL` is set, so localhost is
+  never gated. With no `SITE_PASSWORD` set, the deployment returns 503.
+- Vercel builds only commits authored by the project owner's GitHub account.
+  See `CLAUDE.md` → *Deploy*.

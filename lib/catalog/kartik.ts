@@ -25,9 +25,8 @@ import type { Product, Seller } from "./types";
  * his storefront. That is deliberate and is the whole reason this file exists
  * rather than a few more entries in `seed.ts` — determinism is load-bearing
  * there, and adding products to the main sequence would have moved every count
- * documented in `plan.md` and `progress_tracker.md` (the 1,070 total, Girls 97,
- * Men 575, `₹900 & above` 37, all seven category counts and all thirteen size
- * counts). Nothing in A, B, C or D can see this set, and nothing here can shift
+ * documented in `docs/architecture.md` (the 1,070 total, Girls 108, Men 584,
+ * `₹900 & above` 36, all seven category counts and all thirteen size counts). Nothing in A, B, C or D can see this set, and nothing here can shift
  * a number over there.
  *
  * Built from the same primitives as the main catalog — same colours, fabrics,
