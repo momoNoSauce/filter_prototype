@@ -915,7 +915,8 @@ export function FilterScreen({
 
             The button is `ActionFooter`'s *Clear Filters* pill (grey, Inter
             15), the designer's pick over a new outlined style, with `px` 14 →
-            12 so *Select only one category* fits the 220px panel on one line.
+            12 so the label fits the 220px panel on one line. *1*, not *one*, on
+            the button (2026-10-30, the designer's edit in Figma).
             Figma: 03a, `cta` is an `Action footer button` instance with the
             `Label` property.
 
@@ -926,7 +927,7 @@ export function FilterScreen({
               {/* 17/22 bold over 15/20, as the old count line was set. */}
               <div className="flex flex-col gap-[4px]">
                 <p className="text-[17px] leading-[22px] font-bold text-heading">
-                  There&rsquo;s more than one category.
+                  There&rsquo;s more than one category
                 </p>
                 <p className="text-[15px] leading-[20px] text-muted">
                   Select only one category to view{" "}
@@ -937,7 +938,7 @@ export function FilterScreen({
                 onClick={() => setActiveRail(CATEGORY_FACET_ID)}
                 className="flex h-[40px] cursor-pointer items-center rounded-[999px] border border-[#dedede] bg-[#f7f7f7] px-[12px] font-ui text-[15px] leading-[20px] font-medium whitespace-nowrap text-[#323232]"
               >
-                Select only one category
+                Select only 1 category
               </button>
             </div>
           )}
