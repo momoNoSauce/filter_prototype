@@ -974,8 +974,8 @@ const JOURNEY_RAIL_ORDER: typeof RAIL_ORDER = [
  * **Size gets a row of its own**, which no Kartik rail has carried since
  * 2026-09-08. It is the most vertical-specific facet there is — M in menswear
  * is not M in womenswear, which is why it is `vertical: true` on A–D's rail —
- * and it leads the block here for the same reason it leads the locked panel's
- * chips: it is the one a buyer came for.
+ * and it leads the block here for the same reason it led the locked panel's
+ * old chips: it is the one a buyer came for.
  *
  * **Derived, not retyped.** Every row, and the block's own order, come from
  * `JOURNEY_RAIL_ORDER`, so a row added there lands on both rails and the two

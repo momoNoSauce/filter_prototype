@@ -28,9 +28,9 @@ Open items only. None of them block a demo.
 
 ## Open design questions
 
-1. **`/pvfilters2` locked panel copy:** the heading reads
-   `6 style filters locked` under a row named *More Filters*, and the six
-   filters aren't named until a category is picked.
+1. **`/pvfilters2` locked panel:** the six style filters aren't named until a
+   category is picked, and the panel's button only opens the Category row, so
+   unlocking takes two taps.
 2. **Pattern icon:** missing on the `/pvfilters` style buttons, which show a
    placeholder. To add it, put the file in `public/style/` and add one entry to
    `STYLE_FACET_ICONS`.

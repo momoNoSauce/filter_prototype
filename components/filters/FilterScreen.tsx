@@ -39,8 +39,8 @@ import { SearchField } from "./SearchField";
 import { OptionRow, RangeInputs, SortRow, ThumbRow } from "./OptionRows";
 
 /**
- * The facet the locked panel offers, which is the same one the rail's own
- * Category row does. A constant rather than the string twice.
+ * The Category row's facet, which the locked panel's button opens. A constant
+ * rather than the string twice.
  */
 const CATEGORY_FACET_ID = "category";
 
@@ -347,8 +347,9 @@ export function FilterScreen({
    *
    * Fired by the **transition**, not the state — the render that loses the
    * placeholder — so a sheet that opens already unlocked starts at the top like
-   * any other. Both ways into the unlock, the locked panel's picker and the
-   * Category row's own panel, are the same transition, so both scroll.
+   * any other. The unlock now happens only on the Category row's own panel
+   * (the locked panel's button just opens that row), so this is the one
+   * transition that scrolls.
    */
   const gatedOnRail = RAIL.some((r) => r.gated);
   const wasGated = useRef(gatedOnRail);
@@ -515,7 +516,7 @@ export function FilterScreen({
    * what decides which panel it opens.
    *
    * Read off the *draft*, like everything else on this screen, so ticking a
-   * category in the locked panel unlocks it in the same tap rather than on
+   * category on the Category row unlocks it in the same tap rather than on
    * `Show N results`.
    */
   const locked = Boolean(rail.gated) && settled === null;
@@ -527,24 +528,6 @@ export function FilterScreen({
         return { facet, options: facetOptionsWithCounts(products, draft, facetId) };
       });
 
-  /**
-   * The categories offered *inside* the locked panel, so unlocking is a tap
-   * rather than an instruction to go and find another row. Same facet, same
-   * counts and same `toggle` as the Category row two columns to the left —
-   * ticking here ticks there.
-   */
-  const unlockOptions = locked
-    ? facetOptionsWithCounts(products, draft, CATEGORY_FACET_ID)
-    : [];
-
-  /**
-   * What is behind the lock. Only its **length** is read — the panel counts
-   * them — but it stays derived from the row rather than hard-coded, so adding
-   * a seventh filter to the block changes the heading without anyone
-   * remembering to.
-   */
-  const panelPreview = locked ? rail.facetIds : [];
-
   /*
    * The field is earned, not declared. It replaced a static `searchable` flag
    * on 2026-08-20, which five facets set and none of them needed — Category,
@@ -553,8 +536,8 @@ export function FilterScreen({
    * Now it appears only when the options overflow, and goes away again when
    * pruning shortens them. See `lib/filters/panelFit.ts`.
    */
-  // A locked panel has no options to hunt through — it has a prompt and three
-  // categories — so it never earns a field. `panelFacets` is empty there, which
+  // A locked panel has no options to hunt through — it has a message and a
+  // button — so it never earns a field. `panelFacets` is empty there, which
   // says so already; this is the comment, not a second condition.
   const searchable = needsSearch(
     panelFacets.map(({ facet, options }) => ({
@@ -915,65 +898,47 @@ export function FilterScreen({
 
           {/*
             **The locked panel** — `/pvfilters2`'s *More Filters* before a
-            vertical is settled (2026-09-09).
+            vertical is settled (2026-09-09; message + button since 2026-10-30).
 
-            Two lines and the picker, in that order: what you get and how many,
-            then the one instruction, then the tap that carries it out. Naming
-            the payoff first is what turns a dead row into an offer; a bare
-            *select a category* states a rule and leaves the payoff to the
-            imagination.
+            **A message and one button, centred**, after the live app's own
+            *More Filters* screen (2026-10-30, on request). It replaced a count
+            line (*6 style filters locked*) over the three categories as
+            `ThumbRow`s: the panel now says why the filters are missing and
+            sends the buyer to the row that fixes it, rather than holding a
+            second copy of the Category picker.
 
-            **The six names are not here.** They spent an afternoon as
-            padlocked chips, and the padlock outlived them on the heading until
-            2026-09-24, when it moved to the rail row, after the label. The
-            chips came off because the rail row's ticker read the names out, so
-            spelling them again above the picker was the same information twice
-            in one glance, and it cost the categories most of the fold. **The
-            ticker came off too** (2026-09-24), so nothing names the six until a
-            category is picked — known, and left for the designer to call.
+            **The button goes to the Category row**, it doesn't pick one. It
+            only moves `activeRail`, so the rail highlights Category, which sits
+            just above, and its panel shows the same live counts. Ticking a
+            category there unlocks the style rows as before, and the unlock
+            effect above scrolls the rail to them.
 
-            The categories are the real `ThumbRow`s with live counts and the
-            same `toggle` as the Category row up the rail, so ticking here is
-            ticking there — and because the whole screen runs off the draft, the
-            row unlocks under the finger rather than on `Show N results`.
+            The button is `ActionFooter`'s *Clear Filters* pill (grey, Inter
+            15), the designer's pick over a new outlined style, with `px` 14 →
+            12 so *Select only one category* fits the 220px panel on one line.
+            Figma: 03a, `cta` is an `Action footer button` instance with the
+            `Label` property.
+
+            The padlock stays on the rail row (see `Padlock`).
           */}
           {locked && (
-            <div className="flex w-full flex-col">
-              {/*
-                **17 over 15, not 15 over 14** (2026-09-09, on the render: the
-                heading read as small). This is the screen's own message, not a
-                group heading inside a stacked panel — those are the 15px bold
-                that `FACET_HEADING_H` measures, sized to sit *level* with the
-                option rows they label. A line that is the only thing on the
-                panel has to lead the 15px `ThumbRow`s below it, so it goes a
-                step up and the second line meets the rows at 15.
-
-                **No padlock here since 2026-09-24** — it moved to the rail row,
-                after *More Filters*, on request. The word *locked* is now the
-                panel's only mention of the lock.
-
-                **Set tight, 22 over 20** (2026-09-24, on the render: the gap
-                between the two lines *looks off*). Both inherited the body's
-                1.5, which left 10.5px between their glyphs — two lines of
-                one message set like two messages. Explicit leading takes it to
-                4, the second line's 20 being `ThumbRow`'s own. `pt` 6 → 7 and
-                `pb` 14 → 15 give back what the leading took from the outer
-                edges, so the heading sits where it did and only the gap moved.
-              */}
-              <p className="px-[14px] pt-[7px] text-[17px] leading-[22px] font-bold text-heading">
-                {panelPreview.length} style filters locked
-              </p>
-              <p className="px-[14px] pt-[2px] pb-[15px] text-[15px] leading-[20px] text-muted">
-                Pick a category to see them
-              </p>
-              {unlockOptions.map((option) => (
-                <ThumbRow
-                  key={option.id}
-                  option={option}
-                  selected={(draft[CATEGORY_FACET_ID] ?? []).includes(option.id)}
-                  onToggle={() => toggle(CATEGORY_FACET_ID, option.id)}
-                />
-              ))}
+            <div className="flex w-full flex-col items-center gap-[14px] px-[8px] pt-[28px] pb-[24px] text-center">
+              {/* 17/22 bold over 15/20, as the old count line was set. */}
+              <div className="flex flex-col gap-[4px]">
+                <p className="text-[17px] leading-[22px] font-bold text-heading">
+                  There&rsquo;s more than one category.
+                </p>
+                <p className="text-[15px] leading-[20px] text-muted">
+                  Select only one category to view{" "}
+                  <b className="font-bold text-heading">More Filters</b>
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveRail(CATEGORY_FACET_ID)}
+                className="flex h-[40px] cursor-pointer items-center rounded-[999px] border border-[#dedede] bg-[#f7f7f7] px-[12px] font-ui text-[15px] leading-[20px] font-medium whitespace-nowrap text-[#323232]"
+              >
+                Select only one category
+              </button>
             </div>
           )}
 

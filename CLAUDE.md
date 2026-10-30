@@ -84,8 +84,10 @@ Also: `/seller/[sellerId]`, `/b/seller/[sellerId]`,
   highlights `rail.id`, not `activeRail`. Don't add empty rail space to buy
   scroll room.
 - **The locked More Filters row** looks like any other row and has a padlock
-  after its label. It doesn't animate. Its panel shows a count line and the
-  three categories as `ThumbRow`s.
+  after its label. It doesn't animate. Its panel shows a centred message
+  (*There's more than one category …*) and a grey **Select only one category**
+  pill, styled like `ActionFooter`'s Clear button, that switches the rail to
+  Category. It doesn't pick a category itself.
 - Brands, Seller and Seller City have `hideIfSingle`. They hide when the page's
   products hold only one value (`singleValuedFacets`), which is always the case
   on Kartik.

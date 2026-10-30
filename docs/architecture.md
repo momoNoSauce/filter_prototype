@@ -130,9 +130,10 @@ Sizes live on packs, not products. Each product has 2–4 packs.
 - **Locked**, before a single category is settled: Price Range · Margin on MRP ·
   MOQ · Cashback · Seller Offer · SOLV Target Scheme · Category · More
   Filters 🔒.
-  - The More Filters panel reads `6 style filters locked` and lists the three
-    categories as `ThumbRow`s.
-- **Unlocked**, once a category is picked from that panel or from Category:
+  - The More Filters panel reads *There's more than one category. Select only
+    one category to view More Filters*, with a grey **Select only one
+    category** button that opens the Category row.
+- **Unlocked**, once a category is picked on the Category row:
   - The locked row is replaced by a "More Filters" heading strip, then Size ·
     Fit · Neck Type · Sleeve Type · Pattern · Closure Type.
   - The Category panel opens, and the rail scrolls towards Category.
